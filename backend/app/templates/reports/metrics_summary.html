@@ -1,0 +1,45 @@
+{% extends "reports/base.html" %}
+
+{% block content %}
+<div class="date-range">
+  Report period: {{ date_from }} to {{ date_to }}
+</div>
+
+{% if devices %}
+<h2 class="section-title">Resource Usage by Device</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Hostname</th>
+      <th>Avg CPU %</th>
+      <th>Peak CPU %</th>
+      <th>Avg Memory %</th>
+      <th>Peak Memory %</th>
+      <th>Avg Disk %</th>
+      <th>Avg Temp</th>
+      <th>Data Points</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for device in devices %}
+    <tr>
+      <td style="font-weight: 600;">{{ device.hostname }}</td>
+      <td{% if device.avg_cpu and device.avg_cpu > 80 %} style="color: #991B1B; font-weight: 600;"{% elif device.avg_cpu and device.avg_cpu > 50 %} style="color: #92400E;"{% endif %}>
+        {{ '%.1f' | format(device.avg_cpu) if device.avg_cpu is not none else '-' }}
+      </td>
+      <td>{{ '%.1f' | format(device.peak_cpu) if device.peak_cpu is not none else '-' }}</td>
+      <td{% if device.avg_mem and device.avg_mem > 80 %} style="color: #991B1B; font-weight: 600;"{% elif device.avg_mem and device.avg_mem > 50 %} style="color: #92400E;"{% endif %}>
+        {{ '%.1f' | format(device.avg_mem) if device.avg_mem is not none else '-' }}
+      </td>
+      <td>{{ '%.1f' | format(device.peak_mem) if device.peak_mem is not none else '-' }}</td>
+      <td>{{ '%.1f' | format(device.avg_disk) if device.avg_disk is not none else '-' }}</td>
+      <td>{{ '%.1f' | format(device.avg_temp) if device.avg_temp is not none else '-' }}</td>
+      <td>{{ device.data_points }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="no-data">No metrics data found for the selected date range.</div>
+{% endif %}
+{% endblock %}

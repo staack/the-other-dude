@@ -1,0 +1,111 @@
+# docker-compose.override.yml -- Dev environment (auto-loaded by `docker compose up`)
+# Adds application services with hot reload, debug logging, and dev defaults.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    container_name: tod_api
+    ports:
+      - "8001:8000"
+    env_file: .env
+    environment:
+      ENVIRONMENT: dev
+      LOG_LEVEL: debug
+      DEBUG: "true"
+      GUNICORN_WORKERS: "1"
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/mikrotik
+      SYNC_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/mikrotik
+      APP_USER_DATABASE_URL: postgresql+asyncpg://app_user:app_password@postgres:5432/mikrotik
+      REDIS_URL: redis://redis:6379/0
+      NATS_URL: nats://nats:4222
+      FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL:-admin@mikrotik-portal.dev}
+      FIRST_ADMIN_PASSWORD: ${FIRST_ADMIN_PASSWORD:-changeme-in-production}
+      CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?Set CREDENTIAL_ENCRYPTION_KEY in .env}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      OPENBAO_ADDR: http://openbao:8200
+      OPENBAO_TOKEN: dev-openbao-token
+      GIT_STORE_PATH: /data/git-store
+      WIREGUARD_CONFIG_PATH: /data/wireguard
+      WIREGUARD_GATEWAY: wireguard
+    cap_add:
+      - NET_ADMIN
+    user: root
+    command: >
+      sh -c "
+        if [ -n \"$$WIREGUARD_GATEWAY\" ]; then
+          apt-get update -qq && apt-get install -y -qq iproute2 >/dev/null 2>&1 || true;
+          GW_IP=$$(getent hosts $$WIREGUARD_GATEWAY 2>/dev/null | awk '{print $$1}');
+          [ -z \"$$GW_IP\" ] && GW_IP=$$WIREGUARD_GATEWAY;
+          ip route add 10.10.0.0/16 via $$GW_IP 2>/dev/null || true;
+          echo VPN route: 10.10.0.0/16 via $$GW_IP;
+        fi;
+        exec su -s /bin/sh appuser -c 'gunicorn app.main:app --config gunicorn.conf.py'
+      "
+    volumes:
+      - ./backend:/app
+      - ./docker-data/git-store:/data/git-store
+      - ./docker-data/wireguard:/data/wireguard
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - tod
+
+  poller:
+    build:
+      context: ./poller
+      dockerfile: ./Dockerfile
+    container_name: tod_poller
+    env_file: .env
+    environment:
+      ENVIRONMENT: dev
+      LOG_LEVEL: debug
+      DATABASE_URL: postgres://poller_user:poller_password@postgres:5432/mikrotik
+      REDIS_URL: redis://redis:6379/0
+      NATS_URL: nats://nats:4222
+      CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?Set CREDENTIAL_ENCRYPTION_KEY in .env}
+      OPENBAO_ADDR: http://openbao:8200
+      OPENBAO_TOKEN: dev-openbao-token
+      POLL_INTERVAL_SECONDS: 60
+      WIREGUARD_GATEWAY: wireguard
+    cap_add:
+      - NET_ADMIN
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - tod
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+    container_name: tod_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    networks:
+      - tod

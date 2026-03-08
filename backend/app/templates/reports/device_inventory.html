@@ -1,0 +1,59 @@
+{% extends "reports/base.html" %}
+
+{% block page_size %}A4 landscape{% endblock %}
+
+{% block content %}
+<div class="summary-box">
+  <div class="summary-stat">
+    <div class="value">{{ total_devices }}</div>
+    <div class="label">Total Devices</div>
+  </div>
+  <div class="summary-stat">
+    <div class="value" style="color: #166534;">{{ online_count }}</div>
+    <div class="label">Online</div>
+  </div>
+  <div class="summary-stat">
+    <div class="value" style="color: #991B1B;">{{ offline_count }}</div>
+    <div class="label">Offline</div>
+  </div>
+  <div class="summary-stat">
+    <div class="value" style="color: #475569;">{{ unknown_count }}</div>
+    <div class="label">Unknown</div>
+  </div>
+</div>
+
+{% if devices %}
+<table>
+  <thead>
+    <tr>
+      <th>Hostname</th>
+      <th>IP Address</th>
+      <th>Model</th>
+      <th>RouterOS</th>
+      <th>Status</th>
+      <th>Last Seen</th>
+      <th>Uptime</th>
+      <th>Groups</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for device in devices %}
+    <tr>
+      <td style="font-weight: 600;">{{ device.hostname }}</td>
+      <td>{{ device.ip_address }}</td>
+      <td>{{ device.model or '-' }}</td>
+      <td>{{ device.routeros_version or '-' }}</td>
+      <td>
+        <span class="badge badge-{{ device.status }}">{{ device.status | upper }}</span>
+      </td>
+      <td>{{ device.last_seen or '-' }}</td>
+      <td>{{ device.uptime or '-' }}</td>
+      <td>{{ device.groups or '-' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="no-data">No devices found for this tenant.</div>
+{% endif %}
+{% endblock %}

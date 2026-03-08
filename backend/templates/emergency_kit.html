@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TOD - Emergency Kit</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      color: #1E293B;
+      background: white;
+      line-height: 1.5;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 0;
+      position: relative;
+    }
+
+    /* Header */
+    .header {
+      background: #0F172A;
+      color: white;
+      padding: 32px 40px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      background: #38BDF8;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 700;
+      color: #0F172A;
+      flex-shrink: 0;
+    }
+
+    .header-text h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .header-text p {
+      font-size: 13px;
+      color: #94A3B8;
+      margin-top: 2px;
+    }
+
+    /* Body content */
+    .content {
+      padding: 32px 40px;
+    }
+
+    .warning-box {
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      font-size: 13px;
+      color: #92400E;
+      line-height: 1.6;
+    }
+
+    .warning-box strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    /* Fields */
+    .field {
+      margin-bottom: 20px;
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748B;
+      margin-bottom: 6px;
+    }
+
+    .field-value {
+      font-size: 15px;
+      color: #0F172A;
+      padding: 10px 14px;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+    }
+
+    /* Secret Key placeholder */
+    .secret-key-box {
+      border: 2px dashed #38BDF8;
+      border-radius: 8px;
+      padding: 18px 20px;
+      text-align: center;
+      background: #F0F9FF;
+      margin-bottom: 20px;
+    }
+
+    .secret-key-box .field-label {
+      margin-bottom: 10px;
+    }
+
+    #secret-key-value {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #0F172A;
+    }
+
+    /* Master password write-in line */
+    .write-in {
+      margin-bottom: 28px;
+    }
+
+    .write-in .field-label {
+      margin-bottom: 8px;
+    }
+
+    .write-line {
+      border-bottom: 1px solid #CBD5E1;
+      height: 32px;
+    }
+
+    /* Instructions */
+    .instructions {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+    }
+
+    .instructions h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #0F172A;
+      margin-bottom: 12px;
+    }
+
+    .instructions ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .instructions li {
+      font-size: 13px;
+      color: #475569;
+      padding: 5px 0;
+      padding-left: 20px;
+      position: relative;
+      line-height: 1.5;
+    }
+
+    .instructions li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 12px;
+      width: 6px;
+      height: 6px;
+      background: #38BDF8;
+      border-radius: 50%;
+    }
+
+    .instructions li.warning {
+      color: #B91C1C;
+      font-weight: 500;
+    }
+
+    .instructions li.warning::before {
+      background: #EF4444;
+    }
+
+    /* Separator */
+    .separator {
+      border: none;
+      border-top: 1px solid #E2E8F0;
+      margin: 24px 0;
+    }
+
+    /* Footer */
+    .footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 40px;
+      border-top: 1px solid #E2E8F0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-text {
+      font-size: 11px;
+      color: #94A3B8;
+    }
+
+    .footer-accent {
+      font-size: 11px;
+      color: #38BDF8;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">M</div>
+      <div class="header-text">
+        <h1>Emergency Kit</h1>
+        <p>TOD Zero-Knowledge Recovery</p>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Warning -->
+      <div class="warning-box">
+        <strong>Keep this document safe</strong>
+        This Emergency Kit is your only way to recover access if you lose your Secret Key.
+        Store it in a secure location such as a home safe or safety deposit box.
+      </div>
+
+      <!-- Email -->
+      <div class="field">
+        <div class="field-label">Email Address</div>
+        <div class="field-value">{{ email }}</div>
+      </div>
+
+      <!-- Sign-in URL -->
+      <div class="field">
+        <div class="field-label">Sign-in URL</div>
+        <div class="field-value">{{ signin_url }}</div>
+      </div>
+
+      <!-- Secret Key -->
+      <div class="secret-key-box">
+        <div class="field-label">Secret Key</div>
+        <div id="secret-key-value">{{ secret_key_placeholder }}</div>
+      </div>
+
+      <!-- Master Password write-in -->
+      <div class="write-in">
+        <div class="field-label">Master Password (write by hand)</div>
+        <div class="write-line"></div>
+      </div>
+
+      <hr class="separator">
+
+      <!-- Instructions -->
+      <div class="instructions">
+        <h3>Instructions</h3>
+        <ul>
+          <li>This Emergency Kit contains your Secret Key needed to log in on new devices.</li>
+          <li>Store this document in a safe place — a home safe, safety deposit box, or other secure location.</li>
+          <li>Do NOT store this document digitally alongside your password.</li>
+          <li>Consider writing your Master Password on this sheet and storing it securely.</li>
+          <li class="warning">If you lose both your Emergency Kit and forget your Secret Key, your encrypted data cannot be recovered. There is no reset mechanism.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span class="footer-text">Generated {{ date }} — TOD</span>
+      <span class="footer-accent">CONFIDENTIAL</span>
+    </div>
+  </div>
+</body>
+</html>

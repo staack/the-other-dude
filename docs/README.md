@@ -1,0 +1,203 @@
+# The Other Dude
+
+**Fleet management for MikroTik RouterOS devices.** Built for MSPs who manage hundreds of routers across multiple tenants. Think "UniFi Controller, but for MikroTik."
+
+The Other Dude is a self-hosted, multi-tenant platform that gives you centralized visibility, configuration management, real-time monitoring, and zero-knowledge security across your entire MikroTik fleet -- from a single pane of glass.
+
+---
+
+## Features
+
+### Fleet
+
+- **Dashboard** -- At-a-glance fleet health with device counts, uptime sparklines, and status breakdowns per organization.
+- **Device Management** -- Detailed device pages with system info, interfaces, routes, firewall rules, DHCP leases, and real-time resource metrics.
+- **Fleet Table** -- Virtual-scrolled table (TanStack Virtual) that handles hundreds of devices without breaking a sweat.
+- **Device Map** -- Geographic view of device locations.
+- **Subnet Scanner** -- Discover new RouterOS devices on your network and onboard them in clicks.
+
+### Configuration
+
+- **Config Editor** -- Browse and edit RouterOS configuration sections with a structured command interface. Two-phase config push with automatic panic-revert ensures you never brick a remote device.
+- **Batch Config** -- Apply configuration changes across multiple devices simultaneously with template support.
+- **Bulk Commands** -- Execute arbitrary RouterOS commands across device groups.
+- **Templates** -- Reusable configuration templates with variable substitution.
+- **Simple Config** -- A Linksys/Ubiquiti-style simplified interface covering Internet, LAN/DHCP, WiFi, Port Forwarding, Firewall, DNS, and System settings. No RouterOS CLI knowledge required.
+- **Config Backup & Diff** -- Git-backed configuration storage with full version history and side-by-side diffs. Restore any previous configuration with one click.
+
+### Monitoring
+
+- **Network Topology** -- Interactive topology map (ReactFlow + Dagre layout) showing device interconnections and shared subnets.
+- **Real-Time Metrics** -- Live CPU, memory, disk, and interface traffic via Server-Sent Events (SSE) backed by NATS JetStream.
+- **Alert Rules** -- Configurable threshold-based alerts for any metric (CPU > 90%, interface down, uptime reset, etc.).
+- **Notification Channels** -- Route alerts to email, webhooks, or Slack.
+- **Audit Trail** -- Immutable log of every action taken in the portal, with user attribution and exportable records.
+- **Transparency Dashboard** -- KMS access event monitoring for tenant admins (who accessed what encryption keys, when).
+- **Reports** -- Generate PDF reports (fleet summary, device detail, security audit, performance) with Jinja2 + WeasyPrint.
+
+### Security
+
+- **Zero-Knowledge Architecture** -- 1Password-style hybrid design. SRP-6a authentication means the server never sees your password. Two-Secret Key Derivation (2SKD) with PBKDF2 (650K iterations) + HKDF + XOR.
+- **Secret Key** -- 128-bit `A3-XXXXXX` format key stored in IndexedDB with Emergency Kit PDF export.
+- **OpenBao KMS** -- Per-tenant envelope encryption via Transit secret engine. Go poller uses LRU cache (1024 keys / 5-min TTL) for performance.
+- **Internal Certificate Authority** -- Issue and deploy TLS certificates to RouterOS devices via SFTP. Three-tier TLS fallback: CA-verified, InsecureSkipVerify, plain API.
+- **WireGuard VPN** -- Manage WireGuard tunnels for secure device access across NAT boundaries.
+- **Credential Encryption** -- AES-256-GCM (Fernet) encryption of all stored device credentials at rest.
+- **RBAC** -- Four roles: `super_admin`, `admin`, `operator`, `viewer`. PostgreSQL Row-Level Security enforces tenant isolation at the database layer.
+
+### Administration
+
+- **Multi-Tenancy** -- Full organization isolation with PostgreSQL RLS. Super admins manage all tenants; tenant admins see only their own devices and users.
+- **User Management** -- Per-tenant user administration with role assignment.
+- **API Keys** -- Generate `mktp_`-prefixed API keys with SHA-256 hash storage and operator-level RBAC for automation and integrations.
+- **Firmware Management** -- Track RouterOS versions across your fleet, plan upgrades, and push firmware updates.
+- **Maintenance Windows** -- Schedule maintenance periods with automatic alert suppression.
+- **Setup Wizard** -- Guided 3-step onboarding for first-time deployment.
+
+### UX
+
+- **Command Palette** -- `Cmd+K` / `Ctrl+K` quick navigation (cmdk).
+- **Keyboard Shortcuts** -- Vim-style sequence shortcuts (`g d` for dashboard, `g t` for topology, `[` to toggle sidebar).
+- **Dark / Light Mode** -- Class-based theming with flicker-free initialization.
+- **Page Transitions** -- Smooth route transitions with Framer Motion.
+- **Skeleton Loaders** -- Shimmer-gradient loading states throughout the UI.
+
+---
+
+## Architecture
+
+```
+                         +-----------+
+                         |  Frontend |
+                         | React/nginx|
+                         +-----+-----+
+                               |
+                          /api/ proxy
+                               |
+                         +-----v-----+
+                         |    API    |
+                         |  FastAPI  |
+                         +--+--+--+--+
+                            |  |  |
+              +-------------+  |  +--------------+
+              |                |                 |
+        +-----v------+  +-----v-----+   +-------v-------+
+        | PostgreSQL  |  |   Redis   |   |     NATS      |
+        | TimescaleDB |  |  (locks,  |   |  JetStream    |
+        |   (RLS)     |  |  caching) |   |  (pub/sub)    |
+        +-----^------+  +-----^-----+   +-------^-------+
+              |                |                 |
+        +-----+-------+-------+---------+-------+
+        |             Poller (Go)                |
+        |  Polls RouterOS devices via binary API |
+        |        port 8729 TLS                   |
+        +----------------------------------------+
+              |
+     +--------v---------+
+     |  RouterOS Fleet   |
+     |  (your devices)   |
+     +-------------------+
+```
+
+- **Frontend** serves the React SPA via nginx and proxies `/api/` to the backend.
+- **API** handles all business logic, authentication, and database access with RLS-enforced tenant isolation.
+- **Poller** is a Go microservice that polls RouterOS devices on a configurable interval using the RouterOS binary API, publishing results to NATS and persisting to PostgreSQL.
+- **PostgreSQL + TimescaleDB** stores all relational data with hypertables for time-series metrics.
+- **Redis** provides distributed locks (one poller per device) and rate limiting.
+- **NATS JetStream** delivers real-time events from the poller to the API (and onward to the frontend via SSE).
+- **OpenBao** provides Transit secret engine for per-tenant envelope encryption (zero-knowledge key management).
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, TanStack Router + Query, Tailwind CSS 3.4, Vite, Framer Motion |
+| Backend | Python 3.12, FastAPI 0.115, SQLAlchemy 2.0 async, asyncpg, Pydantic v2 |
+| Poller | Go 1.24, go-routeros/v3, pgx/v5, nats.go |
+| Database | PostgreSQL 17 + TimescaleDB 2.17, Row-Level Security |
+| Cache | Redis 7 |
+| Message Bus | NATS with JetStream |
+| KMS | OpenBao 2.1 (Transit secret engine) |
+| VPN | WireGuard |
+| Auth | SRP-6a (zero-knowledge), JWT (15m access / 7d refresh) |
+| Reports | Jinja2 + WeasyPrint (PDF generation) |
+| Containerization | Docker Compose (dev, staging, production profiles) |
+
+---
+
+## Quick Start
+
+See the full [Quick Start Guide](../QUICKSTART.md) for detailed instructions.
+
+```bash
+# Clone and configure
+cp .env.example .env
+
+# Start infrastructure
+docker compose up -d
+
+# Build app images (one at a time to avoid OOM)
+docker compose build api
+docker compose build poller
+docker compose build frontend
+
+# Start the full stack
+docker compose up -d
+
+# Verify
+curl http://localhost:8001/health
+open http://localhost:3000
+```
+
+Three environment profiles are available:
+
+| Environment | Frontend | API | Notes |
+|-------------|----------|-----|-------|
+| Dev | `localhost:3000` | `localhost:8001` | Hot-reload, volume-mounted source |
+| Staging | `localhost:3080` | `localhost:8081` | Built images, staging secrets |
+| Production | `localhost` (port 80) | Internal (proxied) | Gunicorn workers, log rotation |
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Quick Start](../QUICKSTART.md) | Get running in minutes |
+| [Deployment Guide](DEPLOYMENT.md) | Production deployment, TLS, backups |
+| [Architecture](ARCHITECTURE.md) | System design, data flows, multi-tenancy |
+| [Security Model](SECURITY.md) | Zero-knowledge auth, encryption, RLS, RBAC |
+| [User Guide](USER-GUIDE.md) | End-user guide for all features |
+| [API Reference](API.md) | REST API endpoints and authentication |
+| [Configuration](CONFIGURATION.md) | Environment variables and tuning |
+
+---
+
+## Screenshots
+
+See the [documentation site](https://theotherdude.net) for screenshots.
+
+---
+
+## Project Structure
+
+```
+backend/            Python FastAPI backend
+frontend/           React TypeScript frontend
+poller/             Go microservice for device polling
+infrastructure/     Helm charts, Dockerfiles, OpenBao init
+docs/               Documentation
+docker-compose.yml  Base compose (infrastructure services)
+docker-compose.override.yml   Dev overrides (hot-reload)
+docker-compose.staging.yml    Staging profile
+docker-compose.prod.yml       Production profile
+docker-compose.observability.yml  Prometheus + Grafana
+```
+
+---
+
+## License
+
+Open-source. Self-hosted. Your data stays on your infrastructure.

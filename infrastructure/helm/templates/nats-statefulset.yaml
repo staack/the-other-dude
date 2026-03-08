@@ -1,0 +1,115 @@
+{{- if .Values.nats.enabled }}
+---
+# NATS headless service for StatefulSet DNS
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mikrotik-portal.fullname" . }}-nats-headless
+  labels:
+    {{- include "mikrotik-portal.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+spec:
+  clusterIP: None
+  ports:
+    - name: client
+      port: 4222
+      targetPort: 4222
+  selector:
+    {{- include "mikrotik-portal.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+---
+# NATS ClusterIP service for client access
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mikrotik-portal.fullname" . }}-nats
+  labels:
+    {{- include "mikrotik-portal.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+spec:
+  type: ClusterIP
+  ports:
+    - name: client
+      port: {{ .Values.nats.service.port }}
+      targetPort: 4222
+    - name: monitoring
+      port: 8222
+      targetPort: 8222
+  selector:
+    {{- include "mikrotik-portal.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+---
+# NATS JetStream StatefulSet (needs stable storage)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "mikrotik-portal.fullname" . }}-nats
+  labels:
+    {{- include "mikrotik-portal.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nats
+spec:
+  replicas: 1
+  serviceName: {{ include "mikrotik-portal.fullname" . }}-nats-headless
+  selector:
+    matchLabels:
+      {{- include "mikrotik-portal.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: nats
+  template:
+    metadata:
+      labels:
+        {{- include "mikrotik-portal.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: nats
+    spec:
+      containers:
+        - name: nats
+          image: "{{ .Values.nats.image.repository }}:{{ .Values.nats.image.tag }}"
+          imagePullPolicy: {{ .Values.nats.image.pullPolicy }}
+          args:
+            - "-js"
+            - "--store_dir"
+            - "/data"
+            - "-m"
+            - "8222"
+          ports:
+            - name: client
+              containerPort: 4222
+              protocol: TCP
+            - name: monitoring
+              containerPort: 8222
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: {{ .Values.nats.resources.requests.cpu }}
+              memory: {{ .Values.nats.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.nats.resources.limits.cpu }}
+              memory: {{ .Values.nats.resources.limits.memory }}
+          volumeMounts:
+            - name: nats-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: nats-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- if .Values.nats.storageClass }}
+        storageClassName: {{ .Values.nats.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.nats.storage }}
+{{- end }}

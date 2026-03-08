@@ -1,0 +1,9 @@
+# Git
+.git
+.gitignore
+
+# Go build artifacts
+vendor/
+
+# Logs
+*.log

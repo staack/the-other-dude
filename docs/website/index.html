@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Other Dude — Fleet Management for MikroTik RouterOS</title>
+  <meta name="description" content="Manage hundreds of MikroTik routers from a single pane of glass. Zero-knowledge security, real-time monitoring, and configuration management — built for MSPs.">
+  <meta name="keywords" content="MikroTik, RouterOS, fleet management, MSP, network management, WinBox alternative, MikroTik monitoring, MikroTik configuration, router management, network monitoring tool, MikroTik dashboard, multi-tenant network management">
+  <meta name="author" content="The Other Dude">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#0F172A">
+  <link rel="canonical" href="https://theotherdude.net/">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="The Other Dude — MikroTik Fleet Management for MSPs | Monitor, Configure, Secure">
+  <meta property="og:description" content="Manage hundreds of MikroTik routers from a single pane of glass. Zero-knowledge security, real-time monitoring, and configuration management — built for MSPs.">
+  <meta property="og:url" content="https://theotherdude.net/">
+  <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Other Dude — MikroTik Fleet Management for MSPs">
+  <meta name="twitter:description" content="Manage hundreds of MikroTik routers from a single pane of glass. Zero-knowledge security, real-time monitoring, and configuration management.">
+  <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "The Other Dude",
+    "applicationCategory": "NetworkApplication",
+    "operatingSystem": "Linux, Docker",
+    "description": "Open-source MikroTik RouterOS fleet management platform for MSPs. Real-time monitoring, zero-knowledge security, configuration management, and multi-tenant support.",
+    "url": "https://theotherdude.net",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": [
+      "MikroTik RouterOS fleet management",
+      "Real-time device monitoring via SSE",
+      "Zero-knowledge SRP-6a authentication",
+      "Per-tenant envelope encryption with OpenBao",
+      "Two-phase configuration push with panic-revert",
+      "Multi-tenant PostgreSQL Row-Level Security",
+      "Internal Certificate Authority",
+      "Firmware management and audit trail"
+    ],
+    "softwareRequirements": "Docker, PostgreSQL 17, Redis, NATS"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Navigation                                  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <nav class="site-nav site-nav--dark">
+    <div class="nav-inner container">
+      <a href="index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#architecture" class="nav-link">Architecture</a>
+        <a href="#screenshots" class="nav-link">Screenshots</a>
+        <a href="docs.html" class="nav-link">Docs</a>
+        <a href="docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Hero                                        -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content container">
+      <div class="hero-rosette">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="96" height="96" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+      </div>
+      <span class="hero-badge">Fleet Management for MikroTik</span>
+      <h1 class="hero-title"><span class="gradient-text">MikroTik Fleet Management</span> for MSPs</h1>
+      <p class="hero-subtitle">Manage hundreds of MikroTik routers from a single pane of glass. Zero-knowledge security, real-time monitoring, and configuration management&nbsp;&mdash; built for MSPs who demand more than WinBox.</p>
+      <div class="hero-actions">
+        <a href="docs.html#quickstart" class="btn btn-primary">Get Started</a>
+        <a href="docs.html" class="btn btn-secondary">View Documentation</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Features                                    -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="features" class="features-section">
+    <div class="container">
+      <span class="section-label">FEATURES</span>
+      <h2 class="section-title">Everything you need to manage your fleet</h2>
+      <p class="section-desc">From device discovery to firmware upgrades, The Other Dude gives you complete control over your MikroTik infrastructure.</p>
+
+      <div class="features-grid">
+
+        <!-- Fleet Management -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="8" width="20" height="8" rx="2"/>
+              <line x1="6" y1="12" x2="6" y2="12"/>
+              <line x1="10" y1="12" x2="10" y2="12"/>
+              <line x1="6" y1="16" x2="6" y2="20"/>
+              <line x1="18" y1="16" x2="18" y2="20"/>
+              <line x1="12" y1="4" x2="12" y2="8"/>
+              <circle cx="12" cy="3" r="1"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Fleet Management</h3>
+          <p class="feature-desc">Dashboard with real-time status, virtual-scrolled fleet table, subnet scanning, and per-device detail pages with live metrics.</p>
+        </div>
+
+        <!-- Configuration -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Configuration</h3>
+          <p class="feature-desc">Browse and edit RouterOS config in real-time. Two-phase push with panic-revert ensures you never brick a remote device. Batch templates for fleet-wide changes.</p>
+        </div>
+
+        <!-- Monitoring -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Monitoring</h3>
+          <p class="feature-desc">Real-time CPU, memory, and traffic via SSE. Threshold-based alerts with email, webhook, Slack, and webhook push notifications. Interactive topology map.</p>
+        </div>
+
+        <!-- Zero-Knowledge Security -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <circle cx="12" cy="16" r="1"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Zero-Knowledge Security</h3>
+          <p class="feature-desc">1Password-style SRP-6a auth&nbsp;&mdash; the server never sees your password. Per-tenant envelope encryption via OpenBao Transit. Internal CA for device TLS.</p>
+        </div>
+
+        <!-- Multi-Tenant -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18"/>
+              <path d="M5 21V7l8-4v18"/>
+              <path d="M19 21V11l-6-4"/>
+              <line x1="9" y1="9" x2="9" y2="9.01"/>
+              <line x1="9" y1="13" x2="9" y2="13.01"/>
+              <line x1="9" y1="17" x2="9" y2="17.01"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Multi-Tenant</h3>
+          <p class="feature-desc">PostgreSQL Row-Level Security isolates tenants at the database layer. RBAC with four roles. API keys for automation.</p>
+        </div>
+
+        <!-- Operations -->
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+          </div>
+          <h3 class="feature-title">Operations</h3>
+          <p class="feature-desc">Firmware management, PDF reports, audit trail, maintenance windows, config backup with git-backed version history and diff.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Architecture                                -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="architecture" class="arch-section">
+    <div class="container">
+      <span class="section-label">ARCHITECTURE</span>
+      <h2 class="section-title">Built for reliability at scale</h2>
+
+      <div class="arch-visual">
+        <!-- Row 1: Frontend -->
+        <div class="arch-row">
+          <div class="arch-node arch-node--app">
+            <div class="arch-node-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <div class="arch-node-label">Frontend</div>
+            <div class="arch-node-tech">React 19 &middot; nginx</div>
+          </div>
+        </div>
+        <div class="arch-connector"><div class="arch-connector-line"></div><span class="arch-connector-label">/api/ proxy</span></div>
+
+        <!-- Row 2: Backend API -->
+        <div class="arch-row">
+          <div class="arch-node arch-node--app">
+            <div class="arch-node-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            </div>
+            <div class="arch-node-label">Backend API</div>
+            <div class="arch-node-tech">FastAPI &middot; Python 3.12</div>
+          </div>
+        </div>
+        <div class="arch-connector"><div class="arch-connector-line arch-connector-line--triple"></div></div>
+
+        <!-- Row 3: Infrastructure (3 nodes) -->
+        <div class="arch-row arch-row--triple">
+          <div class="arch-node arch-node--infra">
+            <div class="arch-node-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            </div>
+            <div class="arch-node-label">PostgreSQL</div>
+            <div class="arch-node-tech">TimescaleDB &middot; RLS</div>
+          </div>
+          <div class="arch-node arch-node--infra">
+            <div class="arch-node-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            </div>
+            <div class="arch-node-label">Redis</div>
+            <div class="arch-node-tech">Locks &middot; Cache</div>
+          </div>
+          <div class="arch-node arch-node--infra">
+            <div class="arch-node-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <div class="arch-node-label">NATS</div>
+            <div class="arch-node-tech">JetStream pub/sub</div>
+          </div>
+        </div>
+        <div class="arch-connector"><div class="arch-connector-line arch-connector-line--triple"></div></div>
+
+        <!-- Row 4: Go Poller -->
+        <div class="arch-row">
+          <div class="arch-node arch-node--app">
+            <div class="arch-node-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div class="arch-node-label">Go Poller</div>
+            <div class="arch-node-tech">RouterOS binary API &middot; port 8729</div>
+          </div>
+        </div>
+        <div class="arch-connector"><div class="arch-connector-line"></div></div>
+
+        <!-- Row 5: Devices -->
+        <div class="arch-row">
+          <div class="arch-node arch-node--device">
+            <div class="arch-node-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            </div>
+            <div class="arch-node-label">RouterOS Fleet</div>
+            <div class="arch-node-tech">Your MikroTik devices</div>
+          </div>
+        </div>
+      </div>
+
+      <ul class="arch-bullets">
+        <li>Three-service stack: React frontend, Python API, Go poller&nbsp;&mdash; each independently scalable</li>
+        <li>PostgreSQL RLS enforces tenant isolation at the database layer, not the application layer</li>
+        <li>NATS JetStream delivers real-time events from poller to frontend via SSE</li>
+        <li>OpenBao Transit provides per-tenant envelope encryption for zero-knowledge credential storage</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Tech Stack                                  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="tech-section">
+    <div class="container">
+      <span class="section-label">TECH STACK</span>
+      <h2 class="section-title">Modern tools, battle-tested foundations</h2>
+      <div class="tech-grid">
+        <span class="tech-badge">React 19</span>
+        <span class="tech-badge">TypeScript</span>
+        <span class="tech-badge">FastAPI</span>
+        <span class="tech-badge">Python 3.12</span>
+        <span class="tech-badge">Go 1.24</span>
+        <span class="tech-badge">PostgreSQL 17</span>
+        <span class="tech-badge">TimescaleDB</span>
+        <span class="tech-badge">Redis</span>
+        <span class="tech-badge">NATS</span>
+        <span class="tech-badge">Docker</span>
+        <span class="tech-badge">OpenBao</span>
+        <span class="tech-badge">WireGuard</span>
+        <span class="tech-badge">Tailwind CSS</span>
+        <span class="tech-badge">Vite</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Screenshots                                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section id="screenshots" class="screenshots-section">
+    <div class="container">
+      <span class="section-label">IN ACTION</span>
+      <h2 class="section-title">See it in action</h2>
+    </div>
+    <div class="screenshots-scroll">
+      <div class="screenshots-track">
+
+        <figure class="screenshot-card">
+          <img src="assets/login.png" alt="The Other Dude zero-knowledge SRP-6a login page" loading="lazy" width="800" height="500">
+          <figcaption>Zero-Knowledge SRP-6a Login</figcaption>
+        </figure>
+
+        <figure class="screenshot-card">
+          <img src="assets/dashboard-lebowski-lanes.png" alt="Fleet dashboard showing Lebowski Lanes network overview" loading="lazy" width="800" height="500">
+          <figcaption>Fleet Dashboard &mdash; Lebowski Lanes</figcaption>
+        </figure>
+
+        <figure class="screenshot-card">
+          <img src="assets/device-list.png" alt="Device fleet list with status monitoring across tenants" loading="lazy" width="800" height="500">
+          <figcaption>Device Fleet List</figcaption>
+        </figure>
+
+        <figure class="screenshot-card">
+          <img src="assets/device-detail.png" alt="Device detail view for The Dude core router" loading="lazy" width="800" height="500">
+          <figcaption>Device Detail View</figcaption>
+        </figure>
+
+        <figure class="screenshot-card">
+          <img src="assets/topology.png" alt="Network topology map with automatic device discovery" loading="lazy" width="800" height="500">
+          <figcaption>Network Topology Map</figcaption>
+        </figure>
+
+        <figure class="screenshot-card">
+          <img src="assets/config-editor.png" alt="RouterOS configuration editor with diff preview" loading="lazy" width="800" height="500">
+          <figcaption>Configuration Editor</figcaption>
+        </figure>
+
+        <figure class="screenshot-card">
+          <img src="assets/alerts.png" alt="Alert rules and notification channel management" loading="lazy" width="800" height="500">
+          <figcaption>Alert Rules &amp; Notifications</figcaption>
+        </figure>
+
+        <figure class="screenshot-card">
+          <img src="assets/dashboard-strangers-ranch.png" alt="Multi-tenant view showing The Stranger's Ranch network" loading="lazy" width="800" height="500">
+          <figcaption>Multi-Tenant &mdash; The Stranger&rsquo;s Ranch</figcaption>
+        </figure>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Quick Start                                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="quickstart-section">
+    <div class="container">
+      <span class="section-label">QUICK START</span>
+      <h2 class="section-title">Up and running in minutes</h2>
+
+      <div class="code-window">
+        <div class="code-window-header">
+          <span class="code-dot code-dot--red"></span>
+          <span class="code-dot code-dot--yellow"></span>
+          <span class="code-dot code-dot--green"></span>
+          <span class="code-window-title">Terminal</span>
+        </div>
+        <pre class="code-window-body"><code><span class="code-comment"># Clone and configure</span>
+<span class="code-cmd">cp .env.example .env</span>
+
+<span class="code-comment"># Start infrastructure</span>
+<span class="code-cmd">docker compose up -d</span>
+
+<span class="code-comment"># Build app images</span>
+<span class="code-cmd">docker compose build api &amp;&amp; docker compose build poller &amp;&amp; docker compose build frontend</span>
+
+<span class="code-comment"># Launch</span>
+<span class="code-cmd">docker compose up -d</span>
+
+<span class="code-comment"># Open TOD</span>
+<span class="code-cmd">open http://localhost:3000</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- CTA                                         -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="cta-section">
+    <div class="container">
+      <h2 class="cta-title">Ready to manage your fleet?</h2>
+      <p class="cta-desc">Get started in minutes. Self-hosted, open-source, and built for the MikroTik community.</p>
+      <div class="cta-actions">
+        <a href="docs.html" class="btn btn-primary">Read the Docs</a>
+        <a href="docs.html#quickstart" class="btn btn-secondary">Quick Start Guide</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Footer                                      -->
+  <!-- ═══════════════════════════════════════════ -->
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="docs.html">Docs</a>
+        <a href="#architecture">Architecture</a>
+        <a href="docs.html#security">Security</a>
+        <a href="docs.html#api">API Reference</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox">
+    <img src="" alt="">
+    <div class="lightbox-caption"></div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+  (function() {
+    var lb = document.getElementById('lightbox');
+    var lbImg = lb.querySelector('img');
+    var lbCap = lb.querySelector('.lightbox-caption');
+
+    document.querySelectorAll('.screenshot-card img').forEach(function(img) {
+      img.addEventListener('click', function() {
+        lbImg.src = img.src;
+        lbImg.alt = img.alt;
+        var cap = img.closest('.screenshot-card').querySelector('figcaption');
+        lbCap.textContent = cap ? cap.textContent : '';
+        lb.classList.add('active');
+      });
+    });
+
+    lb.addEventListener('click', function() {
+      lb.classList.remove('active');
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') lb.classList.remove('active');
+    });
+  })();
+  </script>
+</body>
+</html>

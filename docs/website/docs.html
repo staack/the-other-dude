@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Documentation — The Other Dude | MikroTik Fleet Management Setup, API & Architecture Guide</title>
+  <meta name="description" content="Complete documentation for TOD MikroTik fleet management platform. Installation guide, API reference, architecture overview, security model, and configuration management for MSPs.">
+  <meta name="keywords" content="MikroTik documentation, RouterOS fleet management guide, MSP network management setup, MikroTik API, RouterOS configuration management">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#0F172A">
+  <link rel="canonical" href="https://theotherdude.net/docs.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="The Other Dude Documentation — MikroTik Fleet Management Guide">
+  <meta property="og:description" content="Complete documentation for The Other Dude MikroTik fleet management platform. Installation, API reference, architecture, and security.">
+  <meta property="og:url" content="https://theotherdude.net/docs.html">
+  <meta property="og:site_name" content="The Other Dude">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="The Other Dude Documentation — MikroTik Fleet Management Guide">
+  <meta name="twitter:description" content="Complete documentation for The Other Dude MikroTik fleet management platform. Installation, API reference, architecture, and security.">
+
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="script.js" defer></script>
+</head>
+<body class="docs-page">
+
+  <!-- ===== NAV ===== -->
+  <nav class="site-nav site-nav--light">
+    <div class="nav-inner container">
+      <a href="index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <button class="docs-hamburger" aria-label="Toggle sidebar" onclick="toggleSidebar()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="nav-links">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="index.html#features" class="nav-link">Features</a>
+        <a href="docs.html" class="nav-link nav-link--active">Docs</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== DOCS LAYOUT ===== -->
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" id="docs-sidebar">
+      <div class="docs-search">
+        <input type="text" placeholder="Search docs..." id="docs-search-input" />
+      </div>
+      <nav class="sidebar-nav">
+
+        <h4 class="sidebar-heading">Getting Started</h4>
+        <a href="#overview" class="sidebar-link" data-section="overview">Overview</a>
+        <a href="#quickstart" class="sidebar-link" data-section="quickstart">Quick Start</a>
+        <a href="#deployment" class="sidebar-link" data-section="deployment">Deployment</a>
+
+        <h4 class="sidebar-heading">Architecture</h4>
+        <a href="#system-overview" class="sidebar-link" data-section="system-overview">System Overview</a>
+        <a href="#data-flow" class="sidebar-link" data-section="data-flow">Data Flow</a>
+        <a href="#multi-tenancy" class="sidebar-link" data-section="multi-tenancy">Multi-Tenancy</a>
+
+        <h4 class="sidebar-heading">User Guide</h4>
+        <a href="#first-login" class="sidebar-link" data-section="first-login">First Login</a>
+        <a href="#navigation" class="sidebar-link" data-section="navigation">Navigation</a>
+        <a href="#device-management" class="sidebar-link" data-section="device-management">Device Management</a>
+        <a href="#config-editor" class="sidebar-link" data-section="config-editor">Config Editor</a>
+        <a href="#monitoring" class="sidebar-link" data-section="monitoring">Monitoring &amp; Alerts</a>
+        <a href="#reports" class="sidebar-link" data-section="reports">Reports</a>
+
+        <h4 class="sidebar-heading">Security</h4>
+        <a href="#security-model" class="sidebar-link" data-section="security-model">Security Model</a>
+        <a href="#authentication" class="sidebar-link" data-section="authentication">Authentication</a>
+        <a href="#encryption" class="sidebar-link" data-section="encryption">Encryption</a>
+        <a href="#rbac" class="sidebar-link" data-section="rbac">RBAC &amp; Tenants</a>
+
+        <h4 class="sidebar-heading">API Reference</h4>
+        <a href="#api-endpoints" class="sidebar-link" data-section="api-endpoints">Endpoints</a>
+        <a href="#api-auth" class="sidebar-link" data-section="api-auth">Authentication</a>
+        <a href="#api-errors" class="sidebar-link" data-section="api-errors">Error Handling</a>
+
+        <h4 class="sidebar-heading">Configuration</h4>
+        <a href="#env-vars" class="sidebar-link" data-section="env-vars">Environment Variables</a>
+        <a href="#docker-compose" class="sidebar-link" data-section="docker-compose">Docker Compose</a>
+
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="docs-content" id="docs-content">
+
+      <!-- ============================================================ -->
+      <!--  GETTING STARTED                                             -->
+      <!-- ============================================================ -->
+
+      <!-- OVERVIEW -->
+      <section id="overview">
+        <h1>TOD &mdash; The Other Dude</h1>
+        <p>Fleet management for MikroTik RouterOS devices. Built for MSPs who manage hundreds of routers across multiple tenants. Think &ldquo;UniFi Controller, but for MikroTik.&rdquo;</p>
+        <p>TOD is a self-hosted, multi-tenant platform that gives you centralized visibility, configuration management, real-time monitoring, and zero-knowledge security across your entire MikroTik fleet.</p>
+
+        <h2>Features</h2>
+        <ul>
+          <li><strong>Fleet</strong> &mdash; Dashboard with at-a-glance fleet health, virtual-scrolled device table, geographic map, and subnet scanner for device discovery.</li>
+          <li><strong>Configuration</strong> &mdash; Config Editor with two-phase safe apply, batch configuration across devices, bulk CLI commands, reusable templates, Simple Config (Linksys/Ubiquiti-style UI), and git-backed config backup with diff viewer.</li>
+          <li><strong>Monitoring</strong> &mdash; Interactive network topology (ReactFlow + Dagre), real-time metrics via SSE/NATS, configurable alert rules, notification channels (email, webhook, Slack), audit trail, KMS transparency dashboard, and PDF reports.</li>
+          <li><strong>Security</strong> &mdash; 1Password-style zero-knowledge architecture with SRP-6a auth, 2SKD key derivation, Secret Key with Emergency Kit, OpenBao KMS for per-tenant envelope encryption, Internal CA with SFTP cert deployment, WireGuard VPN, and AES-256-GCM credential encryption.</li>
+          <li><strong>Administration</strong> &mdash; Full multi-tenancy with PostgreSQL RLS, user management with RBAC, API keys (<code>mktp_</code> prefix), firmware management, maintenance windows, and setup wizard.</li>
+          <li><strong>UX</strong> &mdash; Command palette (<kbd>Cmd+K</kbd>), Vim-style keyboard shortcuts, dark/light mode, Framer Motion page transitions, and shimmer skeleton loaders.</li>
+        </ul>
+
+        <h2>Tech Stack</h2>
+        <table>
+          <thead>
+            <tr><th>Layer</th><th>Technology</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Frontend</td><td>React 19, TanStack Router + Query, Tailwind CSS 3.4, Vite</td></tr>
+            <tr><td>Backend</td><td>Python 3.12, FastAPI 0.115, SQLAlchemy 2.0, asyncpg</td></tr>
+            <tr><td>Poller</td><td>Go 1.24, go-routeros/v3, pgx/v5, nats.go</td></tr>
+            <tr><td>Database</td><td>PostgreSQL 17 + TimescaleDB, Row-Level Security</td></tr>
+            <tr><td>Cache</td><td>Redis 7</td></tr>
+            <tr><td>Message Bus</td><td>NATS with JetStream</td></tr>
+            <tr><td>KMS</td><td>OpenBao 2.1 (Transit)</td></tr>
+            <tr><td>Auth</td><td>SRP-6a (zero-knowledge), JWT</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- QUICK START -->
+      <section id="quickstart">
+        <h1>Quick Start</h1>
+        <pre><code># Clone and configure
+cp .env.example .env
+
+# Start infrastructure
+docker compose up -d
+
+# Build app images (one at a time to avoid OOM)
+docker compose build api
+docker compose build poller
+docker compose build frontend
+
+# Start the full stack
+docker compose up -d
+
+# Verify
+curl http://localhost:8001/health
+open http://localhost:3000</code></pre>
+
+        <h2>Environment Profiles</h2>
+        <table>
+          <thead>
+            <tr><th>Environment</th><th>Frontend</th><th>API</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Dev</td><td><code>localhost:3000</code></td><td><code>localhost:8001</code></td><td>Hot-reload, volume-mounted source</td></tr>
+            <tr><td>Staging</td><td><code>localhost:3080</code></td><td><code>localhost:8081</code></td><td>Built images, staging secrets</td></tr>
+            <tr><td>Production</td><td><code>localhost</code> (port 80)</td><td>Internal (proxied)</td><td>Gunicorn workers, log rotation</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- DEPLOYMENT -->
+      <section id="deployment">
+        <h1>Deployment</h1>
+
+        <h2>Prerequisites</h2>
+        <ul>
+          <li>Docker Engine 24+ with Docker Compose v2</li>
+          <li>At least 4 GB RAM (2 GB absolute minimum &mdash; builds are memory-intensive)</li>
+          <li>External SSD or fast storage recommended for Docker volumes</li>
+          <li>Network access to RouterOS devices on ports 8728 (API) and 8729 (API-SSL)</li>
+        </ul>
+
+        <h2>1. Clone and Configure</h2>
+        <pre><code>git clone &lt;repository-url&gt; tod
+cd tod
+
+# Copy environment template
+cp .env.example .env.prod</code></pre>
+
+        <h2>2. Generate Secrets</h2>
+        <pre><code># Generate JWT secret
+python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+
+# Generate credential encryption key (32 bytes, base64-encoded)
+python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"</code></pre>
+        <p>Edit <code>.env.prod</code> with the generated values:</p>
+        <pre><code>ENVIRONMENT=production
+JWT_SECRET_KEY=&lt;generated-jwt-secret&gt;
+CREDENTIAL_ENCRYPTION_KEY=&lt;generated-encryption-key&gt;
+POSTGRES_PASSWORD=&lt;strong-password&gt;
+
+# First admin user (created on first startup)
+FIRST_ADMIN_EMAIL=admin@example.com
+FIRST_ADMIN_PASSWORD=&lt;strong-password&gt;</code></pre>
+
+        <h2>3. Build Images</h2>
+        <p>Build images <strong>one at a time</strong> to avoid out-of-memory crashes on constrained hosts:</p>
+        <pre><code>docker compose -f docker-compose.yml -f docker-compose.prod.yml build api
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build poller
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build frontend</code></pre>
+
+        <h2>4. Start the Stack</h2>
+        <pre><code>docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d</code></pre>
+
+        <h2>5. Verify</h2>
+        <pre><code># Check all services are running
+docker compose ps
+
+# Check API health (liveness)
+curl http://localhost:8000/health
+
+# Check readiness (PostgreSQL, Redis, NATS connected)
+curl http://localhost:8000/health/ready
+
+# Access the portal
+open http://localhost</code></pre>
+        <p>Log in with the <code>FIRST_ADMIN_EMAIL</code> and <code>FIRST_ADMIN_PASSWORD</code> credentials set in step 2.</p>
+
+        <h2>Required Environment Variables</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Description</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>ENVIRONMENT</code></td><td>Deployment environment</td><td><code>production</code></td></tr>
+            <tr><td><code>JWT_SECRET_KEY</code></td><td>JWT signing secret (min 32 chars)</td><td><code>&lt;generated&gt;</code></td></tr>
+            <tr><td><code>CREDENTIAL_ENCRYPTION_KEY</code></td><td>AES-256 key for device credentials (base64)</td><td><code>&lt;generated&gt;</code></td></tr>
+            <tr><td><code>POSTGRES_PASSWORD</code></td><td>PostgreSQL superuser password</td><td><code>&lt;strong-password&gt;</code></td></tr>
+            <tr><td><code>FIRST_ADMIN_EMAIL</code></td><td>Initial admin account email</td><td><code>admin@example.com</code></td></tr>
+            <tr><td><code>FIRST_ADMIN_PASSWORD</code></td><td>Initial admin account password</td><td><code>&lt;strong-password&gt;</code></td></tr>
+          </tbody>
+        </table>
+
+        <h2>Optional Environment Variables</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>GUNICORN_WORKERS</code></td><td><code>2</code></td><td>API worker process count</td></tr>
+            <tr><td><code>DB_POOL_SIZE</code></td><td><code>20</code></td><td>App database connection pool size</td></tr>
+            <tr><td><code>DB_MAX_OVERFLOW</code></td><td><code>40</code></td><td>Max overflow connections above pool</td></tr>
+            <tr><td><code>DB_ADMIN_POOL_SIZE</code></td><td><code>10</code></td><td>Admin database connection pool size</td></tr>
+            <tr><td><code>DB_ADMIN_MAX_OVERFLOW</code></td><td><code>20</code></td><td>Admin max overflow connections</td></tr>
+            <tr><td><code>POLL_INTERVAL_SECONDS</code></td><td><code>60</code></td><td>Device polling interval</td></tr>
+            <tr><td><code>CONNECTION_TIMEOUT_SECONDS</code></td><td><code>10</code></td><td>RouterOS connection timeout</td></tr>
+            <tr><td><code>COMMAND_TIMEOUT_SECONDS</code></td><td><code>30</code></td><td>RouterOS per-command timeout</td></tr>
+            <tr><td><code>CIRCUIT_BREAKER_MAX_FAILURES</code></td><td><code>5</code></td><td>Consecutive failures before backoff</td></tr>
+            <tr><td><code>CIRCUIT_BREAKER_BASE_BACKOFF_SECONDS</code></td><td><code>30</code></td><td>Initial backoff duration</td></tr>
+            <tr><td><code>CIRCUIT_BREAKER_MAX_BACKOFF_SECONDS</code></td><td><code>900</code></td><td>Maximum backoff (15 min)</td></tr>
+            <tr><td><code>LOG_LEVEL</code></td><td><code>info</code></td><td>Logging verbosity (<code>debug</code>/<code>info</code>/<code>warn</code>/<code>error</code>)</td></tr>
+            <tr><td><code>CORS_ORIGINS</code></td><td><code>http://localhost:3000</code></td><td>Comma-separated CORS origins</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Storage Configuration</h2>
+        <p>Docker volumes mount to the host filesystem. Default locations:</p>
+        <ul>
+          <li><strong>PostgreSQL data:</strong> <code>./docker-data/postgres</code></li>
+          <li><strong>Redis data:</strong> <code>./docker-data/redis</code></li>
+          <li><strong>NATS data:</strong> <code>./docker-data/nats</code></li>
+          <li><strong>Git store (config backups):</strong> <code>./docker-data/git-store</code></li>
+        </ul>
+        <p>To change storage locations, edit the volume mounts in <code>docker-compose.yml</code>.</p>
+
+        <h2>Resource Limits</h2>
+        <p>Container memory limits are enforced in <code>docker-compose.prod.yml</code> to prevent OOM crashes:</p>
+        <table>
+          <thead>
+            <tr><th>Service</th><th>Memory Limit</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PostgreSQL</td><td>512 MB</td></tr>
+            <tr><td>Redis</td><td>128 MB</td></tr>
+            <tr><td>NATS</td><td>128 MB</td></tr>
+            <tr><td>API</td><td>512 MB</td></tr>
+            <tr><td>Poller</td><td>256 MB</td></tr>
+            <tr><td>Frontend</td><td>64 MB</td></tr>
+          </tbody>
+        </table>
+        <p>Adjust under <code>deploy.resources.limits.memory</code> in <code>docker-compose.prod.yml</code>.</p>
+
+        <h2>Monitoring (Optional)</h2>
+        <p>Enable Prometheus and Grafana monitoring with the observability compose overlay:</p>
+        <pre><code>docker compose \
+  -f docker-compose.yml \
+  -f docker-compose.prod.yml \
+  -f docker-compose.observability.yml \
+  --env-file .env.prod up -d</code></pre>
+        <ul>
+          <li><strong>Prometheus:</strong> <code>http://localhost:9090</code></li>
+          <li><strong>Grafana:</strong> <code>http://localhost:3001</code> (default: admin/admin)</li>
+        </ul>
+
+        <h3>Exported Metrics</h3>
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>Source</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>http_requests_total</code></td><td>API</td><td>HTTP request count by method, path, status</td></tr>
+            <tr><td><code>http_request_duration_seconds</code></td><td>API</td><td>Request latency histogram</td></tr>
+            <tr><td><code>mikrotik_poll_total</code></td><td>Poller</td><td>Poll cycles by status (success/error/skipped)</td></tr>
+            <tr><td><code>mikrotik_poll_duration_seconds</code></td><td>Poller</td><td>Poll cycle duration histogram</td></tr>
+            <tr><td><code>mikrotik_devices_active</code></td><td>Poller</td><td>Number of devices being polled</td></tr>
+            <tr><td><code>mikrotik_circuit_breaker_skips_total</code></td><td>Poller</td><td>Polls skipped due to backoff</td></tr>
+            <tr><td><code>mikrotik_nats_publish_total</code></td><td>Poller</td><td>NATS publishes by subject and status</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Troubleshooting</h2>
+        <table>
+          <thead>
+            <tr><th>Issue</th><th>Solution</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>API won&rsquo;t start with secret error</td><td>Generate production secrets (see step 2 above)</td></tr>
+            <tr><td>Build crashes with OOM</td><td>Build images one at a time (see step 3 above)</td></tr>
+            <tr><td>Device shows offline</td><td>Check network access to device API port (8728/8729)</td></tr>
+            <tr><td>Health check fails</td><td>Check <code>docker compose logs api</code> for startup errors</td></tr>
+            <tr><td>Rate limited (429)</td><td>Wait 60 seconds or check Redis connectivity</td></tr>
+            <tr><td>Migration fails</td><td>Check <code>docker compose logs api</code> for Alembic errors</td></tr>
+            <tr><td>NATS subscriber won&rsquo;t start</td><td>Non-fatal &mdash; API runs without NATS; check NATS container health</td></tr>
+            <tr><td>Poller circuit breaker active</td><td>Device unreachable; check <code>CIRCUIT_BREAKER_*</code> env vars to tune backoff</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============================================================ -->
+      <!--  ARCHITECTURE                                                -->
+      <!-- ============================================================ -->
+
+      <!-- SYSTEM OVERVIEW -->
+      <section id="system-overview">
+        <h1>System Overview</h1>
+        <p>TOD is a containerized MSP fleet management platform for MikroTik RouterOS devices. It uses a three-service architecture: a React frontend, a Python FastAPI backend, and a Go poller. All services communicate through PostgreSQL, Redis, and NATS JetStream. Multi-tenancy is enforced at the database level via PostgreSQL Row-Level Security (RLS).</p>
+
+        <h2>Architecture Diagram</h2>
+        <pre><code>+--------------+     +------------------+     +---------------+
+|   Frontend   |----&gt;|   Backend API    |&lt;---&gt;|   Go Poller   |
+|  React/nginx |     |    FastAPI       |     |  go-routeros  |
++--------------+     +--------+---------+     +-------+-------+
+                              |                       |
+               +--------------+-------------------+---+
+               |              |                   |
+      +--------v---+   +-----v-------+   +-------v-------+
+      |   Redis    |   | PostgreSQL  |   |    NATS       |
+      |  locks,    |   | 17+Timescale|   |  JetStream    |
+      |  cache     |   | DB + RLS    |   |  pub/sub      |
+      +------------+   +-------------+   +-------+-------+
+                                                 |
+                                          +------v-------+
+                                          |   OpenBao    |
+                                          | Transit KMS  |
+                                          +--------------+</code></pre>
+
+        <h2>Services</h2>
+
+        <h3>Frontend (React / nginx)</h3>
+        <ul>
+          <li><strong>Stack:</strong> React 19, TypeScript, TanStack Router (file-based routing), TanStack Query (data fetching), Tailwind CSS 3.4, Vite</li>
+          <li><strong>Production:</strong> Static build served by nginx on port 80 (exposed as port 3000)</li>
+          <li><strong>Development:</strong> Vite dev server with hot module replacement</li>
+          <li><strong>Design system:</strong> Geist Sans + Geist Mono fonts, HSL color tokens via CSS custom properties, class-based dark/light mode</li>
+          <li><strong>Real-time:</strong> Server-Sent Events (SSE) for live device status updates, alerts, and operation progress</li>
+          <li><strong>Client-side encryption:</strong> SRP-6a authentication flow with 2SKD key derivation; Emergency Kit PDF generation</li>
+          <li><strong>UX features:</strong> Command palette (<kbd>Cmd+K</kbd>), Framer Motion page transitions, collapsible sidebar, skeleton loaders</li>
+          <li><strong>Memory limit:</strong> 64 MB</li>
+        </ul>
+
+        <h3>Backend API (FastAPI)</h3>
+        <ul>
+          <li><strong>Stack:</strong> Python 3.12+, FastAPI 0.115+, SQLAlchemy 2.0 async, asyncpg, Gunicorn</li>
+          <li><strong>Two database engines:</strong>
+            <ul>
+              <li><code>admin_engine</code> (superuser) &mdash; used only for auth/bootstrap and NATS subscribers that need cross-tenant access</li>
+              <li><code>app_engine</code> (non-superuser <code>app_user</code> role) &mdash; used for all device/data routes, enforces RLS</li>
+            </ul>
+          </li>
+          <li><strong>Authentication:</strong> JWT tokens (15min access, 7d refresh), SRP-6a zero-knowledge proof, RBAC (super_admin, admin, operator, viewer)</li>
+          <li><strong>NATS subscribers:</strong> Three independent subscribers for device status, metrics, and firmware events. Non-fatal startup &mdash; API serves requests even if NATS is unavailable</li>
+          <li><strong>Background services:</strong> APScheduler for nightly config backups and daily firmware version checks</li>
+          <li><strong>Middleware stack (LIFO):</strong> RequestID &rarr; SecurityHeaders &rarr; RateLimiting &rarr; CORS &rarr; Route handler</li>
+          <li><strong>Health endpoints:</strong> <code>/health</code> (liveness), <code>/health/ready</code> (readiness &mdash; checks PostgreSQL, Redis, NATS)</li>
+          <li><strong>Memory limit:</strong> 512 MB</li>
+        </ul>
+
+        <h4>API Routers</h4>
+        <p>The backend exposes route groups under the <code>/api</code> prefix:</p>
+        <table>
+          <thead>
+            <tr><th>Router</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>auth</code></td><td>Login (SRP-6a + legacy), token refresh, registration</td></tr>
+            <tr><td><code>tenants</code></td><td>Tenant CRUD (super_admin only)</td></tr>
+            <tr><td><code>users</code></td><td>User management, RBAC</td></tr>
+            <tr><td><code>devices</code></td><td>Device CRUD, status, commands</td></tr>
+            <tr><td><code>device_groups</code></td><td>Logical device grouping</td></tr>
+            <tr><td><code>device_tags</code></td><td>Tagging and filtering</td></tr>
+            <tr><td><code>metrics</code></td><td>Time-series metrics (TimescaleDB)</td></tr>
+            <tr><td><code>config_backups</code></td><td>Configuration backup history</td></tr>
+            <tr><td><code>config_editor</code></td><td>Live RouterOS config editing</td></tr>
+            <tr><td><code>firmware</code></td><td>Firmware version tracking and upgrades</td></tr>
+            <tr><td><code>alerts</code></td><td>Alert rules and active alerts</td></tr>
+            <tr><td><code>events</code></td><td>Device event log</td></tr>
+            <tr><td><code>device_logs</code></td><td>RouterOS system logs</td></tr>
+            <tr><td><code>templates</code></td><td>Configuration templates</td></tr>
+            <tr><td><code>clients</code></td><td>Connected client devices</td></tr>
+            <tr><td><code>topology</code></td><td>Network topology (ReactFlow data)</td></tr>
+            <tr><td><code>sse</code></td><td>Server-Sent Events streams</td></tr>
+            <tr><td><code>audit_logs</code></td><td>Immutable audit trail</td></tr>
+            <tr><td><code>reports</code></td><td>PDF report generation (Jinja2 + WeasyPrint)</td></tr>
+            <tr><td><code>api_keys</code></td><td>API key management (<code>mktp_</code> prefix)</td></tr>
+            <tr><td><code>maintenance_windows</code></td><td>Scheduled maintenance with alert suppression</td></tr>
+            <tr><td><code>vpn</code></td><td>WireGuard VPN management</td></tr>
+            <tr><td><code>certificates</code></td><td>Internal CA and device TLS certificates</td></tr>
+            <tr><td><code>transparency</code></td><td>KMS access event dashboard</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Go Poller</h3>
+        <ul>
+          <li><strong>Stack:</strong> Go 1.23, go-routeros/v3, pgx/v5, nats.go</li>
+          <li><strong>Polling model:</strong> Synchronous per-device polling on a configurable interval (default 60s)</li>
+          <li><strong>Device communication:</strong> RouterOS binary API over TLS (port 8729), InsecureSkipVerify for self-signed certs</li>
+          <li><strong>TLS fallback:</strong> Three-tier strategy &mdash; CA-verified &rarr; InsecureSkipVerify &rarr; plain API</li>
+          <li><strong>Distributed locking:</strong> Redis locks prevent concurrent polling of the same device (safe for multi-instance deployment)</li>
+          <li><strong>Circuit breaker:</strong> Backs off from unreachable devices to avoid wasting poll cycles</li>
+          <li><strong>Credential decryption:</strong> OpenBao Transit with LRU cache (1024 entries, 5min TTL) to minimize KMS calls</li>
+          <li><strong>Output:</strong> Publishes poll results to NATS JetStream; the API&rsquo;s NATS subscribers process and persist them</li>
+          <li><strong>Database access:</strong> Uses <code>poller_user</code> role which bypasses RLS (needs cross-tenant device access)</li>
+          <li><strong>Memory limit:</strong> 256 MB</li>
+        </ul>
+
+        <h2>Infrastructure Services</h2>
+
+        <h3>PostgreSQL 17 + TimescaleDB</h3>
+        <ul>
+          <li><strong>Image:</strong> <code>timescale/timescaledb:2.17.2-pg17</code></li>
+          <li><strong>Row-Level Security (RLS):</strong> Enforces tenant isolation at the database level. All data tables have a <code>tenant_id</code> column; RLS policies filter by <code>current_setting('app.tenant_id')</code></li>
+          <li><strong>Database roles:</strong>
+            <ul>
+              <li><code>postgres</code> (superuser) &mdash; admin engine, auth/bootstrap, migrations</li>
+              <li><code>app_user</code> (non-superuser) &mdash; RLS-enforced, used by API for data routes</li>
+              <li><code>poller_user</code> &mdash; bypasses RLS, used by Go poller for cross-tenant device access</li>
+            </ul>
+          </li>
+          <li><strong>TimescaleDB hypertables:</strong> Time-series storage for device metrics (CPU, memory, interface traffic, etc.)</li>
+          <li><strong>Migrations:</strong> Alembic, run automatically on API startup</li>
+          <li><strong>Memory limit:</strong> 512 MB</li>
+        </ul>
+
+        <h3>Redis</h3>
+        <ul>
+          <li><strong>Image:</strong> <code>redis:7-alpine</code></li>
+          <li>Distributed locking for the Go poller (prevents concurrent polling of the same device)</li>
+          <li>Rate limiting on auth endpoints (5 requests/min)</li>
+          <li>Credential cache for OpenBao Transit responses</li>
+          <li><strong>Memory limit:</strong> 128 MB</li>
+        </ul>
+
+        <h3>NATS JetStream</h3>
+        <ul>
+          <li><strong>Image:</strong> <code>nats:2-alpine</code></li>
+          <li><strong>Role:</strong> Message bus between the Go poller and the Python API</li>
+          <li><strong>Streams:</strong> DEVICE_EVENTS (poll results, status changes), ALERT_EVENTS (SSE delivery), OPERATION_EVENTS (SSE delivery)</li>
+          <li><strong>Durable consumers:</strong> Ensure no message loss during API restarts</li>
+          <li><strong>Memory limit:</strong> 128 MB</li>
+        </ul>
+
+        <h3>OpenBao (HashiCorp Vault fork)</h3>
+        <ul>
+          <li><strong>Image:</strong> <code>openbao/openbao:2.1</code></li>
+          <li><strong>Transit secrets engine:</strong> Provides envelope encryption for device credentials at rest</li>
+          <li><strong>Per-tenant keys:</strong> Each tenant gets a dedicated Transit encryption key</li>
+          <li><strong>Memory limit:</strong> 256 MB</li>
+        </ul>
+
+        <h3>WireGuard</h3>
+        <ul>
+          <li><strong>Image:</strong> <code>lscr.io/linuxserver/wireguard</code></li>
+          <li><strong>Role:</strong> VPN gateway for reaching RouterOS devices on remote networks</li>
+          <li><strong>Port:</strong> 51820/UDP</li>
+          <li><strong>Memory limit:</strong> 128 MB</li>
+        </ul>
+
+        <h2>Container Memory Limits</h2>
+        <table>
+          <thead>
+            <tr><th>Service</th><th>Limit</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PostgreSQL</td><td>512 MB</td></tr>
+            <tr><td>API</td><td>512 MB</td></tr>
+            <tr><td>Go Poller</td><td>256 MB</td></tr>
+            <tr><td>OpenBao</td><td>256 MB</td></tr>
+            <tr><td>Redis</td><td>128 MB</td></tr>
+            <tr><td>NATS</td><td>128 MB</td></tr>
+            <tr><td>WireGuard</td><td>128 MB</td></tr>
+            <tr><td>Frontend (nginx)</td><td>64 MB</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Network Ports</h2>
+        <table>
+          <thead>
+            <tr><th>Service</th><th>Internal Port</th><th>External Port</th><th>Protocol</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Frontend</td><td>80</td><td>3000</td><td>HTTP</td></tr>
+            <tr><td>API</td><td>8000</td><td>8001</td><td>HTTP</td></tr>
+            <tr><td>PostgreSQL</td><td>5432</td><td>5432</td><td>TCP</td></tr>
+            <tr><td>Redis</td><td>6379</td><td>6379</td><td>TCP</td></tr>
+            <tr><td>NATS</td><td>4222</td><td>4222</td><td>TCP</td></tr>
+            <tr><td>NATS Monitor</td><td>8222</td><td>8222</td><td>HTTP</td></tr>
+            <tr><td>OpenBao</td><td>8200</td><td>8200</td><td>HTTP</td></tr>
+            <tr><td>WireGuard</td><td>51820</td><td>51820</td><td>UDP</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- DATA FLOW -->
+      <section id="data-flow">
+        <h1>Data Flow</h1>
+
+        <h2>Device Polling Cycle</h2>
+        <pre><code>Go Poller        Redis      OpenBao    RouterOS     NATS        API        PostgreSQL
+   |               |           |           |           |           |            |
+   +--query list--&gt;|           |           |           |           |            |
+   |&lt;--------------+           |           |           |           |            |
+   +--acquire lock-&gt;|          |           |           |           |            |
+   |&lt;--lock granted-+          |           |           |           |            |
+   +--decrypt creds (miss)----&gt;|           |           |           |            |
+   |&lt;--plaintext creds--------+           |           |           |            |
+   +--binary API (8729 TLS)---------------&gt;|           |           |            |
+   |&lt;--system info, interfaces, metrics---+           |           |            |
+   +--publish poll result---------------------------------&gt;|       |            |
+   |               |           |           |           |  subscribe&gt;|           |
+   |               |           |           |           |           +--upsert---&gt;|
+   +--release lock-&gt;|          |           |           |           |            |</code></pre>
+        <ol>
+          <li>Poller queries PostgreSQL for the list of active devices</li>
+          <li>Acquires a Redis distributed lock per device (prevents duplicate polling)</li>
+          <li>Decrypts device credentials via OpenBao Transit (LRU cache avoids repeated KMS calls)</li>
+          <li>Connects to the RouterOS binary API on port 8729 over TLS</li>
+          <li>Collects system info, interface stats, routing tables, and metrics</li>
+          <li>Publishes results to NATS JetStream</li>
+          <li>API NATS subscriber processes results and upserts into PostgreSQL</li>
+          <li>Releases Redis lock</li>
+        </ol>
+
+        <h2>Config Push (Two-Phase with Panic Revert)</h2>
+        <pre><code>Frontend        API           RouterOS
+   |              |               |
+   +--push config-&gt;|              |
+   |              +--apply config-&gt;|
+   |              +--set revert---&gt;|
+   |              |&lt;--ack---------+
+   |&lt;--pending----+               |
+   |              |               |  (timer counting down)
+   +--confirm-----&gt;|              |
+   |              +--cancel timer-&gt;|
+   |              |&lt;--ack---------+
+   |&lt;--confirmed--+               |</code></pre>
+        <ol>
+          <li>Frontend sends config commands to the API</li>
+          <li>API connects to the device and applies the configuration</li>
+          <li>Sets a revert timer on the device (RouterOS safe mode / scheduler)</li>
+          <li>Returns pending status to the frontend</li>
+          <li>User confirms the change works (e.g., connectivity still up)</li>
+          <li>If confirmed: API cancels the revert timer, config is permanent</li>
+          <li>If timeout or rejected: device automatically reverts to the previous configuration</li>
+        </ol>
+        <p>This pattern prevents lockouts from misconfigured firewall rules or IP changes.</p>
+
+        <h2>SRP-6a Authentication Flow</h2>
+        <pre><code>Browser                     API                   PostgreSQL
+   |                          |                       |
+   +--register----------------&gt;|                      |
+   |  (email, salt, verifier) +--store verifier------&gt;|
+   |                          |                       |
+   +--login step 1------------&gt;|                      |
+   |  (email, client_public)  +--lookup verifier-----&gt;|
+   |&lt;--(salt, server_public)--+&lt;----------------------+
+   |                          |                       |
+   +--login step 2------------&gt;|                      |
+   |  (client_proof)          +--verify proof---------+
+   |&lt;--(server_proof, JWT)----+                       |</code></pre>
+        <ol>
+          <li><strong>Registration:</strong> Client derives a verifier from <code>password + secret_key</code> using PBKDF2 (650K iterations) + HKDF + XOR (2SKD). Only the salt and verifier are sent to the server &mdash; never the password.</li>
+          <li><strong>Login step 1:</strong> Client sends email and ephemeral public value; server responds with stored salt and its own ephemeral public value.</li>
+          <li><strong>Login step 2:</strong> Client computes a proof from the shared session key; server validates the proof without ever seeing the password.</li>
+          <li><strong>Token issuance:</strong> On successful proof, server issues JWT (15min access + 7d refresh).</li>
+          <li><strong>Emergency Kit:</strong> A downloadable PDF containing the user&rsquo;s secret key for account recovery.</li>
+        </ol>
+      </section>
+
+      <!-- MULTI-TENANCY -->
+      <section id="multi-tenancy">
+        <h1>Multi-Tenancy</h1>
+        <p>TOD enforces tenant isolation at the database level using PostgreSQL Row-Level Security (RLS), making cross-tenant data access structurally impossible.</p>
+
+        <h2>How It Works</h2>
+        <ul>
+          <li>Every data table includes a <code>tenant_id</code> column.</li>
+          <li>PostgreSQL RLS policies filter rows by <code>current_setting('app.tenant_id')</code>.</li>
+          <li>The API sets tenant context (<code>SET app.tenant_id = ...</code>) on each database session, derived from the authenticated user&rsquo;s JWT.</li>
+          <li><code>super_admin</code> role has NULL <code>tenant_id</code> and can access all tenants.</li>
+          <li><code>poller_user</code> bypasses RLS intentionally (needs cross-tenant device access for polling).</li>
+          <li>Tenant isolation is enforced at the database level, not the application level &mdash; even a compromised API cannot leak cross-tenant data through <code>app_user</code> connections.</li>
+        </ul>
+
+        <h2>Database Roles</h2>
+        <table>
+          <thead>
+            <tr><th>Role</th><th>RLS</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>postgres</code></td><td>Bypasses (superuser)</td><td>Admin engine, auth/bootstrap, migrations</td></tr>
+            <tr><td><code>app_user</code></td><td>Enforced</td><td>All device/data routes in the API</td></tr>
+            <tr><td><code>poller_user</code></td><td>Bypasses</td><td>Cross-tenant device access for Go poller</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Security Layers</h2>
+        <table>
+          <thead>
+            <tr><th>Layer</th><th>Mechanism</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Authentication</td><td>SRP-6a</td><td>Zero-knowledge proof &mdash; password never transmitted or stored</td></tr>
+            <tr><td>Key Derivation</td><td>2SKD (PBKDF2 650K + HKDF + XOR)</td><td>Two-secret key derivation from password + secret key</td></tr>
+            <tr><td>Encryption at Rest</td><td>OpenBao Transit</td><td>Envelope encryption for device credentials</td></tr>
+            <tr><td>Tenant Isolation</td><td>PostgreSQL RLS</td><td>Database-level row filtering by tenant_id</td></tr>
+            <tr><td>Access Control</td><td>JWT + RBAC</td><td>Role-based permissions (super_admin, admin, operator, viewer)</td></tr>
+            <tr><td>Rate Limiting</td><td>Redis-backed</td><td>Auth endpoints limited to 5 requests/min</td></tr>
+            <tr><td>TLS Certificates</td><td>Internal CA</td><td>Certificate management and deployment to RouterOS devices</td></tr>
+            <tr><td>Security Headers</td><td>Middleware</td><td>CSP, SRI hashes on JS bundles, X-Frame-Options, etc.</td></tr>
+            <tr><td>Secret Validation</td><td>Startup check</td><td>Rejects known-insecure defaults in non-dev environments</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============================================================ -->
+      <!--  USER GUIDE                                                  -->
+      <!-- ============================================================ -->
+
+      <!-- FIRST LOGIN -->
+      <section id="first-login">
+        <h1>First Login</h1>
+        <ol>
+          <li>Navigate to the portal URL provided by your administrator.</li>
+          <li>Log in with the admin credentials created during initial deployment.</li>
+          <li>Complete <strong>SRP security enrollment</strong> &mdash; the portal uses zero-knowledge authentication (SRP-6a), so a unique Secret Key is generated for your account.</li>
+          <li><strong>Save your Emergency Kit PDF immediately.</strong> This PDF contains your Secret Key, which you will need to log in from any new browser or device. Without it, you cannot recover access.</li>
+          <li>Complete the <strong>Setup Wizard</strong> to create your first organization and add your first device.</li>
+        </ol>
+
+        <h2>Setup Wizard</h2>
+        <p>The Setup Wizard launches automatically for first-time super_admin users. It walks through three steps:</p>
+        <ul>
+          <li><strong>Step 1 &mdash; Create Organization:</strong> Enter a name for your tenant (organization). This is the top-level container for all your devices, users, and configuration.</li>
+          <li><strong>Step 2 &mdash; Add Device:</strong> Enter the IP address, API port (default 8729 for TLS), and RouterOS credentials for your first device. The portal will attempt to connect and verify the device.</li>
+          <li><strong>Step 3 &mdash; Verify &amp; Complete:</strong> The portal polls the device to confirm connectivity. Once verified, you are taken to the dashboard.</li>
+        </ul>
+        <p>You can always add more organizations and devices later from the sidebar.</p>
+      </section>
+
+      <!-- NAVIGATION -->
+      <section id="navigation">
+        <h1>Navigation</h1>
+        <p>TOD uses a collapsible sidebar with four sections. Press <kbd>[</kbd> to toggle the sidebar between expanded (240px) and collapsed (48px) views. On mobile, the sidebar opens as an overlay.</p>
+
+        <h2>Fleet</h2>
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Dashboard</strong></td><td>Overview of your fleet with device status cards, active alerts, and metrics sparklines. The landing page after login.</td></tr>
+            <tr><td><strong>Devices</strong></td><td>Fleet table with search, sort, and filter. Click any device row to open its detail page.</td></tr>
+            <tr><td><strong>Map</strong></td><td>Geographic map view of device locations.</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Manage</h2>
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Config Editor</strong></td><td>Browse and edit RouterOS configuration paths in real-time. Select a device from the header dropdown.</td></tr>
+            <tr><td><strong>Batch Config</strong></td><td>Apply configuration changes across multiple devices simultaneously using templates.</td></tr>
+            <tr><td><strong>Bulk Commands</strong></td><td>Execute RouterOS CLI commands across selected devices in bulk.</td></tr>
+            <tr><td><strong>Templates</strong></td><td>Create and manage reusable configuration templates.</td></tr>
+            <tr><td><strong>Firmware</strong></td><td>Check for RouterOS updates and schedule firmware upgrades across your fleet.</td></tr>
+            <tr><td><strong>Maintenance</strong></td><td>Schedule maintenance windows to suppress alerts during planned work.</td></tr>
+            <tr><td><strong>VPN</strong></td><td>WireGuard VPN tunnel management &mdash; create, deploy, and monitor tunnels between devices.</td></tr>
+            <tr><td><strong>Certificates</strong></td><td>Internal Certificate Authority management &mdash; generate, deploy, and rotate TLS certificates for your devices.</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Monitor</h2>
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Topology</strong></td><td>Interactive network map showing device connections and shared subnets, rendered with ReactFlow and Dagre layout.</td></tr>
+            <tr><td><strong>Alerts</strong></td><td>Live alert feed with filtering by severity (info, warning, critical) and acknowledgment actions.</td></tr>
+            <tr><td><strong>Alert Rules</strong></td><td>Define threshold-based alert rules on device metrics with configurable severity and notification channels.</td></tr>
+            <tr><td><strong>Audit Trail</strong></td><td>Immutable, append-only log of all operations &mdash; configuration changes, logins, user management, and admin actions.</td></tr>
+            <tr><td><strong>Transparency</strong></td><td>KMS access event dashboard showing encryption key usage across your organization (admin only).</td></tr>
+            <tr><td><strong>Reports</strong></td><td>Generate and export PDF reports: fleet summary, device health, compliance, and SLA.</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Admin</h2>
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Users</strong></td><td>User management with role-based access control (RBAC). Assign roles: super_admin, admin, operator, viewer.</td></tr>
+            <tr><td><strong>Organizations</strong></td><td>Create and manage tenants for multi-tenant MSP operation. Each tenant has isolated data via PostgreSQL row-level security.</td></tr>
+            <tr><td><strong>API Keys</strong></td><td>Generate and manage programmatic access tokens (prefixed <code>mktp_</code>) with operator-level permissions.</td></tr>
+            <tr><td><strong>Settings</strong></td><td>System configuration, theme toggle (dark/light), and profile settings.</td></tr>
+            <tr><td><strong>About</strong></td><td>Platform version, feature summary, and project information.</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Keyboard Shortcuts</h2>
+        <table>
+          <thead>
+            <tr><th>Shortcut</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><kbd>Cmd+K</kbd> / <kbd>Ctrl+K</kbd></td><td>Open command palette for quick navigation and actions</td></tr>
+            <tr><td><kbd>[</kbd></td><td>Toggle sidebar collapsed/expanded</td></tr>
+            <tr><td><kbd>?</kbd></td><td>Show keyboard shortcut help dialog</td></tr>
+            <tr><td><kbd>g d</kbd></td><td>Go to Dashboard</td></tr>
+            <tr><td><kbd>g f</kbd></td><td>Go to Firmware</td></tr>
+            <tr><td><kbd>g t</kbd></td><td>Go to Topology</td></tr>
+            <tr><td><kbd>g a</kbd></td><td>Go to Alerts</td></tr>
+          </tbody>
+        </table>
+        <p>The command palette (<kbd>Cmd+K</kbd>) provides fuzzy search across all pages, devices, and common actions.</p>
+      </section>
+
+      <!-- DEVICE MANAGEMENT -->
+      <section id="device-management">
+        <h1>Device Management</h1>
+
+        <h2>Adding Devices</h2>
+        <p>There are three ways to add devices to your fleet:</p>
+        <ol>
+          <li><strong>Setup Wizard</strong> &mdash; automatically offered on first login.</li>
+          <li><strong>Fleet Table</strong> &mdash; click the &ldquo;Add Device&rdquo; button from the Devices page.</li>
+          <li><strong>Subnet Scanner</strong> &mdash; enter a CIDR range (e.g., <code>192.168.1.0/24</code>) to auto-discover MikroTik devices on the network.</li>
+        </ol>
+        <p>When adding a device, provide:</p>
+        <ul>
+          <li><strong>IP Address</strong> &mdash; the management IP of the RouterOS device.</li>
+          <li><strong>API Port</strong> &mdash; default is 8729 (TLS). The portal connects via the RouterOS binary API protocol.</li>
+          <li><strong>Credentials</strong> &mdash; username and password for the device. Credentials are encrypted at rest with AES-256-GCM.</li>
+        </ul>
+
+        <h2>Device Detail Tabs</h2>
+        <table>
+          <thead>
+            <tr><th>Tab</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Overview</strong></td><td>System info, uptime, hardware model, RouterOS version, resource usage, and interface status summary.</td></tr>
+            <tr><td><strong>Interfaces</strong></td><td>Real-time traffic graphs for each network interface.</td></tr>
+            <tr><td><strong>Config</strong></td><td>Browse the full device configuration tree by RouterOS path.</td></tr>
+            <tr><td><strong>Firewall</strong></td><td>View and manage firewall filter rules, NAT rules, and address lists.</td></tr>
+            <tr><td><strong>DHCP</strong></td><td>Active DHCP leases, server configuration, and address pools.</td></tr>
+            <tr><td><strong>Backups</strong></td><td>Configuration backup timeline with side-by-side diff viewer to compare changes over time.</td></tr>
+            <tr><td><strong>Clients</strong></td><td>Connected clients and wireless registrations.</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Simple Config</h2>
+        <p>Simple Config provides a consumer-router-style interface modeled after Linksys and Ubiquiti UIs. It is designed for operators who prefer guided configuration over raw RouterOS paths.</p>
+        <p>Seven category tabs:</p>
+        <ol>
+          <li><strong>Internet</strong> &mdash; WAN connection type, PPPoE, DHCP client settings.</li>
+          <li><strong>LAN / DHCP</strong> &mdash; LAN addressing, DHCP server and pool configuration.</li>
+          <li><strong>WiFi</strong> &mdash; Wireless SSID, security, and channel settings.</li>
+          <li><strong>Port Forwarding</strong> &mdash; NAT destination rules for inbound services.</li>
+          <li><strong>Firewall</strong> &mdash; Simplified firewall rule management.</li>
+          <li><strong>DNS</strong> &mdash; DNS server and static DNS entries.</li>
+          <li><strong>System</strong> &mdash; Device identity, timezone, NTP, admin password.</li>
+        </ol>
+        <p>Toggle between <strong>Simple</strong> (guided) and <strong>Standard</strong> (full config editor) modes at any time. Per-device settings are stored in browser localStorage.</p>
+      </section>
+
+      <!-- CONFIG EDITOR -->
+      <section id="config-editor">
+        <h1>Config Editor</h1>
+        <p>The Config Editor provides direct access to RouterOS configuration paths (e.g., <code>/ip/address</code>, <code>/ip/firewall/filter</code>, <code>/interface/bridge</code>).</p>
+        <ul>
+          <li>Select a device from the header dropdown.</li>
+          <li>Navigate the configuration tree to browse, add, edit, or delete entries.</li>
+        </ul>
+
+        <h2>Apply Modes</h2>
+        <ul>
+          <li><strong>Standard Apply</strong> &mdash; changes are applied immediately.</li>
+          <li><strong>Safe Apply</strong> &mdash; two-phase commit with automatic panic-revert. Changes are applied, and you have a confirmation window to accept them. If the confirmation times out (device becomes unreachable), changes automatically revert to prevent lockouts.</li>
+        </ul>
+        <p><strong>Safe Apply is strongly recommended</strong> for firewall rules and routing changes on remote devices.</p>
+      </section>
+
+      <!-- MONITORING -->
+      <section id="monitoring">
+        <h1>Monitoring &amp; Alerts</h1>
+
+        <h2>Alert Rules</h2>
+        <p>Create threshold-based rules that fire when device metrics cross defined boundaries:</p>
+        <ul>
+          <li>Select the metric to monitor (CPU, memory, disk, interface traffic, uptime, etc.).</li>
+          <li>Set the threshold value and comparison operator.</li>
+          <li>Choose severity: <strong>info</strong>, <strong>warning</strong>, or <strong>critical</strong>.</li>
+          <li>Assign one or more notification channels.</li>
+        </ul>
+
+        <h2>Notification Channels</h2>
+        <table>
+          <thead>
+            <tr><th>Channel</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Email</strong></td><td>SMTP-based email notifications. Configure server, port, and recipients.</td></tr>
+            <tr><td><strong>Webhook</strong></td><td>HTTP POST to any URL with a JSON payload containing alert details.</td></tr>
+            <tr><td><strong>Slack</strong></td><td>Slack incoming webhook with Block Kit formatting for rich alert messages.</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Maintenance Windows</h2>
+        <ul>
+          <li>Define start and end times.</li>
+          <li>Apply to specific devices or fleet-wide.</li>
+          <li>Alerts generated during the window are recorded but do not trigger notifications.</li>
+          <li>Maintenance windows can be recurring or one-time.</li>
+        </ul>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="reports">
+        <h1>Reports</h1>
+        <p>Generate PDF reports from the Reports page. Four report types are available:</p>
+        <table>
+          <thead>
+            <tr><th>Report</th><th>Content</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Fleet Summary</strong></td><td>Overall fleet health, device counts by status, top alerts, and aggregate statistics.</td></tr>
+            <tr><td><strong>Device Health</strong></td><td>Per-device detailed report with hardware info, resource trends, and recent events.</td></tr>
+            <tr><td><strong>Compliance</strong></td><td>Security posture audit &mdash; firmware versions, default credentials, firewall policy checks.</td></tr>
+            <tr><td><strong>SLA</strong></td><td>Uptime and availability metrics over a selected period with percentage calculations.</td></tr>
+          </tbody>
+        </table>
+        <p>Reports are generated as downloadable PDFs using server-side rendering (Jinja2 + WeasyPrint).</p>
+      </section>
+
+      <!-- ============================================================ -->
+      <!--  SECURITY                                                    -->
+      <!-- ============================================================ -->
+
+      <!-- SECURITY MODEL -->
+      <section id="security-model">
+        <h1>Security Model</h1>
+        <p>TOD implements a 1Password-inspired zero-knowledge security architecture. The server never stores or sees user passwords. All data is stored on infrastructure you own and control &mdash; no external telemetry, analytics, or third-party data transmission.</p>
+
+        <h2>Data Protection</h2>
+        <ul>
+          <li><strong>Config backups:</strong> Encrypted at rest via OpenBao Transit envelope encryption before database storage.</li>
+          <li><strong>Audit logs:</strong> Encrypted at rest via Transit encryption &mdash; audit log content is protected even from database administrators.</li>
+          <li><strong>Subresource Integrity (SRI):</strong> SHA-384 hashes on JavaScript bundles prevent tampering with frontend code.</li>
+          <li><strong>Content Security Policy (CSP):</strong> Strict CSP headers prevent XSS, code injection, and unauthorized resource loading.</li>
+          <li><strong>No external dependencies:</strong> Fully self-hosted with no external analytics, telemetry, CDNs, or third-party services. The only outbound connections are:
+            <ul>
+              <li>RouterOS firmware update checks (no device data sent)</li>
+              <li>SMTP for email notifications (if configured)</li>
+              <li>Webhooks for alerts (if configured)</li>
+            </ul>
+          </li>
+        </ul>
+
+        <h2>Security Headers</h2>
+        <table>
+          <thead>
+            <tr><th>Header</th><th>Value</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>Strict-Transport-Security</code></td><td><code>max-age=31536000; includeSubDomains</code></td><td>Force HTTPS connections</td></tr>
+            <tr><td><code>X-Content-Type-Options</code></td><td><code>nosniff</code></td><td>Prevent MIME-type sniffing</td></tr>
+            <tr><td><code>X-Frame-Options</code></td><td><code>DENY</code></td><td>Prevent clickjacking via iframes</td></tr>
+            <tr><td><code>Content-Security-Policy</code></td><td>Strict policy</td><td>Prevent XSS and code injection</td></tr>
+            <tr><td><code>Referrer-Policy</code></td><td><code>strict-origin-when-cross-origin</code></td><td>Limit referrer information leakage</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Audit Trail</h2>
+        <ul>
+          <li><strong>Immutable audit log:</strong> All significant actions are recorded &mdash; logins, configuration changes, device operations, admin actions.</li>
+          <li><strong>Fire-and-forget logging:</strong> The <code>log_action()</code> function records audit events asynchronously without blocking the main request.</li>
+          <li><strong>Per-tenant access:</strong> Tenants can only view their own audit logs (enforced by RLS).</li>
+          <li><strong>Encryption at rest:</strong> Audit log content is encrypted via OpenBao Transit.</li>
+          <li><strong>CSV export:</strong> Audit logs can be exported in CSV format for compliance and reporting.</li>
+          <li><strong>Account deletion:</strong> When a user deletes their account, audit log entries are anonymized (PII removed) but the action records are retained for security compliance.</li>
+        </ul>
+
+        <h2>Data Retention</h2>
+        <table>
+          <thead>
+            <tr><th>Data Type</th><th>Retention</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>User accounts</td><td>Until deleted</td><td>Users can self-delete from Settings</td></tr>
+            <tr><td>Device metrics</td><td>90 days</td><td>Purged by TimescaleDB retention policy</td></tr>
+            <tr><td>Configuration backups</td><td>Indefinite</td><td>Stored in git repositories on your server</td></tr>
+            <tr><td>Audit logs</td><td>Indefinite</td><td>Anonymized on account deletion</td></tr>
+            <tr><td>API keys</td><td>Until revoked</td><td>Cascade-deleted with user account</td></tr>
+            <tr><td>Encrypted key material</td><td>Until user deleted</td><td>Cascade-deleted with user account</td></tr>
+            <tr><td>Session data (Redis)</td><td>15 min / 7 days</td><td>Auto-expiring access/refresh tokens</td></tr>
+            <tr><td>Password reset tokens</td><td>30 minutes</td><td>Auto-expire</td></tr>
+            <tr><td>SRP session state</td><td>Short-lived</td><td>Auto-expire in Redis</td></tr>
+          </tbody>
+        </table>
+
+        <h2>GDPR Compliance</h2>
+        <ul>
+          <li><strong>Right of Access (Art. 15):</strong> Users can view their account information on the Settings page.</li>
+          <li><strong>Right to Data Portability (Art. 20):</strong> Users can export all personal data in JSON format from Settings.</li>
+          <li><strong>Right to Erasure (Art. 17):</strong> Users can permanently delete their account and all associated data. Audit logs are anonymized (PII removed) with a deletion receipt generated for compliance verification.</li>
+          <li><strong>Right to Rectification (Art. 16):</strong> Account information can be updated by the tenant administrator.</li>
+        </ul>
+        <p>As a self-hosted application, the deployment operator is the data controller and is responsible for compliance with applicable data protection laws.</p>
+      </section>
+
+      <!-- AUTHENTICATION -->
+      <section id="authentication">
+        <h1>Authentication</h1>
+
+        <h2>SRP-6a Zero-Knowledge Proof</h2>
+        <p>TOD uses the Secure Remote Password (SRP-6a) protocol for authentication, ensuring the server never receives, transmits, or stores user passwords.</p>
+        <ul>
+          <li><strong>SRP-6a protocol:</strong> Password is verified via a zero-knowledge proof &mdash; only a cryptographic verifier derived from the password is stored on the server, never the password itself.</li>
+          <li><strong>Session management:</strong> JWT tokens with 15-minute access token lifetime and 7-day refresh token lifetime, delivered via httpOnly cookies.</li>
+          <li><strong>SRP session state:</strong> Ephemeral SRP handshake data stored in Redis with automatic expiration.</li>
+        </ul>
+
+        <h3>Authentication Flow</h3>
+        <pre><code>Client                                Server
+  |                                     |
+  |  POST /auth/srp/init {email}        |
+  |------------------------------------&gt;|
+  |  {salt, server_ephemeral_B}         |
+  |&lt;------------------------------------|
+  |                                     |
+  |  [Client derives session key from   |
+  |   password + Secret Key + salt + B] |
+  |                                     |
+  |  POST /auth/srp/verify {A, M1}      |
+  |------------------------------------&gt;|
+  |  [Server verifies M1 proof]         |
+  |  {M2, access_token, refresh_token}  |
+  |&lt;------------------------------------|</code></pre>
+
+        <h2>Two-Secret Key Derivation (2SKD)</h2>
+        <p>Combines the user password with a 128-bit Secret Key using a multi-step derivation process, ensuring that compromise of either factor alone is insufficient:</p>
+        <ul>
+          <li><strong>PBKDF2</strong> with 650,000 iterations stretches the password.</li>
+          <li><strong>HKDF</strong> expansion derives the final key material.</li>
+          <li><strong>XOR</strong> combination of both factors produces the verifier input.</li>
+        </ul>
+
+        <h2>Secret Key &amp; Emergency Kit</h2>
+        <ul>
+          <li><strong>Secret Key format:</strong> <code>A3-XXXXXX</code> (128-bit), stored exclusively in the browser&rsquo;s IndexedDB. The server never sees or stores the Secret Key.</li>
+          <li><strong>Emergency Kit:</strong> Downloadable PDF containing the Secret Key for account recovery. Generated client-side.</li>
+        </ul>
+      </section>
+
+      <!-- ENCRYPTION -->
+      <section id="encryption">
+        <h1>Encryption</h1>
+
+        <h2>Credential Encryption</h2>
+        <p>Device credentials (RouterOS usernames and passwords) are encrypted at rest using envelope encryption:</p>
+        <ul>
+          <li><strong>Encryption algorithm:</strong> AES-256-GCM (via Fernet symmetric encryption).</li>
+          <li><strong>Key management:</strong> OpenBao Transit secrets engine provides the master encryption keys.</li>
+          <li><strong>Per-tenant isolation:</strong> Each tenant has its own encryption key in OpenBao Transit.</li>
+          <li><strong>Envelope encryption:</strong> Data is encrypted with a data encryption key (DEK), which is itself encrypted by the tenant&rsquo;s Transit key.</li>
+        </ul>
+
+        <h2>Go Poller LRU Cache</h2>
+        <p>The Go poller decrypts credentials at runtime via the Transit API, with an LRU cache (1,024 entries, 5-minute TTL) to reduce KMS round-trips. Cache hits avoid OpenBao API calls entirely.</p>
+
+        <h2>Additional Encryption</h2>
+        <ul>
+          <li><strong>CA private keys:</strong> Encrypted with AES-256-GCM before database storage. PEM key material is never logged.</li>
+          <li><strong>Config backups:</strong> Encrypted at rest via OpenBao Transit before database storage.</li>
+          <li><strong>Audit logs:</strong> Content encrypted via Transit &mdash; protected even from database administrators.</li>
+        </ul>
+      </section>
+
+      <!-- RBAC -->
+      <section id="rbac">
+        <h1>RBAC &amp; Tenants</h1>
+
+        <h2>Role-Based Access Control</h2>
+        <table>
+          <thead>
+            <tr><th>Role</th><th>Scope</th><th>Capabilities</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>super_admin</code></td><td>Global</td><td>Full system access, tenant management, user management across all tenants</td></tr>
+            <tr><td><code>admin</code></td><td>Tenant</td><td>Manage devices, users, settings, certificates within their tenant</td></tr>
+            <tr><td><code>operator</code></td><td>Tenant</td><td>Device operations, configuration changes, monitoring</td></tr>
+            <tr><td><code>viewer</code></td><td>Tenant</td><td>Read-only access to devices, metrics, and dashboards</td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li>RBAC is enforced at both the API middleware layer and database level.</li>
+          <li>API keys inherit the <code>operator</code> permission level and are scoped to a single tenant.</li>
+          <li>API key tokens use the <code>mktp_</code> prefix and are stored as SHA-256 hashes (the plaintext token is shown once at creation and never stored).</li>
+        </ul>
+
+        <h2>Tenant Isolation via RLS</h2>
+        <p>Multi-tenancy is enforced at the database level via PostgreSQL Row-Level Security (RLS). The <code>app_user</code> database role automatically filters all queries by the authenticated user&rsquo;s <code>tenant_id</code>. Super admins operate outside tenant scope.</p>
+
+        <h2>Internal CA &amp; TLS Fallback</h2>
+        <p>TOD includes a per-tenant Internal Certificate Authority for managing TLS certificates on RouterOS devices:</p>
+        <ul>
+          <li><strong>Per-tenant CA:</strong> Each tenant can generate its own self-signed Certificate Authority.</li>
+          <li><strong>Deployment:</strong> Certificates are deployed to devices via SFTP.</li>
+          <li><strong>Three-tier TLS fallback:</strong> The Go poller attempts connections in order:
+            <ol>
+              <li>CA-verified TLS (using the tenant&rsquo;s CA certificate)</li>
+              <li>InsecureSkipVerify TLS (for self-signed RouterOS certs)</li>
+              <li>Plain API connection (fallback)</li>
+            </ol>
+          </li>
+          <li><strong>Key protection:</strong> CA private keys are encrypted with AES-256-GCM before database storage.</li>
+        </ul>
+      </section>
+
+      <!-- ============================================================ -->
+      <!--  API REFERENCE                                               -->
+      <!-- ============================================================ -->
+
+      <!-- API ENDPOINTS -->
+      <section id="api-endpoints">
+        <h1>API Endpoints</h1>
+
+        <h2>Overview</h2>
+        <p>TOD exposes a REST API built with FastAPI. Interactive documentation is available at:</p>
+        <ul>
+          <li><strong>Swagger UI:</strong> <code>http://&lt;host&gt;:&lt;port&gt;/docs</code> (dev environment only)</li>
+          <li><strong>ReDoc:</strong> <code>http://&lt;host&gt;:&lt;port&gt;/redoc</code> (dev environment only)</li>
+        </ul>
+        <p>Both Swagger and ReDoc are disabled in staging/production environments.</p>
+
+        <h2>Endpoint Groups</h2>
+        <p>All API routes are mounted under the <code>/api</code> prefix.</p>
+        <table>
+          <thead>
+            <tr><th>Group</th><th>Prefix</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Auth</td><td><code>/api/auth/*</code></td><td>Login, register, SRP exchange, password reset, token refresh</td></tr>
+            <tr><td>Tenants</td><td><code>/api/tenants/*</code></td><td>Tenant/organization CRUD</td></tr>
+            <tr><td>Users</td><td><code>/api/users/*</code></td><td>User management, RBAC role assignment</td></tr>
+            <tr><td>Devices</td><td><code>/api/devices/*</code></td><td>Device CRUD, scanning, status</td></tr>
+            <tr><td>Device Groups</td><td><code>/api/device-groups/*</code></td><td>Logical device grouping</td></tr>
+            <tr><td>Device Tags</td><td><code>/api/device-tags/*</code></td><td>Tag-based device labeling</td></tr>
+            <tr><td>Metrics</td><td><code>/api/metrics/*</code></td><td>TimescaleDB device metrics (CPU, memory, traffic)</td></tr>
+            <tr><td>Config Backups</td><td><code>/api/config-backups/*</code></td><td>Automated RouterOS config backup history</td></tr>
+            <tr><td>Config Editor</td><td><code>/api/config-editor/*</code></td><td>Live RouterOS config browsing and editing</td></tr>
+            <tr><td>Firmware</td><td><code>/api/firmware/*</code></td><td>RouterOS firmware version management and upgrades</td></tr>
+            <tr><td>Alerts</td><td><code>/api/alerts/*</code></td><td>Alert rule CRUD, alert history</td></tr>
+            <tr><td>Events</td><td><code>/api/events/*</code></td><td>Device event log</td></tr>
+            <tr><td>Device Logs</td><td><code>/api/device-logs/*</code></td><td>RouterOS syslog entries</td></tr>
+            <tr><td>Templates</td><td><code>/api/templates/*</code></td><td>Config templates for batch operations</td></tr>
+            <tr><td>Clients</td><td><code>/api/clients/*</code></td><td>Connected client (DHCP lease) data</td></tr>
+            <tr><td>Topology</td><td><code>/api/topology/*</code></td><td>Network topology map data</td></tr>
+            <tr><td>SSE</td><td><code>/api/sse/*</code></td><td>Server-Sent Events for real-time updates</td></tr>
+            <tr><td>Audit Logs</td><td><code>/api/audit-logs/*</code></td><td>Immutable audit trail</td></tr>
+            <tr><td>Reports</td><td><code>/api/reports/*</code></td><td>PDF report generation (Jinja2 + WeasyPrint)</td></tr>
+            <tr><td>API Keys</td><td><code>/api/api-keys/*</code></td><td>API key CRUD</td></tr>
+            <tr><td>Maintenance Windows</td><td><code>/api/maintenance-windows/*</code></td><td>Scheduled maintenance window management</td></tr>
+            <tr><td>VPN</td><td><code>/api/vpn/*</code></td><td>WireGuard VPN tunnel management</td></tr>
+            <tr><td>Certificates</td><td><code>/api/certificates/*</code></td><td>Internal CA and device certificate management</td></tr>
+            <tr><td>Transparency</td><td><code>/api/transparency/*</code></td><td>KMS access event dashboard</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Health Checks</h2>
+        <table>
+          <thead>
+            <tr><th>Endpoint</th><th>Type</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>GET /health</code></td><td>Liveness</td><td>Always returns 200 if the API process is alive. Response includes <code>version</code>.</td></tr>
+            <tr><td><code>GET /health/ready</code></td><td>Readiness</td><td>Returns 200 only when PostgreSQL, Redis, and NATS are all healthy. Returns 503 otherwise.</td></tr>
+            <tr><td><code>GET /api/health</code></td><td>Liveness</td><td>Backward-compatible alias under <code>/api</code> prefix.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- API AUTH -->
+      <section id="api-auth">
+        <h1>API Authentication</h1>
+
+        <h2>SRP-6a Login</h2>
+        <ul>
+          <li><code>POST /api/auth/login</code> &mdash; SRP-6a authentication (returns JWT access + refresh tokens)</li>
+          <li><code>POST /api/auth/refresh</code> &mdash; Refresh an expired access token</li>
+          <li><code>POST /api/auth/logout</code> &mdash; Invalidate the current session</li>
+        </ul>
+        <p>All authenticated endpoints require one of:</p>
+        <ul>
+          <li><code>Authorization: Bearer &lt;token&gt;</code> header</li>
+          <li>httpOnly cookie (set automatically by the login flow)</li>
+        </ul>
+        <p>Access tokens expire after 15 minutes. Refresh tokens are valid for 7 days.</p>
+
+        <h2>API Key Authentication</h2>
+        <ul>
+          <li>Create API keys in <strong>Admin &gt; API Keys</strong></li>
+          <li>Use header: <code>X-API-Key: mktp_&lt;key&gt;</code></li>
+          <li>Keys have operator-level RBAC permissions</li>
+          <li>Prefix: <code>mktp_</code>, stored as SHA-256 hash</li>
+        </ul>
+
+        <h2>Rate Limiting</h2>
+        <ul>
+          <li>Auth endpoints: 5 requests/minute per IP</li>
+          <li>General endpoints: no global rate limit (per-route limits may apply)</li>
+        </ul>
+        <p>Rate limit violations return HTTP 429 with a JSON error body.</p>
+
+        <h2>RBAC Roles</h2>
+        <table>
+          <thead>
+            <tr><th>Role</th><th>Scope</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>super_admin</code></td><td>Global (no tenant)</td><td>Full platform access, tenant management</td></tr>
+            <tr><td><code>admin</code></td><td>Tenant</td><td>Full access within their tenant</td></tr>
+            <tr><td><code>operator</code></td><td>Tenant</td><td>Device operations, config changes</td></tr>
+            <tr><td><code>viewer</code></td><td>Tenant</td><td>Read-only access</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- API ERRORS -->
+      <section id="api-errors">
+        <h1>Error Handling</h1>
+
+        <h2>Error Format</h2>
+        <p>All error responses use a standard JSON format:</p>
+        <pre><code>{
+  "detail": "Human-readable error message"
+}</code></pre>
+
+        <h2>Status Codes</h2>
+        <table>
+          <thead>
+            <tr><th>Code</th><th>Meaning</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>400</td><td>Bad request / validation error</td></tr>
+            <tr><td>401</td><td>Unauthorized (missing or expired token)</td></tr>
+            <tr><td>403</td><td>Forbidden (insufficient RBAC permissions)</td></tr>
+            <tr><td>404</td><td>Resource not found</td></tr>
+            <tr><td>409</td><td>Conflict (duplicate resource)</td></tr>
+            <tr><td>422</td><td>Unprocessable entity (Pydantic validation)</td></tr>
+            <tr><td>429</td><td>Rate limit exceeded</td></tr>
+            <tr><td>500</td><td>Internal server error</td></tr>
+            <tr><td>503</td><td>Service unavailable (readiness check failed)</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ============================================================ -->
+      <!--  CONFIGURATION                                               -->
+      <!-- ============================================================ -->
+
+      <!-- ENV VARS -->
+      <section id="env-vars">
+        <h1>Environment Variables</h1>
+        <p>TOD uses Pydantic Settings for configuration. All values can be set via environment variables or a <code>.env</code> file in the backend working directory.</p>
+
+        <h2>Application</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>APP_NAME</code></td><td><code>TOD - The Other Dude</code></td><td>Application display name</td></tr>
+            <tr><td><code>APP_VERSION</code></td><td><code>0.1.0</code></td><td>Semantic version string</td></tr>
+            <tr><td><code>ENVIRONMENT</code></td><td><code>dev</code></td><td>Runtime environment: <code>dev</code>, <code>staging</code>, or <code>production</code></td></tr>
+            <tr><td><code>DEBUG</code></td><td><code>false</code></td><td>Enable debug mode</td></tr>
+            <tr><td><code>CORS_ORIGINS</code></td><td><code>http://localhost:3000,...</code></td><td>Comma-separated list of allowed CORS origins</td></tr>
+            <tr><td><code>APP_BASE_URL</code></td><td><code>http://localhost:5173</code></td><td>Frontend base URL (used in password reset emails)</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Authentication &amp; JWT</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>JWT_SECRET_KEY</code></td><td><em>(insecure dev default)</em></td><td>HMAC signing key for JWTs. <strong>Must be changed in production.</strong></td></tr>
+            <tr><td><code>JWT_ALGORITHM</code></td><td><code>HS256</code></td><td>JWT signing algorithm</td></tr>
+            <tr><td><code>JWT_ACCESS_TOKEN_EXPIRE_MINUTES</code></td><td><code>15</code></td><td>Access token lifetime in minutes</td></tr>
+            <tr><td><code>JWT_REFRESH_TOKEN_EXPIRE_DAYS</code></td><td><code>7</code></td><td>Refresh token lifetime in days</td></tr>
+            <tr><td><code>PASSWORD_RESET_TOKEN_EXPIRE_MINUTES</code></td><td><code>30</code></td><td>Password reset link validity in minutes</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Database</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>DATABASE_URL</code></td><td><code>postgresql+asyncpg://postgres:postgres@localhost:5432/mikrotik</code></td><td>Admin (superuser) async database URL. Used for migrations and bootstrap.</td></tr>
+            <tr><td><code>SYNC_DATABASE_URL</code></td><td><code>postgresql+psycopg2://postgres:postgres@localhost:5432/mikrotik</code></td><td>Synchronous URL used by Alembic migrations only.</td></tr>
+            <tr><td><code>APP_USER_DATABASE_URL</code></td><td><code>postgresql+asyncpg://app_user:app_password@localhost:5432/mikrotik</code></td><td>Non-superuser async URL. Enforces PostgreSQL RLS for tenant isolation.</td></tr>
+            <tr><td><code>DB_POOL_SIZE</code></td><td><code>20</code></td><td>App user connection pool size</td></tr>
+            <tr><td><code>DB_MAX_OVERFLOW</code></td><td><code>40</code></td><td>App user pool max overflow connections</td></tr>
+            <tr><td><code>DB_ADMIN_POOL_SIZE</code></td><td><code>10</code></td><td>Admin connection pool size</td></tr>
+            <tr><td><code>DB_ADMIN_MAX_OVERFLOW</code></td><td><code>20</code></td><td>Admin pool max overflow connections</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Security</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>CREDENTIAL_ENCRYPTION_KEY</code></td><td><em>(insecure dev default)</em></td><td>AES-256-GCM encryption key for device credentials at rest. Must be exactly 32 bytes, base64-encoded. <strong>Must be changed in production.</strong></td></tr>
+          </tbody>
+        </table>
+
+        <h2>OpenBao / Vault (KMS)</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>OPENBAO_ADDR</code></td><td><code>http://localhost:8200</code></td><td>OpenBao Transit server address for per-tenant envelope encryption</td></tr>
+            <tr><td><code>OPENBAO_TOKEN</code></td><td><em>(insecure dev default)</em></td><td>OpenBao authentication token. <strong>Must be changed in production.</strong></td></tr>
+          </tbody>
+        </table>
+
+        <h2>NATS</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>NATS_URL</code></td><td><code>nats://localhost:4222</code></td><td>NATS JetStream server URL for pub/sub between Go poller and Python API</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Redis</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>REDIS_URL</code></td><td><code>redis://localhost:6379/0</code></td><td>Redis URL for caching, distributed locks, and rate limiting</td></tr>
+          </tbody>
+        </table>
+
+        <h2>SMTP (Notifications)</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>SMTP_HOST</code></td><td><code>localhost</code></td><td>SMTP server hostname</td></tr>
+            <tr><td><code>SMTP_PORT</code></td><td><code>587</code></td><td>SMTP server port</td></tr>
+            <tr><td><code>SMTP_USER</code></td><td><em>(none)</em></td><td>SMTP authentication username</td></tr>
+            <tr><td><code>SMTP_PASSWORD</code></td><td><em>(none)</em></td><td>SMTP authentication password</td></tr>
+            <tr><td><code>SMTP_USE_TLS</code></td><td><code>false</code></td><td>Enable STARTTLS for SMTP connections</td></tr>
+            <tr><td><code>SMTP_FROM_ADDRESS</code></td><td><code>noreply@mikrotik-portal.local</code></td><td>Sender address for outbound emails</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Firmware</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>FIRMWARE_CACHE_DIR</code></td><td><code>/data/firmware-cache</code></td><td>Path to firmware download cache (PVC mount in production)</td></tr>
+            <tr><td><code>FIRMWARE_CHECK_INTERVAL_HOURS</code></td><td><code>24</code></td><td>Hours between automatic RouterOS version checks</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Storage Paths</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>GIT_STORE_PATH</code></td><td><code>./git-store</code></td><td>Path to bare git repos for config backup history. In production: <code>/data/git-store</code> on a ReadWriteMany PVC.</td></tr>
+            <tr><td><code>WIREGUARD_CONFIG_PATH</code></td><td><code>/data/wireguard</code></td><td>Shared volume path for WireGuard configuration files</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Bootstrap</h2>
+        <table>
+          <thead>
+            <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>FIRST_ADMIN_EMAIL</code></td><td><em>(none)</em></td><td>Email for the initial super_admin user. Only used if no users exist in the database.</td></tr>
+            <tr><td><code>FIRST_ADMIN_PASSWORD</code></td><td><em>(none)</em></td><td>Password for the initial super_admin user. The user is created with <code>must_upgrade_auth=True</code>, triggering SRP registration on first login.</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Production Safety</h2>
+        <p>TOD refuses to start in <code>staging</code> or <code>production</code> environments if any of these variables still have their insecure dev defaults:</p>
+        <ul>
+          <li><code>JWT_SECRET_KEY</code></li>
+          <li><code>CREDENTIAL_ENCRYPTION_KEY</code></li>
+          <li><code>OPENBAO_TOKEN</code></li>
+        </ul>
+        <p>The process exits with code 1 and a clear error message indicating which variable needs to be rotated.</p>
+      </section>
+
+      <!-- DOCKER COMPOSE -->
+      <section id="docker-compose">
+        <h1>Docker Compose</h1>
+
+        <h2>Profiles</h2>
+        <table>
+          <thead>
+            <tr><th>Profile</th><th>Command</th><th>Services</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><em>(default)</em></td><td><code>docker compose up -d</code></td><td>Infrastructure only: PostgreSQL, Redis, NATS, OpenBao</td></tr>
+            <tr><td><code>full</code></td><td><code>docker compose --profile full up -d</code></td><td>All services: infrastructure + API, Poller, Frontend</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Container Memory Limits</h2>
+        <p>All containers have enforced memory limits to prevent OOM on the host:</p>
+        <table>
+          <thead>
+            <tr><th>Service</th><th>Memory Limit</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PostgreSQL</td><td>512 MB</td></tr>
+            <tr><td>Redis</td><td>128 MB</td></tr>
+            <tr><td>NATS</td><td>128 MB</td></tr>
+            <tr><td>API</td><td>512 MB</td></tr>
+            <tr><td>Poller</td><td>256 MB</td></tr>
+            <tr><td>Frontend</td><td>64 MB</td></tr>
+          </tbody>
+        </table>
+        <p>Build Docker images sequentially (not in parallel) to avoid OOM during builds.</p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Back to Top -->
+  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()">&uarr;</button>
+
+</body>
+</html>

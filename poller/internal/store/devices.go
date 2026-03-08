@@ -1,0 +1,161 @@
+// Package store provides database access for the poller service.
+package store
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+// Device represents a device row fetched from the devices table.
+// The poller reads ALL devices across all tenants (no RLS applied to poller_user).
+type Device struct {
+	ID                          string
+	TenantID                    string
+	IPAddress                   string
+	APIPort                     int
+	APISSLPort                  int
+	EncryptedCredentials        []byte  // legacy AES-256-GCM BYTEA
+	EncryptedCredentialsTransit *string // OpenBao Transit ciphertext (TEXT, nullable)
+	RouterOSVersion             *string
+	MajorVersion                *int
+	TLSMode                     string  // "insecure" or "portal_ca"
+	CACertPEM                   *string // PEM-encoded CA cert (only populated when TLSMode = "portal_ca")
+}
+
+// DeviceStore manages PostgreSQL connections for device data access.
+type DeviceStore struct {
+	pool *pgxpool.Pool
+}
+
+// NewDeviceStore creates a pgx connection pool and returns a DeviceStore.
+//
+// The databaseURL should use the poller_user role which has SELECT-only access
+// to the devices table and is not subject to RLS policies.
+func NewDeviceStore(ctx context.Context, databaseURL string) (*DeviceStore, error) {
+	pool, err := pgxpool.New(ctx, databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("creating pgx pool: %w", err)
+	}
+
+	// Verify connectivity immediately.
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("pinging database: %w", err)
+	}
+
+	return &DeviceStore{pool: pool}, nil
+}
+
+// FetchDevices returns all devices from the database.
+//
+// The query reads across all tenants intentionally — the poller_user role has
+// SELECT-only access without RLS so it can poll all devices.
+func (s *DeviceStore) FetchDevices(ctx context.Context) ([]Device, error) {
+	const query = `
+		SELECT
+			d.id::text,
+			d.tenant_id::text,
+			d.ip_address,
+			d.api_port,
+			d.api_ssl_port,
+			d.encrypted_credentials,
+			d.encrypted_credentials_transit,
+			d.routeros_version,
+			d.routeros_major_version,
+			d.tls_mode,
+			ca.cert_pem
+		FROM devices d
+		LEFT JOIN certificate_authorities ca
+			ON d.tenant_id = ca.tenant_id
+			AND d.tls_mode = 'portal_ca'
+		WHERE d.encrypted_credentials IS NOT NULL
+		   OR d.encrypted_credentials_transit IS NOT NULL
+	`
+
+	rows, err := s.pool.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("querying devices: %w", err)
+	}
+	defer rows.Close()
+
+	var devices []Device
+	for rows.Next() {
+		var d Device
+		if err := rows.Scan(
+			&d.ID,
+			&d.TenantID,
+			&d.IPAddress,
+			&d.APIPort,
+			&d.APISSLPort,
+			&d.EncryptedCredentials,
+			&d.EncryptedCredentialsTransit,
+			&d.RouterOSVersion,
+			&d.MajorVersion,
+			&d.TLSMode,
+			&d.CACertPEM,
+		); err != nil {
+			return nil, fmt.Errorf("scanning device row: %w", err)
+		}
+		devices = append(devices, d)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterating device rows: %w", err)
+	}
+
+	return devices, nil
+}
+
+// GetDevice returns a single device by ID for interactive command execution.
+func (s *DeviceStore) GetDevice(ctx context.Context, deviceID string) (Device, error) {
+	const query = `
+		SELECT
+			d.id::text,
+			d.tenant_id::text,
+			d.ip_address,
+			d.api_port,
+			d.api_ssl_port,
+			d.encrypted_credentials,
+			d.encrypted_credentials_transit,
+			d.routeros_version,
+			d.routeros_major_version,
+			d.tls_mode,
+			ca.cert_pem
+		FROM devices d
+		LEFT JOIN certificate_authorities ca
+			ON d.tenant_id = ca.tenant_id
+			AND d.tls_mode = 'portal_ca'
+		WHERE d.id = $1
+	`
+	var d Device
+	err := s.pool.QueryRow(ctx, query, deviceID).Scan(
+		&d.ID,
+		&d.TenantID,
+		&d.IPAddress,
+		&d.APIPort,
+		&d.APISSLPort,
+		&d.EncryptedCredentials,
+		&d.EncryptedCredentialsTransit,
+		&d.RouterOSVersion,
+		&d.MajorVersion,
+		&d.TLSMode,
+		&d.CACertPEM,
+	)
+	if err != nil {
+		return Device{}, fmt.Errorf("querying device %s: %w", deviceID, err)
+	}
+	return d, nil
+}
+
+// Pool returns the underlying pgxpool.Pool for shared use by other subsystems
+// (e.g., credential cache key_access_log inserts).
+func (s *DeviceStore) Pool() *pgxpool.Pool {
+	return s.pool
+}
+
+// Close closes the pgx connection pool.
+func (s *DeviceStore) Close() {
+	s.pool.Close()
+}

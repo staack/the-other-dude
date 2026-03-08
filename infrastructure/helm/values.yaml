@@ -1,0 +1,219 @@
+# Default values for mikrotik-portal.
+# These values should work with `helm install` out of the box for development.
+# Production deployments MUST override secrets.jwtSecretKey, secrets.credentialEncryptionKey,
+# and secrets.firstAdminPassword.
+
+# -----------------------------------------------------------------------
+# API service
+# -----------------------------------------------------------------------
+api:
+  replicaCount: 1
+
+  image:
+    repository: mikrotik-portal/api
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8000
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Liveness and readiness probe configuration
+  probes:
+    liveness:
+      path: /api/health
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      failureThreshold: 3
+    readiness:
+      path: /api/health
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      failureThreshold: 3
+
+  env:
+    # Token expiry (minutes for access, days for refresh)
+    jwtAccessTokenExpireMinutes: 15
+    jwtRefreshTokenExpireDays: 7
+    # CORS — set to your frontend origin in production
+    corsOrigins: "http://localhost:3000,http://localhost:5173"
+    debug: "false"
+
+# -----------------------------------------------------------------------
+# Frontend service
+# -----------------------------------------------------------------------
+frontend:
+  replicaCount: 1
+
+  image:
+    repository: mikrotik-portal/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 80
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# -----------------------------------------------------------------------
+# PostgreSQL (TimescaleDB)
+# -----------------------------------------------------------------------
+postgres:
+  # Set to false to use an external PostgreSQL instance (provide externalUrl below)
+  enabled: true
+
+  image:
+    repository: timescale/timescaledb
+    tag: latest-pg17
+    pullPolicy: IfNotPresent
+
+  # Storage for the PVC
+  storage: 10Gi
+  storageClass: ""  # leave empty to use cluster default StorageClass
+
+  service:
+    port: 5432
+
+  auth:
+    database: mikrotik
+    username: postgres
+    # password is sourced from secrets.dbPassword
+    appUsername: app_user
+    # appPassword is sourced from secrets.dbAppPassword
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+  # External PostgreSQL URL (used when postgres.enabled=false)
+  # externalUrl: "postgresql+asyncpg://user:pass@host:5432/mikrotik"
+
+# -----------------------------------------------------------------------
+# Redis
+# -----------------------------------------------------------------------
+redis:
+  enabled: true
+
+  image:
+    repository: redis
+    tag: 7-alpine
+    pullPolicy: IfNotPresent
+
+  service:
+    port: 6379
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# -----------------------------------------------------------------------
+# NATS JetStream
+# -----------------------------------------------------------------------
+nats:
+  enabled: true
+
+  image:
+    repository: nats
+    tag: 2-alpine
+    pullPolicy: IfNotPresent
+
+  storage: 5Gi
+  storageClass: ""  # leave empty to use cluster default StorageClass
+
+  service:
+    port: 4222
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+
+# -----------------------------------------------------------------------
+# Go Poller
+# -----------------------------------------------------------------------
+poller:
+  replicaCount: 2
+
+  image:
+    repository: mikrotik-portal/poller
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  env:
+    pollIntervalSeconds: 60
+    logLevel: info
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# -----------------------------------------------------------------------
+# Ingress
+# -----------------------------------------------------------------------
+ingress:
+  enabled: true
+  className: nginx
+  # annotations:
+  #   cert-manager.io/cluster-issuer: letsencrypt-prod
+
+  # host: mikrotik.example.com  — set this in your deployment
+  host: ""
+
+  tls:
+    enabled: false
+    # secretName: mikrotik-portal-tls
+
+# -----------------------------------------------------------------------
+# Secrets
+# IMPORTANT: All secrets below MUST be overridden in production.
+# -----------------------------------------------------------------------
+secrets:
+  # JWT signing key — generate with: openssl rand -hex 32
+  jwtSecretKey: ""
+
+  # AES-256-GCM credential encryption key (base64-encoded 32 bytes)
+  # Generate with: python -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"
+  credentialEncryptionKey: ""
+
+  # First admin account (created on first startup)
+  firstAdminEmail: "admin@mikrotik-portal.local"
+  firstAdminPassword: ""
+
+  # PostgreSQL superuser password
+  dbPassword: "postgres"
+
+  # app_user password (non-superuser, RLS-enforced)
+  dbAppPassword: "app_password"
+
+  # poller_user password (bypasses RLS — SELECT on devices only)
+  dbPollerPassword: "poller_password"

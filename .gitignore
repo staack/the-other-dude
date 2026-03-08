@@ -1,0 +1,40 @@
+# Environment files with secrets
+.env
+.env.prod
+.env.local
+.env.*.local
+
+# Docker data
+docker-data/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build caches
+.go-cache/
+.npm-cache/
+.tmp/
+
+# Git worktrees
+.worktrees/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright MCP logs
+.playwright-mcp/

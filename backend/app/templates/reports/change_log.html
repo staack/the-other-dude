@@ -1,0 +1,46 @@
+{% extends "reports/base.html" %}
+
+{% block content %}
+<div class="date-range">
+  Report period: {{ date_from }} to {{ date_to }}
+</div>
+
+<div class="summary-box">
+  <div class="summary-stat">
+    <div class="value">{{ total_entries }}</div>
+    <div class="label">Total Changes</div>
+  </div>
+  <div class="summary-stat">
+    <div class="value">{{ data_source }}</div>
+    <div class="label">Data Source</div>
+  </div>
+</div>
+
+{% if entries %}
+<h2 class="section-title">Change Log</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>User</th>
+      <th>Action</th>
+      <th>Device</th>
+      <th>Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for entry in entries %}
+    <tr>
+      <td>{{ entry.timestamp }}</td>
+      <td>{{ entry.user or '-' }}</td>
+      <td>{{ entry.action }}</td>
+      <td style="font-weight: 600;">{{ entry.device or '-' }}</td>
+      <td>{{ entry.details or '-' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="no-data">No changes found for the selected date range.</div>
+{% endif %}
+{% endblock %}

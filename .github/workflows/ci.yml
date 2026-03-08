@@ -1,0 +1,267 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Cancel in-progress runs for the same branch/PR to save runner minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # LINT — parallel linting for all three services
+  # ---------------------------------------------------------------------------
+  python-lint:
+    name: Lint Python (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Ruff check
+        run: ruff check backend/
+
+      - name: Ruff format check
+        run: ruff format --check backend/
+
+  go-lint:
+    name: Lint Go (golangci-lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: poller
+
+  frontend-lint:
+    name: Lint Frontend (ESLint + tsc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: ESLint
+        working-directory: frontend
+        run: npx eslint .
+
+      - name: TypeScript type check
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+  # ---------------------------------------------------------------------------
+  # TEST — parallel test suites for all three services
+  # ---------------------------------------------------------------------------
+  backend-test:
+    name: Test Backend (pytest)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg17
+        env:
+          POSTGRES_DB: mikrotik_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      nats:
+        image: nats:2-alpine
+        ports:
+          - 4222:4222
+        options: >-
+          --health-cmd "true"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      ENVIRONMENT: dev
+      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@localhost:5432/mikrotik_test"
+      SYNC_DATABASE_URL: "postgresql+psycopg2://postgres:postgres@localhost:5432/mikrotik_test"
+      APP_USER_DATABASE_URL: "postgresql+asyncpg://app_user:app_password@localhost:5432/mikrotik_test"
+      TEST_DATABASE_URL: "postgresql+asyncpg://postgres:postgres@localhost:5432/mikrotik_test"
+      TEST_APP_USER_DATABASE_URL: "postgresql+asyncpg://app_user:app_password@localhost:5432/mikrotik_test"
+      CREDENTIAL_ENCRYPTION_KEY: "LLLjnfBZTSycvL2U07HDSxUeTtLxb9cZzryQl0R9E4w="
+      JWT_SECRET_KEY: "change-this-in-production-use-a-long-random-string"
+      REDIS_URL: "redis://localhost:6379/0"
+      NATS_URL: "nats://localhost:4222"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('backend/pyproject.toml') }}
+          restore-keys: pip-
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -e ".[dev]"
+
+      - name: Set up test database roles
+        env:
+          PGPASSWORD: postgres
+        run: |
+          # Create app_user role for RLS-enforced connections
+          psql -h localhost -U postgres -d mikrotik_test -c "
+            CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+            GRANT CONNECT ON DATABASE mikrotik_test TO app_user;
+            GRANT USAGE ON SCHEMA public TO app_user;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO app_user;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO app_user;
+          " || true
+
+          # Create poller_user role
+          psql -h localhost -U postgres -d mikrotik_test -c "
+            DO \$\$
+            BEGIN
+              IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'poller_user') THEN
+                CREATE ROLE poller_user WITH LOGIN PASSWORD 'poller_password' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+              END IF;
+            END
+            \$\$;
+            GRANT CONNECT ON DATABASE mikrotik_test TO poller_user;
+            GRANT USAGE ON SCHEMA public TO poller_user;
+          " || true
+
+      - name: Run backend tests
+        working-directory: backend
+        run: python -m pytest tests/ -x -v --tb=short
+
+  poller-test:
+    name: Test Go Poller
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: go-${{ hashFiles('poller/go.sum') }}
+          restore-keys: go-
+
+      - name: Run poller tests
+        working-directory: poller
+        run: go test ./... -v -count=1
+
+  frontend-test:
+    name: Test Frontend (Vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npx vitest run
+
+  # ---------------------------------------------------------------------------
+  # BUILD — sequential Docker builds + Trivy scans (depends on lint + test)
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build & Scan Docker Images
+    runs-on: ubuntu-latest
+    needs: [python-lint, go-lint, frontend-lint, backend-test, poller-test, frontend-test]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build and scan each image SEQUENTIALLY to avoid OOM.
+      # Each multi-stage build (Go, Python/pip, Node/tsc) can peak at 1-2 GB.
+      # Running them in parallel would exceed typical runner memory.
+
+      - name: Build API image
+        run: docker build -f infrastructure/docker/Dockerfile.api -t mikrotik-api:ci .
+
+      - name: Scan API image
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: "mikrotik-api:ci"
+          format: "table"
+          exit-code: "1"
+          severity: "HIGH,CRITICAL"
+          trivyignores: ".trivyignore"
+
+      - name: Build Poller image
+        run: docker build -f poller/Dockerfile -t mikrotik-poller:ci ./poller
+
+      - name: Scan Poller image
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: "mikrotik-poller:ci"
+          format: "table"
+          exit-code: "1"
+          severity: "HIGH,CRITICAL"
+          trivyignores: ".trivyignore"
+
+      - name: Build Frontend image
+        run: docker build -f infrastructure/docker/Dockerfile.frontend -t mikrotik-frontend:ci .
+
+      - name: Scan Frontend image
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: "mikrotik-frontend:ci"
+          format: "table"
+          exit-code: "1"
+          severity: "HIGH,CRITICAL"
+          trivyignores: ".trivyignore"

@@ -1,0 +1,7 @@
+# Go build output
+/poller
+/cmd/poller/poller
+
+# Test binaries
+*.test
+*.out

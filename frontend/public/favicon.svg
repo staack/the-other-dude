@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background -->
+  <rect width="32" height="32" rx="6" fill="#0F172A"/>
+  <!-- Outer diamond frame - burgundy -->
+  <path d="M16 3 L29 16 L16 29 L3 16 Z" fill="none" stroke="#8B1A1A" stroke-width="1.5"/>
+  <!-- Middle diamond - cream -->
+  <path d="M16 6 L26 16 L16 26 L6 16 Z" fill="none" stroke="#F5E6C8" stroke-width="1"/>
+  <!-- Inner diamond - burgundy filled -->
+  <path d="M16 9 L23 16 L16 23 L9 16 Z" fill="#8B1A1A"/>
+  <!-- Center rosette petals - teal -->
+  <path d="M16 10 L19 16 L16 22 L13 16 Z" fill="#2A9D8F"/>
+  <!-- Cross petals - cream -->
+  <path d="M12 16 L16 13 L20 16 L16 19 Z" fill="#F5E6C8"/>
+  <!-- Center dot - teal -->
+  <circle cx="16" cy="16" r="2" fill="#2A9D8F"/>
+  <!-- Corner accents - teal -->
+  <rect x="2" y="2" width="3" height="3" rx="1" fill="#2A9D8F" opacity="0.6"/>
+  <rect x="27" y="2" width="3" height="3" rx="1" fill="#2A9D8F" opacity="0.6"/>
+  <rect x="2" y="27" width="3" height="3" rx="1" fill="#2A9D8F" opacity="0.6"/>
+  <rect x="27" y="27" width="3" height="3" rx="1" fill="#2A9D8F" opacity="0.6"/>
+</svg>

@@ -1,0 +1,164 @@
+# ─── Low-RAM build note ──────────────────────────────────────────────────────
+# On a 2-core / 2-4 GB server, build images ONE AT A TIME to avoid OOM:
+#
+#   docker compose build api
+#   docker compose build poller
+#   docker compose build frontend
+#
+# Running `docker compose build` (all at once) will trigger three concurrent
+# multi-stage builds (Go, Python/pip, Node/tsc/Vite) that together can peak at
+# 3-4 GB RAM, crashing the machine before any image finishes.
+#
+# Once built, starting the stack uses far less RAM (nginx + uvicorn + Go binary).
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  postgres:
+    image: timescale/timescaledb:2.17.2-pg17
+    container_name: tod_postgres
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mikrotik}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - /Volumes/ssd01/mikrotik/docker-data/postgres:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mikrotik"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - mikrotik
+
+  redis:
+    image: redis:7-alpine
+    container_name: tod_redis
+    env_file: .env
+    ports:
+      - "6379:6379"
+    volumes:
+      - /Volumes/ssd01/mikrotik/docker-data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    networks:
+      - mikrotik
+
+  nats:
+    image: nats:2-alpine
+    container_name: tod_nats
+    command: ["--jetstream", "--store_dir", "/data", "-m", "8222"]
+    env_file: .env
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - /Volumes/ssd01/mikrotik/docker-data/nats:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:8222/healthz || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    networks:
+      - mikrotik
+
+  openbao:
+    image: openbao/openbao:2.1
+    container_name: tod_openbao
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        # Start OpenBao in background
+        bao server -dev -dev-listen-address=0.0.0.0:8200 &
+        BAO_PID=$$!
+        # Wait for ready and run init
+        sleep 2
+        /init/init.sh
+        # Wait for OpenBao process
+        wait $$BAO_PID
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: dev-openbao-token
+      BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./infrastructure/openbao/init.sh:/init/init.sh:ro
+    cap_add:
+      - IPC_LOCK
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8200/v1/sys/health | grep -q '\"sealed\":false' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - mikrotik
+
+  wireguard:
+    image: lscr.io/linuxserver/wireguard:latest
+    container_name: tod_wireguard
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+    volumes:
+      - /Volumes/ssd01/mikrotik/docker-data/wireguard:/config
+      - /Volumes/ssd01/mikrotik/docker-data/wireguard/custom-cont-init.d:/custom-cont-init.d
+    ports:
+      - "51820:51820/udp"
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ip link show wg0 2>/dev/null || exit 0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    networks:
+      - mikrotik
+
+  mailpit:
+    image: axllent/mailpit:latest
+    profiles: ["mail-testing"]
+    ports:
+      - "8026:8025"
+      - "1026:1025"
+    networks:
+      - mikrotik
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+networks:
+  mikrotik:
+    driver: bridge

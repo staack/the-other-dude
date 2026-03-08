@@ -1,0 +1,88 @@
+# docker-compose.staging.yml -- Staging environment override
+# Usage: docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env.staging up -d
+#
+# Staging mirrors production behavior (gunicorn, info logging, restart policies)
+# but exposes the API port for debugging and uses distinct container names/ports
+# so it can coexist with dev on the same host if needed.
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    container_name: tod_staging_api
+    ports:
+      - "8081:8000"
+    env_file: .env.staging
+    environment:
+      ENVIRONMENT: staging
+      LOG_LEVEL: info
+      GUNICORN_WORKERS: "2"
+    command: ["gunicorn", "app.main:app", "--config", "gunicorn.conf.py"]
+    volumes:
+      - ./docker-data/staging-git-store:/data/git-store
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - tod
+
+  poller:
+    build:
+      context: ./poller
+      dockerfile: ./Dockerfile
+    container_name: tod_staging_poller
+    env_file: .env.staging
+    environment:
+      ENVIRONMENT: staging
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - tod
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+    container_name: tod_staging_frontend
+    ports:
+      - "3080:80"
+    depends_on:
+      - api
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    restart: unless-stopped
+    networks:
+      - tod

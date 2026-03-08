@@ -1,0 +1,55 @@
+# Multi-stage build for TOD API
+# Stage 1: build — install Python deps
+FROM python:3.12-slim AS builder
+
+# Install system dependencies needed for asyncpg (libpq-dev) and cryptography
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    gcc \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+# Copy and install Python dependencies first (layer cache optimization)
+COPY backend/pyproject.toml ./
+# Create a minimal README.md so pip install doesn't fail (pyproject.toml references it)
+RUN echo "# TOD API" > README.md
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --prefix=/install .
+
+# Stage 2: runtime — lean production image
+FROM python:3.12-slim AS runtime
+
+# Runtime system deps: libpq for asyncpg, pango/cairo/gdk-pixbuf for weasyprint PDF generation
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libpangoft2-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf-2.0-0 \
+    libglib2.0-0 \
+    libffi8 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user for security
+RUN groupadd --gid 1001 appuser && \
+    useradd --uid 1001 --gid appuser --no-create-home appuser
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /install /usr/local
+
+# Copy application source
+COPY backend/ .
+
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
+
+USER appuser
+
+EXPOSE 8000
+
+CMD ["gunicorn", "app.main:app", "--config", "gunicorn.conf.py"]
