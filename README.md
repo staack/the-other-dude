@@ -119,9 +119,13 @@ See the documentation site for screenshots and feature walkthroughs.
 
 [Business Source License 1.1](LICENSE)
 
-Free for personal and educational use. Commercial use (managing devices for paying
-customers or as part of a paid service) requires a commercial license. See the
-LICENSE file for full terms.
+Free for production use managing up to 1,000 devices with no limitations. Deployments
+exceeding 1,000 managed devices require a commercial license. See the LICENSE file
+for full terms.
+
+For commercial licensing inquiries: [license@theotherdude.net](mailto:license@theotherdude.net)
+
+For support: [support@theotherdude.net](mailto:support@theotherdude.net) — support inquiries are best-effort unless covered by a support license.
 
 ---
 
