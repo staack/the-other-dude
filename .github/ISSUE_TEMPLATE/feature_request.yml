@@ -1,0 +1,50 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: We'd love to hear your ideas! Please describe what you'd like to see.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What problem does this solve? What are you trying to do?
+      placeholder: "As an MSP operator, I need to..."
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How do you think this should work?
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which area of the platform does this relate to?
+      options:
+        - Dashboard / Fleet View
+        - Device Management
+        - Configuration Management
+        - Monitoring / Alerts
+        - Network Tools
+        - Security / Authentication
+        - VPN / WireGuard
+        - Reports / Operations
+        - API
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you've thought about?
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, mockups, links, or anything else.
