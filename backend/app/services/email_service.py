@@ -59,8 +59,15 @@ async def send_email(
     msg.set_content(plain_text)
     msg.add_alternative(html, subtype="html")
 
-    use_tls = smtp_config.use_tls
-    start_tls = not use_tls if smtp_config.port != 25 else False
+    # Port 465 = implicit TLS (use_tls=True, start_tls=False)
+    # Port 587 = STARTTLS (use_tls=False, start_tls=True) — only when TLS requested
+    # Port 25/other = plain SMTP (use_tls=False, start_tls=False)
+    if smtp_config.port == 465:
+        use_tls, start_tls = True, False
+    elif smtp_config.use_tls:
+        use_tls, start_tls = False, True
+    else:
+        use_tls, start_tls = False, False
 
     await aiosmtplib.send(
         msg,
@@ -80,11 +87,17 @@ async def test_smtp_connection(smtp_config: SMTPConfig) -> dict:
         dict with "success" bool and "message" string.
     """
     try:
+        if smtp_config.port == 465:
+            _use_tls, _start_tls = True, False
+        elif smtp_config.use_tls:
+            _use_tls, _start_tls = False, True
+        else:
+            _use_tls, _start_tls = False, False
         smtp = aiosmtplib.SMTP(
             hostname=smtp_config.host,
             port=smtp_config.port,
-            use_tls=smtp_config.use_tls,
-            start_tls=not smtp_config.use_tls if smtp_config.port != 25 else False,
+            use_tls=_use_tls,
+            start_tls=_start_tls,
         )
         await smtp.connect()
         if smtp_config.user and smtp_config.password:
