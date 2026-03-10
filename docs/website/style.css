@@ -563,18 +563,18 @@ ul, ol {
   font-family: "Fira Code", "SF Mono", monospace;
   font-size: 0.95rem;
   color: var(--text-primary);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-accent);
+  background: var(--bg-deep);
+  border: 1px solid rgba(42, 157, 143, 0.4);
   border-radius: 8px;
-  padding: 10px 28px;
+  padding: 12px 32px;
   letter-spacing: 0.02em;
 }
 
 .arch-flow-arrow {
   color: var(--accent);
-  font-size: 1.2rem;
+  font-size: 1.4rem;
   line-height: 1;
-  padding: 4px 0;
+  padding: 6px 0;
 }
 
 /* CTA closing */

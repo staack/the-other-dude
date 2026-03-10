@@ -229,15 +229,15 @@
 
       <div class="arch-flow">
         <div class="arch-flow-step">Routers</div>
-        <div class="arch-flow-arrow">&darr;</div>
+        <div class="arch-flow-arrow">↓</div>
         <div class="arch-flow-step">Go Pollers</div>
-        <div class="arch-flow-arrow">&darr;</div>
+        <div class="arch-flow-arrow">↓</div>
         <div class="arch-flow-step">NATS Event Bus</div>
-        <div class="arch-flow-arrow">&darr;</div>
+        <div class="arch-flow-arrow">↓</div>
         <div class="arch-flow-step">FastAPI Backend</div>
-        <div class="arch-flow-arrow">&darr;</div>
+        <div class="arch-flow-arrow">↓</div>
         <div class="arch-flow-step">PostgreSQL + TimescaleDB</div>
-        <div class="arch-flow-arrow">&darr;</div>
+        <div class="arch-flow-arrow">↓</div>
         <div class="arch-flow-step">React Web Interface</div>
       </div>
 
@@ -315,9 +315,24 @@
           <span class="code-dot code-dot--green"></span>
           <span class="code-window-title">Terminal</span>
         </div>
-        <pre class="code-window-body"><code><span class="code-cmd">git clone https://github.com/staack/the-other-dude</span>
+        <pre class="code-window-body"><code><span class="code-comment"># Clone the repo</span>
+<span class="code-cmd">git clone https://github.com/staack/the-other-dude.git</span>
 <span class="code-cmd">cd the-other-dude</span>
-<span class="code-cmd">docker compose up</span></code></pre>
+
+<span class="code-comment"># Configure</span>
+<span class="code-cmd">cp .env.example .env</span>
+
+<span class="code-comment"># Start infrastructure</span>
+<span class="code-cmd">docker compose up -d</span>
+
+<span class="code-comment"># Build app images</span>
+<span class="code-cmd">docker compose build api &amp;&amp; docker compose build poller &amp;&amp; docker compose build frontend</span>
+
+<span class="code-comment"># Launch</span>
+<span class="code-cmd">docker compose up -d</span>
+
+<span class="code-comment"># Open TOD</span>
+<span class="code-cmd">open http://localhost:3000</span></code></pre>
       </div>
     </div>
   </section>
