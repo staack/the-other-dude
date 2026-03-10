@@ -106,8 +106,7 @@
         <span>The Other Dude</span>
       </a>
       <div class="nav-links">
-        <a href="#features" class="nav-link">Features</a>
-        <a href="#architecture" class="nav-link">Architecture</a>
+        <a href="#what-it-does" class="nav-link">Features</a>
         <a href="#screenshots" class="nav-link">Screenshots</a>
         <a href="docs.html" class="nav-link">Docs</a>
         <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
@@ -150,203 +149,93 @@
           <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
         </svg>
       </div>
-      <span class="hero-badge">Fleet Management for MikroTik</span>
-      <h1 class="hero-title"><span class="gradient-text">MikroTik Fleet Management</span> for MSPs</h1>
-      <p class="hero-subtitle">Manage hundreds of MikroTik routers from a single pane of glass. Zero-knowledge security, real-time monitoring, and configuration management&nbsp;&mdash; built for MSPs who demand more than WinBox.</p>
+      <h1 class="hero-title"><span class="gradient-text">Centralized Management</span> for MikroTik Networks</h1>
+      <p class="hero-subtitle">Managing MikroTik routers shouldn&rsquo;t require dozens of WinBox tabs, SSH scripts, and crossed fingers.</p>
+      <p class="hero-subtitle">The Other Dude is a modern management platform for MikroTik networks that gives you centralized visibility and control over your entire fleet.</p>
+      <p class="hero-subtitle hero-subtitle--muted">Designed for operators who run real networks &mdash; from small deployments to large distributed infrastructures.</p>
       <div class="hero-actions">
         <a href="docs.html#quickstart" class="btn btn-primary">Get Started</a>
-        <a href="docs.html" class="btn btn-secondary">View Documentation</a>
+        <a href="https://github.com/staack/the-other-dude" class="btn btn-secondary" rel="noopener">View on GitHub</a>
       </div>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════ -->
-  <!-- Features                                    -->
+  <!-- What It Does                                -->
   <!-- ═══════════════════════════════════════════ -->
-  <section id="features" class="features-section">
+  <section id="what-it-does" class="features-section">
     <div class="container">
-      <span class="section-label">FEATURES</span>
-      <h2 class="section-title">Everything you need to manage your fleet</h2>
-      <p class="section-desc">From device discovery to firmware upgrades, The Other Dude gives you complete control over your MikroTik infrastructure.</p>
+      <span class="section-label">WHAT IT DOES</span>
+      <h2 class="section-title">Manage MikroTik routers at scale without the chaos of manual tools</h2>
+      <p class="section-desc">With a single interface you can:</p>
 
-      <div class="features-grid">
-
-        <!-- Fleet Management -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="8" width="20" height="8" rx="2"/>
-              <line x1="6" y1="12" x2="6" y2="12"/>
-              <line x1="10" y1="12" x2="10" y2="12"/>
-              <line x1="6" y1="16" x2="6" y2="20"/>
-              <line x1="18" y1="16" x2="18" y2="20"/>
-              <line x1="12" y1="4" x2="12" y2="8"/>
-              <circle cx="12" cy="3" r="1"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">Fleet Management</h3>
-          <p class="feature-desc">Dashboard with real-time status, virtual-scrolled fleet table, subnet scanning, and per-device detail pages with live metrics.</p>
-        </div>
-
-        <!-- Configuration -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">Configuration</h3>
-          <p class="feature-desc">Browse and edit RouterOS config in real-time. Two-phase push with panic-revert ensures you never brick a remote device. Batch templates for fleet-wide changes.</p>
-        </div>
-
-        <!-- Monitoring -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">Monitoring</h3>
-          <p class="feature-desc">Real-time CPU, memory, and traffic via SSE. Threshold-based alerts with email, webhook, Slack, and webhook push notifications. Interactive topology map.</p>
-        </div>
-
-        <!-- Zero-Knowledge Security -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              <circle cx="12" cy="16" r="1"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">Zero-Knowledge Security</h3>
-          <p class="feature-desc">1Password-style SRP-6a auth&nbsp;&mdash; the server never sees your password. Per-tenant envelope encryption via OpenBao Transit. Internal CA for device TLS.</p>
-        </div>
-
-        <!-- Multi-Tenant -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 21h18"/>
-              <path d="M5 21V7l8-4v18"/>
-              <path d="M19 21V11l-6-4"/>
-              <line x1="9" y1="9" x2="9" y2="9.01"/>
-              <line x1="9" y1="13" x2="9" y2="13.01"/>
-              <line x1="9" y1="17" x2="9" y2="17.01"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">Multi-Tenant</h3>
-          <p class="feature-desc">PostgreSQL Row-Level Security isolates tenants at the database layer. RBAC with four roles. API keys for automation.</p>
-        </div>
-
-        <!-- Operations -->
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-            </svg>
-          </div>
-          <h3 class="feature-title">Operations</h3>
-          <p class="feature-desc">Firmware management, PDF reports, audit trail, maintenance windows, config backup with git-backed version history and diff.</p>
-        </div>
-
-      </div>
+      <ul class="content-list">
+        <li>Monitor device health and metrics in real time</li>
+        <li>Push configuration changes across many routers</li>
+        <li>Track configuration history and diffs</li>
+        <li>Manage firmware upgrades</li>
+        <li>Discover and visualize network topology</li>
+        <li>Maintain secure backups of router configurations</li>
+      </ul>
+      <p class="section-desc section-desc--emphasis">Everything in one place.</p>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════ -->
-  <!-- Architecture                                -->
+  <!-- Safe Configuration                          -->
   <!-- ═══════════════════════════════════════════ -->
-  <section id="architecture" class="arch-section">
+  <section class="features-section features-section--alt">
     <div class="container">
-      <span class="section-label">ARCHITECTURE</span>
-      <h2 class="section-title">Built for reliability at scale</h2>
+      <span class="section-label">SAFE CONFIGURATION</span>
+      <h2 class="section-title">Push changes with confidence</h2>
+      <p class="section-desc">Remote configuration changes can be risky. The Other Dude includes a two-phase push system with automatic rollback protection to help prevent accidental lockouts and configuration mistakes.</p>
 
-      <div class="arch-visual">
-        <!-- Row 1: Frontend -->
-        <div class="arch-row">
-          <div class="arch-node arch-node--app">
-            <div class="arch-node-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            </div>
-            <div class="arch-node-label">Frontend</div>
-            <div class="arch-node-tech">React 19 &middot; nginx</div>
-          </div>
-        </div>
-        <div class="arch-connector"><div class="arch-connector-line"></div><span class="arch-connector-label">/api/ proxy</span></div>
-
-        <!-- Row 2: Backend API -->
-        <div class="arch-row">
-          <div class="arch-node arch-node--app">
-            <div class="arch-node-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-            </div>
-            <div class="arch-node-label">Backend API</div>
-            <div class="arch-node-tech">FastAPI &middot; Python 3.12</div>
-          </div>
-        </div>
-        <div class="arch-connector"><div class="arch-connector-line arch-connector-line--triple"></div></div>
-
-        <!-- Row 3: Infrastructure (3 nodes) -->
-        <div class="arch-row arch-row--triple">
-          <div class="arch-node arch-node--infra">
-            <div class="arch-node-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-            </div>
-            <div class="arch-node-label">PostgreSQL</div>
-            <div class="arch-node-tech">TimescaleDB &middot; RLS</div>
-          </div>
-          <div class="arch-node arch-node--infra">
-            <div class="arch-node-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-            </div>
-            <div class="arch-node-label">Redis</div>
-            <div class="arch-node-tech">Locks &middot; Cache</div>
-          </div>
-          <div class="arch-node arch-node--infra">
-            <div class="arch-node-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            </div>
-            <div class="arch-node-label">NATS</div>
-            <div class="arch-node-tech">JetStream pub/sub</div>
-          </div>
-        </div>
-        <div class="arch-connector"><div class="arch-connector-line arch-connector-line--triple"></div></div>
-
-        <!-- Row 4: Go Poller -->
-        <div class="arch-row">
-          <div class="arch-node arch-node--app">
-            <div class="arch-node-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-            </div>
-            <div class="arch-node-label">Go Poller</div>
-            <div class="arch-node-tech">RouterOS binary API &middot; port 8729</div>
-          </div>
-        </div>
-        <div class="arch-connector"><div class="arch-connector-line"></div></div>
-
-        <!-- Row 5: Devices -->
-        <div class="arch-row">
-          <div class="arch-node arch-node--device">
-            <div class="arch-node-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
-            </div>
-            <div class="arch-node-label">RouterOS Fleet</div>
-            <div class="arch-node-tech">Your MikroTik devices</div>
-          </div>
-        </div>
-      </div>
-
-      <ul class="arch-bullets">
-        <li>Three-service stack: React frontend, Python API, Go poller&nbsp;&mdash; each independently scalable</li>
-        <li>PostgreSQL RLS enforces tenant isolation at the database layer, not the application layer</li>
-        <li>NATS JetStream delivers real-time events from poller to frontend via SSE</li>
-        <li>OpenBao Transit provides per-tenant envelope encryption for zero-knowledge credential storage</li>
+      <ul class="content-list">
+        <li>Two-phase configuration push</li>
+        <li>Automatic rollback safety</li>
+        <li>Configuration diff and history</li>
+        <li>Controlled fleet-wide changes</li>
       </ul>
     </div>
   </section>
 
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Built for Real Operators                    -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="features-section">
+    <div class="container">
+      <span class="section-label">WHO IT&rsquo;S FOR</span>
+      <h2 class="section-title">Built for real operators</h2>
+      <p class="section-desc">The Other Dude is designed for people who operate MikroTik networks in the real world:</p>
+
+      <ul class="content-list">
+        <li>Managed Service Providers</li>
+        <li>Wireless ISPs</li>
+        <li>Network engineers managing distributed sites</li>
+        <li>Homelab operators running large environments</li>
+      </ul>
+      <p class="section-desc">If you manage more than a handful of routers, centralized control becomes essential.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- Designed for Scale                          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <section class="features-section features-section--alt">
+    <div class="container">
+      <span class="section-label">SCALE</span>
+      <h2 class="section-title">Designed for scale</h2>
+      <p class="section-desc">The Other Dude was built from the start to support modern infrastructure.</p>
+
+      <ul class="content-list">
+        <li>Kubernetes-native deployment</li>
+        <li>Horizontally scalable pollers</li>
+        <li>Event-driven architecture</li>
+        <li>PostgreSQL + TimescaleDB metrics storage</li>
+      </ul>
+      <p class="section-desc">Deploy small or scale to thousands of routers.</p>
+    </div>
+  </section>
 
   <!-- ═══════════════════════════════════════════ -->
   <!-- Screenshots                                 -->
@@ -445,10 +334,12 @@
   <!-- ═══════════════════════════════════════════ -->
   <section class="cta-section">
     <div class="container">
-      <h2 class="cta-title">Ready to manage your fleet?</h2>
-      <p class="cta-desc">Get started in minutes. Self-hosted, open-source, and built for the MikroTik community.</p>
+      <span class="section-label">OPEN SOURCE</span>
+      <h2 class="cta-title">Centralized management for MikroTik networks</h2>
+      <p class="cta-desc">The Other Dude is open source and available on GitHub. Run it yourself, contribute improvements, or adapt it for your own infrastructure.</p>
+      <p class="cta-tagline">Less time juggling tools. More time running your network.</p>
       <div class="cta-actions">
-        <a href="docs.html" class="btn btn-primary">Read the Docs</a>
+        <a href="https://github.com/staack/the-other-dude" class="btn btn-primary" rel="noopener">View on GitHub</a>
         <a href="docs.html#quickstart" class="btn btn-secondary">Quick Start Guide</a>
       </div>
     </div>
@@ -481,7 +372,7 @@
       </div>
       <nav class="footer-links">
         <a href="docs.html">Docs</a>
-        <a href="#architecture">Architecture</a>
+        <a href="#what-it-does">Features</a>
         <a href="docs.html#security">Security</a>
         <a href="docs.html#api">API Reference</a>
         <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>

@@ -379,8 +379,17 @@ ul, ol {
   font-size: clamp(1.1rem, 2vw, 1.35rem);
   color: var(--text-secondary);
   max-width: 600px;
-  margin: 0 auto 48px;
+  margin: 0 auto 16px;
   line-height: 1.7;
+}
+
+.hero-subtitle:last-of-type {
+  margin-bottom: 48px;
+}
+
+.hero-subtitle--muted {
+  color: var(--text-muted);
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
 }
 
 .hero-actions {
@@ -476,9 +485,53 @@ ul, ol {
 .section-desc {
   color: var(--text-secondary);
   max-width: 600px;
-  margin-bottom: 64px;
+  margin-bottom: 32px;
   font-size: 1.1rem;
   line-height: 1.7;
+}
+
+.section-desc--emphasis {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 1.2rem;
+  margin-top: 32px;
+}
+
+.content-list {
+  list-style: none;
+  max-width: 600px;
+  padding: 0;
+}
+
+.content-list li {
+  position: relative;
+  padding-left: 24px;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.content-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.features-section--alt {
+  background: var(--bg-surface);
+}
+
+.cta-tagline {
+  color: var(--text-secondary);
+  font-size: 1.15rem;
+  font-style: italic;
+  margin-bottom: 32px;
 }
 
 .features-grid {
