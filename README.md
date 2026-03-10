@@ -29,42 +29,16 @@ real-time monitoring, and zero-knowledge security, all self-hosted on your infra
 ## Architecture
 
 ```
-                        +----------------+
-                        |    Frontend    |
-                        |  React / Vite  |
-                        +-------+--------+
-                                |
-                           /api/ proxy
-                                |
-                        +-------v--------+
-                        |    Backend     |
-                        |    FastAPI     |
-                        +--+----+-----+--+
-                           |    |     |
-             +-------------+    |     +--------------+
-             |                  |                    |
-      +------v-------+  +------v------+  +----------v----------+
-      |  PostgreSQL   |  |    Redis    |  |        NATS         |
-      |  TimescaleDB  |  |   (locks,   |  |     JetStream       |
-      |    (RLS)      |  |   caching)  |  |     (pub/sub)       |
-      +------^-------+  +------^------+  +----------^----------+
-             |                  |                    |
-      +------+------------------+--------------------+------+
-      |                   Go Poller                         |
-      |         RouterOS binary API (port 8729 TLS)         |
-      +---------------------------+-------------------------+
-                                  |
-                       +----------v-----------+
-                       |    RouterOS Fleet    |
-                       |    (your devices)    |
-                       +----------------------+
+Routers
+   ↓
+Pollers (Go)
+   ↓
+NATS Event Bus
+   ↓
+API + TimescaleDB
+   ↓
+Web UI
 ```
-
-The **Go poller** communicates with RouterOS devices using the binary API over TLS,
-publishing metrics to NATS and persisting to PostgreSQL with TimescaleDB hypertables.
-The **FastAPI backend** enforces tenant isolation via Row-Level Security and streams
-real-time events to the **React frontend** over SSE. **OpenBao** provides Transit
-secret engine for per-tenant envelope encryption.
 
 ---
 
