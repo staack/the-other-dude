@@ -123,7 +123,7 @@ class Settings(BaseSettings):
 
     # Password reset
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
-    APP_BASE_URL: str = "http://localhost:5173"
+    APP_BASE_URL: str = "http://localhost:3000"
 
     # App settings
     APP_NAME: str = "TOD - The Other Dude"

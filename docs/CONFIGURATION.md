@@ -13,7 +13,7 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | `ENVIRONMENT` | `dev` | Runtime environment: `dev`, `staging`, or `production` |
 | `DEBUG` | `false` | Enable debug mode |
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:5173,http://localhost:8080` | Comma-separated list of allowed CORS origins |
-| `APP_BASE_URL` | `http://localhost:5173` | Frontend base URL (used in password reset emails) |
+| `APP_BASE_URL` | `http://localhost:3000` | Frontend base URL (used in password reset emails) |
 
 ### Authentication & JWT
 
