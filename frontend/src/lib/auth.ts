@@ -159,7 +159,14 @@ export const useAuth = create<AuthState>((set, get) => ({
       const detail = axErr?.response?.data?.detail ?? ''
       let message: string
       if (axErr?.response?.status === 401) {
-        // SRP proof failed — wrong password, wrong Secret Key, or stale credentials
+        // SRP proof failed — wrong password, wrong Secret Key, or stale credentials.
+        // If the user didn't manually provide a key, the stored IndexedDB key is wrong
+        // (e.g. server was rebuilt, user re-enrolled). Show the Secret Key field so they
+        // can enter their current key from their Emergency Kit.
+        if (!secretKeyInput) {
+          set({ needsSecretKey: true, isLoading: false, isDerivingKeys: false, error: 'This device has an outdated Secret Key. Please enter your current Secret Key from your Emergency Kit.' })
+          return
+        }
         message = 'Sign in failed. Check your password and Secret Key. If you lost your Secret Key, use "Forgot password?" to reset your account and get a new one.'
       } else if (detail.includes('initialization failed')) {
         message = 'Authentication setup failed. Please try again or reset your password.'
