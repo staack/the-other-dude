@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { useState, useEffect } from 'react'
 import { Plus, Scan, ChevronRight } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -17,6 +17,7 @@ const searchSchema = z.object({
   sort_dir: z.enum(['asc', 'desc']).optional(),
   page: z.number().int().positive().optional(),
   page_size: z.number().int().positive().optional(),
+  add: z.string().optional(),
 })
 
 export const Route = createFileRoute('/_authenticated/tenants/$tenantId/devices/')({
@@ -28,7 +29,22 @@ function DevicesPage() {
   const { tenantId } = Route.useParams()
   const search = Route.useSearch()
   const { user } = useAuth()
-  const [addOpen, setAddOpen] = useState(false)
+  const navigate = useNavigate()
+  const [addOpen, setAddOpen] = useState(search.add === 'true')
+
+  // Open dialog when ?add=true is set (e.g. from empty state button)
+  useEffect(() => {
+    if (search.add === 'true') {
+      setAddOpen(true)
+      // Clear the search param so it doesn't re-open on navigation
+      void navigate({
+        to: '/tenants/$tenantId/devices',
+        params: { tenantId },
+        search: { ...search, add: undefined },
+        replace: true,
+      })
+    }
+  }, [search.add])
 
   const { data: tenant } = useQuery({
     queryKey: ['tenants', tenantId],
