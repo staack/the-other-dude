@@ -227,6 +227,36 @@
   }
 
   /* -------------------------------------------------- */
+  /*  8. Bullet throb on scroll (landing page)          */
+  /* -------------------------------------------------- */
+  function initBulletThrob() {
+    var items = document.querySelectorAll('.content-list li');
+    if (!items.length) return;
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            /* stagger each bullet by its index within the list */
+            var li = entry.target;
+            var siblings = Array.from(li.parentElement.children);
+            var idx = siblings.indexOf(li);
+            setTimeout(function () {
+              li.classList.add('in-view');
+            }, idx * 120);
+            observer.unobserve(li);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    items.forEach(function (item) {
+      observer.observe(item);
+    });
+  }
+
+  /* -------------------------------------------------- */
   /*  Init on DOMContentLoaded                          */
   /* -------------------------------------------------- */
   document.addEventListener('DOMContentLoaded', function () {
@@ -237,5 +267,6 @@
     initReveal();
     initSmoothScroll();
     initActiveNav();
+    initBulletThrob();
   });
 })();
