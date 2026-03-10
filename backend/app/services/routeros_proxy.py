@@ -143,8 +143,8 @@ async def remove_entry(
 async def execute_cli(device_id: str, cli_command: str) -> dict[str, Any]:
     """Execute an arbitrary RouterOS CLI command.
 
-    For commands that don't follow the standard /path/action pattern.
-    The command is sent as-is to the RouterOS API.
+    Parses a CLI-style string like '/ping address=8.8.8.8 count=4' into the
+    RouterOS API command ('/ping') and args (['=address=8.8.8.8', '=count=4']).
 
     Args:
         device_id: Device UUID.
@@ -153,7 +153,16 @@ async def execute_cli(device_id: str, cli_command: str) -> dict[str, Any]:
     Returns:
         Command response dict.
     """
-    return await execute_command(device_id, cli_command)
+    parts = cli_command.strip().split()
+    command = parts[0]
+    # RouterOS API args need '=' prefix: 'address=8.8.8.8' -> '=address=8.8.8.8'
+    args = []
+    for p in parts[1:]:
+        if "=" in p and not p.startswith("="):
+            args.append(f"={p}")
+        else:
+            args.append(p)
+    return await execute_command(device_id, command, args=args if args else None)
 
 
 async def close() -> None:
