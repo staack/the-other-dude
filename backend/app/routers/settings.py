@@ -124,7 +124,7 @@ async def update_smtp_settings(
     if data.smtp_password is not None:
         updates["smtp_password"] = data.smtp_password
 
-    await _set_system_settings(updates, str(user.id))
+    await _set_system_settings(updates, str(user.user_id))
     return {"status": "ok"}
 
 
