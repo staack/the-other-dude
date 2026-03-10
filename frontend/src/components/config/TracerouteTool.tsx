@@ -28,7 +28,7 @@ interface HopResult {
 }
 
 export function TracerouteTool({ tenantId, deviceId }: ConfigPanelProps) {
-  const [target, setTarget] = useState('')
+  const [target, setTarget] = useState('8.8.8.8')
   const [maxHops, setMaxHops] = useState('30')
   const [timeout, setTimeout] = useState('1000')
   const [protocol, setProtocol] = useState('icmp')

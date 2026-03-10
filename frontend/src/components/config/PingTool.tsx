@@ -34,7 +34,7 @@ interface PingStats {
 }
 
 export function PingTool({ tenantId, deviceId }: ConfigPanelProps) {
-  const [target, setTarget] = useState('')
+  const [target, setTarget] = useState('8.8.8.8')
   const [count, setCount] = useState('4')
   const [size, setSize] = useState('64')
   const [srcAddress, setSrcAddress] = useState('')
