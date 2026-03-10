@@ -103,7 +103,7 @@ export function SecretKeyInput({ value, onChange, error }: SecretKeyInputProps) 
     [groups],
   )
 
-  // 26-char key = 4 groups of 6 + 1 group of 2
+  // 27-char key = 4 groups of 6 + 1 group of 3 (old keys: 26 chars, last group = 2)
   const isComplete =
     groups.slice(0, 4).every((g) => g.length === 6) && groups[4].length >= 2
   const hasContent = groups.some((g) => g.length > 0)
@@ -151,7 +151,7 @@ export function SecretKeyInput({ value, onChange, error }: SecretKeyInputProps) 
       </div>
       {error && hasContent && !isComplete && (
         <p className="text-xs text-error">
-          Enter all 30 characters of your Secret Key
+          Enter all characters of your Secret Key
         </p>
       )}
     </div>

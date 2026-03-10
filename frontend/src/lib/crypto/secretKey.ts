@@ -1,18 +1,19 @@
 /**
  * Secret Key generation and parsing.
  *
- * The Secret Key is a 128-bit CSPRNG value formatted as A3-XXXXXX-XXXXXX-XXXXXX-XXXXXX-XX
+ * The Secret Key is a 128-bit CSPRNG value formatted as A3-XXXXXX-XXXXXX-XXXXXX-XXXXXX-XXX
  * using a 30-character alphabet (ambiguous characters removed). It is generated client-side
  * and NEVER transmitted to the server.
  *
- * Encoding: 16 bytes (128 bits) -> BigInt -> base-30 -> 26 characters -> grouped with hyphens.
+ * Encoding: 16 bytes (128 bits) -> BigInt -> base-30 -> 27 characters -> grouped with hyphens.
+ * 27 chars needed because ceil(128 / log2(30)) = 27 (30^26 < 2^128 < 30^27).
  */
 
 // Uppercase letters minus O, I, L, S (ambiguous) + digits minus 0, 1
 // = 22 letters + 8 digits = 30 characters
 const CHARSET = 'ABCDEFGHJKMNPQRTUVWXYZ23456789';
 const BASE = BigInt(CHARSET.length); // 30n
-const KEY_CHAR_LENGTH = 26;
+const KEY_CHAR_LENGTH = 27;
 const RAW_BYTE_LENGTH = 16;
 
 /**
@@ -27,7 +28,7 @@ export function generateSecretKey(): { formatted: string; raw: Uint8Array } {
 }
 
 /**
- * Encode 16 raw bytes into the A3-XXXXXX-XXXXXX-XXXXXX-XXXXXX-XX format.
+ * Encode 16 raw bytes into the A3-XXXXXX-XXXXXX-XXXXXX-XXXXXX-XXX format.
  */
 export function formatSecretKey(raw: Uint8Array): string {
   // Convert 16 bytes to a BigInt (big-endian)
@@ -36,14 +37,14 @@ export function formatSecretKey(raw: Uint8Array): string {
     n = (n << 8n) | BigInt(byte);
   }
 
-  // Base-30 encode to 26 characters (ceil(128 / log2(30)) ~= 26.1)
+  // Base-30 encode to 27 characters (ceil(128 / log2(30)) = 27)
   const chars: string[] = [];
   for (let i = 0; i < KEY_CHAR_LENGTH; i++) {
     chars.push(CHARSET[Number(n % BASE)]);
     n = n / BASE;
   }
 
-  // Format: A3-XXXXXX-XXXXXX-XXXXXX-XXXXXX-XX
+  // Format: A3-XXXXXX-XXXXXX-XXXXXX-XXXXXX-XXX
   const keyStr = chars.join('');
   const groups: string[] = [];
   for (let i = 0; i < keyStr.length; i += 6) {
@@ -61,7 +62,8 @@ export function parseSecretKey(input: string): Uint8Array | null {
   const cleaned = input.replace(/-/g, '').replace(/\s/g, '').toUpperCase();
   if (!cleaned.startsWith('A3')) return null;
   const keyPart = cleaned.slice(2);
-  if (keyPart.length < KEY_CHAR_LENGTH) return null;
+  // Accept both old 26-char and new 27-char keys for backward compatibility
+  if (keyPart.length < 26) return null;
 
   // Reverse base-30 encoding: reconstruct the BigInt
   // chars were pushed least-significant first, so index 0 is the lowest digit
