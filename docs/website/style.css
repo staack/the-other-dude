@@ -369,13 +369,13 @@ ul, ol {
 }
 
 .hero-title .gradient-text {
-  background: linear-gradient(90deg, var(--text-primary) 50%, var(--accent) 50%, var(--accent-secondary) 100%);
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-secondary) 50%, var(--text-primary) 50%);
   background-size: 200% 100%;
   background-position: 100% 0;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: gradient-fill 1.2s ease-out 0.3s forwards;
+  animation: gradient-fill 1.2s ease-out 0.3s both;
 }
 
 @keyframes gradient-fill {
