@@ -227,6 +227,54 @@
   }
 
   /* -------------------------------------------------- */
+  /*  8. Bullet throb — one at a time per list          */
+  /* -------------------------------------------------- */
+  function initBulletThrob() {
+    var lists = document.querySelectorAll('.content-list');
+    lists.forEach(function (list) {
+      var items = list.querySelectorAll('li');
+      var count = items.length;
+      if (!count) return;
+
+      /* each bullet gets 0.8s of the cycle; total = count * 0.8s */
+      var step = 0.8;
+      var total = count * step;
+
+      /*
+       * The keyframe runs 0→50%→100% as throb.
+       * We shrink the active window so only ~1/count of the cycle is the throb.
+       * Rewrite: 0-X% is the throb, X-100% is idle.
+       */
+      var pct = (1 / count) * 100;
+      var halfPct = pct / 2;
+
+      /* inject a scoped keyframe for this list size */
+      var name = 'bt-' + count;
+      if (!document.querySelector('[data-bt="' + name + '"]')) {
+        var style = document.createElement('style');
+        style.setAttribute('data-bt', name);
+        style.textContent =
+          '@keyframes ' + name + ' {' +
+          '0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(42,157,143,0); }' +
+          halfPct.toFixed(1) + '% { transform: scale(1.5); box-shadow: 0 0 8px 2px rgba(42,157,143,0.3); }' +
+          pct.toFixed(1) + '% { transform: scale(1); box-shadow: 0 0 0 0 rgba(42,157,143,0); }' +
+          '100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(42,157,143,0); }' +
+          '}';
+        document.head.appendChild(style);
+      }
+
+      items.forEach(function (li, i) {
+        li.style.setProperty('--bt-animation', name + ' ' + total + 's ease-in-out infinite ' + (i * step) + 's');
+      });
+    });
+
+    /* apply via a single rule */
+    var rule = document.createElement('style');
+    rule.textContent = '.content-list li::before { animation: var(--bt-animation, none); }';
+    document.head.appendChild(rule);
+  }
+
+  /* -------------------------------------------------- */
   /*  Init on DOMContentLoaded                          */
   /* -------------------------------------------------- */
   document.addEventListener('DOMContentLoaded', function () {
@@ -237,5 +285,6 @@
     initReveal();
     initSmoothScroll();
     initActiveNav();
+    initBulletThrob();
   });
 })();

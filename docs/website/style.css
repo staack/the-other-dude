@@ -538,10 +538,6 @@ ul, ol {
   50%      { transform: scale(1.5); box-shadow: 0 0 8px 2px rgba(42, 157, 143, 0.3); }
 }
 
-.content-list li::before {
-  animation: bullet-throb 2.4s ease-in-out infinite;
-}
-
 .features-section--alt {
   background: var(--bg-surface);
 }
