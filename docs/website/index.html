@@ -107,6 +107,7 @@
       </a>
       <div class="nav-links">
         <a href="#what-it-does" class="nav-link">Features</a>
+        <a href="#architecture" class="nav-link">Architecture</a>
         <a href="#screenshots" class="nav-link">Screenshots</a>
         <a href="docs.html" class="nav-link">Docs</a>
         <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
@@ -151,8 +152,8 @@
       </div>
       <h1 class="hero-title"><span class="gradient-text">Centralized Management for MikroTik Networks</span></h1>
       <p class="hero-subtitle">Managing MikroTik routers shouldn&rsquo;t require dozens of WinBox tabs, SSH scripts, and crossed fingers.</p>
-      <p class="hero-subtitle">The Other Dude is a modern management platform for MikroTik networks that gives you centralized visibility and control over your entire fleet.</p>
-      <p class="hero-subtitle hero-subtitle--muted">Designed for operators who run real networks &mdash; from small deployments to large distributed infrastructures.</p>
+      <p class="hero-subtitle">The Other Dude gives you centralized visibility and control over your entire MikroTik fleet.</p>
+      <p class="hero-subtitle hero-subtitle--muted">Monitor devices, push configuration safely, and operate your network from a single interface.</p>
       <div class="hero-actions">
         <a href="docs.html#quickstart" class="btn btn-primary">Get Started</a>
         <a href="https://github.com/staack/the-other-dude" class="btn btn-secondary" rel="noopener">View on GitHub</a>
@@ -165,7 +166,7 @@
   <!-- ═══════════════════════════════════════════ -->
   <section id="what-it-does" class="features-section">
     <div class="container">
-      <span class="section-label">WHAT IT DOES</span>
+      <span class="section-label">WHAT THE OTHER DUDE DOES</span>
       <h2 class="section-title">Manage MikroTik routers at scale without the chaos of manual tools</h2>
       <p class="section-desc">With a single interface you can:</p>
 
@@ -182,58 +183,65 @@
   </section>
 
   <!-- ═══════════════════════════════════════════ -->
-  <!-- Safe Configuration                          -->
+  <!-- Safe Configuration Changes                  -->
   <!-- ═══════════════════════════════════════════ -->
   <section class="features-section features-section--alt">
     <div class="container">
-      <span class="section-label">SAFE CONFIGURATION</span>
+      <span class="section-label">SAFE CONFIGURATION CHANGES</span>
       <h2 class="section-title">Push changes with confidence</h2>
-      <p class="section-desc">Remote configuration changes can be risky. The Other Dude includes a two-phase push system with automatic rollback protection to help prevent accidental lockouts and configuration mistakes.</p>
+      <p class="section-desc">Remote configuration changes can be risky.</p>
+      <p class="section-desc">The Other Dude includes a two-phase push system with automatic panic-revert protection to help prevent accidental lockouts and configuration mistakes.</p>
 
       <ul class="content-list">
         <li>Two-phase configuration push</li>
-        <li>Automatic rollback safety</li>
+        <li>Automatic panic-revert rollback</li>
         <li>Configuration diff and history</li>
-        <li>Controlled fleet-wide changes</li>
+        <li>Fleet-wide templates and controlled rollouts</li>
       </ul>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════ -->
-  <!-- Built for Real Operators                    -->
+  <!-- Who This Is For                             -->
   <!-- ═══════════════════════════════════════════ -->
   <section class="features-section">
     <div class="container">
-      <span class="section-label">WHO IT&rsquo;S FOR</span>
+      <span class="section-label">WHO THIS IS FOR</span>
       <h2 class="section-title">Built for real operators</h2>
       <p class="section-desc">The Other Dude is designed for people who operate MikroTik networks in the real world:</p>
 
       <ul class="content-list">
-        <li>Managed Service Providers</li>
-        <li>Wireless ISPs</li>
-        <li>Network engineers managing distributed sites</li>
-        <li>Homelab operators running large environments</li>
+        <li>Managed Service Providers managing many client networks</li>
+        <li>Wireless ISPs running large router fleets</li>
+        <li>Network engineers operating distributed infrastructure</li>
+        <li>Homelab operators managing larger environments</li>
       </ul>
-      <p class="section-desc">If you manage more than a handful of routers, centralized control becomes essential.</p>
     </div>
   </section>
 
   <!-- ═══════════════════════════════════════════ -->
-  <!-- Designed for Scale                          -->
+  <!-- Architecture                                -->
   <!-- ═══════════════════════════════════════════ -->
-  <section class="features-section features-section--alt">
+  <section id="architecture" class="features-section features-section--alt">
     <div class="container">
-      <span class="section-label">SCALE</span>
-      <h2 class="section-title">Designed for scale</h2>
-      <p class="section-desc">The Other Dude was built from the start to support modern infrastructure.</p>
+      <span class="section-label">ARCHITECTURE</span>
+      <h2 class="section-title">Event-driven, designed for reliability and horizontal scaling</h2>
 
-      <ul class="content-list">
-        <li>Kubernetes-native deployment</li>
-        <li>Horizontally scalable pollers</li>
-        <li>Event-driven architecture</li>
-        <li>PostgreSQL + TimescaleDB metrics storage</li>
-      </ul>
-      <p class="section-desc">Deploy small or scale to thousands of routers.</p>
+      <div class="arch-flow">
+        <div class="arch-flow-step">Routers</div>
+        <div class="arch-flow-arrow">&darr;</div>
+        <div class="arch-flow-step">Go Pollers</div>
+        <div class="arch-flow-arrow">&darr;</div>
+        <div class="arch-flow-step">NATS Event Bus</div>
+        <div class="arch-flow-arrow">&darr;</div>
+        <div class="arch-flow-step">FastAPI Backend</div>
+        <div class="arch-flow-arrow">&darr;</div>
+        <div class="arch-flow-step">PostgreSQL + TimescaleDB</div>
+        <div class="arch-flow-arrow">&darr;</div>
+        <div class="arch-flow-step">React Web Interface</div>
+      </div>
+
+      <p class="section-desc">This architecture allows the system to scale horizontally while keeping polling, processing, and the user interface separated.</p>
     </div>
   </section>
 
@@ -298,7 +306,7 @@
   <section class="quickstart-section">
     <div class="container">
       <span class="section-label">QUICK START</span>
-      <h2 class="section-title">Up and running in minutes</h2>
+      <h2 class="section-title">Run The Other Dude locally in minutes using Docker</h2>
 
       <div class="code-window">
         <div class="code-window-header">
@@ -307,24 +315,9 @@
           <span class="code-dot code-dot--green"></span>
           <span class="code-window-title">Terminal</span>
         </div>
-        <pre class="code-window-body"><code><span class="code-comment"># Clone the repo</span>
-<span class="code-cmd">git clone https://github.com/staack/the-other-dude.git</span>
+        <pre class="code-window-body"><code><span class="code-cmd">git clone https://github.com/staack/the-other-dude</span>
 <span class="code-cmd">cd the-other-dude</span>
-
-<span class="code-comment"># Configure</span>
-<span class="code-cmd">cp .env.example .env</span>
-
-<span class="code-comment"># Start infrastructure</span>
-<span class="code-cmd">docker compose up -d</span>
-
-<span class="code-comment"># Build app images</span>
-<span class="code-cmd">docker compose build api &amp;&amp; docker compose build poller &amp;&amp; docker compose build frontend</span>
-
-<span class="code-comment"># Launch</span>
-<span class="code-cmd">docker compose up -d</span>
-
-<span class="code-comment"># Open TOD</span>
-<span class="code-cmd">open http://localhost:3000</span></code></pre>
+<span class="code-cmd">docker compose up</span></code></pre>
       </div>
     </div>
   </section>
@@ -335,12 +328,14 @@
   <section class="cta-section">
     <div class="container">
       <span class="section-label">OPEN SOURCE</span>
-      <h2 class="cta-title">Centralized management for MikroTik networks</h2>
-      <p class="cta-desc">The Other Dude is open source and available on GitHub. Run it yourself, contribute improvements, or adapt it for your own infrastructure.</p>
-      <p class="cta-tagline">Less time juggling tools. More time running your network.</p>
+      <h2 class="cta-title">The Other Dude is open source and self-hosted</h2>
+      <p class="cta-desc">Run it yourself, modify it, or contribute improvements.</p>
       <div class="cta-actions">
         <a href="https://github.com/staack/the-other-dude" class="btn btn-primary" rel="noopener">View on GitHub</a>
-        <a href="docs.html#quickstart" class="btn btn-secondary">Quick Start Guide</a>
+      </div>
+      <div class="cta-closing">
+        <p class="cta-closing-title">Centralized management for MikroTik networks.</p>
+        <p class="cta-tagline">Less time juggling tools.<br>More time running your network.</p>
       </div>
     </div>
   </section>

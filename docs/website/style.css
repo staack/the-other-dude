@@ -375,7 +375,7 @@ ul, ol {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: gradient-fill 1.2s ease-out 0.3s both;
+  animation: gradient-fill 2s ease-out 0.3s both;
 }
 
 @keyframes gradient-fill {
@@ -548,6 +548,46 @@ ul, ol {
 
 .features-section--alt {
   background: var(--bg-surface);
+}
+
+/* Architecture flow diagram */
+.arch-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin: 40px 0;
+}
+
+.arch-flow-step {
+  font-family: "Fira Code", "SF Mono", monospace;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  padding: 10px 28px;
+  letter-spacing: 0.02em;
+}
+
+.arch-flow-arrow {
+  color: var(--accent);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 4px 0;
+}
+
+/* CTA closing */
+.cta-closing {
+  margin-top: 48px;
+}
+
+.cta-closing-title {
+  color: var(--text-primary);
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 1.3rem;
+  margin-bottom: 8px;
 }
 
 .features-grid {
