@@ -68,6 +68,32 @@ body {
   overflow-x: hidden;
 }
 
+/* Testing / Early Access banner */
+.testing-banner {
+  background: linear-gradient(90deg, #8B1A1A, #a82222);
+  color: #F5E6C8;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  position: relative;
+  z-index: 1000;
+}
+
+.testing-banner strong {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.testing-banner--light {
+  background: linear-gradient(90deg, #fef3cd, #fce8b2);
+  color: #664d03;
+}
+
+.testing-banner--light strong {
+  color: #523e02;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.2;

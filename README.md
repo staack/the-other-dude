@@ -2,6 +2,9 @@
 
 **Self-hosted MikroTik fleet management for MSPs.**
 
+> **Warning**
+> This software is in active development and testing. It is **not yet ready for production use**. APIs, database schemas, and features may change without notice. Use at your own risk.
+
 TOD is a multi-tenant platform for managing RouterOS devices at scale. It replaces
 the chaos of juggling WinBox sessions and SSH terminals across hundreds of routers
 with a single, centralized web interface -- fleet visibility, configuration management,
