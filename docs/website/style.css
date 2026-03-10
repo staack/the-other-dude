@@ -463,6 +463,13 @@ ul, ol {
   padding: 120px 0;
 }
 
+.features-section .container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
 .section-label {
   color: var(--accent);
   font-family: "Outfit", sans-serif;
@@ -480,6 +487,7 @@ ul, ol {
   color: var(--text-primary);
   margin-bottom: 16px;
   letter-spacing: -0.02em;
+  max-width: 700px;
 }
 
 .section-desc {
@@ -499,14 +507,15 @@ ul, ol {
 
 .content-list {
   list-style: none;
-  max-width: 600px;
+  max-width: 520px;
   padding: 0;
+  text-align: left;
 }
 
 .content-list li {
   position: relative;
   padding-left: 24px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   color: var(--text-secondary);
   font-size: 1.05rem;
   line-height: 1.6;
@@ -525,13 +534,6 @@ ul, ol {
 
 .features-section--alt {
   background: var(--bg-surface);
-}
-
-.cta-tagline {
-  color: var(--text-secondary);
-  font-size: 1.15rem;
-  font-style: italic;
-  margin-bottom: 32px;
 }
 
 .features-grid {
@@ -977,12 +979,20 @@ ul, ol {
   letter-spacing: -0.02em;
 }
 
-.cta-subtitle {
+.cta-subtitle,
+.cta-desc {
   color: var(--text-secondary);
   font-size: 1.1rem;
-  max-width: 500px;
-  margin: 0 auto 40px;
+  max-width: 550px;
+  margin: 0 auto 20px;
   line-height: 1.7;
+}
+
+.cta-tagline {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  font-style: italic;
+  margin: 0 auto 40px;
 }
 
 .cta-actions {
