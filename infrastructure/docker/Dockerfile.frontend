@@ -1,6 +1,6 @@
 # Multi-stage build for TOD Frontend
 # Stage 1: build — Node.js build environment
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Cap Node.js heap to 512 MB so tsc + vite build don't OOM a low-RAM server.
 # Vite's bundler defaults to using all available heap; on a 2-4 GB machine that
