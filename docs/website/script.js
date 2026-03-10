@@ -236,15 +236,17 @@
     var observer = new IntersectionObserver(
       function (entries) {
         entries.forEach(function (entry) {
+          var li = entry.target;
           if (entry.isIntersecting) {
             /* stagger each bullet by its index within the list */
-            var li = entry.target;
             var siblings = Array.from(li.parentElement.children);
             var idx = siblings.indexOf(li);
             setTimeout(function () {
               li.classList.add('in-view');
             }, idx * 120);
-            observer.unobserve(li);
+          } else {
+            /* reset when scrolled out so it throbs again on re-entry */
+            li.classList.remove('in-view');
           }
         });
       },
