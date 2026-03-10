@@ -24,7 +24,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /Volumes/ssd01/mikrotik/docker-data/postgres:/var/lib/postgresql/data
+      - ./docker-data/postgres:/var/lib/postgresql/data
       - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d mikrotik"]
@@ -45,7 +45,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - /Volumes/ssd01/mikrotik/docker-data/redis:/data
+      - ./docker-data/redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -67,7 +67,7 @@ services:
       - "4222:4222"
       - "8222:8222"
     volumes:
-      - /Volumes/ssd01/mikrotik/docker-data/nats:/data
+      - ./docker-data/nats:/data
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:8222/healthz || exit 1"]
       interval: 5s
@@ -124,8 +124,8 @@ services:
       - PGID=1000
       - TZ=UTC
     volumes:
-      - /Volumes/ssd01/mikrotik/docker-data/wireguard:/config
-      - /Volumes/ssd01/mikrotik/docker-data/wireguard/custom-cont-init.d:/custom-cont-init.d
+      - ./docker-data/wireguard:/config
+      - ./docker-data/wireguard/custom-cont-init.d:/custom-cont-init.d
     ports:
       - "51820:51820/udp"
     cap_add:
