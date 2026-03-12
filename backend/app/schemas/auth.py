@@ -19,7 +19,7 @@ class TokenResponse(BaseModel):
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str
+    refresh_token: Optional[str] = None  # Optional: also accepted via httpOnly cookie
 
 
 class UserMeResponse(BaseModel):

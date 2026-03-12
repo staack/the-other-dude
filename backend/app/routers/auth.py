@@ -75,6 +75,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 ACCESS_TOKEN_COOKIE = "access_token"
 ACCESS_TOKEN_MAX_AGE = 15 * 60  # 15 minutes in seconds
 
+# Refresh token cookie settings (httpOnly, longer-lived)
+REFRESH_TOKEN_COOKIE = "refresh_token"
+REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60  # 7 days in seconds
+
 # Cookie Secure flag requires HTTPS. Safari strictly enforces this —
 # it silently drops Secure cookies over plain HTTP, unlike Chrome
 # which exempts localhost. Auto-detect from CORS origins: if all
@@ -239,7 +243,7 @@ async def srp_verify_endpoint(
     )
     await db.commit()
 
-    # Set cookie (same as existing login)
+    # Set access token cookie
     response.set_cookie(
         key=ACCESS_TOKEN_COOKIE,
         value=access_token,
@@ -247,6 +251,16 @@ async def srp_verify_endpoint(
         httponly=True,
         secure=_COOKIE_SECURE,
         samesite="lax",
+    )
+    # Set refresh token cookie (httpOnly, scoped to refresh endpoint)
+    response.set_cookie(
+        key=REFRESH_TOKEN_COOKIE,
+        value=refresh_token,
+        max_age=REFRESH_TOKEN_MAX_AGE,
+        httponly=True,
+        secure=_COOKIE_SECURE,
+        samesite="lax",
+        path="/api/auth/refresh",
     )
 
     # Fetch encrypted key set
@@ -360,6 +374,18 @@ async def login(
             secure=_COOKIE_SECURE,
             samesite="lax",
         )
+        # Also set refresh token as httpOnly cookie so auto-refresh works
+        # without the frontend needing to persist the token in JS memory.
+        if not user.must_upgrade_auth:
+            response.set_cookie(
+                key=REFRESH_TOKEN_COOKIE,
+                value=refresh,
+                max_age=REFRESH_TOKEN_MAX_AGE,
+                httponly=True,
+                secure=_COOKIE_SECURE,
+                samesite="lax",
+                path="/api/auth/refresh",  # scope cookie to refresh endpoint only
+            )
 
         # Update last_login
         await db.execute(
@@ -400,17 +426,29 @@ async def login(
 @limiter.limit("10/minute")
 async def refresh_token(
     request: StarletteRequest,
-    body: RefreshRequest,
-    response: Response,
+    body: Optional[RefreshRequest] = None,
+    response: Response = None,
     db: AsyncSession = Depends(get_admin_db),
     redis: aioredis.Redis = Depends(get_redis),
+    refresh_token_cookie: Optional[str] = Cookie(default=None, alias="refresh_token"),
 ) -> TokenResponse:
     """
     Exchange a valid refresh token for a new access token.
+
+    Accepts the refresh token either in the JSON body (legacy) or as an
+    httpOnly cookie named 'refresh_token' (preferred — set automatically at login).
     Rate limited to 10 requests per minute per IP.
     """
+    # Resolve token: body takes precedence over cookie
+    raw_token = (body.refresh_token if body and body.refresh_token else None) or refresh_token_cookie
+    if not raw_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No refresh token provided",
+        )
+
     # Validate refresh token
-    payload = verify_token(body.refresh_token, expected_type="refresh")
+    payload = verify_token(raw_token, expected_type="refresh")
 
     user_id_str = payload.get("sub")
     if not user_id_str:
@@ -453,7 +491,7 @@ async def refresh_token(
     )
     new_refresh_token = create_refresh_token(user_id=user.id)
 
-    # Update cookie
+    # Rotate access token cookie
     response.set_cookie(
         key=ACCESS_TOKEN_COOKIE,
         value=new_access_token,
@@ -461,6 +499,16 @@ async def refresh_token(
         httponly=True,
         secure=_COOKIE_SECURE,
         samesite="lax",
+    )
+    # Rotate refresh token cookie (silent token rotation)
+    response.set_cookie(
+        key=REFRESH_TOKEN_COOKIE,
+        value=new_refresh_token,
+        max_age=REFRESH_TOKEN_MAX_AGE,
+        httponly=True,
+        secure=_COOKIE_SECURE,
+        samesite="lax",
+        path="/api/auth/refresh",
     )
 
     return TokenResponse(
@@ -500,6 +548,13 @@ async def logout(
         httponly=True,
         secure=_COOKIE_SECURE,
         samesite="lax",
+    )
+    response.delete_cookie(
+        key=REFRESH_TOKEN_COOKIE,
+        httponly=True,
+        secure=_COOKIE_SECURE,
+        samesite="lax",
+        path="/api/auth/refresh",
     )
 
 

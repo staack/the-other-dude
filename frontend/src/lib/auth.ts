@@ -145,7 +145,43 @@ export const useAuth = create<AuthState>((set, get) => ({
 
       // 8. Store AUK and unlock key set
       keyStore.setAUK(auk)
-      // TODO (Phase 30): Decrypt encrypted_key_set with AUK to get vault key
+
+      // Decrypt encrypted_key_set with AUK to get vault key + RSA private key.
+      // Non-fatal: if decryption fails (e.g. corrupted key set, wrong AUK) we log
+      // a warning and continue. Server-side Transit encryption still works; only
+      // Tier 1 (client-side) encrypted data will be inaccessible until re-auth.
+      if (result.encrypted_key_set) {
+        const ks = result.encrypted_key_set
+        try {
+          const b64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
+
+          // Unwrap vault key (AES-256-GCM) using AUK
+          const vaultKey = await crypto.subtle.unwrapKey(
+            'raw',
+            b64(ks.encrypted_vault_key),
+            auk,
+            { name: 'AES-GCM', iv: b64(ks.vault_key_nonce) },
+            { name: 'AES-GCM', length: 256 },
+            false, // non-extractable
+            ['encrypt', 'decrypt'],
+          )
+          keyStore.setVaultKey(vaultKey)
+
+          // Unwrap RSA-OAEP private key using AUK
+          const privateKey = await crypto.subtle.unwrapKey(
+            'pkcs8',
+            b64(ks.encrypted_private_key),
+            auk,
+            { name: 'AES-GCM', iv: b64(ks.private_key_nonce) },
+            { name: 'RSA-OAEP', hash: 'SHA-256' },
+            false, // non-extractable
+            ['decrypt'],
+          )
+          keyStore.setPrivateKey(privateKey)
+        } catch (e) {
+          console.warn('[auth] key set decryption failed (Tier 1 data will be inaccessible):', e)
+        }
+      }
 
       // 9. Store Secret Key in IndexedDB for future logins on this device
       await keyStore.storeSecretKey(email, secretKeyBytes)
