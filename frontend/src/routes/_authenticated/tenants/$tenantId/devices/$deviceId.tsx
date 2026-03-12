@@ -55,6 +55,8 @@ import { InterfaceGauges } from '@/components/network/InterfaceGauges'
 import { useSimpleConfigMode } from '@/hooks/useSimpleConfig'
 import { SimpleModeToggle } from '@/components/simple-config/SimpleModeToggle'
 import { SimpleConfigView } from '@/components/simple-config/SimpleConfigView'
+import { WinBoxButton } from '@/components/fleet/WinBoxButton'
+import { SSHTerminal } from '@/components/fleet/SSHTerminal'
 
 export const Route = createFileRoute(
   '/_authenticated/tenants/$tenantId/devices/$deviceId',
@@ -450,6 +452,14 @@ function DeviceDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           <SimpleModeToggle mode={mode} onModeChange={toggleMode} />
+          {user?.role !== 'viewer' && (
+            <div className="flex gap-2">
+              {device.routeros_version !== null && (
+                <WinBoxButton tenantId={tenantId} deviceId={deviceId} />
+              )}
+              <SSHTerminal tenantId={tenantId} deviceId={deviceId} deviceName={device.hostname} />
+            </div>
+          )}
           <div className="flex gap-2">
             {canWrite(user) && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} data-testid="button-edit-device">
