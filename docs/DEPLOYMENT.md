@@ -119,6 +119,14 @@ Log in with the `FIRST_ADMIN_EMAIL` and `FIRST_ADMIN_PASSWORD` credentials set i
 | `CIRCUIT_BREAKER_MAX_BACKOFF_SECONDS` | `900` | Maximum backoff (15 min) |
 | `LOG_LEVEL` | `info` | Logging verbosity (`debug`/`info`/`warn`/`error`) |
 | `CORS_ORIGINS` | `http://localhost:3000` | Comma-separated CORS origins |
+| `TUNNEL_PORT_MIN` | `49000` | Start of WinBox tunnel port range |
+| `TUNNEL_PORT_MAX` | `49100` | End of WinBox tunnel port range |
+| `TUNNEL_IDLE_TIMEOUT` | `300` | WinBox tunnel idle timeout (seconds) |
+| `SSH_RELAY_PORT` | `8080` | SSH relay HTTP server port |
+| `SSH_IDLE_TIMEOUT` | `900` | SSH session idle timeout (seconds) |
+| `SSH_MAX_SESSIONS` | `200` | Maximum concurrent SSH sessions |
+| `SSH_MAX_PER_USER` | `10` | Maximum SSH sessions per user |
+| `SSH_MAX_PER_DEVICE` | `20` | Maximum SSH sessions per device |
 
 ### Security Notes
 
@@ -149,10 +157,12 @@ Container memory limits are enforced in `docker-compose.prod.yml` to prevent OOM
 | Redis | 128MB |
 | NATS | 128MB |
 | API | 512MB |
-| Poller | 256MB |
+| Poller | 512MB |
 | Frontend | 64MB |
 
 Adjust under `deploy.resources.limits.memory` in `docker-compose.prod.yml`.
+
+> **Note:** The WinBox tunnel port range (`TUNNEL_PORT_MIN`–`TUNNEL_PORT_MAX`, default 49000–49100) must be mapped in the poller container's port bindings. Add `"49000-49100:49000-49100"` to the poller service's `ports` list in your compose file. The SSH relay port (`SSH_RELAY_PORT`, default 8080) similarly requires a port mapping if accessed directly.
 
 ## API Documentation
 

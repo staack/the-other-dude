@@ -97,7 +97,9 @@ The backend exposes 25 route groups under the `/api` prefix:
 - **Output**: Publishes poll results to NATS JetStream; the API's NATS subscribers process and persist them
 - **Database access**: Uses `poller_user` role which bypasses RLS (needs cross-tenant device access)
 - **VPN routing**: Adds static route to WireGuard gateway for reaching remote devices
-- **Memory limit**: 256MB
+- **Tunnel manager**: On-demand TCP proxy for WinBox connections; allocates ports from a configurable range (default 49000–49100), bound to localhost only, with idle-timeout cleanup
+- **SSH relay**: WebSocket-to-SSH bridge serving browser-based terminal sessions; listens on port 8080, enforces per-user and per-device session limits
+- **Memory limit**: 512MB
 
 ## Infrastructure Services
 
@@ -271,6 +273,8 @@ All services communicate over a single Docker bridge network (`tod`). External p
 | NATS Monitor | 8222 | 8222 | HTTP |
 | OpenBao | 8200 | 8200 | HTTP |
 | WireGuard | 51820 | 51820 | UDP |
+| Poller SSH Relay | 8080 | 8080 | HTTP/WebSocket |
+| Poller WinBox Tunnels | 49000–49100 | 49000–49100 | TCP (localhost only) |
 
 ## File Structure
 
@@ -292,6 +296,9 @@ frontend/                   React TypeScript frontend
 poller/                     Go microservice for device polling
   main.go                   Entry point
   Dockerfile                Multi-stage build
+  internal/
+    tunnel/                 WinBox TCP proxy and port pool manager
+    sshrelay/               WebSocket-to-SSH bridge for browser terminals
 infrastructure/             Deployment configuration
   docker/                   Dockerfiles for api, frontend
   helm/                     Kubernetes Helm charts
@@ -322,7 +329,7 @@ docker compose build frontend
 |---------|-------|
 | PostgreSQL | 512MB |
 | API | 512MB |
-| Go Poller | 256MB |
+| Go Poller | 512MB |
 | OpenBao | 256MB |
 | Redis | 128MB |
 | NATS | 128MB |

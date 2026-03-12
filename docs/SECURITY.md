@@ -85,6 +85,16 @@ TOD includes a per-tenant Internal Certificate Authority for managing TLS certif
 - **Key protection:** CA private keys are encrypted with AES-256-GCM before database storage. PEM key material is never logged or exposed via API responses.
 - **Certificate rotation and revocation:** Supported via the certificate lifecycle state machine.
 
+## Remote Access Security
+
+TOD v9.5 adds on-demand WinBox tunnels and browser-based SSH terminals for devices behind NAT.
+
+- **Single-use session tokens:** SSH sessions are initiated with a short-lived token stored in Redis (`GETDEL`, 120-second TTL). The token is consumed on first use and cannot be replayed.
+- **RBAC enforcement:** Opening a tunnel or starting an SSH session requires the `operator` role or higher. `viewer` accounts have no access to remote access features.
+- **Audit trail:** Tunnel open/close events and SSH session start/end events are recorded in the immutable audit log with device ID, user ID, source IP, and timestamp.
+- **WinBox tunnel binding:** TCP proxies for WinBox connections are bound to `127.0.0.1` only. Tunnels are never exposed on `0.0.0.0` and cannot be reached from outside the host without explicit port forwarding.
+- **Idle-timeout cleanup:** Inactive tunnels are closed automatically after `TUNNEL_IDLE_TIMEOUT` seconds (default 300). SSH sessions time out after `SSH_IDLE_TIMEOUT` seconds (default 900). Resources are reclaimed immediately on disconnect.
+
 ## Network Security
 
 - **RouterOS communication:** All device communication uses the RouterOS binary API over TLS (port 8729). InsecureSkipVerify is enabled by default because RouterOS devices typically use self-signed certificates.

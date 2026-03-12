@@ -87,6 +87,19 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | `GIT_STORE_PATH` | `./git-store` | Path to bare git repos for config backup history (one repo per tenant). In production: `/data/git-store` on a ReadWriteMany PVC. |
 | `WIREGUARD_CONFIG_PATH` | `/data/wireguard` | Shared volume path for WireGuard configuration files |
 
+### Remote Access (Go Poller)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TUNNEL_PORT_MIN` | `49000` | Start of WinBox tunnel port range |
+| `TUNNEL_PORT_MAX` | `49100` | End of WinBox tunnel port range |
+| `TUNNEL_IDLE_TIMEOUT` | `300` | WinBox tunnel idle timeout (seconds) |
+| `SSH_RELAY_PORT` | `8080` | SSH relay HTTP server port |
+| `SSH_IDLE_TIMEOUT` | `900` | SSH session idle timeout (seconds) |
+| `SSH_MAX_SESSIONS` | `200` | Maximum concurrent SSH sessions |
+| `SSH_MAX_PER_USER` | `10` | Maximum SSH sessions per user |
+| `SSH_MAX_PER_DEVICE` | `20` | Maximum SSH sessions per device |
+
 ### Bootstrap
 
 | Variable | Default | Description |

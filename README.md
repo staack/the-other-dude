@@ -20,6 +20,7 @@ real-time monitoring, and zero-knowledge security, all self-hosted on your infra
 - **Zero-Knowledge Security** -- 1Password-style architecture. SRP-6a authentication (server never sees your password), per-tenant envelope encryption via Transit KMS, Emergency Kit export.
 - **Multi-Tenant with PostgreSQL RLS** -- Full organization isolation enforced at the database layer. Four roles: super_admin, admin, operator, viewer.
 - **Internal Certificate Authority** -- Issue and deploy TLS certificates to RouterOS devices via SFTP. Three-tier TLS fallback for maximum compatibility.
+- **Remote Access** -- WinBox TCP tunnels and browser-based SSH terminal for managing devices behind NAT. One-click connection through the WireGuard VPN overlay.
 - **WireGuard VPN Onboarding** -- Create device + VPN peer in one transaction. Generates ready-to-paste RouterOS commands for devices behind NAT.
 - **PDF Reports** -- Fleet summary, device detail, security audit, and performance reports generated server-side.
 - **Command Palette UX** -- Cmd+K quick navigation, keyboard shortcuts, dark/light mode, smooth page transitions, and skeleton loaders throughout.
