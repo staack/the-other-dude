@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -123,8 +124,15 @@ func (s *Server) handleSSH(w http.ResponseWriter, r *http.Request) {
 	}
 	ws.SetReadLimit(1 << 20)
 
-	// Extract source IP (nginx sets X-Real-IP)
+	// Extract source IP (nginx sets X-Real-IP, fall back to X-Forwarded-For then RemoteAddr)
 	sourceIP := r.Header.Get("X-Real-IP")
+	if sourceIP == "" {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			// Use last entry (closest proxy)
+			parts := strings.Split(xff, ",")
+			sourceIP = strings.TrimSpace(parts[len(parts)-1])
+		}
+	}
 	if sourceIP == "" {
 		sourceIP = r.RemoteAddr
 	}
@@ -134,6 +142,13 @@ func (s *Server) handleSSH(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("ssh: device lookup failed", "device_id", payload.DeviceID, "err", err)
 		ws.Close(websocket.StatusInternalError, "device not found")
+		return
+	}
+
+	// Verify device belongs to the tenant in the token
+	if dev.TenantID != payload.TenantID {
+		slog.Warn("ssh: tenant mismatch", "device_tenant", dev.TenantID, "token_tenant", payload.TenantID)
+		ws.Close(websocket.StatusPolicyViolation, "unauthorized")
 		return
 	}
 

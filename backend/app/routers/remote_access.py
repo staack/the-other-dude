@@ -29,6 +29,7 @@ from app.schemas.remote_access import (
     TunnelStatusItem,
     WinboxSessionResponse,
 )
+from app.middleware.rate_limit import limiter
 from app.services.audit_service import log_action
 from sqlalchemy import select
 
@@ -102,6 +103,7 @@ async def _check_tenant_access(current_user: CurrentUser, tenant_id: uuid.UUID, 
     summary="Open a WinBox tunnel to the device",
     dependencies=[Depends(require_operator_or_above)],
 )
+@limiter.limit("10/minute")
 async def open_winbox_session(
     tenant_id: uuid.UUID,
     device_id: uuid.UUID,
@@ -176,6 +178,7 @@ async def open_winbox_session(
     summary="Create a single-use SSH WebSocket session token",
     dependencies=[Depends(require_operator_or_above)],
 )
+@limiter.limit("10/minute")
 async def open_ssh_session(
     tenant_id: uuid.UUID,
     device_id: uuid.UUID,
@@ -193,6 +196,13 @@ async def open_ssh_session(
     await _check_tenant_access(current_user, tenant_id, db)
     await _get_device(db, tenant_id, device_id)
     source_ip = _source_ip(request)
+
+    # TODO(defense-in-depth): No API-side SSH session count check is performed here.
+    # SSH session limits (per-user, per-device, global) are enforced at the poller/SSH
+    # relay level on WebSocket connect. There is currently no NATS subject that exposes
+    # SSH session counts to the API (tunnel.status.list only covers WinBox tunnels).
+    # When such a subject is added, query it here before issuing the token and raise
+    # HTTPException(429) if limits are exceeded, providing earlier feedback to the client.
 
     try:
         await log_action(
