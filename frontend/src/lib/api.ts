@@ -931,6 +931,43 @@ export const apiKeysApi = {
     api.delete(`/api/tenants/${tenantId}/api-keys/${keyId}`).then((r) => r.data),
 }
 
+// ─── Remote Access ───────────────────────────────────────────────────────────
+
+export const remoteAccessApi = {
+  openWinbox: (tenantId: string, deviceId: string) =>
+    api
+      .post<{
+        tunnel_id: string
+        host: string
+        port: number
+        winbox_uri: string
+        idle_timeout_seconds: number
+      }>(`/api/tenants/${tenantId}/devices/${deviceId}/winbox-session`)
+      .then((r) => r.data),
+
+  closeWinbox: (tenantId: string, deviceId: string, tunnelId: string) =>
+    api
+      .delete(`/api/tenants/${tenantId}/devices/${deviceId}/winbox-session/${tunnelId}`)
+      .then((r) => r.data),
+
+  openSSH: (tenantId: string, deviceId: string, cols: number, rows: number) =>
+    api
+      .post<{
+        token: string
+        websocket_url: string
+        idle_timeout_seconds: number
+      }>(`/api/tenants/${tenantId}/devices/${deviceId}/ssh-session`, { cols, rows })
+      .then((r) => r.data),
+
+  getSessions: (tenantId: string, deviceId: string) =>
+    api
+      .get<{
+        winbox_tunnels: Array<{ tunnel_id: string; local_port: number; idle_seconds: number; created_at: string }>
+        ssh_sessions: Array<{ session_id: string; idle_seconds: number; created_at: string }>
+      }>(`/api/tenants/${tenantId}/devices/${deviceId}/sessions`)
+      .then((r) => r.data),
+}
+
 // ─── VPN (WireGuard) ────────────────────────────────────────────────────────
 
 export interface VpnConfigResponse {
