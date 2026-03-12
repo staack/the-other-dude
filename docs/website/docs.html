@@ -101,6 +101,7 @@
         <a href="#navigation" class="sidebar-link" data-section="navigation">Navigation</a>
         <a href="#device-management" class="sidebar-link" data-section="device-management">Device Management</a>
         <a href="#config-editor" class="sidebar-link" data-section="config-editor">Config Editor</a>
+        <a href="#remote-access" class="sidebar-link" data-section="remote-access">Remote Access</a>
         <a href="#monitoring" class="sidebar-link" data-section="monitoring">Monitoring &amp; Alerts</a>
         <a href="#reports" class="sidebar-link" data-section="reports">Reports</a>
 
@@ -141,6 +142,7 @@
           <li><strong>Configuration</strong> &mdash; Config Editor with two-phase safe apply, batch configuration across devices, bulk CLI commands, reusable templates, Simple Config (Linksys/Ubiquiti-style UI), and git-backed config backup with diff viewer.</li>
           <li><strong>Monitoring</strong> &mdash; Interactive network topology (ReactFlow + Dagre), real-time metrics via SSE/NATS, configurable alert rules, notification channels (email, webhook, Slack), audit trail, KMS transparency dashboard, and PDF reports.</li>
           <li><strong>Security</strong> &mdash; 1Password-style zero-knowledge architecture with SRP-6a auth, 2SKD key derivation, Secret Key with Emergency Kit, OpenBao KMS for per-tenant envelope encryption, Internal CA with SFTP cert deployment, WireGuard VPN, and AES-256-GCM credential encryption.</li>
+          <li><strong>Remote Access</strong> &mdash; One-click WinBox tunnel launch via NATS request-reply, browser-based SSH terminal (xterm.js over WebSocket), per-device session management with idle timeouts, and full audit logging of remote sessions.</li>
           <li><strong>Administration</strong> &mdash; Full multi-tenancy with PostgreSQL RLS, user management with RBAC, API keys (<code>mktp_</code> prefix), firmware management, maintenance windows, and setup wizard.</li>
           <li><strong>UX</strong> &mdash; Command palette (<kbd>Cmd+K</kbd>), Vim-style keyboard shortcuts, dark/light mode, Framer Motion page transitions, and shimmer skeleton loaders.</li>
         </ul>
@@ -452,6 +454,7 @@ open http://localhost</code></pre>
             <tr><td><code>reports</code></td><td>PDF report generation (Jinja2 + WeasyPrint)</td></tr>
             <tr><td><code>api_keys</code></td><td>API key management (<code>mktp_</code> prefix)</td></tr>
             <tr><td><code>maintenance_windows</code></td><td>Scheduled maintenance with alert suppression</td></tr>
+            <tr><td><code>remote_access</code></td><td>WinBox tunnel and SSH terminal session management</td></tr>
             <tr><td><code>vpn</code></td><td>WireGuard VPN management</td></tr>
             <tr><td><code>certificates</code></td><td>Internal CA and device TLS certificates</td></tr>
             <tr><td><code>transparency</code></td><td>KMS access event dashboard</td></tr>
@@ -468,6 +471,8 @@ open http://localhost</code></pre>
           <li><strong>Circuit breaker:</strong> Backs off from unreachable devices to avoid wasting poll cycles</li>
           <li><strong>Credential decryption:</strong> OpenBao Transit with LRU cache (1024 entries, 5min TTL) to minimize KMS calls</li>
           <li><strong>Output:</strong> Publishes poll results to NATS JetStream; the API&rsquo;s NATS subscribers process and persist them</li>
+          <li><strong>Remote access:</strong> Tunnel manager allocates TCP ports (49000&ndash;49004) for WinBox sessions; SSH relay server bridges WebSocket connections to RouterOS SSH via PTY</li>
+          <li><strong>NATS responder:</strong> Listens on <code>tunnel.open.*</code> / <code>tunnel.close.*</code> for API-initiated WinBox tunnel requests</li>
           <li><strong>Database access:</strong> Uses <code>poller_user</code> role which bypasses RLS (needs cross-tenant device access)</li>
           <li><strong>Memory limit:</strong> 256 MB</li>
         </ul>
@@ -503,7 +508,8 @@ open http://localhost</code></pre>
         <ul>
           <li><strong>Image:</strong> <code>nats:2-alpine</code></li>
           <li><strong>Role:</strong> Message bus between the Go poller and the Python API</li>
-          <li><strong>Streams:</strong> DEVICE_EVENTS (poll results, status changes), ALERT_EVENTS (SSE delivery), OPERATION_EVENTS (SSE delivery)</li>
+          <li><strong>Streams:</strong> DEVICE_EVENTS (poll results, status changes), ALERT_EVENTS (SSE delivery), OPERATION_EVENTS (SSE delivery), AUDIT_EVENTS (session lifecycle)</li>
+          <li><strong>Request-reply:</strong> <code>tunnel.open.*</code> and <code>tunnel.close.*</code> subjects for WinBox tunnel management between API and poller</li>
           <li><strong>Durable consumers:</strong> Ensure no message loss during API restarts</li>
           <li><strong>Memory limit:</strong> 128 MB</li>
         </ul>
@@ -555,6 +561,8 @@ open http://localhost</code></pre>
             <tr><td>NATS Monitor</td><td>8222</td><td>8222</td><td>HTTP</td></tr>
             <tr><td>OpenBao</td><td>8200</td><td>8200</td><td>HTTP</td></tr>
             <tr><td>WireGuard</td><td>51820</td><td>51820</td><td>UDP</td></tr>
+            <tr><td>WinBox Tunnels</td><td>49000&ndash;49004</td><td>49000&ndash;49004</td><td>TCP</td></tr>
+            <tr><td>SSH Relay (WebSocket)</td><td>2222</td><td>2222</td><td>TCP</td></tr>
           </tbody>
         </table>
       </section>
@@ -821,6 +829,14 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
+        <h2>Remote Access Buttons</h2>
+        <p>The device detail page includes <strong>WinBox</strong> and <strong>SSH</strong> buttons for one-click remote access:</p>
+        <ul>
+          <li><strong>WinBox</strong> &mdash; Opens a WinBox tunnel via NATS request-reply. The poller allocates a local TCP port and proxies traffic to the device&rsquo;s WinBox port. A <code>winbox://</code> URI is returned to launch the WinBox application.</li>
+          <li><strong>SSH</strong> &mdash; Opens an in-browser SSH terminal powered by xterm.js. The connection is bridged through a WebSocket to the poller&rsquo;s SSH relay, which creates a PTY session on the target device.</li>
+        </ul>
+        <p>Both session types have configurable idle timeouts (WinBox: 5 min, SSH: 15 min) and are fully audit-logged.</p>
+
         <h2>Simple Config</h2>
         <p>Simple Config provides a consumer-router-style interface modeled after Linksys and Ubiquiti UIs. It is designed for operators who prefer guided configuration over raw RouterOS paths.</p>
         <p>Seven category tabs:</p>
@@ -851,6 +867,70 @@ open http://localhost</code></pre>
           <li><strong>Safe Apply</strong> &mdash; two-phase commit with automatic panic-revert. Changes are applied, and you have a confirmation window to accept them. If the confirmation times out (device becomes unreachable), changes automatically revert to prevent lockouts.</li>
         </ul>
         <p><strong>Safe Apply is strongly recommended</strong> for firewall rules and routing changes on remote devices.</p>
+      </section>
+
+      <!-- REMOTE ACCESS -->
+      <section id="remote-access">
+        <h1>Remote Access</h1>
+        <p>TOD provides browser-based remote access to RouterOS devices without exposing management ports to the internet. Two access methods are available from the device detail page.</p>
+
+        <h2>WinBox Tunnels</h2>
+        <p>Click the <strong>WinBox</strong> button on any device to open a temporary TCP tunnel:</p>
+        <ol>
+          <li>The API sends a NATS request to the poller on <code>tunnel.open.{device_id}</code>.</li>
+          <li>The poller allocates a port from the pool (49000&ndash;49004) and opens a bidirectional TCP proxy to the device&rsquo;s WinBox port (8291).</li>
+          <li>The API returns a <code>winbox://</code> URI that launches your local WinBox application.</li>
+          <li>The tunnel closes automatically after 5 minutes of idle time, or when explicitly closed.</li>
+        </ol>
+
+        <h2>SSH Terminal</h2>
+        <p>Click the <strong>SSH</strong> button to open an in-browser terminal:</p>
+        <ol>
+          <li>The API generates a single-use session token stored in Redis (60-second TTL).</li>
+          <li>The frontend connects to the poller&rsquo;s WebSocket endpoint with the token.</li>
+          <li>The poller&rsquo;s SSH relay authenticates the token, establishes an SSH connection to the device, and bridges the WebSocket to a PTY session.</li>
+          <li>The terminal renders in the browser using xterm.js with full color and resize support.</li>
+          <li>Sessions close after 15 minutes of idle time.</li>
+        </ol>
+
+        <h2>Architecture</h2>
+        <pre><code>Browser         API            NATS          Poller         RouterOS
+  |              |               |              |               |
+  +--WinBox btn-&gt;|              |              |               |
+  |              +--req tunnel.open-----------&gt;|               |
+  |              |               |              +--TCP proxy---&gt;|
+  |              |&lt;--{port, uri}---------------+               |
+  |&lt;--winbox://-&gt;+              |              |               |
+  |              |               |              |               |
+  +--SSH btn----&gt;|              |              |               |
+  |              +--token to Redis             |               |
+  |&lt;--ws url-----+              |              |               |
+  +--WebSocket--------------------------------------&gt;|         |
+  |              |               |              +--SSH session-&gt;|
+  |&lt;-------- bidirectional PTY bridge --------&gt;|&lt;------------&gt;|</code></pre>
+
+        <h2>Session Management</h2>
+        <table>
+          <thead>
+            <tr><th>Feature</th><th>WinBox Tunnel</th><th>SSH Terminal</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Idle timeout</td><td>5 minutes</td><td>15 minutes</td></tr>
+            <tr><td>Port range</td><td>49000&ndash;49004</td><td>N/A (WebSocket)</td></tr>
+            <tr><td>Auth method</td><td>NATS request-reply</td><td>Single-use Redis token (60s TTL)</td></tr>
+            <tr><td>Audit logged</td><td>Yes (open/close)</td><td>Yes (open/close with duration)</td></tr>
+            <tr><td>RBAC</td><td>Operator+</td><td>Operator+</td></tr>
+          </tbody>
+        </table>
+
+        <h2>Security</h2>
+        <ul>
+          <li>WinBox tunnels are only accessible from the poller&rsquo;s host (bound to <code>0.0.0.0</code> within the container network).</li>
+          <li>SSH session tokens are single-use, expire in 60 seconds, and are validated + deleted atomically in Redis.</li>
+          <li>All session open/close events are written to the immutable audit trail.</li>
+          <li>SSH session end events are published to NATS JetStream for durable processing.</li>
+          <li>Rate limited: 5 tunnel/session requests per minute per IP.</li>
+        </ul>
       </section>
 
       <!-- MONITORING -->
@@ -1134,6 +1214,7 @@ open http://localhost</code></pre>
             <tr><td>Reports</td><td><code>/api/reports/*</code></td><td>PDF report generation (Jinja2 + WeasyPrint)</td></tr>
             <tr><td>API Keys</td><td><code>/api/api-keys/*</code></td><td>API key CRUD</td></tr>
             <tr><td>Maintenance Windows</td><td><code>/api/maintenance-windows/*</code></td><td>Scheduled maintenance window management</td></tr>
+            <tr><td>Remote Access</td><td><code>/api/tenants/{id}/devices/{id}/remote-access/*</code></td><td>WinBox tunnel and SSH terminal session management</td></tr>
             <tr><td>VPN</td><td><code>/api/vpn/*</code></td><td>WireGuard VPN tunnel management</td></tr>
             <tr><td>Certificates</td><td><code>/api/certificates/*</code></td><td>Internal CA and device certificate management</td></tr>
             <tr><td>Transparency</td><td><code>/api/transparency/*</code></td><td>KMS access event dashboard</td></tr>
