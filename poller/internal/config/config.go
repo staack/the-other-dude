@@ -64,6 +64,32 @@ type Config struct {
 	// Each API call (DetectVersion, CollectInterfaces, etc.) is wrapped with
 	// this timeout to prevent indefinite blocking on unresponsive devices.
 	CommandTimeoutSeconds int
+
+	// TunnelPortMin is the lower bound of the local TCP port pool for WinBox tunnels.
+	TunnelPortMin int
+
+	// TunnelPortMax is the upper bound of the local TCP port pool for WinBox tunnels.
+	TunnelPortMax int
+
+	// TunnelIdleTimeout is the number of seconds a WinBox tunnel may remain idle
+	// with no active connections before it is automatically closed.
+	TunnelIdleTimeout int
+
+	// SSHRelayPort is the TCP port on which the SSH relay HTTP server listens.
+	SSHRelayPort string
+
+	// SSHIdleTimeout is the number of seconds an SSH relay session may remain
+	// idle before it is automatically terminated.
+	SSHIdleTimeout int
+
+	// SSHMaxSessions is the maximum total number of concurrent SSH relay sessions.
+	SSHMaxSessions int
+
+	// SSHMaxPerUser is the maximum number of concurrent SSH relay sessions per user.
+	SSHMaxPerUser int
+
+	// SSHMaxPerDevice is the maximum number of concurrent SSH relay sessions per device.
+	SSHMaxPerDevice int
 }
 
 // knownInsecureEncryptionKey is the base64-encoded dev default encryption key.
@@ -86,6 +112,14 @@ func Load() (*Config, error) {
 		CircuitBreakerBaseBackoffSeconds: getEnvInt("CIRCUIT_BREAKER_BASE_BACKOFF_SECONDS", 30),
 		CircuitBreakerMaxBackoffSeconds:  getEnvInt("CIRCUIT_BREAKER_MAX_BACKOFF_SECONDS", 900),
 		CommandTimeoutSeconds:            getEnvInt("COMMAND_TIMEOUT_SECONDS", 30),
+		TunnelPortMin:                    getEnvInt("TUNNEL_PORT_MIN", 49000),
+		TunnelPortMax:                    getEnvInt("TUNNEL_PORT_MAX", 49100),
+		TunnelIdleTimeout:                getEnvInt("TUNNEL_IDLE_TIMEOUT", 300),
+		SSHRelayPort:                     getEnv("SSH_RELAY_PORT", "8080"),
+		SSHIdleTimeout:                   getEnvInt("SSH_IDLE_TIMEOUT", 900),
+		SSHMaxSessions:                   getEnvInt("SSH_MAX_SESSIONS", 200),
+		SSHMaxPerUser:                    getEnvInt("SSH_MAX_PER_USER", 10),
+		SSHMaxPerDevice:                  getEnvInt("SSH_MAX_PER_DEVICE", 20),
 	}
 
 	if cfg.DatabaseURL == "" {

@@ -9,6 +9,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,7 +22,9 @@ import (
 	"github.com/mikrotik-portal/poller/internal/config"
 	"github.com/mikrotik-portal/poller/internal/observability"
 	"github.com/mikrotik-portal/poller/internal/poller"
+	"github.com/mikrotik-portal/poller/internal/sshrelay"
 	"github.com/mikrotik-portal/poller/internal/store"
+	"github.com/mikrotik-portal/poller/internal/tunnel"
 	"github.com/mikrotik-portal/poller/internal/vault"
 )
 
@@ -187,6 +190,56 @@ func main() {
 	slog.Info("NATS credential subscriber started (device.credential_changed.>)")
 
 	// -----------------------------------------------------------------------
+	// Initialize WinBox tunnel manager
+	// -----------------------------------------------------------------------
+	tunnelMgr := tunnel.NewManager(
+		cfg.TunnelPortMin,
+		cfg.TunnelPortMax,
+		time.Duration(cfg.TunnelIdleTimeout)*time.Second,
+		deviceStore,
+		credentialCache,
+	)
+	defer tunnelMgr.Shutdown()
+	slog.Info("tunnel manager initialized",
+		"port_min", cfg.TunnelPortMin,
+		"port_max", cfg.TunnelPortMax,
+		"idle_timeout_s", cfg.TunnelIdleTimeout,
+	)
+
+	// -----------------------------------------------------------------------
+	// Subscribe NATS tunnel responder
+	// -----------------------------------------------------------------------
+	tunnelResp := bus.NewTunnelResponder(publisher.Conn(), tunnelMgr, deviceStore, credentialCache)
+	if err := tunnelResp.Subscribe(); err != nil {
+		slog.Error("failed to subscribe tunnel responder", "error", err)
+		os.Exit(1)
+	}
+	defer tunnelResp.Stop()
+	slog.Info("NATS tunnel responder started (tunnel.*)")
+
+	// -----------------------------------------------------------------------
+	// Initialize SSH relay server and HTTP listener
+	// -----------------------------------------------------------------------
+	sshServer := sshrelay.NewServer(redisClient, credentialCache, deviceStore, sshrelay.Config{
+		IdleTimeout:  time.Duration(cfg.SSHIdleTimeout) * time.Second,
+		MaxSessions:  cfg.SSHMaxSessions,
+		MaxPerUser:   cfg.SSHMaxPerUser,
+		MaxPerDevice: cfg.SSHMaxPerDevice,
+	})
+	defer sshServer.Shutdown()
+
+	httpServer := &http.Server{
+		Addr:    ":" + cfg.SSHRelayPort,
+		Handler: sshServer.Handler(),
+	}
+	go func() {
+		slog.Info("SSH relay HTTP server starting", "port", cfg.SSHRelayPort)
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("SSH relay HTTP server error", "error", err)
+		}
+	}()
+
+	// -----------------------------------------------------------------------
 	// Start observability HTTP server (Prometheus metrics + health endpoint)
 	// -----------------------------------------------------------------------
 	observability.StartServer(ctx, ":9091")
@@ -225,6 +278,13 @@ func main() {
 	if err := scheduler.Run(ctx); err != nil {
 		slog.Error("scheduler exited with error", "error", err)
 		os.Exit(1)
+	}
+
+	// Gracefully shut down the SSH relay HTTP server.
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdownCancel()
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		slog.Warn("SSH relay HTTP server shutdown error", "error", err)
 	}
 
 	slog.Info("poller shutdown complete")
