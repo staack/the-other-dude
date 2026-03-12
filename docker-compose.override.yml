@@ -47,6 +47,7 @@ services:
     volumes:
       - ./backend:/app
       - ./docker-data/git-store:/data/git-store
+      - ./docker-data/firmware-cache:/data/firmware-cache
       - ./docker-data/wireguard:/data/wireguard
     depends_on:
       postgres:
