@@ -276,6 +276,7 @@ def create_app() -> FastAPI:
     from app.routers.certificates import router as certificates_router
     from app.routers.transparency import router as transparency_router
     from app.routers.settings import router as settings_router
+    from app.routers.remote_access import router as remote_access_router
 
     app.include_router(auth_router, prefix="/api")
     app.include_router(tenants_router, prefix="/api")
@@ -302,6 +303,7 @@ def create_app() -> FastAPI:
     app.include_router(certificates_router, prefix="/api/certificates", tags=["certificates"])
     app.include_router(transparency_router, prefix="/api")
     app.include_router(settings_router, prefix="/api")
+    app.include_router(remote_access_router, prefix="/api")
 
     # Health check endpoints
     @app.get("/health", tags=["health"])
