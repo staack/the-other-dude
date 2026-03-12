@@ -7,6 +7,7 @@ services:
       context: .
       dockerfile: infrastructure/docker/Dockerfile.api
     container_name: tod_api
+    restart: on-failure
     ports:
       - "8001:8000"
     env_file: .env
@@ -66,6 +67,7 @@ services:
       context: ./poller
       dockerfile: ./Dockerfile
     container_name: tod_poller
+    restart: on-failure
     env_file: .env
     environment:
       ENVIRONMENT: dev

@@ -1,4 +1,4 @@
-#!/bin/sh
+﻿#!/bin/sh
 # OpenBao Transit initialization script
 # Runs after OpenBao starts in dev mode
 
