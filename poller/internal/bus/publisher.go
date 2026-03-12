@@ -124,6 +124,7 @@ func NewPublisher(natsURL string) (*Publisher, error) {
 			"config.changed.>",
 			"config.push.rollback.>",
 			"config.push.alert.>",
+			"audit.session.end.>",
 		},
 		MaxAge:   24 * time.Hour,
 	})
@@ -300,6 +301,43 @@ func (p *Publisher) PublishPushAlert(ctx context.Context, event PushAlertEvent) 
 		"device_id", event.DeviceID,
 		"tenant_id", event.TenantID,
 		"push_type", event.PushType,
+		"subject", subject,
+	)
+
+	return nil
+}
+
+// SessionEndEvent is the payload published to NATS JetStream when an SSH
+// relay session ends. The backend subscribes to audit.session.end.> and
+// writes an audit log entry with the session duration.
+type SessionEndEvent struct {
+	SessionID string `json:"session_id"`
+	UserID    string `json:"user_id"`
+	TenantID  string `json:"tenant_id"`
+	DeviceID  string `json:"device_id"`
+	StartTime string `json:"start_time"` // RFC3339
+	EndTime   string `json:"end_time"`   // RFC3339
+	SourceIP  string `json:"source_ip"`
+	Reason    string `json:"reason"` // "normal", "idle_timeout", "shutdown"
+}
+
+// PublishSessionEnd publishes an SSH session end event to NATS JetStream.
+func (p *Publisher) PublishSessionEnd(ctx context.Context, event SessionEndEvent) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("marshalling session end event: %w", err)
+	}
+
+	subject := fmt.Sprintf("audit.session.end.%s", event.SessionID)
+
+	_, err = p.js.Publish(ctx, subject, data)
+	if err != nil {
+		return fmt.Errorf("publishing to %s: %w", subject, err)
+	}
+
+	slog.Debug("published session end event",
+		"session_id", event.SessionID,
+		"device_id", event.DeviceID,
 		"subject", subject,
 	)
 

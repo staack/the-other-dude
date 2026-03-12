@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mikrotik-portal/poller/internal/bus"
 	"github.com/mikrotik-portal/poller/internal/store"
 	"github.com/mikrotik-portal/poller/internal/vault"
 	"github.com/redis/go-redis/v9"
@@ -35,6 +36,7 @@ type Server struct {
 	redis        *redis.Client
 	credCache    *vault.CredentialCache
 	deviceStore  *store.DeviceStore
+	publisher    *bus.Publisher
 	sessions     map[string]*Session
 	mu           sync.Mutex
 	idleTime     time.Duration
@@ -53,12 +55,13 @@ type Config struct {
 }
 
 // NewServer creates and starts a new SSH relay server.
-func NewServer(rc *redis.Client, cc *vault.CredentialCache, ds *store.DeviceStore, cfg Config) *Server {
+func NewServer(rc *redis.Client, cc *vault.CredentialCache, ds *store.DeviceStore, pub *bus.Publisher, cfg Config) *Server {
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &Server{
 		redis:        rc,
 		credCache:    cc,
 		deviceStore:  ds,
+		publisher:    pub,
 		sessions:     make(map[string]*Session),
 		idleTime:     cfg.IdleTimeout,
 		maxSessions:  cfg.MaxSessions,
@@ -255,12 +258,15 @@ func (s *Server) handleSSH(w http.ResponseWriter, r *http.Request) {
 	delete(s.sessions, sess.ID)
 	s.mu.Unlock()
 
-	duration := time.Since(sess.StartTime)
+	endTime := time.Now()
+	duration := endTime.Sub(sess.StartTime)
 	slog.Info("ssh session ended",
 		"session_id", sess.ID,
 		"device_id", payload.DeviceID,
 		"duration", duration.String(),
 	)
+
+	s.publishSessionEnd(sess, endTime, "normal")
 }
 
 // validateToken performs a Redis GETDEL to atomically consume a single-use token.
@@ -331,6 +337,36 @@ func (s *Server) cleanupIdle() {
 	for _, sess := range toCancel {
 		slog.Info("ssh session idle timeout", "session_id", sess.ID)
 		sess.cancel()
+		s.publishSessionEnd(sess, time.Now(), "idle_timeout")
+	}
+}
+
+// publishSessionEnd publishes an audit.session.end event via NATS JetStream.
+// Errors are logged but never block session cleanup.
+func (s *Server) publishSessionEnd(sess *Session, endTime time.Time, reason string) {
+	if s.publisher == nil {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	event := bus.SessionEndEvent{
+		SessionID: sess.ID,
+		UserID:    sess.UserID,
+		TenantID:  sess.TenantID,
+		DeviceID:  sess.DeviceID,
+		StartTime: sess.StartTime.Format(time.RFC3339),
+		EndTime:   endTime.Format(time.RFC3339),
+		SourceIP:  sess.SourceIP,
+		Reason:    reason,
+	}
+
+	if err := s.publisher.PublishSessionEnd(ctx, event); err != nil {
+		slog.Error("failed to publish session end event",
+			"session_id", sess.ID,
+			"error", err,
+		)
 	}
 }
 

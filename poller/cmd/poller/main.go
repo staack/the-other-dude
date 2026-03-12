@@ -220,7 +220,7 @@ func main() {
 	// -----------------------------------------------------------------------
 	// Initialize SSH relay server and HTTP listener
 	// -----------------------------------------------------------------------
-	sshServer := sshrelay.NewServer(redisClient, credentialCache, deviceStore, sshrelay.Config{
+	sshServer := sshrelay.NewServer(redisClient, credentialCache, deviceStore, publisher, sshrelay.Config{
 		IdleTimeout:  time.Duration(cfg.SSHIdleTimeout) * time.Second,
 		MaxSessions:  cfg.SSHMaxSessions,
 		MaxPerUser:   cfg.SSHMaxPerUser,

@@ -80,6 +80,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from app.services.firmware_subscriber import start_firmware_subscriber, stop_firmware_subscriber
     from app.services.metrics_subscriber import start_metrics_subscriber, stop_metrics_subscriber
     from app.services.nats_subscriber import start_nats_subscriber, stop_nats_subscriber
+    from app.services.session_audit_subscriber import start_session_audit_subscriber, stop_session_audit_subscriber
     from app.services.sse_manager import ensure_sse_streams
 
     # Configure structured logging FIRST -- before any other startup work
@@ -123,6 +124,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as exc:
         logger.warning(
             "NATS firmware subscriber could not start (API will run without it)",
+            error=str(exc),
+        )
+
+    # Start NATS subscriber for SSH session end audit events (separate NATS connection).
+    session_audit_nc = None
+    try:
+        session_audit_nc = await start_session_audit_subscriber()
+    except Exception as exc:
+        logger.warning(
+            "NATS session audit subscriber could not start (API will run without it)",
             error=str(exc),
         )
 
@@ -212,6 +223,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await stop_nats_subscriber(nats_connection)
     await stop_metrics_subscriber(metrics_nc)
     await stop_firmware_subscriber(firmware_nc)
+    await stop_session_audit_subscriber(session_audit_nc)
     if config_change_nc:
         await stop_config_change_subscriber()
     if push_rollback_nc:
