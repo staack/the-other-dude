@@ -63,7 +63,7 @@ Web UI
 
 ```bash
 # Clone and configure
-git clone https://github.com/your-org/tod.git && cd tod
+git clone https://github.com/staack/the-other-dude.git && cd the-other-dude
 cp .env.example .env
 # Edit .env -- set CREDENTIAL_ENCRYPTION_KEY and JWT_SECRET_KEY at minimum
 

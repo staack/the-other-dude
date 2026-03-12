@@ -8,7 +8,7 @@ TOD (The Other Dude) is a containerized fleet management platform for RouterOS d
 
 - **Backend API** (Python/FastAPI) -- REST API with JWT authentication and PostgreSQL RLS
 - **Go Poller** -- Polls RouterOS devices via binary API, publishes events to NATS
-- **Frontend** (React/nginx) -- Single-page application served by nginx
+- **Frontend** (React/nginx) -- Single-page application served by nginx (dynamic DNS resolver prevents 502 errors after API container restarts)
 - **PostgreSQL + TimescaleDB** -- Primary database with time-series extensions
 - **Redis** -- Distributed locking and rate limiting
 - **NATS JetStream** -- Message bus for device events
@@ -135,6 +135,7 @@ Docker volumes mount to the host filesystem. Default locations are configured in
 - **Redis data**: `./docker-data/redis`
 - **NATS data**: `./docker-data/nats`
 - **Git store (config backups)**: `./docker-data/git-store`
+- **Firmware cache**: `./docker-data/firmware-cache` (downloaded RouterOS firmware packages)
 
 To change storage locations, edit the volume mounts in `docker-compose.yml`.
 
@@ -255,3 +256,4 @@ docker compose restart api
 | Migration fails | Check `docker compose logs api` for Alembic errors |
 | NATS subscriber won't start | Non-fatal -- API runs without NATS; check NATS container health |
 | Poller circuit breaker active | Device unreachable; check `CIRCUIT_BREAKER_*` env vars to tune backoff |
+| Frontend returns 502 after API restart | nginx caches upstream DNS at startup; the dynamic resolver (`resolver 127.0.0.11`) in `nginx-spa.conf` handles this automatically — if you see 502s, ensure the nginx config has not been overridden |

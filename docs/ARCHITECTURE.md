@@ -55,7 +55,7 @@ TOD (The Other Dude) is a containerized MSP fleet management platform for MikroT
 
 #### API Routers
 
-The backend exposes 21 route groups under the `/api` prefix:
+The backend exposes 25 route groups under the `/api` prefix:
 
 | Router | Purpose |
 |--------|---------|
@@ -82,11 +82,12 @@ The backend exposes 21 route groups under the `/api` prefix:
 | `maintenance_windows` | Scheduled maintenance with alert suppression |
 | `vpn` | WireGuard VPN management |
 | `certificates` | Internal CA and device TLS certificates |
+| `settings` | System settings (SMTP configuration, super_admin only) |
 | `transparency` | KMS access event dashboard |
 
 ### Go Poller
 
-- **Stack**: Go 1.23, go-routeros/v3, pgx/v5, nats.go
+- **Stack**: Go 1.24, go-routeros/v3, pgx/v5, nats.go
 - **Polling model**: Synchronous per-device polling on a configurable interval (default 60s)
 - **Device communication**: RouterOS binary API over TLS (port 8729), InsecureSkipVerify for self-signed certs
 - **TLS fallback**: Three-tier strategy -- CA-verified -> InsecureSkipVerify -> plain API
@@ -280,7 +281,7 @@ backend/                    FastAPI Python backend
     config.py               Pydantic Settings configuration
     database.py             SQLAlchemy engines (admin + app_user)
     models/                 SQLAlchemy ORM models
-    routers/                FastAPI route handlers (21 modules)
+    routers/                FastAPI route handlers (25 modules)
     services/               Business logic, NATS subscribers, schedulers
     middleware/              Rate limiting, request ID, security headers
 frontend/                   React TypeScript frontend

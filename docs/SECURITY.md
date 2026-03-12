@@ -13,7 +13,8 @@ TOD uses the Secure Remote Password (SRP-6a) protocol for authentication, ensuri
 - **Key derivation pipeline:** PBKDF2 with 650,000 iterations + HKDF expansion + XOR combination of both factors.
 - **Secret Key format:** `A3-XXXXXX` (128-bit), stored exclusively in the browser's IndexedDB. The server never sees or stores the Secret Key.
 - **Emergency Kit:** Downloadable PDF containing the Secret Key for account recovery. Generated client-side.
-- **Session management:** JWT tokens with 15-minute access token lifetime and 7-day refresh token lifetime, delivered via httpOnly cookies.
+- **Vault key decryption on login:** After successful SRP authentication, the client decrypts the user's vault key using the derived session key. This enables client-side decryption of encrypted data without the server ever handling the plaintext vault key.
+- **Session management:** JWT tokens with 15-minute access token lifetime and 7-day refresh token lifetime. Access tokens are returned in the response body; refresh tokens are delivered via httpOnly cookies to enable silent token refresh without exposing the refresh token to JavaScript.
 - **SRP session state:** Ephemeral SRP handshake data stored in Redis with automatic expiration.
 
 ### Authentication Flow
@@ -117,7 +118,7 @@ The following security headers are enforced on all responses:
 ## Audit Trail
 
 - **Immutable audit log:** All significant actions are recorded in the `audit_logs` table — logins, configuration changes, device operations, admin actions.
-- **Fire-and-forget logging:** The `log_action()` function records audit events asynchronously without blocking the main request.
+- **Fire-and-forget logging:** The `log_action()` function records audit events asynchronously without blocking the main request. Each call opens a dedicated database session and self-commits, ensuring audit entries are persisted regardless of whether the caller's transaction commits or rolls back.
 - **Per-tenant access:** Tenants can only view their own audit logs (enforced by RLS).
 - **Encryption at rest:** Audit log content is encrypted via OpenBao Transit.
 - **CSV export:** Audit logs can be exported in CSV format for compliance and reporting.
