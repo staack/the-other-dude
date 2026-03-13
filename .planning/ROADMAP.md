@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Manual Backup Trigger** - API endpoint for on-demand config backup via poller (completed 2026-03-13)
 - [x] **Phase 5: Diff Engine** - Unified diff generation and structured change parsing (completed 2026-03-13)
 - [x] **Phase 6: History API** - REST endpoints for timeline, snapshot view, and diff retrieval with RBAC (completed 2026-03-13)
-- [ ] **Phase 7: Config History UI** - Timeline section on device page with change summaries
+- [x] **Phase 7: Config History UI** - Timeline section on device page with change summaries (completed 2026-03-13)
 - [ ] **Phase 8: Diff Viewer & Download** - Unified diff display with syntax highlighting and .rsc download
 - [ ] **Phase 9: Retention & Cleanup** - 90-day retention policy with automatic snapshot deletion
 - [ ] **Phase 10: Audit & Observability** - Audit event logging for all config backup operations
@@ -120,10 +120,10 @@ Plans:
   1. Device detail page shows a "Configuration History" section below the Remote Access section
   2. Timeline displays change entries with component badge, summary text, and relative timestamp
   3. Timeline loads via TanStack Query and shows loading/empty states appropriately
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 07-01: Configuration History section and change timeline component
+- [ ] 07-01-PLAN.md — API client, ConfigHistorySection component, and device detail page wiring
 
 ### Phase 8: Diff Viewer & Download
 **Goal**: Users can view unified diffs with syntax highlighting and download any snapshot as a .rsc file
@@ -180,7 +180,7 @@ Note: Phase 9 depends only on Phase 3 and Phase 10 depends on Phases 3/4/5, so P
 | 4. Manual Backup Trigger | 1/1 | Complete   | 2026-03-13 |
 | 5. Diff Engine | 2/2 | Complete   | 2026-03-13 |
 | 6. History API | 2/2 | Complete   | 2026-03-13 |
-| 7. Config History UI | 0/1 | Not started | - |
+| 7. Config History UI | 1/1 | Complete   | 2026-03-13 |
 | 8. Diff Viewer & Download | 0/2 | Not started | - |
 | 9. Retention & Cleanup | 0/1 | Not started | - |
 | 10. Audit & Observability | 0/1 | Not started | - |

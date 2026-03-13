@@ -38,8 +38,8 @@
 
 ### Frontend
 
-- [ ] **UI-01**: Device page shows Configuration History section below Remote Access
-- [ ] **UI-02**: Timeline displays change entries with component, summary, and timestamp
+- [x] **UI-01**: Device page shows Configuration History section below Remote Access
+- [x] **UI-02**: Timeline displays change entries with component, summary, and timestamp
 - [ ] **UI-03**: Diff viewer shows unified diff with add/remove highlighting
 - [ ] **UI-04**: User can download snapshot as `router-{device_name}-{timestamp}.rsc`
 
@@ -87,8 +87,8 @@
 | API-02 | Phase 6: History API | Complete |
 | API-03 | Phase 6: History API | Complete |
 | API-04 | Phase 6: History API | Complete |
-| UI-01 | Phase 7: Config History UI | Pending |
-| UI-02 | Phase 7: Config History UI | Pending |
+| UI-01 | Phase 7: Config History UI | Complete |
+| UI-02 | Phase 7: Config History UI | Complete |
 | UI-03 | Phase 8: Diff Viewer & Download | Pending |
 | UI-04 | Phase 8: Diff Viewer & Download | Pending |
 | OBS-01 | Phase 10: Audit & Observability | Pending |
