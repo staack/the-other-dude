@@ -214,6 +214,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         logger.error("Push rollback subscriber failed to start (non-fatal): %s", e)
 
+    # Config snapshot ingestion subscriber (Go poller -> PostgreSQL via Transit encryption)
+    config_snapshot_nc = None
+    try:
+        from app.services.config_snapshot_subscriber import (
+            start_config_snapshot_subscriber,
+            stop_config_snapshot_subscriber,
+        )
+        config_snapshot_nc = await start_config_snapshot_subscriber()
+    except Exception as e:
+        logger.error("Config snapshot subscriber failed to start (non-fatal): %s", e)
+
     logger.info("startup complete, ready to serve requests")
     yield
 
@@ -228,6 +239,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await stop_config_change_subscriber()
     if push_rollback_nc:
         await stop_push_rollback_subscriber()
+    if config_snapshot_nc:
+        await stop_config_snapshot_subscriber()
 
     # Dispose database engine connections to release all pooled connections cleanly.
     from app.database import app_engine, engine
