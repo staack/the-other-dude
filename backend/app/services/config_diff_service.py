@@ -16,6 +16,7 @@ import time
 from prometheus_client import Counter, Histogram
 from sqlalchemy import text
 
+from app.services.config_change_parser import parse_diff_changes
 from app.services.openbao_service import OpenBaoTransitService
 
 logger = logging.getLogger(__name__)
@@ -125,15 +126,16 @@ async def generate_and_store_diff(
             if line.startswith("-") and not line.startswith("--")
         )
 
-        # 9. INSERT into router_config_diffs
-        await session.execute(
+        # 9. INSERT into router_config_diffs (RETURNING id for change parser)
+        diff_result = await session.execute(
             text(
                 "INSERT INTO router_config_diffs "
                 "(device_id, tenant_id, old_snapshot_id, new_snapshot_id, "
                 "diff_text, lines_added, lines_removed) "
                 "VALUES (CAST(:device_id AS uuid), CAST(:tenant_id AS uuid), "
                 "CAST(:old_snapshot_id AS uuid), CAST(:new_snapshot_id AS uuid), "
-                ":diff_text, :lines_added, :lines_removed)"
+                ":diff_text, :lines_added, :lines_removed) "
+                "RETURNING id"
             ),
             {
                 "device_id": device_id,
@@ -145,8 +147,9 @@ async def generate_and_store_diff(
                 "lines_removed": lines_removed,
             },
         )
+        diff_id = diff_result.scalar_one()
 
-        # 10. Commit
+        # 10. Commit diff
         await session.commit()
 
         config_diff_generated_total.inc()
@@ -158,6 +161,39 @@ async def generate_and_store_diff(
             lines_added,
             lines_removed,
         )
+
+        # 11. Parse structured changes (best-effort)
+        try:
+            changes = parse_diff_changes(diff_text)
+            for change in changes:
+                await session.execute(
+                    text(
+                        "INSERT INTO router_config_changes "
+                        "(diff_id, device_id, tenant_id, component, summary, raw_line) "
+                        "VALUES (CAST(:diff_id AS uuid), CAST(:device_id AS uuid), "
+                        "CAST(:tenant_id AS uuid), :component, :summary, :raw_line)"
+                    ),
+                    {
+                        "diff_id": str(diff_id),
+                        "device_id": device_id,
+                        "tenant_id": tenant_id,
+                        "component": change["component"],
+                        "summary": change["summary"],
+                        "raw_line": change["raw_line"],
+                    },
+                )
+            if changes:
+                await session.commit()
+                logger.info(
+                    "Stored %d config changes for device %s diff %s",
+                    len(changes), device_id, diff_id,
+                )
+        except Exception as exc:
+            logger.warning(
+                "Change parser error for device %s diff %s (non-fatal): %s",
+                device_id, diff_id, exc,
+            )
+            config_diff_errors_total.labels(error_type="change_parser").inc()
 
     except Exception as exc:
         logger.warning(
