@@ -56,17 +56,17 @@ Plans:
 - [ ] 02-02-PLAN.md — Backup scheduler with per-device goroutines, concurrency control, retry logic, and main.go wiring
 
 ### Phase 3: Snapshot Ingestion
-**Goal**: Backend receives config snapshots from NATS, computes SHA256 hash, and stores new snapshots while skipping duplicates
+**Goal**: Backend receives config snapshots from NATS, encrypts via Transit, deduplicates by SHA256, and stores new snapshots
 **Depends on**: Phase 1, Phase 2
 **Requirements**: STOR-02
 **Success Criteria** (what must be TRUE):
   1. Backend NATS subscriber consumes `config.snapshot.create` messages and persists snapshots to `router_config_snapshots`
   2. When a snapshot has the same SHA256 hash as the device's most recent snapshot, it is skipped (no new row, no diff)
   3. Each stored snapshot includes device_id, tenant_id, config_text (encrypted), sha256_hash, and collected_at timestamp
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: NATS subscriber for config snapshot ingestion with deduplication
+- [ ] 03-01-PLAN.md — NATS subscriber for config snapshot ingestion with dedup, encryption, and main.py wiring
 
 ### Phase 4: Manual Backup Trigger
 **Goal**: Operators can trigger an immediate config backup for a specific device through the API
