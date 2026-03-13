@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 
 	"github.com/mikrotik-portal/poller/internal/store"
@@ -49,22 +50,7 @@ type mockLockHandle struct{}
 
 func (h *mockLockHandle) Release(_ context.Context) error { return nil }
 
-// testMsg builds a nats.Msg with the given payload and a reply inbox.
-func testMsg(t *testing.T, payload any) *nats.Msg {
-	t.Helper()
-	data, err := json.Marshal(payload)
-	if err != nil {
-		t.Fatalf("marshal payload: %v", err)
-	}
-	return &nats.Msg{
-		Subject: "config.backup.trigger",
-		Data:    data,
-		Reply:   "test.reply",
-	}
-}
-
 func TestBackupResponder_Subscribe(t *testing.T) {
-	// Start embedded NATS for subscribe test
 	nc, cleanup := startTestNATS(t)
 	defer cleanup()
 
@@ -252,16 +238,32 @@ func TestBackupResponder_DeviceNotFound_ReturnsError(t *testing.T) {
 	}
 }
 
-// startTestNATS starts an embedded NATS server for testing and returns
-// a connected client and cleanup function.
+// startTestNATS starts an in-process NATS server and returns a connected client
+// and cleanup function.
 func startTestNATS(t *testing.T) (*nats.Conn, func()) {
 	t.Helper()
 
-	// Use nats-server test helper: start a temporary NATS server
-	s, err := nats.Connect(nats.DefaultURL)
-	if err != nil {
-		// Fall back to in-process test server
-		t.Skip("NATS server not available for testing, skipping")
+	opts := &natsserver.Options{
+		Host: "127.0.0.1",
+		Port: -1, // random port
 	}
-	return s, func() { s.Close() }
+	s, err := natsserver.NewServer(opts)
+	if err != nil {
+		t.Fatalf("failed to create test NATS server: %v", err)
+	}
+	s.Start()
+	if !s.ReadyForConnections(5 * time.Second) {
+		t.Fatal("NATS server not ready in time")
+	}
+
+	nc, err := nats.Connect(s.ClientURL())
+	if err != nil {
+		s.Shutdown()
+		t.Fatalf("failed to connect to test NATS: %v", err)
+	}
+
+	return nc, func() {
+		nc.Close()
+		s.Shutdown()
+	}
 }

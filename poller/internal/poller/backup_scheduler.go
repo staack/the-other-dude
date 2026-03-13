@@ -271,7 +271,7 @@ func (bs *BackupScheduler) executeBackupTick(ctx context.Context, dev store.Devi
 
 	// Execute the backup.
 	state.lastAttemptAt = time.Now()
-	if err := bs.collectAndPublish(ctx, dev, state); err != nil {
+	if _, err := bs.collectAndPublish(ctx, dev, state); err != nil {
 		slog.Error("config backup failed",
 			"device_id", dev.ID,
 			"ip", dev.IPAddress,
@@ -327,8 +327,17 @@ func (bs *BackupScheduler) executeBackupTick(ctx context.Context, dev store.Devi
 	}
 }
 
+// CollectAndPublish performs the config backup pipeline (SSH, normalize, hash, publish)
+// for a single device and returns the SHA256 hash of the collected config.
+// This is the public entry point used by BackupResponder for manual triggers.
+func (bs *BackupScheduler) CollectAndPublish(ctx context.Context, dev store.Device) (string, error) {
+	return bs.collectAndPublish(ctx, dev, nil)
+}
+
 // collectAndPublish performs the actual config backup: SSH command, normalize, hash, publish.
-func (bs *BackupScheduler) collectAndPublish(ctx context.Context, dev store.Device, state *backupDeviceState) error {
+// If state is nil (manual trigger), observability metrics are still recorded but
+// state tracking is skipped.
+func (bs *BackupScheduler) collectAndPublish(ctx context.Context, dev store.Device, state *backupDeviceState) (string, error) {
 	observability.ConfigBackupActive.Inc()
 	defer observability.ConfigBackupActive.Dec()
 
@@ -345,7 +354,7 @@ func (bs *BackupScheduler) collectAndPublish(ctx context.Context, dev store.Devi
 		dev.EncryptedCredentials,
 	)
 	if err != nil {
-		return fmt.Errorf("decrypting credentials for device %s: %w", dev.ID, err)
+		return "", fmt.Errorf("decrypting credentials for device %s: %w", dev.ID, err)
 	}
 
 	// Build known fingerprint for TOFU verification.
@@ -369,7 +378,7 @@ func (bs *BackupScheduler) collectAndPublish(ctx context.Context, dev store.Devi
 		"/export show-sensitive",
 	)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// TOFU: store fingerprint on first connection.
@@ -386,10 +395,10 @@ func (bs *BackupScheduler) collectAndPublish(ctx context.Context, dev store.Devi
 
 	// Validate output: non-empty and looks like RouterOS config.
 	if result.Stdout == "" {
-		return fmt.Errorf("empty config output from device %s", dev.ID)
+		return "", fmt.Errorf("empty config output from device %s", dev.ID)
 	}
 	if !strings.Contains(result.Stdout, "/") {
-		return fmt.Errorf("config output from device %s does not look like RouterOS config", dev.ID)
+		return "", fmt.Errorf("config output from device %s does not look like RouterOS config", dev.ID)
 	}
 
 	// Normalize and hash.
@@ -414,7 +423,7 @@ func (bs *BackupScheduler) collectAndPublish(ctx context.Context, dev store.Devi
 	}
 
 	if err := bs.publisher.PublishConfigSnapshot(ctx, event); err != nil {
-		return fmt.Errorf("publishing config snapshot for device %s: %w", dev.ID, err)
+		return "", fmt.Errorf("publishing config snapshot for device %s: %w", dev.ID, err)
 	}
 
 	slog.Info("config backup published",
@@ -422,7 +431,7 @@ func (bs *BackupScheduler) collectAndPublish(ctx context.Context, dev store.Devi
 		"sha256_hash", hash,
 	)
 
-	return nil
+	return hash, nil
 }
 
 // isDeviceOnline checks if a device is online via Redis status key.

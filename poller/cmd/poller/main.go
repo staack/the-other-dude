@@ -294,6 +294,23 @@ func main() {
 		cfg.ConfigBackupMaxConcurrent,
 	)
 
+	// -----------------------------------------------------------------------
+	// Initialize NATS backup responder for manual config backup triggers
+	// -----------------------------------------------------------------------
+	backupResponder := bus.NewBackupResponder(
+		publisher.Conn(),
+		deviceStore,
+		backupScheduler,
+		bus.NewRedisBackupLocker(locker),
+		backupCmdTimeout,
+	)
+	if err := backupResponder.Subscribe(); err != nil {
+		slog.Error("failed to start backup responder", "error", err)
+		os.Exit(1)
+	}
+	defer backupResponder.Stop()
+	slog.Info("NATS backup responder started (config.backup.trigger)")
+
 	go func() {
 		slog.Info("starting config backup scheduler",
 			"interval", backupInterval,
