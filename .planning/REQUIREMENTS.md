@@ -45,8 +45,8 @@
 
 ### Observability
 
-- [ ] **OBS-01**: Audit events logged: `config_snapshot_created`, `config_snapshot_skipped_duplicate`
-- [ ] **OBS-02**: Audit events logged: `config_diff_generated`, `config_backup_manual_trigger`
+- [x] **OBS-01**: Audit events logged: `config_snapshot_created`, `config_snapshot_skipped_duplicate`
+- [x] **OBS-02**: Audit events logged: `config_diff_generated`, `config_backup_manual_trigger`
 
 ## v2 Requirements
 
@@ -91,8 +91,8 @@
 | UI-02 | Phase 7: Config History UI | Complete |
 | UI-03 | Phase 8: Diff Viewer & Download | Complete |
 | UI-04 | Phase 8: Diff Viewer & Download | Complete |
-| OBS-01 | Phase 10: Audit & Observability | Pending |
-| OBS-02 | Phase 10: Audit & Observability | Pending |
+| OBS-01 | Phase 10: Audit & Observability | Complete |
+| OBS-02 | Phase 10: Audit & Observability | Complete |
 
 **Coverage:**
 - v1 requirements: 25 total
