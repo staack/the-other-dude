@@ -11,6 +11,7 @@ import asyncio
 import json
 import logging
 import time
+import uuid as _uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -20,6 +21,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 
 from app.config import settings
 from app.database import AdminAsyncSessionLocal
+from app.services.audit_service import log_action
 from app.services.config_diff_service import generate_and_store_diff
 from app.services.openbao_service import OpenBaoTransitService
 
@@ -111,6 +113,18 @@ async def handle_config_snapshot(msg) -> None:
                 device_id,
             )
             config_snapshot_dedup_skipped_total.inc()
+            try:
+                await log_action(
+                    db=None,
+                    tenant_id=_uuid.UUID(tenant_id),
+                    user_id=None,
+                    action="config_snapshot_skipped_duplicate",
+                    resource_type="config_snapshot",
+                    device_id=_uuid.UUID(device_id),
+                    details={"sha256_hash": sha256_hash},
+                )
+            except Exception:
+                pass
             await msg.ack()
             return
 
@@ -172,6 +186,20 @@ async def handle_config_snapshot(msg) -> None:
             await session.rollback()
             await msg.nak()
             return
+
+        try:
+            await log_action(
+                db=None,
+                tenant_id=_uuid.UUID(tenant_id),
+                user_id=None,
+                action="config_snapshot_created",
+                resource_type="config_snapshot",
+                resource_id=str(new_snapshot_id),
+                device_id=_uuid.UUID(device_id),
+                details={"sha256_hash": sha256_hash},
+            )
+        except Exception:
+            pass
 
         # --- Diff generation (best-effort) ---
         try:

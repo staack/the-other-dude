@@ -837,6 +837,23 @@ async def trigger_config_snapshot(
     reply_data = json.loads(reply.data)
 
     if reply_data.get("status") == "success":
+        try:
+            from app.services.audit_service import log_action
+            await log_action(
+                db,
+                tenant_id,
+                current_user.user_id,
+                "config_backup_manual_trigger",
+                resource_type="config_snapshot",
+                device_id=device_id,
+                details={
+                    "sha256_hash": reply_data.get("sha256_hash"),
+                    "triggered_by": str(current_user.user_id),
+                },
+                ip_address=request.client.host if request.client else None,
+            )
+        except Exception:
+            pass
         return {
             "status": "success",
             "sha256_hash": reply_data.get("sha256_hash"),

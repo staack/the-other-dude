@@ -161,10 +161,10 @@ Plans:
   2. `config_snapshot_skipped_duplicate` audit event logged when a duplicate snapshot is detected
   3. `config_diff_generated` audit event logged when a diff is created between snapshots
   4. `config_backup_manual_trigger` audit event logged when an operator triggers a manual backup
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 10-01: Audit event emission for all config backup operations
+- [ ] 10-01-PLAN.md — Audit event emission for all config backup operations
 
 ## Progress
 

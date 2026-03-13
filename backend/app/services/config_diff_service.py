@@ -162,6 +162,27 @@ async def generate_and_store_diff(
             lines_removed,
         )
 
+        try:
+            from app.services.audit_service import log_action
+            import uuid as _uuid
+            await log_action(
+                db=None,
+                tenant_id=_uuid.UUID(tenant_id),
+                user_id=None,
+                action="config_diff_generated",
+                resource_type="config_diff",
+                resource_id=str(diff_id),
+                device_id=_uuid.UUID(device_id),
+                details={
+                    "old_snapshot_id": str(old_snapshot_id),
+                    "new_snapshot_id": new_snapshot_id,
+                    "lines_added": lines_added,
+                    "lines_removed": lines_removed,
+                },
+            )
+        except Exception:
+            pass
+
         # 11. Parse structured changes (best-effort)
         try:
             changes = parse_diff_changes(diff_text)
