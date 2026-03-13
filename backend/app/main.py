@@ -281,6 +281,7 @@ def create_app() -> FastAPI:
     from app.routers.sse import router as sse_router
     from app.routers.config_backups import router as config_router
     from app.routers.config_editor import router as config_editor_router
+    from app.routers.config_history import router as config_history_router
     from app.routers.device_groups import router as device_groups_router
     from app.routers.device_tags import router as device_tags_router
     from app.routers.devices import router as devices_router
@@ -311,6 +312,7 @@ def create_app() -> FastAPI:
     app.include_router(device_tags_router, prefix="/api")
     app.include_router(metrics_router, prefix="/api")
     app.include_router(config_router, prefix="/api")
+    app.include_router(config_history_router, prefix="/api")
     app.include_router(firmware_router, prefix="/api")
     app.include_router(alerts_router, prefix="/api")
     app.include_router(config_editor_router, prefix="/api")
