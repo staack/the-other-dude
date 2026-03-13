@@ -15,12 +15,14 @@ Provides:
     - POST /emergency-rollback   — rollback to most recent pre-push backup
     - GET  /schedules            — view effective backup schedule
     - PUT  /schedules            — create/update device-specific schedule override
+    - POST /config-snapshot/trigger — trigger Go poller config snapshot via NATS
 
 RLS is enforced via get_db() (app_user engine with tenant context).
 RBAC: viewer = read-only (GET); operator and above = write (POST/PUT).
 """
 
 import asyncio
+import json
 import logging
 import uuid
 from datetime import timezone, datetime
@@ -743,3 +745,112 @@ async def update_schedule(
         "enabled": schedule.enabled,
         "is_default": False,
     }
+
+
+# ---------------------------------------------------------------------------
+# Config Snapshot Trigger (Go poller via NATS request-reply)
+# ---------------------------------------------------------------------------
+
+
+async def _get_nats():
+    """Get or create a NATS connection for config snapshot trigger requests.
+
+    Reuses the same lazy-init pattern as routeros_proxy._get_nats().
+    """
+    from app.services.routeros_proxy import _get_nats as _proxy_get_nats
+    return await _proxy_get_nats()
+
+
+@router.post(
+    "/tenants/{tenant_id}/devices/{device_id}/config-snapshot/trigger",
+    summary="Trigger an immediate config snapshot via the Go poller",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[require_scope("config:write")],
+)
+@limiter.limit("10/minute")
+async def trigger_config_snapshot(
+    request: Request,
+    tenant_id: uuid.UUID,
+    device_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    _role: CurrentUser = Depends(require_min_role("operator")),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Trigger an immediate config snapshot for a device via the Go poller.
+
+    Sends a NATS request to the poller's BackupResponder, which performs
+    SSH config collection, normalization, hashing, and publishes the
+    snapshot through the same ingestion pipeline as scheduled backups.
+
+    Returns 201 on success with the snapshot's SHA256 hash.
+    Returns 409 if a backup is already in progress for the device.
+    Returns 502 if the poller reports a failure.
+    Returns 504 if the request times out (backup may still complete).
+    """
+    await _check_tenant_access(current_user, tenant_id, db)
+
+    # Verify device exists in this tenant.
+    result = await db.execute(
+        select(Device).where(
+            Device.id == device_id,  # type: ignore[arg-type]
+            Device.tenant_id == tenant_id,  # type: ignore[arg-type]
+        )
+    )
+    device = result.scalar_one_or_none()
+    if device is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Device {device_id} not found in tenant {tenant_id}",
+        )
+
+    # Send NATS request to Go poller.
+    nc = await _get_nats()
+    payload = {
+        "device_id": str(device_id),
+        "tenant_id": str(tenant_id),
+    }
+
+    import nats.errors
+
+    try:
+        reply = await nc.request(
+            "config.backup.trigger",
+            json.dumps(payload).encode(),
+            timeout=90.0,
+        )
+    except nats.errors.TimeoutError:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="Backup request timed out -- the backup may still complete via the scheduled pipeline",
+        )
+    except Exception as exc:
+        logger.error(
+            "NATS request failed for config snapshot trigger device %s: %s",
+            device_id,
+            exc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to communicate with poller: {exc}",
+        ) from exc
+
+    reply_data = json.loads(reply.data)
+
+    if reply_data.get("status") == "success":
+        return {
+            "status": "success",
+            "sha256_hash": reply_data.get("sha256_hash"),
+            "message": reply_data.get("message", "Config snapshot collected"),
+        }
+
+    if reply_data.get("status") == "locked":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=reply_data.get("message", "backup already in progress"),
+        )
+
+    # status == "failed" or unknown
+    raise HTTPException(
+        status_code=status.HTTP_502_BAD_GATEWAY,
+        detail=reply_data.get("error", "Backup failed"),
+    )
