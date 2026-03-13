@@ -133,11 +133,11 @@ Plans:
   1. Clicking a timeline entry opens a diff viewer showing unified diff with add (green) / remove (red) line highlighting
   2. User can download any snapshot as `router-{device_name}-{timestamp}.rsc` file
   3. Diff viewer handles large configs without performance degradation
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: Unified diff viewer component with syntax highlighting
-- [ ] 08-02: Snapshot download as .rsc file
+- [ ] 08-01-PLAN.md — Unified diff viewer component with syntax highlighting and clickable timeline entries
+- [ ] 08-02-PLAN.md — Snapshot download as .rsc file with download button on timeline entries
 
 ### Phase 9: Retention & Cleanup
 **Goal**: Snapshots older than the retention period are automatically cleaned up, keeping storage bounded
@@ -181,6 +181,6 @@ Note: Phase 9 depends only on Phase 3 and Phase 10 depends on Phases 3/4/5, so P
 | 5. Diff Engine | 2/2 | Complete   | 2026-03-13 |
 | 6. History API | 2/2 | Complete   | 2026-03-13 |
 | 7. Config History UI | 1/1 | Complete   | 2026-03-13 |
-| 8. Diff Viewer & Download | 0/2 | Not started | - |
+| 8. Diff Viewer & Download | 1/2 | In Progress|  |
 | 9. Retention & Cleanup | 0/1 | Not started | - |
 | 10. Audit & Observability | 0/1 | Not started | - |
