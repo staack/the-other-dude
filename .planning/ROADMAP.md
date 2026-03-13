@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: History API** - REST endpoints for timeline, snapshot view, and diff retrieval with RBAC (completed 2026-03-13)
 - [x] **Phase 7: Config History UI** - Timeline section on device page with change summaries (completed 2026-03-13)
 - [ ] **Phase 8: Diff Viewer & Download** - Unified diff display with syntax highlighting and .rsc download
-- [ ] **Phase 9: Retention & Cleanup** - 90-day retention policy with automatic snapshot deletion
+- [x] **Phase 9: Retention & Cleanup** - 90-day retention policy with automatic snapshot deletion (completed 2026-03-13)
 - [ ] **Phase 10: Audit & Observability** - Audit event logging for all config backup operations
 
 ## Phase Details
@@ -147,10 +147,10 @@ Plans:
   1. Snapshots older than 90 days (default) are automatically deleted along with their associated diffs and changes
   2. Retention period is configurable via `CONFIG_RETENTION_DAYS` environment variable
   3. Cleanup runs on a scheduled interval without blocking normal operations
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 09-01: Retention cleanup scheduler and cascading deletion
+- [ ] 09-01-PLAN.md — Retention cleanup service with APScheduler, configurable retention period, and cascading deletion
 
 ### Phase 10: Audit & Observability
 **Goal**: All config backup operations are logged as audit events for compliance and troubleshooting
@@ -182,5 +182,5 @@ Note: Phase 9 depends only on Phase 3 and Phase 10 depends on Phases 3/4/5, so P
 | 6. History API | 2/2 | Complete   | 2026-03-13 |
 | 7. Config History UI | 1/1 | Complete   | 2026-03-13 |
 | 8. Diff Viewer & Download | 1/2 | In Progress|  |
-| 9. Retention & Cleanup | 0/1 | Not started | - |
+| 9. Retention & Cleanup | 1/1 | Complete   | 2026-03-13 |
 | 10. Audit & Observability | 0/1 | Not started | - |

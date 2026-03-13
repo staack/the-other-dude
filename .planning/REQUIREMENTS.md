@@ -18,8 +18,8 @@
 
 - [x] **STOR-01**: API stores config snapshots in `router_config_snapshots` table with SHA256 hash
 - [x] **STOR-02**: Duplicate snapshots (same hash as previous) are skipped, no diff generated
-- [ ] **STOR-03**: Snapshots retained for 90 days (configurable via `CONFIG_RETENTION_DAYS`)
-- [ ] **STOR-04**: Older snapshots automatically deleted by retention cleanup
+- [x] **STOR-03**: Snapshots retained for 90 days (configurable via `CONFIG_RETENTION_DAYS`)
+- [x] **STOR-04**: Older snapshots automatically deleted by retention cleanup
 - [x] **STOR-05**: Snapshots encrypted at rest, accessible only through RBAC
 
 ### Diff & Parsing
@@ -76,8 +76,8 @@
 | COLL-06 | Phase 2: Poller Config Collection | Complete |
 | STOR-01 | Phase 1: Database Schema | Complete |
 | STOR-02 | Phase 3: Snapshot Ingestion | Complete |
-| STOR-03 | Phase 9: Retention & Cleanup | Pending |
-| STOR-04 | Phase 9: Retention & Cleanup | Pending |
+| STOR-03 | Phase 9: Retention & Cleanup | Complete |
+| STOR-04 | Phase 9: Retention & Cleanup | Complete |
 | STOR-05 | Phase 1: Database Schema | Complete |
 | DIFF-01 | Phase 5: Diff Engine | Complete |
 | DIFF-02 | Phase 5: Diff Engine | Complete |
