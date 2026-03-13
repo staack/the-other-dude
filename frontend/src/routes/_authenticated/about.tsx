@@ -509,7 +509,7 @@ function AboutPage() {
           MSP fleet management platform for RouterOS devices
         </p>
         <span className="inline-block px-3 py-1 text-xs font-mono font-medium text-accent bg-accent-muted rounded-full">
-          v6.0
+          v9.6
         </span>
       </div>
 
