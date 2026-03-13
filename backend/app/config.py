@@ -125,6 +125,9 @@ class Settings(BaseSettings):
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
     APP_BASE_URL: str = "http://localhost:3000"
 
+    # Retention cleanup — delete config snapshots older than N days
+    CONFIG_RETENTION_DAYS: int = 90
+
     # App settings
     APP_NAME: str = "TOD - The Other Dude"
     APP_VERSION: str = "0.1.0"
