@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v9.6
 milestone_name: milestone
-status: completed
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-03-13T03:37:57.863Z"
-last_activity: 2026-03-13 -- Completed 05-01 config diff service with TDD
+status: in-progress
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-13T04:00:32.171Z"
+last_activity: 2026-03-13 -- Completed 06-01 config history timeline endpoint
 progress:
   total_phases: 10
   completed_phases: 5
-  total_plans: 7
-  completed_plans: 7
-  percent: 86
+  total_plans: 9
+  completed_plans: 8
+  percent: 89
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-12)
 
 **Core value:** Operators can see exactly what changed on a router and when, with reliable config snapshots for download
-**Current focus:** Phase 5: Diff Engine -- COMPLETE
+**Current focus:** Phase 6: History API
 
 ## Current Position
 
-Phase: 5 of 10 (Diff Engine) -- COMPLETE
-Plan: 2 of 2 in current phase (05-02 complete)
-Status: Phase 5 complete
-Last activity: 2026-03-13 -- Completed 05-02 structured change parser with TDD
+Phase: 6 of 10 (History API)
+Plan: 1 of 2 in current phase (06-01 complete)
+Status: In progress
+Last activity: 2026-03-13 -- Completed 06-01 config history timeline endpoint
 
-Progress: [█████████░] 86%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [█████████░] 86%
 *Updated after each plan completion*
 | Phase 05 P01 | 3min | 2 tasks | 4 files |
 | Phase 05 P02 | 2min | 2 tasks | 4 files |
+| Phase 06 P01 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Diff service instantiates own OpenBaoTransitService per-call with close() for clean lifecycle
 - [Phase 05]: RETURNING id on snapshot INSERT to capture new_snapshot_id without separate query
 - [Phase 05]: Change parser is pure function; DB writes in diff service. RETURNING id on diff INSERT for linking.
+- [Phase 06]: Raw SQL text() JOIN for timeline queries, consistent with config_diff_service pattern
+- [Phase 06]: Pagination defaults limit=50, offset=0 with FastAPI Query validation (ge=1, le=200)
 
 ### Pending Todos
 
@@ -91,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T03:37:57.861Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-03-13T04:00:00Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None
