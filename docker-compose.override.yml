@@ -82,7 +82,7 @@ services:
       POLL_INTERVAL_SECONDS: 60
       WIREGUARD_GATEWAY: wireguard
       TUNNEL_PORT_MIN: 49000
-      TUNNEL_PORT_MAX: 49100
+      TUNNEL_PORT_MAX: 49004
       TUNNEL_IDLE_TIMEOUT: 300
       SSH_RELAY_PORT: 8080
       SSH_IDLE_TIMEOUT: 900
@@ -90,7 +90,7 @@ services:
       SSH_MAX_PER_USER: 10
       SSH_MAX_PER_DEVICE: 20
     ports:
-      - "127.0.0.1:49000-49100:49000-49100"
+      - "49000-49004:49000-49004"
     ulimits:
       nofile:
         soft: 8192

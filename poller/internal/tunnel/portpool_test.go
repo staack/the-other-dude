@@ -71,7 +71,7 @@ func TestPortPool_ConcurrentAccess(t *testing.T) {
 
 func TestPortPool_BindVerification(t *testing.T) {
 	// Occupy a port, then verify Allocate skips it
-	ln, err := net.Listen("tcp", "127.0.0.1:49050")
+	ln, err := net.Listen("tcp", "0.0.0.0:49050")
 	require.NoError(t, err)
 	defer ln.Close()
 
