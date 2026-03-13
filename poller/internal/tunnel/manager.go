@@ -65,7 +65,7 @@ func (m *Manager) OpenTunnel(deviceID, tenantID, userID, remoteAddr string) (*Op
 		return nil, err
 	}
 
-	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	ln, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port))
 	if err != nil {
 		m.portPool.Release(port)
 		return nil, fmt.Errorf("failed to listen on port %d: %w", port, err)

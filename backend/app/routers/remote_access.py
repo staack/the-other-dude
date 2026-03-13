@@ -159,11 +159,17 @@ async def open_winbox_session(
     if not isinstance(port, int) or not (49000 <= port <= 49100):
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Invalid port allocation from tunnel service")
 
+    # Derive the tunnel host from the request so remote clients get the server's
+    # address rather than 127.0.0.1 (which would point to the user's own machine).
+    tunnel_host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "127.0.0.1")
+    # Strip port from host header (e.g. "10.101.0.175:8001" → "10.101.0.175")
+    tunnel_host = tunnel_host.split(":")[0]
+
     return WinboxSessionResponse(
         tunnel_id=tunnel_id,
-        host="127.0.0.1",
+        host=tunnel_host,
         port=port,
-        winbox_uri=f"winbox://127.0.0.1:{port}",
+        winbox_uri=f"winbox://{tunnel_host}:{port}",
     )
 
 
