@@ -9,9 +9,9 @@
 
 - [x] **COLL-01**: Poller collects RouterOS config via SSH `/export show-sensitive` on a configurable interval (default 6h)
 - [x] **COLL-02**: Poller normalizes config output (trim whitespace, normalize line endings, remove timestamp headers)
-- [ ] **COLL-03**: Poller sends config snapshot to API via NATS subject `config.snapshot.create`
+- [x] **COLL-03**: Poller sends config snapshot to API via NATS subject `config.snapshot.create`
 - [ ] **COLL-04**: Manual backup trigger via POST `/api/tenants/{tenant_id}/devices/{device_id}/backup`
-- [ ] **COLL-05**: Unreachable routers log warning and retry next interval
+- [x] **COLL-05**: Unreachable routers log warning and retry next interval
 - [x] **COLL-06**: Collection interval configurable via `CONFIG_BACKUP_INTERVAL` environment variable
 
 ### Storage
@@ -70,9 +70,9 @@
 |-------------|-------|--------|
 | COLL-01 | Phase 2: Poller Config Collection | Complete |
 | COLL-02 | Phase 2: Poller Config Collection | Complete |
-| COLL-03 | Phase 2: Poller Config Collection | Pending |
+| COLL-03 | Phase 2: Poller Config Collection | Complete |
 | COLL-04 | Phase 4: Manual Backup Trigger | Pending |
-| COLL-05 | Phase 2: Poller Config Collection | Pending |
+| COLL-05 | Phase 2: Poller Config Collection | Complete |
 | COLL-06 | Phase 2: Poller Config Collection | Complete |
 | STOR-01 | Phase 1: Database Schema | Complete |
 | STOR-02 | Phase 3: Snapshot Ingestion | Pending |

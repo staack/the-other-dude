@@ -13,7 +13,7 @@ This roadmap delivers automated RouterOS configuration backup and change trackin
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Database Schema** - Config snapshot, diff, and change tables with encryption and RLS (completed 2026-03-13)
-- [ ] **Phase 2: Poller Config Collection** - SSH export, normalization, and NATS publishing from Go poller
+- [x] **Phase 2: Poller Config Collection** - SSH export, normalization, and NATS publishing from Go poller (completed 2026-03-13)
 - [ ] **Phase 3: Snapshot Ingestion** - Backend NATS subscriber stores snapshots with SHA256 deduplication
 - [ ] **Phase 4: Manual Backup Trigger** - API endpoint for on-demand config backup via poller
 - [ ] **Phase 5: Diff Engine** - Unified diff generation and structured change parsing
@@ -175,7 +175,7 @@ Note: Phase 9 depends only on Phase 3 and Phase 10 depends on Phases 3/4/5, so P
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Database Schema | 1/1 | Complete    | 2026-03-13 |
-| 2. Poller Config Collection | 0/2 | Not started | - |
+| 2. Poller Config Collection | 2/2 | Complete    | 2026-03-13 |
 | 3. Snapshot Ingestion | 0/1 | Not started | - |
 | 4. Manual Backup Trigger | 0/1 | Not started | - |
 | 5. Diff Engine | 0/2 | Not started | - |

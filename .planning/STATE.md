@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v9.6
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-13T01:49:00Z"
-last_activity: 2026-03-13 -- Completed 02-01 config backup primitives (SSH executor, normalizer, NATS event, migration)
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-03-13T01:55:37Z"
+last_activity: 2026-03-13 -- Completed 02-02 backup scheduler (per-device goroutines, concurrency, main.go wiring)
 progress:
   total_phases: 10
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 100
 ---
 
@@ -25,26 +25,26 @@ See: .planning/PROJECT.md (updated 2026-03-12)
 
 ## Current Position
 
-Phase: 2 of 10 (Poller Config Collection)
-Plan: 1 of 2 in current phase (02-01 complete)
-Status: Phase 2 in progress
-Last activity: 2026-03-13 -- Completed 02-01 config backup primitives (SSH executor, normalizer, NATS event, migration)
+Phase: 2 of 10 (Poller Config Collection) -- COMPLETE
+Plan: 2 of 2 in current phase (02-02 complete)
+Status: Phase 2 complete
+Last activity: 2026-03-13 -- Completed 02-02 backup scheduler with per-device goroutines and main.go wiring
 
-Progress: [███████░░░] 67%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
+- Total plans completed: 3
 - Average duration: 4min
-- Total execution time: 0.13 hours
+- Total execution time: 0.20 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-database-schema | 1 | 3min | 3min |
-| 02-poller-config-collection | 1 | 5min | 5min |
+| 02-poller-config-collection | 2 | 9min | 4.5min |
 
 **Recent Trend:**
 - Last 5 plans: none
@@ -65,6 +65,9 @@ Recent decisions affecting current work:
 - [02-01] TOFU fingerprint format matches ssh-keygen: SHA256:base64(sha256(pubkey))
 - [02-01] NormalizationVersion=1 constant in NATS payloads for future re-processing
 - [02-01] UpdateSSHHostKey uses COALESCE on first_seen to preserve original observation time
+- [02-02] BackupScheduler runs independently from status poll scheduler with separate goroutines
+- [02-02] Buffered channel semaphore for concurrency control (Go idiom, no external deps)
+- [02-02] Devices with no Redis status key assumed potentially online for first backup
 
 ### Pending Todos
 
@@ -76,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T01:49:00Z
-Stopped at: Completed 02-01-PLAN.md
-Resume file: .planning/phases/02-poller-config-collection/02-02-PLAN.md
+Last session: 2026-03-13T01:55:37Z
+Stopped at: Completed 02-02-PLAN.md (Phase 2 complete)
+Resume file: Next phase (03)
