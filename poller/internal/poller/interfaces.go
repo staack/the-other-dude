@@ -12,3 +12,9 @@ import (
 type DeviceFetcher interface {
 	FetchDevices(ctx context.Context) ([]store.Device, error)
 }
+
+// SSHHostKeyUpdater is the subset of store.DeviceStore used by the BackupScheduler
+// to persist TOFU SSH host key fingerprints after first successful connection.
+type SSHHostKeyUpdater interface {
+	UpdateSSHHostKey(ctx context.Context, deviceID string, fingerprint string) error
+}
