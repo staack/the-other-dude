@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Poller Config Collection** - SSH export, normalization, and NATS publishing from Go poller (completed 2026-03-13)
 - [ ] **Phase 3: Snapshot Ingestion** - Backend NATS subscriber stores snapshots with SHA256 deduplication
 - [x] **Phase 4: Manual Backup Trigger** - API endpoint for on-demand config backup via poller (completed 2026-03-13)
-- [ ] **Phase 5: Diff Engine** - Unified diff generation and structured change parsing
+- [x] **Phase 5: Diff Engine** - Unified diff generation and structured change parsing (completed 2026-03-13)
 - [ ] **Phase 6: History API** - REST endpoints for timeline, snapshot view, and diff retrieval with RBAC
 - [ ] **Phase 7: Config History UI** - Timeline section on device page with change summaries
 - [ ] **Phase 8: Diff Viewer & Download** - Unified diff display with syntax highlighting and .rsc download
@@ -178,7 +178,7 @@ Note: Phase 9 depends only on Phase 3 and Phase 10 depends on Phases 3/4/5, so P
 | 2. Poller Config Collection | 2/2 | Complete    | 2026-03-13 |
 | 3. Snapshot Ingestion | 0/1 | Not started | - |
 | 4. Manual Backup Trigger | 1/1 | Complete   | 2026-03-13 |
-| 5. Diff Engine | 1/2 | In Progress|  |
+| 5. Diff Engine | 2/2 | Complete   | 2026-03-13 |
 | 6. History API | 0/2 | Not started | - |
 | 7. Config History UI | 0/1 | Not started | - |
 | 8. Diff Viewer & Download | 0/2 | Not started | - |
