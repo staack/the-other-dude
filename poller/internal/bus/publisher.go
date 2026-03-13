@@ -65,6 +65,19 @@ type PushRollbackEvent struct {
 	PrePushCommitSHA string `json:"pre_push_commit_sha"`
 }
 
+// ConfigSnapshotEvent is the payload published to NATS JetStream when a config
+// backup is successfully collected from a device. The backend subscribes to
+// "config.snapshot.>" to store snapshots and compute diffs.
+type ConfigSnapshotEvent struct {
+	DeviceID             string `json:"device_id"`
+	TenantID             string `json:"tenant_id"`
+	RouterOSVersion      string `json:"routeros_version,omitempty"`
+	CollectedAt          string `json:"collected_at"`          // RFC3339
+	SHA256Hash           string `json:"sha256_hash"`
+	ConfigText           string `json:"config_text"`
+	NormalizationVersion int    `json:"normalization_version"`
+}
+
 // PushAlertEvent triggers an alert for editor pushes (one-click rollback).
 type PushAlertEvent struct {
 	DeviceID string `json:"device_id"`
@@ -122,6 +135,7 @@ func NewPublisher(natsURL string) (*Publisher, error) {
 			"device.firmware.>",
 			"device.credential_changed.>",
 			"config.changed.>",
+			"config.snapshot.>",
 			"config.push.rollback.>",
 			"config.push.alert.>",
 			"audit.session.end.>",
@@ -251,6 +265,33 @@ func (p *Publisher) PublishConfigChanged(ctx context.Context, event ConfigChange
 		"tenant_id", event.TenantID,
 		"old_timestamp", event.OldTimestamp,
 		"new_timestamp", event.NewTimestamp,
+		"subject", subject,
+	)
+
+	return nil
+}
+
+// PublishConfigSnapshot publishes a config snapshot event to NATS JetStream.
+//
+// Events are published to "config.snapshot.create.{DeviceID}" so the Python
+// backend can store the snapshot and compute diffs against the previous one.
+func (p *Publisher) PublishConfigSnapshot(ctx context.Context, event ConfigSnapshotEvent) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("marshalling config snapshot event: %w", err)
+	}
+
+	subject := fmt.Sprintf("config.snapshot.create.%s", event.DeviceID)
+
+	_, err = p.js.Publish(ctx, subject, data)
+	if err != nil {
+		return fmt.Errorf("publishing to %s: %w", subject, err)
+	}
+
+	slog.Debug("published config snapshot event",
+		"device_id", event.DeviceID,
+		"tenant_id", event.TenantID,
+		"sha256_hash", event.SHA256Hash,
 		"subject", subject,
 	)
 

@@ -22,6 +22,8 @@ type Device struct {
 	MajorVersion                *int
 	TLSMode                     string  // "insecure" or "portal_ca"
 	CACertPEM                   *string // PEM-encoded CA cert (only populated when TLSMode = "portal_ca")
+	SSHPort                     int     // SSH port for config backup (default 22)
+	SSHHostKeyFingerprint       *string // TOFU SSH host key fingerprint (SHA256:base64)
 }
 
 // DeviceStore manages PostgreSQL connections for device data access.
@@ -65,7 +67,9 @@ func (s *DeviceStore) FetchDevices(ctx context.Context) ([]Device, error) {
 			d.routeros_version,
 			d.routeros_major_version,
 			d.tls_mode,
-			ca.cert_pem
+			ca.cert_pem,
+			COALESCE(d.ssh_port, 22),
+			d.ssh_host_key_fingerprint
 		FROM devices d
 		LEFT JOIN certificate_authorities ca
 			ON d.tenant_id = ca.tenant_id
@@ -95,6 +99,8 @@ func (s *DeviceStore) FetchDevices(ctx context.Context) ([]Device, error) {
 			&d.MajorVersion,
 			&d.TLSMode,
 			&d.CACertPEM,
+			&d.SSHPort,
+			&d.SSHHostKeyFingerprint,
 		); err != nil {
 			return nil, fmt.Errorf("scanning device row: %w", err)
 		}
@@ -122,7 +128,9 @@ func (s *DeviceStore) GetDevice(ctx context.Context, deviceID string) (Device, e
 			d.routeros_version,
 			d.routeros_major_version,
 			d.tls_mode,
-			ca.cert_pem
+			ca.cert_pem,
+			COALESCE(d.ssh_port, 22),
+			d.ssh_host_key_fingerprint
 		FROM devices d
 		LEFT JOIN certificate_authorities ca
 			ON d.tenant_id = ca.tenant_id
@@ -142,11 +150,24 @@ func (s *DeviceStore) GetDevice(ctx context.Context, deviceID string) (Device, e
 		&d.MajorVersion,
 		&d.TLSMode,
 		&d.CACertPEM,
+		&d.SSHPort,
+		&d.SSHHostKeyFingerprint,
 	)
 	if err != nil {
 		return Device{}, fmt.Errorf("querying device %s: %w", deviceID, err)
 	}
 	return d, nil
+}
+
+// UpdateSSHHostKey stores the SSH host key fingerprint for TOFU verification.
+// Called after a successful first-connect to persist the observed fingerprint.
+func (s *DeviceStore) UpdateSSHHostKey(ctx context.Context, deviceID string, fingerprint string) error {
+	const query = `UPDATE devices SET ssh_host_key_fingerprint = $1, ssh_host_key_first_seen = COALESCE(ssh_host_key_first_seen, NOW()), ssh_host_key_last_verified = NOW() WHERE id = $2`
+	_, err := s.pool.Exec(ctx, query, fingerprint, deviceID)
+	if err != nil {
+		return fmt.Errorf("updating SSH host key for device %s: %w", deviceID, err)
+	}
+	return nil
 }
 
 // Pool returns the underlying pgxpool.Pool for shared use by other subsystems
