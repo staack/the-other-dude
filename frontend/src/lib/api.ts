@@ -968,6 +968,29 @@ export const remoteAccessApi = {
       .then((r) => r.data),
 }
 
+// ─── Config History ─────────────────────────────────────────────────────────
+
+export interface ConfigChangeEntry {
+  id: string
+  component: string
+  summary: string
+  created_at: string
+  diff_id: string
+  lines_added: number
+  lines_removed: number
+  snapshot_id: string
+}
+
+export const configHistoryApi = {
+  list: (tenantId: string, deviceId: string, limit = 50, offset = 0) =>
+    api
+      .get<ConfigChangeEntry[]>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/config-history`,
+        { params: { limit, offset } },
+      )
+      .then((r) => r.data),
+}
+
 // ─── VPN (WireGuard) ────────────────────────────────────────────────────────
 
 export interface VpnConfigResponse {
