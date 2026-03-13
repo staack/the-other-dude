@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { History } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
 import { configHistoryApi } from '@/lib/api'
+import { DiffViewer } from './DiffViewer'
 
 interface ConfigHistorySectionProps {
   tenantId: string
@@ -40,6 +42,7 @@ function LineDelta({ added, removed }: { added: number; removed: number }) {
 }
 
 export function ConfigHistorySection({ tenantId, deviceId }: ConfigHistorySectionProps) {
+  const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null)
   const { data: changes, isLoading } = useQuery({
     queryKey: ['config-history', tenantId, deviceId],
     queryFn: () => configHistoryApi.list(tenantId, deviceId),
@@ -52,6 +55,17 @@ export function ConfigHistorySection({ tenantId, deviceId }: ConfigHistorySectio
         <History className="h-4 w-4 text-muted-foreground" />
         <h3 className="text-sm font-medium text-muted-foreground">Configuration History</h3>
       </div>
+
+      {selectedSnapshotId && (
+        <div className="mb-3">
+          <DiffViewer
+            tenantId={tenantId}
+            deviceId={deviceId}
+            snapshotId={selectedSnapshotId}
+            onClose={() => setSelectedSnapshotId(null)}
+          />
+        </div>
+      )}
 
       {isLoading ? (
         <TableSkeleton rows={3} />
@@ -68,7 +82,8 @@ export function ConfigHistorySection({ tenantId, deviceId }: ConfigHistorySectio
             {changes.map((entry) => (
               <div
                 key={entry.id}
-                className="relative flex items-start gap-3 pl-8 pr-3 py-2.5 rounded-lg"
+                className="relative flex items-start gap-3 pl-8 pr-3 py-2.5 rounded-lg cursor-pointer hover:bg-elevated/50 transition-colors"
+                onClick={() => setSelectedSnapshotId(entry.snapshot_id)}
               >
                 {/* Timeline dot */}
                 <div className="absolute left-2 top-3.5 h-2 w-2 rounded-full border border-border bg-elevated" />
