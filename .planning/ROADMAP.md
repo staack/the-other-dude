@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Database Schema** - Config snapshot, diff, and change tables with encryption and RLS (completed 2026-03-13)
 - [x] **Phase 2: Poller Config Collection** - SSH export, normalization, and NATS publishing from Go poller (completed 2026-03-13)
 - [ ] **Phase 3: Snapshot Ingestion** - Backend NATS subscriber stores snapshots with SHA256 deduplication
-- [ ] **Phase 4: Manual Backup Trigger** - API endpoint for on-demand config backup via poller
+- [x] **Phase 4: Manual Backup Trigger** - API endpoint for on-demand config backup via poller (completed 2026-03-13)
 - [ ] **Phase 5: Diff Engine** - Unified diff generation and structured change parsing
 - [ ] **Phase 6: History API** - REST endpoints for timeline, snapshot view, and diff retrieval with RBAC
 - [ ] **Phase 7: Config History UI** - Timeline section on device page with change summaries
@@ -76,10 +76,10 @@ Plans:
   1. POST `/api/tenants/{tenant_id}/devices/{device_id}/backup` triggers an immediate config collection for the specified device
   2. The triggered backup flows through the same collection and ingestion pipeline as scheduled backups
   3. Endpoint requires operator role or higher (viewers cannot trigger)
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 04-01: Manual backup trigger API endpoint and NATS request flow
+- [ ] 04-01-PLAN.md — Go BackupResponder (NATS request-reply) + Python API trigger endpoint
 
 ### Phase 5: Diff Engine
 **Goal**: When a new (non-duplicate) snapshot is stored, the system generates a unified diff against the previous snapshot and parses structured changes
@@ -177,7 +177,7 @@ Note: Phase 9 depends only on Phase 3 and Phase 10 depends on Phases 3/4/5, so P
 | 1. Database Schema | 1/1 | Complete    | 2026-03-13 |
 | 2. Poller Config Collection | 2/2 | Complete    | 2026-03-13 |
 | 3. Snapshot Ingestion | 0/1 | Not started | - |
-| 4. Manual Backup Trigger | 0/1 | Not started | - |
+| 4. Manual Backup Trigger | 1/1 | Complete   | 2026-03-13 |
 | 5. Diff Engine | 0/2 | Not started | - |
 | 6. History API | 0/2 | Not started | - |
 | 7. Config History UI | 0/1 | Not started | - |
