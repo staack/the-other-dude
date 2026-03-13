@@ -981,12 +981,29 @@ export interface ConfigChangeEntry {
   snapshot_id: string
 }
 
+export interface DiffResponse {
+  id: string
+  diff_text: string
+  lines_added: number
+  lines_removed: number
+  old_snapshot_id: string
+  new_snapshot_id: string
+  created_at: string
+}
+
 export const configHistoryApi = {
   list: (tenantId: string, deviceId: string, limit = 50, offset = 0) =>
     api
       .get<ConfigChangeEntry[]>(
         `/api/tenants/${tenantId}/devices/${deviceId}/config-history`,
         { params: { limit, offset } },
+      )
+      .then((r) => r.data),
+
+  getDiff: (tenantId: string, deviceId: string, snapshotId: string) =>
+    api
+      .get<DiffResponse>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/config/${snapshotId}/diff`,
       )
       .then((r) => r.data),
 }
