@@ -32,8 +32,8 @@
 ### API
 
 - [x] **API-01**: GET `/api/tenants/{tid}/devices/{did}/config-history` returns change timeline
-- [ ] **API-02**: GET `/api/tenants/{tid}/devices/{did}/config/{snapshot_id}` returns full snapshot
-- [ ] **API-03**: GET `/api/tenants/{tid}/devices/{did}/config/{snapshot_id}/diff` returns unified diff
+- [x] **API-02**: GET `/api/tenants/{tid}/devices/{did}/config/{snapshot_id}` returns full snapshot
+- [x] **API-03**: GET `/api/tenants/{tid}/devices/{did}/config/{snapshot_id}/diff` returns unified diff
 - [x] **API-04**: RBAC enforced: operator+ can trigger backups, viewers can read history
 
 ### Frontend
@@ -84,8 +84,8 @@
 | DIFF-03 | Phase 5: Diff Engine | Complete |
 | DIFF-04 | Phase 5: Diff Engine | Complete |
 | API-01 | Phase 6: History API | Complete |
-| API-02 | Phase 6: History API | Pending |
-| API-03 | Phase 6: History API | Pending |
+| API-02 | Phase 6: History API | Complete |
+| API-03 | Phase 6: History API | Complete |
 | API-04 | Phase 6: History API | Complete |
 | UI-01 | Phase 7: Config History UI | Pending |
 | UI-02 | Phase 7: Config History UI | Pending |
