@@ -51,6 +51,7 @@ import { cn } from '@/lib/utils'
 import { DetailPageSkeleton } from '@/components/ui/page-skeleton'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
 import { InterfaceGauges } from '@/components/network/InterfaceGauges'
+import { ConfigHistorySection } from '@/components/config/ConfigHistorySection'
 // Phase 27: Simple Configuration Interface
 import { useSimpleConfigMode } from '@/hooks/useSimpleConfig'
 import { SimpleModeToggle } from '@/components/simple-config/SimpleModeToggle'
@@ -646,6 +647,9 @@ function DeviceDetailPage() {
               <h3 className="text-sm font-medium text-muted-foreground mb-3">Interface Utilization</h3>
               <InterfaceGauges tenantId={tenantId} deviceId={deviceId} active={activeTab === 'overview'} />
             </div>
+
+            {/* Configuration History */}
+            <ConfigHistorySection tenantId={tenantId} deviceId={deviceId} />
           </>
         }
         alertsContent={
