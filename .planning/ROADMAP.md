@@ -106,11 +106,11 @@ Plans:
   3. GET `/api/tenants/{tid}/devices/{did}/config/{snapshot_id}/diff` returns unified diff text
   4. All endpoints enforce RBAC: viewer+ can read history, operator+ required for backup trigger
   5. Endpoints return proper 404 for nonexistent snapshots and 403 for unauthorized access
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: Config history timeline endpoint
-- [ ] 06-02: Snapshot view and diff retrieval endpoints with RBAC
+- [ ] 06-01-PLAN.md — Config history timeline endpoint with service, router, and tests
+- [ ] 06-02-PLAN.md — Snapshot view and diff retrieval endpoints with Transit decrypt and RBAC
 
 ### Phase 7: Config History UI
 **Goal**: Device detail page displays a Configuration History section showing a timeline of config changes
