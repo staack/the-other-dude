@@ -62,6 +62,9 @@ async def test_new_snapshot_encrypted_and_stored():
     ), patch(
         "app.services.config_snapshot_subscriber.OpenBaoTransitService",
         return_value=mock_openbao,
+    ), patch(
+        "app.services.config_snapshot_subscriber.generate_and_store_diff",
+        new_callable=AsyncMock,
     ):
         await handle_config_snapshot(msg)
 
@@ -248,6 +251,9 @@ async def test_first_snapshot_for_device_always_stored():
     ), patch(
         "app.services.config_snapshot_subscriber.OpenBaoTransitService",
         return_value=mock_openbao,
+    ), patch(
+        "app.services.config_snapshot_subscriber.generate_and_store_diff",
+        new_callable=AsyncMock,
     ):
         await handle_config_snapshot(msg)
 

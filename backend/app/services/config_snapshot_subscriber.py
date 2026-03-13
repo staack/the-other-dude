@@ -20,6 +20,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 
 from app.config import settings
 from app.database import AdminAsyncSessionLocal
+from app.services.config_diff_service import generate_and_store_diff
 from app.services.openbao_service import OpenBaoTransitService
 
 logger = logging.getLogger(__name__)
@@ -134,12 +135,13 @@ async def handle_config_snapshot(msg) -> None:
 
         # --- INSERT new snapshot ---
         try:
-            await session.execute(
+            insert_result = await session.execute(
                 text(
                     "INSERT INTO router_config_snapshots "
                     "(device_id, tenant_id, config_text, sha256_hash, collected_at) "
                     "VALUES (CAST(:device_id AS uuid), CAST(:tenant_id AS uuid), "
-                    ":config_text, :sha256_hash, :collected_at)"
+                    ":config_text, :sha256_hash, :collected_at) "
+                    "RETURNING id"
                 ),
                 {
                     "device_id": device_id,
@@ -149,6 +151,7 @@ async def handle_config_snapshot(msg) -> None:
                     "collected_at": collected_at,
                 },
             )
+            new_snapshot_id = insert_result.scalar_one()
             await session.commit()
         except IntegrityError:
             logger.warning(
@@ -169,6 +172,15 @@ async def handle_config_snapshot(msg) -> None:
             await session.rollback()
             await msg.nak()
             return
+
+        # --- Diff generation (best-effort) ---
+        try:
+            await generate_and_store_diff(device_id, tenant_id, str(new_snapshot_id), session)
+        except Exception as exc:
+            logger.warning(
+                "Diff generation failed for device %s (non-fatal): %s",
+                device_id, exc,
+            )
 
     logger.info(
         "Config snapshot stored for device %s tenant %s",
