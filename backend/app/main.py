@@ -78,6 +78,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan: run migrations and bootstrap on startup."""
     from app.services.backup_scheduler import start_backup_scheduler, stop_backup_scheduler
     from app.services.firmware_subscriber import start_firmware_subscriber, stop_firmware_subscriber
+    from app.services.retention_service import start_retention_scheduler, stop_retention_scheduler
     from app.services.metrics_subscriber import start_metrics_subscriber, stop_metrics_subscriber
     from app.services.nats_subscriber import start_nats_subscriber, stop_nats_subscriber
     from app.services.session_audit_subscriber import start_session_audit_subscriber, stop_session_audit_subscriber
@@ -225,6 +226,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         logger.error("Config snapshot subscriber failed to start (non-fatal): %s", e)
 
+    # Start retention cleanup scheduler (daily purge of expired config snapshots)
+    try:
+        await start_retention_scheduler()
+    except Exception as exc:
+        logger.warning("retention scheduler could not start (API will run without it)", error=str(exc))
+
     logger.info("startup complete, ready to serve requests")
     yield
 
@@ -241,6 +248,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await stop_push_rollback_subscriber()
     if config_snapshot_nc:
         await stop_config_snapshot_subscriber()
+    await stop_retention_scheduler()
 
     # Dispose database engine connections to release all pooled connections cleanly.
     from app.database import app_engine, engine
