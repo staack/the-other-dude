@@ -9,6 +9,7 @@ from app.models.config_template import ConfigTemplate, ConfigTemplateTag, Templa
 from app.models.audit_log import AuditLog
 from app.models.maintenance_window import MaintenanceWindow
 from app.models.api_key import ApiKey
+from app.models.config_backup import RouterConfigSnapshot, RouterConfigDiff, RouterConfigChange
 
 __all__ = [
     "Tenant",
@@ -32,4 +33,7 @@ __all__ = [
     "AuditLog",
     "MaintenanceWindow",
     "ApiKey",
+    "RouterConfigSnapshot",
+    "RouterConfigDiff",
+    "RouterConfigChange",
 ]

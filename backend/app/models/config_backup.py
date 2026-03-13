@@ -176,3 +176,164 @@ class ConfigPushOperation(Base):
             f"<ConfigPushOperation id={self.id} device_id={self.device_id} "
             f"status={self.status!r}>"
         )
+
+
+class RouterConfigSnapshot(Base):
+    """A point-in-time router configuration snapshot.
+
+    The config_text column stores OpenBao Transit ciphertext (vault:v1:...).
+    Plaintext router config is NEVER stored in PostgreSQL -- it is encrypted
+    via Transit before insertion and decrypted on read.
+
+    The sha256_hash column stores the SHA-256 hex digest of the PLAINTEXT
+    config (computed before encryption). This enables deduplication: if
+    the hash matches the latest snapshot for a device, no new row is created.
+    """
+
+    __tablename__ = "router_config_snapshots"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    device_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    # OpenBao Transit ciphertext (vault:v1:...). Plaintext NEVER stored.
+    config_text: Mapped[str] = mapped_column(Text, nullable=False)
+    # SHA-256 hex digest of the PLAINTEXT config, for deduplication.
+    sha256_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    collected_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<RouterConfigSnapshot id={self.id} device_id={self.device_id} "
+            f"hash={self.sha256_hash[:8]!r}>"
+        )
+
+
+class RouterConfigDiff(Base):
+    """Unified diff between two consecutive router config snapshots.
+
+    Stores the diff_text (unified diff output) along with line counts
+    for quick display without re-parsing. References both the old and
+    new snapshot by foreign key.
+    """
+
+    __tablename__ = "router_config_diffs"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    device_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    old_snapshot_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("router_config_snapshots.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    new_snapshot_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("router_config_snapshots.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    diff_text: Mapped[str] = mapped_column(Text, nullable=False)
+    lines_added: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    lines_removed: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<RouterConfigDiff id={self.id} device_id={self.device_id} "
+            f"+{self.lines_added}/-{self.lines_removed}>"
+        )
+
+
+class RouterConfigChange(Base):
+    """A parsed change extracted from a router config diff.
+
+    Each change represents a semantic modification (e.g., firewall rule
+    added, IP address changed) parsed from the unified diff. The component
+    field identifies the RouterOS section (e.g., 'ip/firewall/filter').
+    """
+
+    __tablename__ = "router_config_changes"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
+    )
+    diff_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("router_config_diffs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    device_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("devices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    # RouterOS config section path (e.g., 'ip/firewall/filter')
+    component: Mapped[str] = mapped_column(Text, nullable=False)
+    # Human-readable description of the change
+    summary: Mapped[str] = mapped_column(Text, nullable=False)
+    # Raw diff line(s), nullable for synthesized changes
+    raw_line: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<RouterConfigChange id={self.id} diff_id={self.diff_id} "
+            f"component={self.component!r}>"
+        )
