@@ -275,6 +275,36 @@ func main() {
 		"conn_timeout", connTimeout,
 	)
 
+	// -----------------------------------------------------------------------
+	// Start the config backup scheduler
+	// -----------------------------------------------------------------------
+	backupInterval := time.Duration(cfg.ConfigBackupIntervalSeconds) * time.Second
+	backupCmdTimeout := time.Duration(cfg.ConfigBackupCommandTimeoutSeconds) * time.Second
+
+	backupScheduler := poller.NewBackupScheduler(
+		deviceStore,
+		deviceStore, // SSHHostKeyUpdater (DeviceStore satisfies this interface)
+		locker,
+		publisher,
+		credentialCache,
+		redisClient,
+		backupInterval,
+		backupCmdTimeout,
+		refreshPeriod, // reuse existing device refresh period
+		cfg.ConfigBackupMaxConcurrent,
+	)
+
+	go func() {
+		slog.Info("starting config backup scheduler",
+			"interval", backupInterval,
+			"max_concurrent", cfg.ConfigBackupMaxConcurrent,
+			"command_timeout", backupCmdTimeout,
+		)
+		if err := backupScheduler.Run(ctx); err != nil {
+			slog.Error("backup scheduler exited with error", "error", err)
+		}
+	}()
+
 	if err := scheduler.Run(ctx); err != nil {
 		slog.Error("scheduler exited with error", "error", err)
 		os.Exit(1)
