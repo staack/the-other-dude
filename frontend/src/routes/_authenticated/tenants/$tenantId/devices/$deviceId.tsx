@@ -649,7 +649,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Configuration History */}
-            <ConfigHistorySection tenantId={tenantId} deviceId={deviceId} />
+            <ConfigHistorySection tenantId={tenantId} deviceId={deviceId} deviceName={device.hostname} />
           </>
         }
         alertsContent={

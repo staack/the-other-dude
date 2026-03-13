@@ -991,6 +991,13 @@ export interface DiffResponse {
   created_at: string
 }
 
+export interface SnapshotResponse {
+  id: string
+  config_text: string
+  sha256_hash: string
+  collected_at: string
+}
+
 export const configHistoryApi = {
   list: (tenantId: string, deviceId: string, limit = 50, offset = 0) =>
     api
@@ -1004,6 +1011,13 @@ export const configHistoryApi = {
     api
       .get<DiffResponse>(
         `/api/tenants/${tenantId}/devices/${deviceId}/config/${snapshotId}/diff`,
+      )
+      .then((r) => r.data),
+
+  getSnapshot: (tenantId: string, deviceId: string, snapshotId: string) =>
+    api
+      .get<SnapshotResponse>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/config/${snapshotId}`,
       )
       .then((r) => r.data),
 }

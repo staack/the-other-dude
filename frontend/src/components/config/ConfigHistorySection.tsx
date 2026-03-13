@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { History } from 'lucide-react'
+import { Download, History } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
 import { configHistoryApi } from '@/lib/api'
@@ -9,6 +9,7 @@ import { DiffViewer } from './DiffViewer'
 interface ConfigHistorySectionProps {
   tenantId: string
   deviceId: string
+  deviceName: string
 }
 
 function formatRelativeTime(isoDate: string): string {
@@ -41,8 +42,22 @@ function LineDelta({ added, removed }: { added: number; removed: number }) {
   )
 }
 
-export function ConfigHistorySection({ tenantId, deviceId }: ConfigHistorySectionProps) {
+export function ConfigHistorySection({ tenantId, deviceId, deviceName }: ConfigHistorySectionProps) {
   const [selectedSnapshotId, setSelectedSnapshotId] = useState<string | null>(null)
+
+  async function handleDownload(snapshotId: string, collectedAt: string) {
+    const snapshot = await configHistoryApi.getSnapshot(tenantId, deviceId, snapshotId)
+    const timestamp = new Date(collectedAt).toISOString().replace(/[:.]/g, '-').slice(0, 19)
+    const filename = `router-${deviceName}-${timestamp}.rsc`
+    const blob = new Blob([snapshot.config_text], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const { data: changes, isLoading } = useQuery({
     queryKey: ['config-history', tenantId, deviceId],
     queryFn: () => configHistoryApi.list(tenantId, deviceId),
@@ -102,6 +117,18 @@ export function ConfigHistorySection({ tenantId, deviceId }: ConfigHistorySectio
                     {formatRelativeTime(entry.created_at)}
                   </span>
                 </div>
+
+                {/* Download button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleDownload(entry.snapshot_id, entry.created_at)
+                  }}
+                  className="p-1 rounded hover:bg-elevated text-text-muted hover:text-text-primary transition-colors"
+                  title="Download .rsc"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                </button>
               </div>
             ))}
           </div>
