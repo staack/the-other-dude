@@ -24,8 +24,8 @@
 
 ### Diff & Parsing
 
-- [ ] **DIFF-01**: Unified diff generated when new snapshot differs from previous
-- [ ] **DIFF-02**: Diffs stored in `router_config_diffs` table linking snapshot pairs
+- [x] **DIFF-01**: Unified diff generated when new snapshot differs from previous
+- [x] **DIFF-02**: Diffs stored in `router_config_diffs` table linking snapshot pairs
 - [ ] **DIFF-03**: Structured change parser extracts component, summary, and raw line as JSON
 - [ ] **DIFF-04**: Parsed changes stored in `router_config_changes` table
 
@@ -79,8 +79,8 @@
 | STOR-03 | Phase 9: Retention & Cleanup | Pending |
 | STOR-04 | Phase 9: Retention & Cleanup | Pending |
 | STOR-05 | Phase 1: Database Schema | Complete |
-| DIFF-01 | Phase 5: Diff Engine | Pending |
-| DIFF-02 | Phase 5: Diff Engine | Pending |
+| DIFF-01 | Phase 5: Diff Engine | Complete |
+| DIFF-02 | Phase 5: Diff Engine | Complete |
 | DIFF-03 | Phase 5: Diff Engine | Pending |
 | DIFF-04 | Phase 5: Diff Engine | Pending |
 | API-01 | Phase 6: History API | Pending |

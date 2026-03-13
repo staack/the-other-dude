@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v9.6
 milestone_name: milestone
 status: completed
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-13T02:57:18.418Z"
-last_activity: 2026-03-13 -- Completed 03-01 config snapshot subscriber with dedup, Transit encryption, and NATS ingestion
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-13T03:34:01.712Z"
+last_activity: 2026-03-13 -- Completed 05-01 config diff service with TDD
 progress:
   total_phases: 10
   completed_phases: 4
-  total_plans: 5
-  completed_plans: 5
-  percent: 100
+  total_plans: 7
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-12)
 
 **Core value:** Operators can see exactly what changed on a router and when, with reliable config snapshots for download
-**Current focus:** Phase 4: Manual Backup Trigger -- COMPLETE
+**Current focus:** Phase 5: Diff Engine -- 05-01 COMPLETE
 
 ## Current Position
 
-Phase: 4 of 10 (Manual Backup Trigger) -- COMPLETE
-Plan: 1 of 1 in current phase (04-01 complete)
-Status: Phase 4 complete
-Last activity: 2026-03-13 -- Completed 04-01 manual backup trigger with NATS request-reply
+Phase: 5 of 10 (Diff Engine) -- IN PROGRESS
+Plan: 1 of 1 in current phase (05-01 complete)
+Status: Phase 5 complete
+Last activity: 2026-03-13 -- Completed 05-01 config diff service with TDD
 
-Progress: [██████████] 100%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [██████████] 100%
 - Trend: stable
 
 *Updated after each plan completion*
+| Phase 05 P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Interface-based DI (BackupExecutor, BackupLocker, DeviceGetter) for BackupResponder testability
 - [Phase 04]: collectAndPublish refactored to return (hash, error) with public CollectAndPublish wrapper
 - [Phase 04]: In-process nats-server/v2 for Go unit tests, reused routeros_proxy NATS conn for Python
+- [Phase 05]: Diff service instantiates own OpenBaoTransitService per-call with close() for clean lifecycle
+- [Phase 05]: RETURNING id on snapshot INSERT to capture new_snapshot_id without separate query
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T03:10:41Z
-Stopped at: Completed 04-01-PLAN.md
-Resume file: .planning/phases/04-manual-backup-trigger/04-01-SUMMARY.md
+Last session: 2026-03-13T03:34:01.709Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None

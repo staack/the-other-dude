@@ -90,11 +90,11 @@ Plans:
   2. Diff is stored in `router_config_diffs` linking the two snapshot IDs
   3. Structured change parser extracts component name, human-readable summary, and raw diff line for each change
   4. Parsed changes are stored in `router_config_changes` as JSON-structured records
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 05-01: Unified diff generation between consecutive snapshots
-- [ ] 05-02: Structured change parser and storage
+- [ ] 05-01-PLAN.md — Unified diff generation service with Transit decrypt and subscriber integration
+- [ ] 05-02-PLAN.md — Structured change parser extracting components and summaries from diffs
 
 ### Phase 6: History API
 **Goal**: Frontend can query config change timeline, retrieve full snapshots, and view diffs through RBAC-protected endpoints
@@ -178,7 +178,7 @@ Note: Phase 9 depends only on Phase 3 and Phase 10 depends on Phases 3/4/5, so P
 | 2. Poller Config Collection | 2/2 | Complete    | 2026-03-13 |
 | 3. Snapshot Ingestion | 0/1 | Not started | - |
 | 4. Manual Backup Trigger | 1/1 | Complete   | 2026-03-13 |
-| 5. Diff Engine | 0/2 | Not started | - |
+| 5. Diff Engine | 1/2 | In Progress|  |
 | 6. History API | 0/2 | Not started | - |
 | 7. Config History UI | 0/1 | Not started | - |
 | 8. Diff Viewer & Download | 0/2 | Not started | - |
