@@ -3,11 +3,16 @@
 Provides paginated query of config change entries for a device,
 joining router_config_changes with router_config_diffs to include
 diff metadata (lines_added, lines_removed, snapshot_id).
+
+Also provides single-snapshot retrieval (with Transit decrypt) and
+diff retrieval by snapshot id.
 """
 
 import logging
 
 from sqlalchemy import text
+
+from app.services.openbao_service import OpenBaoTransitService
 
 logger = logging.getLogger(__name__)
 
@@ -62,3 +67,88 @@ async def get_config_history(
         }
         for row in rows
     ]
+
+
+async def get_snapshot(
+    snapshot_id: str,
+    device_id: str,
+    tenant_id: str,
+    session,
+) -> dict | None:
+    """Return decrypted config snapshot for a given snapshot, device, and tenant.
+
+    Returns None if the snapshot does not exist or belongs to a different
+    device/tenant (RLS prevents cross-tenant access).
+    """
+    result = await session.execute(
+        text(
+            "SELECT id, config_text, sha256_hash, collected_at "
+            "FROM router_config_snapshots "
+            "WHERE id = CAST(:snapshot_id AS uuid) "
+            "AND device_id = CAST(:device_id AS uuid) "
+            "AND tenant_id = CAST(:tenant_id AS uuid)"
+        ),
+        {
+            "snapshot_id": snapshot_id,
+            "device_id": device_id,
+            "tenant_id": tenant_id,
+        },
+    )
+    row = result.fetchone()
+    if row is None:
+        return None
+
+    ciphertext = row._mapping["config_text"]
+
+    openbao = OpenBaoTransitService()
+    try:
+        plaintext_bytes = await openbao.decrypt(tenant_id, ciphertext)
+    finally:
+        await openbao.close()
+
+    return {
+        "id": str(row._mapping["id"]),
+        "config_text": plaintext_bytes.decode("utf-8"),
+        "sha256_hash": row._mapping["sha256_hash"],
+        "collected_at": row._mapping["collected_at"].isoformat(),
+    }
+
+
+async def get_snapshot_diff(
+    snapshot_id: str,
+    device_id: str,
+    tenant_id: str,
+    session,
+) -> dict | None:
+    """Return the diff associated with a snapshot (as the new_snapshot_id).
+
+    Returns None if no diff exists for this snapshot (e.g., first snapshot).
+    """
+    result = await session.execute(
+        text(
+            "SELECT id, diff_text, lines_added, lines_removed, "
+            "old_snapshot_id, new_snapshot_id, created_at "
+            "FROM router_config_diffs "
+            "WHERE new_snapshot_id = CAST(:snapshot_id AS uuid) "
+            "AND device_id = CAST(:device_id AS uuid) "
+            "AND tenant_id = CAST(:tenant_id AS uuid)"
+        ),
+        {
+            "snapshot_id": snapshot_id,
+            "device_id": device_id,
+            "tenant_id": tenant_id,
+        },
+    )
+    row = result.fetchone()
+    if row is None:
+        return None
+
+    return {
+        "id": str(row._mapping["id"]),
+        "diff_text": row._mapping["diff_text"],
+        "lines_added": row._mapping["lines_added"],
+        "lines_removed": row._mapping["lines_removed"],
+        "old_snapshot_id": str(row._mapping["old_snapshot_id"]),
+        "new_snapshot_id": str(row._mapping["new_snapshot_id"]),
+        "created_at": row._mapping["created_at"].isoformat(),
+    }

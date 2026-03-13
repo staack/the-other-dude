@@ -120,3 +120,125 @@ async def test_ordering_desc_by_created_at():
     call_args = mock_session.execute.call_args
     query_text = str(call_args[0][0])
     assert "DESC" in query_text.upper()
+
+
+# ---------------------------------------------------------------------------
+# Tests for get_snapshot
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_get_snapshot_returns_decrypted_content():
+    """get_snapshot decrypts config_text via Transit and returns plaintext."""
+    from unittest.mock import patch
+    from app.services.config_history_service import get_snapshot
+
+    snapshot_id = str(uuid4())
+    device_id = str(uuid4())
+    tenant_id = str(uuid4())
+    ts = datetime(2026, 3, 12, 10, 0, 0, tzinfo=timezone.utc)
+    sha = "abc123" * 10 + "abcd"
+
+    mock_session = AsyncMock()
+    result_mock = MagicMock()
+    row = MagicMock()
+    row._mapping = {
+        "id": uuid4(),
+        "config_text": "vault:v1:encrypted_data",
+        "sha256_hash": sha,
+        "collected_at": ts,
+    }
+    result_mock.fetchone.return_value = row
+    mock_session.execute = AsyncMock(return_value=result_mock)
+
+    plaintext_config = "/ip address\nadd address=10.0.0.1/24"
+    mock_openbao = AsyncMock()
+    mock_openbao.decrypt = AsyncMock(return_value=plaintext_config.encode("utf-8"))
+
+    with patch(
+        "app.services.config_history_service.OpenBaoTransitService",
+        return_value=mock_openbao,
+    ):
+        result = await get_snapshot(snapshot_id, device_id, tenant_id, mock_session)
+
+    assert result is not None
+    assert result["config_text"] == plaintext_config
+    assert result["sha256_hash"] == sha
+    assert result["collected_at"] == ts.isoformat()
+    mock_openbao.decrypt.assert_called_once_with(tenant_id, "vault:v1:encrypted_data")
+    mock_openbao.close.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_get_snapshot_not_found_returns_none():
+    """get_snapshot returns None when snapshot not found (wrong id/device/tenant)."""
+    from app.services.config_history_service import get_snapshot
+
+    mock_session = AsyncMock()
+    result_mock = MagicMock()
+    result_mock.fetchone.return_value = None
+    mock_session.execute = AsyncMock(return_value=result_mock)
+
+    result = await get_snapshot(str(uuid4()), str(uuid4()), str(uuid4()), mock_session)
+
+    assert result is None
+
+
+# ---------------------------------------------------------------------------
+# Tests for get_snapshot_diff
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_get_snapshot_diff_returns_diff_text():
+    """get_snapshot_diff returns diff data for the given snapshot."""
+    from app.services.config_history_service import get_snapshot_diff
+
+    snapshot_id = str(uuid4())
+    device_id = str(uuid4())
+    tenant_id = str(uuid4())
+    diff_id = uuid4()
+    old_snap = uuid4()
+    new_snap = uuid4()
+    ts = datetime(2026, 3, 12, 11, 0, 0, tzinfo=timezone.utc)
+
+    mock_session = AsyncMock()
+    result_mock = MagicMock()
+    row = MagicMock()
+    row._mapping = {
+        "id": diff_id,
+        "diff_text": "--- old\n+++ new\n@@ -1 +1 @@\n-line1\n+line2",
+        "lines_added": 1,
+        "lines_removed": 1,
+        "old_snapshot_id": old_snap,
+        "new_snapshot_id": new_snap,
+        "created_at": ts,
+    }
+    result_mock.fetchone.return_value = row
+    mock_session.execute = AsyncMock(return_value=result_mock)
+
+    result = await get_snapshot_diff(snapshot_id, device_id, tenant_id, mock_session)
+
+    assert result is not None
+    assert result["id"] == str(diff_id)
+    assert "line2" in result["diff_text"]
+    assert result["lines_added"] == 1
+    assert result["lines_removed"] == 1
+    assert result["old_snapshot_id"] == str(old_snap)
+    assert result["new_snapshot_id"] == str(new_snap)
+    assert result["created_at"] == ts.isoformat()
+
+
+@pytest.mark.asyncio
+async def test_get_snapshot_diff_no_diff_returns_none():
+    """get_snapshot_diff returns None when no diff exists (first snapshot)."""
+    from app.services.config_history_service import get_snapshot_diff
+
+    mock_session = AsyncMock()
+    result_mock = MagicMock()
+    result_mock.fetchone.return_value = None
+    mock_session.execute = AsyncMock(return_value=result_mock)
+
+    result = await get_snapshot_diff(str(uuid4()), str(uuid4()), str(uuid4()), mock_session)
+
+    assert result is None
