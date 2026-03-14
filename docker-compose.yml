@@ -16,7 +16,6 @@ services:
   postgres:
     image: timescale/timescaledb:2.17.2-pg17
     container_name: tod_postgres
-    env_file: .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-tod}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -41,7 +40,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: tod_redis
-    env_file: .env
     ports:
       - "6379:6379"
     volumes:
@@ -62,7 +60,6 @@ services:
     image: nats:2-alpine
     container_name: tod_nats
     command: ["--jetstream", "--store_dir", "/data", "-m", "8222"]
-    env_file: .env
     ports:
       - "4222:4222"
       - "8222:8222"
