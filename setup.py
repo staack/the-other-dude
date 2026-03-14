@@ -436,6 +436,256 @@ def wizard_domain(config: dict) -> None:
     ok(f"CORS_ORIGINS=https://{domain}")
 
 
+# ── Reverse proxy ───────────────────────────────────────────────────────────
+
+PROXY_EXAMPLES = PROJECT_ROOT / "infrastructure" / "reverse-proxy-examples"
+
+PROXY_CONFIGS = {
+    "caddy": {
+        "label": "Caddy",
+        "binary": "caddy",
+        "example": PROXY_EXAMPLES / "caddy" / "Caddyfile.example",
+        "targets": [
+            pathlib.Path("/etc/caddy/Caddyfile.d"),
+            pathlib.Path("/etc/caddy"),
+        ],
+        "filename": None,  # derived from domain
+        "placeholders": {
+            "tod.example.com": None,  # replaced with domain
+            "YOUR_TOD_HOST": None,    # replaced with host IP
+        },
+    },
+    "nginx": {
+        "label": "nginx",
+        "binary": "nginx",
+        "example": PROXY_EXAMPLES / "nginx" / "tod.conf.example",
+        "targets": [
+            pathlib.Path("/etc/nginx/sites-available"),
+            pathlib.Path("/etc/nginx/conf.d"),
+        ],
+        "filename": None,
+        "placeholders": {
+            "tod.example.com": None,
+            "YOUR_TOD_HOST": None,
+        },
+    },
+    "apache": {
+        "label": "Apache",
+        "binary": "apache2",
+        "alt_binary": "httpd",
+        "example": PROXY_EXAMPLES / "apache" / "tod.conf.example",
+        "targets": [
+            pathlib.Path("/etc/apache2/sites-available"),
+            pathlib.Path("/etc/httpd/conf.d"),
+        ],
+        "filename": None,
+        "placeholders": {
+            "tod.example.com": None,
+            "YOUR_TOD_HOST": None,
+        },
+    },
+    "haproxy": {
+        "label": "HAProxy",
+        "binary": "haproxy",
+        "example": PROXY_EXAMPLES / "haproxy" / "haproxy.cfg.example",
+        "targets": [
+            pathlib.Path("/etc/haproxy"),
+        ],
+        "filename": "haproxy.cfg",
+        "placeholders": {
+            "tod.example.com": None,
+            "YOUR_TOD_HOST": None,
+        },
+    },
+    "traefik": {
+        "label": "Traefik",
+        "binary": "traefik",
+        "example": PROXY_EXAMPLES / "traefik" / "traefik-dynamic.yaml.example",
+        "targets": [
+            pathlib.Path("/etc/traefik/dynamic"),
+            pathlib.Path("/etc/traefik"),
+        ],
+        "filename": None,
+        "placeholders": {
+            "tod.example.com": None,
+            "YOUR_TOD_HOST": None,
+        },
+    },
+}
+
+
+def _detect_proxy(name: str, cfg: dict) -> bool:
+    """Check if a reverse proxy binary is installed."""
+    binary = cfg["binary"]
+    if shutil.which(binary):
+        return True
+    alt = cfg.get("alt_binary")
+    if alt and shutil.which(alt):
+        return True
+    return False
+
+
+def _get_host_ip() -> str:
+    """Best-effort detection of the host's LAN IP."""
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
+
+def wizard_reverse_proxy(config: dict) -> None:
+    section("Reverse Proxy")
+    info("TOD needs a reverse proxy for HTTPS termination.")
+    info("Example configs are included for Caddy, nginx, Apache, HAProxy, and Traefik.")
+    print()
+
+    if not ask_yes_no("Configure a reverse proxy now?", default=True):
+        config["proxy_configured"] = False
+        info("Skipped. Example configs are in infrastructure/reverse-proxy-examples/")
+        return
+
+    # Detect installed proxies
+    detected = []
+    for name, cfg in PROXY_CONFIGS.items():
+        if _detect_proxy(name, cfg):
+            detected.append(name)
+
+    if detected:
+        print()
+        info(f"Detected: {', '.join(PROXY_CONFIGS[n]['label'] for n in detected)}")
+    else:
+        print()
+        info("No reverse proxy detected on this system.")
+
+    # Show menu
+    print()
+    print("  Which reverse proxy are you using?")
+    choices = list(PROXY_CONFIGS.keys())
+    for i, name in enumerate(choices, 1):
+        label = PROXY_CONFIGS[name]["label"]
+        tag = f" {green('(detected)')}" if name in detected else ""
+        print(f"    {bold(f'{i})')} {label}{tag}")
+    print(f"    {bold(f'{len(choices) + 1})')} Skip — I'll configure it myself")
+    print()
+
+    while True:
+        choice = input(f"  Choice [1-{len(choices) + 1}]: ").strip()
+        if not choice.isdigit():
+            warn("Please enter a number.")
+            continue
+        idx = int(choice) - 1
+        if idx == len(choices):
+            config["proxy_configured"] = False
+            info("Skipped. Example configs are in infrastructure/reverse-proxy-examples/")
+            return
+        if 0 <= idx < len(choices):
+            break
+        warn(f"Please enter 1-{len(choices) + 1}.")
+
+    selected = choices[idx]
+    cfg = PROXY_CONFIGS[selected]
+    domain = config["domain"]
+    host_ip = _get_host_ip()
+
+    # Read and customize the example config
+    if not cfg["example"].exists():
+        fail(f"Example config not found: {cfg['example']}")
+        config["proxy_configured"] = False
+        return
+
+    template = cfg["example"].read_text()
+
+    # Replace placeholders
+    output = template.replace("tod.example.com", domain)
+    output = output.replace("YOUR_TOD_HOST", host_ip)
+
+    # Determine output filename
+    if cfg["filename"]:
+        out_name = cfg["filename"]
+    else:
+        safe_domain = domain.replace(".", "-")
+        ext = cfg["example"].suffix.replace(".example", "") or ".conf"
+        if cfg["example"].name == "Caddyfile.example":
+            out_name = f"{safe_domain}.caddy"
+        else:
+            out_name = f"{safe_domain}{ext}"
+
+    # Find a writable target directory
+    target_dir = None
+    for candidate in cfg["targets"]:
+        if candidate.is_dir():
+            target_dir = candidate
+            break
+
+    print()
+    if target_dir:
+        out_path = target_dir / out_name
+        info(f"Will write: {out_path}")
+    else:
+        # Fall back to project directory
+        out_path = PROJECT_ROOT / out_name
+        info(f"No standard config directory found for {cfg['label']}.")
+        info(f"Will write to: {out_path}")
+
+    print()
+    info("Preview (first 20 lines):")
+    for line in output.splitlines()[:20]:
+        print(f"    {dim(line)}")
+    print(f"    {dim('...')}")
+    print()
+
+    custom_path = ask(f"Write config to", default=str(out_path))
+    out_path = pathlib.Path(custom_path)
+
+    if out_path.exists():
+        if not ask_yes_no(f"{out_path} already exists. Overwrite?", default=False):
+            info("Skipped writing proxy config.")
+            config["proxy_configured"] = False
+            return
+
+    try:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(output)
+        ok(f"Wrote {cfg['label']} config to {out_path}")
+        config["proxy_configured"] = True
+        config["proxy_type"] = cfg["label"]
+        config["proxy_path"] = str(out_path)
+
+        # Post-install hints
+        print()
+        if selected == "caddy":
+            info("Reload Caddy:  systemctl reload caddy")
+        elif selected == "nginx":
+            if "/sites-available/" in str(out_path):
+                sites_enabled = out_path.parent.parent / "sites-enabled" / out_path.name
+                info(f"Enable site:   ln -s {out_path} {sites_enabled}")
+            info("Test config:   nginx -t")
+            info("Reload nginx:  systemctl reload nginx")
+        elif selected == "apache":
+            if "/sites-available/" in str(out_path):
+                info(f"Enable site:   a2ensite {out_path.stem}")
+            info("Test config:   apachectl configtest")
+            info("Reload Apache: systemctl reload apache2")
+        elif selected == "haproxy":
+            info("Test config:   haproxy -c -f /etc/haproxy/haproxy.cfg")
+            info("Reload:        systemctl reload haproxy")
+        elif selected == "traefik":
+            info("Traefik watches for file changes — no reload needed.")
+
+    except PermissionError:
+        fail(f"Permission denied writing to {out_path}")
+        warn(f"Try running with sudo, or copy manually:")
+        info(f"  The config has been printed above.")
+        config["proxy_configured"] = False
+    except Exception as e:
+        fail(f"Failed to write config: {e}")
+        config["proxy_configured"] = False
+
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 
 def show_summary(config: dict) -> bool:
@@ -471,6 +721,14 @@ def show_summary(config: dict) -> bool:
     print(f"  {bold('Web')}")
     print(f"    Domain               = {config['domain']}")
     print(f"    APP_BASE_URL         = {config['app_base_url']}")
+    print()
+
+    print(f"  {bold('Reverse Proxy')}")
+    if config.get("proxy_configured"):
+        print(f"    Type                 = {config['proxy_type']}")
+        print(f"    Config               = {config['proxy_path']}")
+    else:
+        print(f"    {dim('(not configured)')}")
     print()
 
     print(f"  {bold('OpenBao')}")
@@ -848,6 +1106,7 @@ def main() -> int:
     wizard_admin(config)
     wizard_email(config)
     wizard_domain(config)
+    wizard_reverse_proxy(config)
 
     # Summary
     if not show_summary(config):
