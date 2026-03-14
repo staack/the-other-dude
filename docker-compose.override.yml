@@ -16,9 +16,9 @@ services:
       LOG_LEVEL: debug
       DEBUG: "true"
       GUNICORN_WORKERS: "1"
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/mikrotik
-      SYNC_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/mikrotik
-      APP_USER_DATABASE_URL: postgresql+asyncpg://app_user:app_password@postgres:5432/mikrotik
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/tod
+      SYNC_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/tod
+      APP_USER_DATABASE_URL: postgresql+asyncpg://app_user:app_password@postgres:5432/tod
       REDIS_URL: redis://redis:6379/0
       NATS_URL: nats://nats:4222
       FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL:-admin@the-other-dude.dev}
@@ -74,7 +74,7 @@ services:
     environment:
       ENVIRONMENT: dev
       LOG_LEVEL: debug
-      DATABASE_URL: postgres://poller_user:poller_password@postgres:5432/mikrotik
+      DATABASE_URL: postgres://poller_user:poller_password@postgres:5432/tod
       REDIS_URL: redis://redis:6379/0
       NATS_URL: nats://nats:4222
       CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?Set CREDENTIAL_ENCRYPTION_KEY in .env}
