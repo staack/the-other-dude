@@ -537,6 +537,46 @@ def _get_host_ip() -> str:
         return "127.0.0.1"
 
 
+def _write_system_file(path: pathlib.Path, content: str) -> bool:
+    """Write a file, using sudo tee if direct write fails with permission error."""
+    # Try direct write first
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+        return True
+    except PermissionError:
+        pass
+
+    # Fall back to sudo
+    info(f"Need elevated permissions to write to {path.parent}")
+    if not ask_yes_no("Use sudo?", default=True):
+        warn("Skipped. You can copy the config manually later.")
+        return False
+
+    try:
+        # Ensure parent directory exists
+        subprocess.run(
+            ["sudo", "mkdir", "-p", str(path.parent)],
+            check=True, timeout=30,
+        )
+        # Write via sudo tee
+        result = subprocess.run(
+            ["sudo", "tee", str(path)],
+            input=content, text=True,
+            capture_output=True, timeout=30,
+        )
+        if result.returncode != 0:
+            fail(f"sudo tee failed: {result.stderr.strip()}")
+            return False
+        return True
+    except subprocess.CalledProcessError as e:
+        fail(f"sudo failed: {e}")
+        return False
+    except Exception as e:
+        fail(f"Failed to write config: {e}")
+        return False
+
+
 def wizard_reverse_proxy(config: dict) -> None:
     section("Reverse Proxy")
     info("TOD needs a reverse proxy for HTTPS termination.")
@@ -647,43 +687,37 @@ def wizard_reverse_proxy(config: dict) -> None:
             config["proxy_configured"] = False
             return
 
-    try:
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(output)
-        ok(f"Wrote {cfg['label']} config to {out_path}")
-        config["proxy_configured"] = True
-        config["proxy_type"] = cfg["label"]
-        config["proxy_path"] = str(out_path)
+    written = _write_system_file(out_path, output)
 
-        # Post-install hints
-        print()
-        if selected == "caddy":
-            info("Reload Caddy:  systemctl reload caddy")
-        elif selected == "nginx":
-            if "/sites-available/" in str(out_path):
-                sites_enabled = out_path.parent.parent / "sites-enabled" / out_path.name
-                info(f"Enable site:   ln -s {out_path} {sites_enabled}")
-            info("Test config:   nginx -t")
-            info("Reload nginx:  systemctl reload nginx")
-        elif selected == "apache":
-            if "/sites-available/" in str(out_path):
-                info(f"Enable site:   a2ensite {out_path.stem}")
-            info("Test config:   apachectl configtest")
-            info("Reload Apache: systemctl reload apache2")
-        elif selected == "haproxy":
-            info("Test config:   haproxy -c -f /etc/haproxy/haproxy.cfg")
-            info("Reload:        systemctl reload haproxy")
-        elif selected == "traefik":
-            info("Traefik watches for file changes — no reload needed.")
+    if not written:
+        config["proxy_configured"] = False
+        return
 
-    except PermissionError:
-        fail(f"Permission denied writing to {out_path}")
-        warn(f"Try running with sudo, or copy manually:")
-        info(f"  The config has been printed above.")
-        config["proxy_configured"] = False
-    except Exception as e:
-        fail(f"Failed to write config: {e}")
-        config["proxy_configured"] = False
+    ok(f"Wrote {cfg['label']} config to {out_path}")
+    config["proxy_configured"] = True
+    config["proxy_type"] = cfg["label"]
+    config["proxy_path"] = str(out_path)
+
+    # Post-install hints
+    print()
+    if selected == "caddy":
+        info("Reload Caddy:  sudo systemctl reload caddy")
+    elif selected == "nginx":
+        if "/sites-available/" in str(out_path):
+            sites_enabled = out_path.parent.parent / "sites-enabled" / out_path.name
+            info(f"Enable site:   sudo ln -s {out_path} {sites_enabled}")
+        info("Test config:   sudo nginx -t")
+        info("Reload nginx:  sudo systemctl reload nginx")
+    elif selected == "apache":
+        if "/sites-available/" in str(out_path):
+            info(f"Enable site:   sudo a2ensite {out_path.stem}")
+        info("Test config:   sudo apachectl configtest")
+        info("Reload Apache: sudo systemctl reload apache2")
+    elif selected == "haproxy":
+        info("Test config:   sudo haproxy -c -f /etc/haproxy/haproxy.cfg")
+        info("Reload:        sudo systemctl reload haproxy")
+    elif selected == "traefik":
+        info("Traefik watches for file changes — no reload needed.")
 
 
 # ── Summary ──────────────────────────────────────────────────────────────────
