@@ -232,13 +232,11 @@ async def delete_tenant(
     had_vpn = await get_vpn_config(db, tenant_id)
 
     await db.delete(tenant)
-    await db.flush()
+    await db.commit()
 
     # Regenerate wg0.conf without deleted tenant's peers
     if had_vpn:
-        await sync_wireguard_config(db)
-
-    await db.commit()
+        await sync_wireguard_config()
 
 
 # ---------------------------------------------------------------------------

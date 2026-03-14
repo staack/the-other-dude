@@ -151,10 +151,22 @@ def _get_wg_config_path() -> Path:
     return Path(os.getenv("WIREGUARD_CONFIG_PATH", "/data/wireguard"))
 
 
-async def sync_wireguard_config(db: AsyncSession) -> None:
+async def _commit_and_sync(db: AsyncSession) -> None:
+    """Commit the caller's transaction then regenerate wg0.conf.
+
+    sync_wireguard_config opens its own DB session, so callers must commit
+    first for their changes to be visible. This helper combines both steps
+    and provides a single patch point for tests.
+    """
+    await _commit_and_sync(db)
+
+
+async def sync_wireguard_config() -> None:
     """Regenerate wg0.conf with ALL tenants' peers and write to shared volume.
 
     Uses AdminAsyncSessionLocal to bypass RLS (must see all tenants).
+    Callers MUST commit their transaction before calling this function,
+    since it opens a separate DB session that cannot see uncommitted data.
     Uses a PostgreSQL advisory lock to prevent concurrent writes.
     Writes atomically via temp file + rename.
     """
@@ -323,7 +335,7 @@ async def setup_vpn(
     logger.info("vpn_subnet_allocated", event="vpn_audit",
                 tenant_id=str(tenant_id), subnet_index=subnet_index, subnet=subnet)
 
-    await sync_wireguard_config(db)
+    await _commit_and_sync(db)
     return config
 
 
@@ -341,7 +353,7 @@ async def update_vpn_config(
         config.is_enabled = is_enabled
 
     await db.flush()
-    await sync_wireguard_config(db)
+    await _commit_and_sync(db)
     return config
 
 
@@ -410,7 +422,7 @@ async def add_peer(db: AsyncSession, tenant_id: uuid.UUID, device_id: uuid.UUID,
     db.add(peer)
     await db.flush()
 
-    await sync_wireguard_config(db)
+    await _commit_and_sync(db)
     return peer
 
 
@@ -425,7 +437,7 @@ async def remove_peer(db: AsyncSession, tenant_id: uuid.UUID, peer_id: uuid.UUID
 
     await db.delete(peer)
     await db.flush()
-    await sync_wireguard_config(db)
+    await _commit_and_sync(db)
 
 
 async def get_peer_config(db: AsyncSession, tenant_id: uuid.UUID, peer_id: uuid.UUID) -> dict:
@@ -523,7 +535,7 @@ async def onboard_device(
     db.add(peer)
     await db.flush()
 
-    await sync_wireguard_config(db)
+    await _commit_and_sync(db)
 
     # Generate RouterOS commands
     endpoint = config.endpoint or "YOUR_SERVER_IP:51820"

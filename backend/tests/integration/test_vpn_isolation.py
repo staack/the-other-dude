@@ -36,16 +36,15 @@ def wireguard_tmp_dir(tmp_path):
 
 
 @pytest.fixture(autouse=True)
-def _no_sync_wireguard():
-    """Patch sync_wireguard_config to a no-op in service calls.
+def _no_commit_and_sync():
+    """Patch _commit_and_sync to a no-op in service calls.
 
-    sync_wireguard_config opens its own AdminAsyncSessionLocal connection,
-    which cannot see uncommitted test-transaction data. We patch it globally
-    so setup_vpn / add_peer / remove_peer don't fail, and then call the
-    real function explicitly in tests that need to verify wg0.conf content
-    (those tests commit data first or use a dedicated helper).
+    _commit_and_sync commits the transaction then opens a separate DB session
+    to regenerate wg0.conf. In tests, committing breaks transaction rollback
+    isolation, and the separate session can't see test data. Patching this
+    single function prevents both issues.
     """
-    with patch("app.services.vpn_service.sync_wireguard_config", new_callable=AsyncMock):
+    with patch("app.services.vpn_service._commit_and_sync", new_callable=AsyncMock):
         yield
 
 
