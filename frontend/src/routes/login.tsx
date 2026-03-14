@@ -232,13 +232,15 @@ function LoginPage() {
           </form>
         </div>
 
-        {/* First-run hint */}
-        <div className="text-center mt-4 px-2">
-          <p className="text-xs text-text-muted">
-            First time? Use the credentials from your <code className="text-text-secondary">.env</code> file
-            (<code className="text-text-secondary">FIRST_ADMIN_EMAIL</code> / <code className="text-text-secondary">FIRST_ADMIN_PASSWORD</code>).
-          </p>
-        </div>
+        {/* First-run hint (dev only) */}
+        {import.meta.env.DEV && (
+          <div className="text-center mt-4 px-2">
+            <p className="text-xs text-text-muted">
+              First time? Use the credentials from your <code className="text-text-secondary">.env</code> file
+              (<code className="text-text-secondary">FIRST_ADMIN_EMAIL</code> / <code className="text-text-secondary">FIRST_ADMIN_PASSWORD</code>).
+            </p>
+          </div>
+        )}
 
         {/* Legal links */}
         <div className="flex justify-center gap-4 mt-3">
