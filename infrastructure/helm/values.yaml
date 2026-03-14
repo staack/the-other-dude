@@ -90,7 +90,7 @@ postgres:
     port: 5432
 
   auth:
-    database: mikrotik
+    database: tod
     username: postgres
     # password is sourced from secrets.dbPassword
     appUsername: app_user
@@ -105,7 +105,7 @@ postgres:
       memory: 2Gi
 
   # External PostgreSQL URL (used when postgres.enabled=false)
-  # externalUrl: "postgresql+asyncpg://user:pass@host:5432/mikrotik"
+  # externalUrl: "postgresql+asyncpg://user:pass@host:5432/tod"
 
 # -----------------------------------------------------------------------
 # Redis
@@ -186,7 +186,7 @@ ingress:
   # annotations:
   #   cert-manager.io/cluster-issuer: letsencrypt-prod
 
-  # host: mikrotik.example.com  — set this in your deployment
+  # host: tod.example.com  — set this in your deployment
   host: ""
 
   tls:

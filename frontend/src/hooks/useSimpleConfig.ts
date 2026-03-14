@@ -6,7 +6,7 @@
 
 import { useState, useCallback } from 'react'
 
-const STORAGE_KEY = 'mikrotik-simple-mode'
+const STORAGE_KEY = 'tod-simple-mode'
 
 type ConfigMode = 'simple' | 'standard'
 

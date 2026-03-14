@@ -1,4 +1,4 @@
-const THEME_STORAGE_KEY = 'mikrotik-ui-state'
+const THEME_STORAGE_KEY = 'tod-ui-state'
 
 export type Theme = 'dark' | 'light'
 

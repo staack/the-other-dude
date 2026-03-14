@@ -24,7 +24,7 @@ errorlog = "-"
 loglevel = os.getenv("LOG_LEVEL", "info")
 
 # Process naming
-proc_name = "mikrotik-api"
+proc_name = "tod-api"
 
 # Preload application for faster worker spawning (shared memory for code)
 preload_app = True

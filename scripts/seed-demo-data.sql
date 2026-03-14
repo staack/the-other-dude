@@ -2,7 +2,7 @@
 -- The Other Dude v9.0 — Demo Seed Data (Big Lebowski themed)
 -- =============================================================================
 -- Creates two tenants with realistic MikroTik device data for screenshots.
--- Run against a fresh database after migrations: psql -U postgres -d mikrotik -f seed-demo-data.sql
+-- Run against a fresh database after migrations: psql -U postgres -d tod -f seed-demo-data.sql
 -- Idempotent: uses ON CONFLICT DO NOTHING.
 -- =============================================================================
 

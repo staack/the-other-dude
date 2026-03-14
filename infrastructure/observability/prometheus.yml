@@ -3,14 +3,14 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: 'mikrotik-api'
+  - job_name: 'tod-api'
     metrics_path: /metrics
     static_configs:
       - targets: ['api:8000']
         labels:
           service: 'api'
 
-  - job_name: 'mikrotik-poller'
+  - job_name: 'tod-poller'
     metrics_path: /metrics
     static_configs:
       - targets: ['poller:9091']

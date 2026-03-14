@@ -33,7 +33,7 @@ export const useUIStore = create<UIState>()(
       },
     }),
     {
-      name: 'mikrotik-ui-state',
+      name: 'tod-ui-state',
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
         theme: state.theme,

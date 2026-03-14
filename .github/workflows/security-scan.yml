@@ -20,36 +20,36 @@ jobs:
       # Add base-image CVEs to .trivyignore with justification if needed.
 
       - name: Build API image
-        run: docker build -f infrastructure/docker/Dockerfile.api -t mikrotik-api:scan .
+        run: docker build -f infrastructure/docker/Dockerfile.api -t tod-api:scan .
 
       - name: Scan API image
         uses: aquasecurity/trivy-action@0.33.1
         with:
-          image-ref: "mikrotik-api:scan"
+          image-ref: "tod-api:scan"
           format: "table"
           exit-code: "1"
           severity: "HIGH,CRITICAL"
           trivyignores: ".trivyignore"
 
       - name: Build Poller image
-        run: docker build -f poller/Dockerfile -t mikrotik-poller:scan ./poller
+        run: docker build -f poller/Dockerfile -t tod-poller:scan ./poller
 
       - name: Scan Poller image
         uses: aquasecurity/trivy-action@0.33.1
         with:
-          image-ref: "mikrotik-poller:scan"
+          image-ref: "tod-poller:scan"
           format: "table"
           exit-code: "1"
           severity: "HIGH,CRITICAL"
           trivyignores: ".trivyignore"
 
       - name: Build Frontend image
-        run: docker build -f infrastructure/docker/Dockerfile.frontend -t mikrotik-frontend:scan .
+        run: docker build -f infrastructure/docker/Dockerfile.frontend -t tod-frontend:scan .
 
       - name: Scan Frontend image
         uses: aquasecurity/trivy-action@0.33.1
         with:
-          image-ref: "mikrotik-frontend:scan"
+          image-ref: "tod-frontend:scan"
           format: "table"
           exit-code: "1"
           severity: "HIGH,CRITICAL"
