@@ -65,7 +65,7 @@ services:
     environment:
       ENVIRONMENT: production
       LOG_LEVEL: info
-      DATABASE_URL: postgres://poller_user:poller_password@postgres:5432/mikrotik
+      DATABASE_URL: ${POLLER_DATABASE_URL:-postgres://poller_user:poller_password@postgres:5432/tod}
       TUNNEL_PORT_MIN: 49000
       TUNNEL_PORT_MAX: 49100
       TUNNEL_IDLE_TIMEOUT: 300

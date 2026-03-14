@@ -18,7 +18,7 @@ services:
     container_name: tod_postgres
     env_file: .env
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-mikrotik}
+      POSTGRES_DB: ${POSTGRES_DB:-tod}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
@@ -27,7 +27,7 @@ services:
       - ./docker-data/postgres:/var/lib/postgresql/data
       - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d mikrotik"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB:-tod}"]
       interval: 5s
       timeout: 5s
       retries: 5

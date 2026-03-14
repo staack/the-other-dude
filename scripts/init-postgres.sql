@@ -3,7 +3,7 @@
 CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password' NOSUPERUSER NOCREATEDB NOCREATEROLE;
 
 -- Grant connect to the database
-GRANT CONNECT ON DATABASE mikrotik TO app_user;
+GRANT CONNECT ON DATABASE tod TO app_user;
 
 -- Grant schema usage
 GRANT USAGE ON SCHEMA public TO app_user;
@@ -23,7 +23,7 @@ BEGIN
 END
 $$;
 
-GRANT CONNECT ON DATABASE mikrotik TO poller_user;
+GRANT CONNECT ON DATABASE tod TO poller_user;
 GRANT USAGE ON SCHEMA public TO poller_user;
 -- SELECT grant on devices is applied via Alembic migration 002
 -- (after the devices table is created)
