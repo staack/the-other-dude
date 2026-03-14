@@ -3,6 +3,7 @@
 
 services:
   postgres:
+    env_file: .env.prod
     volumes:
       - ./docker-data/postgres:/var/lib/postgresql/data
       - ./scripts/init-postgres-prod.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -131,6 +132,12 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  redis:
+    env_file: .env.prod
+
+  nats:
+    env_file: .env.prod
 
   winbox-worker:
     environment:
