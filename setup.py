@@ -1067,6 +1067,7 @@ def health_check(config: dict) -> None:
 
     deadline = time.time() + 60
     pending = dict(services)
+    last_waiting_msg = 0
 
     while pending and time.time() < deadline:
         for container, label in list(pending.items()):
@@ -1085,6 +1086,12 @@ def health_check(config: dict) -> None:
                 pass
 
         if pending:
+            now = time.time()
+            remaining = int(deadline - now)
+            if now - last_waiting_msg >= 10:
+                waiting_names = ", ".join(label for _, label in pending.items())
+                info(f"Waiting for: {waiting_names} ({remaining}s remaining)")
+                last_waiting_msg = now
             time.sleep(3)
 
     for container, label in pending.items():
