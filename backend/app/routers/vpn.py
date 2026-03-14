@@ -83,7 +83,12 @@ async def setup_vpn(
     try:
         config = await vpn_service.setup_vpn(db, tenant_id, endpoint=body.endpoint)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        msg = str(e)
+        if "already configured" in msg:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
+        elif "exhausted" in msg:
+            raise HTTPException(status_code=422, detail=msg)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
     return VpnConfigResponse.model_validate(config)
 
 
@@ -164,7 +169,10 @@ async def add_peer(
     try:
         peer = await vpn_service.add_peer(db, tenant_id, body.device_id, additional_allowed_ips=body.additional_allowed_ips)
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+        msg = str(e)
+        if "must not overlap" in msg:
+            raise HTTPException(status_code=422, detail=msg)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=msg)
 
     # Enrich with device info
     result = await db.execute(select(Device).where(Device.id == peer.device_id))
