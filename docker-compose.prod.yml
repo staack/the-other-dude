@@ -72,6 +72,8 @@ services:
       dockerfile: ./Dockerfile
     container_name: tod_poller
     env_file: .env.prod
+    cap_add:
+      - NET_ADMIN
     environment:
       ENVIRONMENT: production
       LOG_LEVEL: info
