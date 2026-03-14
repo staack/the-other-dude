@@ -21,7 +21,7 @@ services:
       APP_USER_DATABASE_URL: postgresql+asyncpg://app_user:app_password@postgres:5432/mikrotik
       REDIS_URL: redis://redis:6379/0
       NATS_URL: nats://nats:4222
-      FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL:-admin@mikrotik-portal.dev}
+      FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL:-admin@the-other-dude.dev}
       FIRST_ADMIN_PASSWORD: ${FIRST_ADMIN_PASSWORD:-changeme-in-production}
       CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?Set CREDENTIAL_ENCRYPTION_KEY in .env}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
@@ -62,6 +62,7 @@ services:
           memory: 512M
     networks:
       - tod
+      - tod_remote_worker
 
   poller:
     build:
@@ -115,6 +116,17 @@ services:
           memory: 256M
     networks:
       - tod
+      - tod_remote_worker
+
+  winbox-worker:
+    environment:
+      LOG_LEVEL: debug
+      MAX_CONCURRENT_SESSIONS: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    restart: on-failure
 
   frontend:
     build:

@@ -13,9 +13,9 @@ import (
 
 	"github.com/nats-io/nats.go"
 
-	"github.com/mikrotik-portal/poller/internal/store"
-	"github.com/mikrotik-portal/poller/internal/tunnel"
-	"github.com/mikrotik-portal/poller/internal/vault"
+	"github.com/staack/the-other-dude/poller/internal/store"
+	"github.com/staack/the-other-dude/poller/internal/tunnel"
+	"github.com/staack/the-other-dude/poller/internal/vault"
 )
 
 // TunnelOpenRequest is the JSON payload for a tunnel.open NATS request.

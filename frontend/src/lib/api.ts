@@ -968,6 +968,59 @@ export const remoteAccessApi = {
       .then((r) => r.data),
 }
 
+// ─── Remote WinBox (Browser) ─────────────────────────────────────────────────
+
+export interface RemoteWinBoxSession {
+  session_id: string
+  status: 'creating' | 'active' | 'grace' | 'terminating' | 'terminated' | 'failed'
+  websocket_path?: string
+  xpra_ws_port?: number
+  idle_timeout_seconds: number
+  max_lifetime_seconds: number
+  expires_at: string
+  max_expires_at: string
+  created_at?: string
+}
+
+export const remoteWinboxApi = {
+  create: (tenantId: string, deviceId: string, opts?: {
+    idle_timeout_seconds?: number
+    max_lifetime_seconds?: number
+  }) =>
+    api
+      .post<RemoteWinBoxSession>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/winbox-remote-sessions`,
+        opts || {},
+      )
+      .then((r) => r.data),
+
+  get: (tenantId: string, deviceId: string, sessionId: string) =>
+    api
+      .get<RemoteWinBoxSession>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/winbox-remote-sessions/${sessionId}`,
+      )
+      .then((r) => r.data),
+
+  list: (tenantId: string, deviceId: string) =>
+    api
+      .get<RemoteWinBoxSession[]>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/winbox-remote-sessions`,
+      )
+      .then((r) => r.data),
+
+  delete: (tenantId: string, deviceId: string, sessionId: string) =>
+    api
+      .delete(
+        `/api/tenants/${tenantId}/devices/${deviceId}/winbox-remote-sessions/${sessionId}`,
+      )
+      .then((r) => r.data),
+
+  getWebSocketUrl: (sessionPath: string) => {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${proto}//${window.location.host}${sessionPath}`
+  },
+}
+
 // ─── Config History ─────────────────────────────────────────────────────────
 
 export interface ConfigChangeEntry {

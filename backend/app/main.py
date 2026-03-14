@@ -1,7 +1,8 @@
 """FastAPI application entry point."""
 
+import asyncio
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 import structlog
 from fastapi import FastAPI
@@ -232,11 +233,80 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as exc:
         logger.warning("retention scheduler could not start (API will run without it)", error=str(exc))
 
+    # Start Remote WinBox session reconciliation loop (60s interval).
+    # Detects orphaned sessions (worker lost them) and cleans up Redis + tunnels.
+    winbox_reconcile_task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
+    try:
+        from app.routers.winbox_remote import _get_redis as _wb_get_redis, _close_tunnel
+        from app.services.winbox_remote import get_session as _wb_worker_get, health_check as _wb_health
+
+        async def _winbox_reconcile_loop() -> None:
+            """Scan Redis for winbox-remote:* keys and reconcile with worker."""
+            import json as _json
+
+            while True:
+                try:
+                    await asyncio.sleep(60)
+                    rd = await _wb_get_redis()
+                    cursor = "0"
+                    while True:
+                        cursor, keys = await rd.scan(
+                            cursor=cursor, match="winbox-remote:*", count=100
+                        )
+                        for key in keys:
+                            raw = await rd.get(key)
+                            if raw is None:
+                                continue
+                            try:
+                                sess = _json.loads(raw)
+                            except Exception:
+                                await rd.delete(key)
+                                continue
+
+                            sess_status = sess.get("status")
+                            if sess_status not in ("creating", "active", "grace"):
+                                continue
+
+                            session_id = sess.get("session_id")
+                            if not session_id:
+                                await rd.delete(key)
+                                continue
+
+                            # Health-check against worker
+                            worker_info = await _wb_worker_get(session_id)
+                            if worker_info is None:
+                                # Worker lost the session — clean up
+                                logger.warning(
+                                    "reconcile: worker lost session %s, cleaning up",
+                                    session_id,
+                                )
+                                tunnel_id = sess.get("tunnel_id")
+                                if tunnel_id:
+                                    await _close_tunnel(tunnel_id)
+                                await rd.delete(key)
+
+                        if cursor == "0" or cursor == 0:
+                            break
+                except asyncio.CancelledError:
+                    break
+                except Exception as exc:
+                    logger.warning("winbox reconcile loop error: %s", exc)
+
+        winbox_reconcile_task = asyncio.create_task(_winbox_reconcile_loop())
+    except Exception as exc:
+        logger.warning("winbox reconcile loop could not start (non-fatal)", error=str(exc))
+
     logger.info("startup complete, ready to serve requests")
     yield
 
     # Shutdown
     logger.info("shutting down TOD API")
+    if winbox_reconcile_task and not winbox_reconcile_task.done():
+        winbox_reconcile_task.cancel()
+        try:
+            await winbox_reconcile_task
+        except asyncio.CancelledError:
+            pass
     await stop_backup_scheduler()
     await stop_nats_subscriber(nats_connection)
     await stop_metrics_subscriber(metrics_nc)
@@ -311,6 +381,7 @@ def create_app() -> FastAPI:
     from app.routers.transparency import router as transparency_router
     from app.routers.settings import router as settings_router
     from app.routers.remote_access import router as remote_access_router
+    from app.routers.winbox_remote import router as winbox_remote_router
 
     app.include_router(auth_router, prefix="/api")
     app.include_router(tenants_router, prefix="/api")
@@ -339,6 +410,7 @@ def create_app() -> FastAPI:
     app.include_router(transparency_router, prefix="/api")
     app.include_router(settings_router, prefix="/api")
     app.include_router(remote_access_router, prefix="/api")
+    app.include_router(winbox_remote_router, prefix="/api")
 
     # Health check endpoints
     @app.get("/health", tags=["health"])

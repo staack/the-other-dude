@@ -11,7 +11,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 
-	"github.com/mikrotik-portal/poller/internal/device"
+	"github.com/staack/the-other-dude/poller/internal/device"
 )
 
 // DeviceStatusEvent is the payload published to NATS JetStream when a device

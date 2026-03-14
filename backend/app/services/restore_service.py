@@ -43,7 +43,7 @@ from app.services.push_tracker import record_push, clear_push
 logger = logging.getLogger(__name__)
 
 # Name of the panic-revert scheduler installed on the RouterOS device
-_PANIC_REVERT_SCHEDULER = "mikrotik-portal-panic-revert"
+_PANIC_REVERT_SCHEDULER = "the-other-dude-panic-revert"
 # Name of the pre-push binary backup saved on device flash
 _PRE_PUSH_BACKUP = "portal-pre-push"
 # Name of the RSC file used for /import on device

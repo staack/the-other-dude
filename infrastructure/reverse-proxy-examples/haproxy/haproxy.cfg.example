@@ -1,0 +1,77 @@
+# The Other Dude — HAProxy reverse proxy example
+#
+# This config assumes:
+#   - TOD frontend runs on FRONTEND_HOST:3000
+#   - TOD API runs on API_HOST:8001
+#   - WinBox worker Xpra ports are on WORKER_HOST:10100-10119
+#   - TLS is terminated by HAProxy
+#
+# Replace tod.example.com and upstream addresses with your values.
+#
+# IMPORTANT: Do NOT enable compression on the xpra backend —
+# compressing WebSocket binary frames corrupts Xpra mouse/keyboard data.
+
+global
+    log stdout format raw local0
+    maxconn 4096
+
+defaults
+    log     global
+    mode    http
+    option  httplog
+    timeout connect 10s
+    timeout client  300s
+    timeout server  300s
+    timeout tunnel  3600s
+
+# ── Frontend ─────────────────────────────────────────────────────────
+
+frontend https
+    bind *:443 ssl crt /etc/ssl/certs/tod.example.com.pem
+    bind *:80
+    redirect scheme https code 301 if !{ ssl_fc }
+
+    # Security headers
+    http-response set-header X-Frame-Options "SAMEORIGIN"
+    http-response set-header X-Content-Type-Options "nosniff"
+    http-response set-header Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Routing rules (order matters — first match wins)
+    acl is_xpra path_beg /xpra/
+    acl is_api  path_beg /api/
+
+    use_backend xpra if is_xpra
+    use_backend api  if is_api
+    default_backend frontend
+
+# ── Backends ─────────────────────────────────────────────────────────
+
+backend api
+    option forwardfor
+    http-request set-header X-Forwarded-Proto https
+    server api1 YOUR_TOD_HOST:8001 check
+
+backend frontend
+    option forwardfor
+    server fe1 YOUR_TOD_HOST:3000 check
+
+# Xpra backend — uses a Lua or map-based approach to extract the port
+# from the URL path. This example covers port 10100; add servers for
+# 10101-10119 as needed, or use HAProxy's Lua scripting for dynamic routing.
+#
+# WARNING: Do NOT add "compression" directives to this backend.
+backend xpra
+    option forwardfor
+
+    # Strip /xpra/{port} prefix
+    http-request set-path %[path,regsub(^/xpra/[0-9]+/,/)]
+
+    # Route to the correct port based on URL
+    # For dynamic port routing, use a map file or Lua script.
+    # Static example for port 10100:
+    acl xpra_10100 path_beg /xpra/10100/
+    use-server xpra10100 if xpra_10100
+
+    server xpra10100 YOUR_TOD_HOST:10100 check
+    # server xpra10101 YOUR_TOD_HOST:10101 check
+    # ... add through 10119 as needed

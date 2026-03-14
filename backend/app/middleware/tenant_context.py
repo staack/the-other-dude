@@ -164,6 +164,67 @@ async def get_current_user(
     )
 
 
+async def get_current_user_ws(
+    websocket: "WebSocket",
+) -> CurrentUser:
+    """
+    WebSocket authentication helper.
+
+    Extracts JWT from the ``access_token`` cookie or ``token`` query parameter,
+    decodes it, and returns a :class:`CurrentUser`.  Unlike :func:`get_current_user`
+    this does **not** touch the database (no RLS tenant context) because WebSocket
+    handlers typically manage their own DB sessions.
+
+    Raises:
+        WebSocketException 1008: If no token is provided or the token is invalid.
+    """
+    from starlette.websockets import WebSocket, WebSocketState
+    from fastapi import WebSocketException
+
+    # 1. Try cookie
+    token: Optional[str] = websocket.cookies.get("access_token")
+
+    # 2. Fall back to query param
+    if not token:
+        token = websocket.query_params.get("token")
+
+    if not token:
+        raise WebSocketException(code=1008, reason="Not authenticated")
+
+    try:
+        payload = verify_token(token, expected_type="access")
+    except HTTPException:
+        raise WebSocketException(code=1008, reason="Invalid or expired token")
+
+    user_id_str = payload.get("sub")
+    tenant_id_str = payload.get("tenant_id")
+    role = payload.get("role")
+
+    if not user_id_str or not role:
+        raise WebSocketException(code=1008, reason="Invalid token payload")
+
+    try:
+        user_id = uuid.UUID(user_id_str)
+    except ValueError:
+        raise WebSocketException(code=1008, reason="Invalid token payload")
+
+    tenant_id: Optional[uuid.UUID] = None
+    if tenant_id_str:
+        try:
+            tenant_id = uuid.UUID(tenant_id_str)
+        except ValueError:
+            pass
+
+    if role != "super_admin" and tenant_id is None:
+        raise WebSocketException(code=1008, reason="Invalid token: no tenant context")
+
+    return CurrentUser(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        role=role,
+    )
+
+
 async def get_optional_current_user(
     request: Request,
     credentials: Annotated[Optional[HTTPAuthorizationCredentials], Depends(bearer_scheme)] = None,

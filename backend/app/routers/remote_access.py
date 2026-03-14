@@ -29,6 +29,7 @@ from app.schemas.remote_access import (
     TunnelStatusItem,
     WinboxSessionResponse,
 )
+from app.schemas.winbox_remote import RemoteWinboxSessionItem
 from app.middleware.rate_limit import limiter
 from app.services.audit_service import log_action
 from sqlalchemy import select
@@ -329,4 +330,26 @@ async def list_sessions(
         logger.warning("tunnel.status.list NATS request failed: %s", exc)
         # Return empty list rather than error — poller may be unavailable
 
-    return ActiveSessionsResponse(winbox_tunnels=tunnels, ssh_sessions=[])
+    # Query Redis for remote winbox (browser) sessions for this device
+    remote_winbox: list[RemoteWinboxSessionItem] = []
+    try:
+        rd = await _get_redis()
+        pattern = f"winbox-remote:{device_id}:*"
+        cursor, keys = await rd.scan(0, match=pattern, count=100)
+        while keys or cursor:
+            for key in keys:
+                raw = await rd.get(key)
+                if raw:
+                    data = json.loads(raw)
+                    remote_winbox.append(RemoteWinboxSessionItem(**data))
+            if not cursor:
+                break
+            cursor, keys = await rd.scan(cursor, match=pattern, count=100)
+    except Exception as exc:
+        logger.warning("Redis winbox-remote scan failed: %s", exc)
+
+    return ActiveSessionsResponse(
+        winbox_tunnels=tunnels,
+        ssh_sessions=[],
+        remote_winbox_sessions=remote_winbox,
+    )

@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mikrotik-portal/poller/internal/bus"
-	"github.com/mikrotik-portal/poller/internal/store"
-	"github.com/mikrotik-portal/poller/internal/testutil"
+	"github.com/staack/the-other-dude/poller/internal/bus"
+	"github.com/staack/the-other-dude/poller/internal/store"
+	"github.com/staack/the-other-dude/poller/internal/testutil"
 )
 
 // TestPollPublishConsumeCycle_Integration verifies the complete pipeline:

@@ -57,6 +57,7 @@ import { useSimpleConfigMode } from '@/hooks/useSimpleConfig'
 import { SimpleModeToggle } from '@/components/simple-config/SimpleModeToggle'
 import { SimpleConfigView } from '@/components/simple-config/SimpleConfigView'
 import { WinBoxButton } from '@/components/fleet/WinBoxButton'
+import { RemoteWinBoxButton } from '@/components/fleet/RemoteWinBoxButton'
 import { SSHTerminal } from '@/components/fleet/SSHTerminal'
 
 export const Route = createFileRoute(
@@ -456,7 +457,10 @@ function DeviceDetailPage() {
           {user?.role !== 'viewer' && (
             <div className="flex gap-2">
               {device.routeros_version !== null && (
-                <WinBoxButton tenantId={tenantId} deviceId={deviceId} />
+                <>
+                  <WinBoxButton tenantId={tenantId} deviceId={deviceId} />
+                  <RemoteWinBoxButton tenantId={tenantId} deviceId={deviceId} />
+                </>
               )}
               <SSHTerminal tenantId={tenantId} deviceId={deviceId} deviceName={device.hostname} />
             </div>

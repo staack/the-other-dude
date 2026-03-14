@@ -12,15 +12,35 @@ services:
       ENVIRONMENT: production
       LOG_LEVEL: info
       GUNICORN_WORKERS: "2"
-    command: ["gunicorn", "app.main:app", "--config", "gunicorn.conf.py"]
+      WIREGUARD_CONFIG_PATH: /data/wireguard
+      WIREGUARD_GATEWAY: wireguard
+    cap_add:
+      - NET_ADMIN
+    user: root
+    command: >
+      sh -c "
+        if [ -n \"$$WIREGUARD_GATEWAY\" ]; then
+          apt-get update -qq && apt-get install -y -qq iproute2 >/dev/null 2>&1 || true;
+          GW_IP=$$(getent hosts $$WIREGUARD_GATEWAY 2>/dev/null | awk '{print $$1}');
+          [ -z \"$$GW_IP\" ] && GW_IP=$$WIREGUARD_GATEWAY;
+          ip route add 10.10.0.0/16 via $$GW_IP 2>/dev/null || true;
+          echo VPN route: 10.10.0.0/16 via $$GW_IP;
+        fi;
+        exec su -s /bin/sh appuser -c 'gunicorn app.main:app --config gunicorn.conf.py'
+      "
+    ports:
+      - "8001:8000"
     volumes:
       - ./docker-data/git-store:/data/git-store
+      - ./docker-data/wireguard:/data/wireguard
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
       nats:
+        condition: service_healthy
+      openbao:
         condition: service_healthy
     deploy:
       resources:
@@ -34,6 +54,7 @@ services:
         max-file: "3"
     networks:
       - tod
+      - tod_remote_worker
 
   poller:
     build:
@@ -44,6 +65,7 @@ services:
     environment:
       ENVIRONMENT: production
       LOG_LEVEL: info
+      DATABASE_URL: postgres://poller_user:poller_password@postgres:5432/mikrotik
       TUNNEL_PORT_MIN: 49000
       TUNNEL_PORT_MAX: 49100
       TUNNEL_IDLE_TIMEOUT: 300
@@ -65,6 +87,8 @@ services:
         condition: service_healthy
       nats:
         condition: service_healthy
+      openbao:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:8080/healthz || exit 1"]
       interval: 30s
@@ -82,6 +106,32 @@ services:
         max-file: "3"
     networks:
       - tod
+      - tod_remote_worker
+
+  openbao:
+    env_file: .env.prod
+    environment:
+      BAO_ADDR: "http://127.0.0.1:8200"
+      BAO_UNSEAL_KEY: "${BAO_UNSEAL_KEY}"
+      BAO_TOKEN: "${OPENBAO_TOKEN}"
+    ports: []
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  winbox-worker:
+    environment:
+      LOG_LEVEL: info
+      MAX_CONCURRENT_SESSIONS: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
 
   frontend:
     build:
@@ -89,7 +139,7 @@ services:
       dockerfile: infrastructure/docker/Dockerfile.frontend
     container_name: tod_frontend
     ports:
-      - "80:80"
+      - "3000:80"
     depends_on:
       - api
     deploy:

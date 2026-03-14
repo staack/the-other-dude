@@ -3,9 +3,9 @@ import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth, isSuperAdmin, isTenantAdmin } from '@/lib/auth'
 import { authApi } from '@/lib/api'
-import { getSMTPSettings, updateSMTPSettings, testSMTPSettings } from '@/lib/settingsApi'
+import { getSMTPSettings, updateSMTPSettings, testSMTPSettings, clearWinboxSessions } from '@/lib/settingsApi'
 import { SMTP_PRESETS } from '@/lib/smtpPresets'
-import { Settings, User, Shield, Info, Key, Lock, ChevronRight, Download, Trash2, AlertTriangle, Mail } from 'lucide-react'
+import { Settings, User, Shield, Info, Key, Lock, ChevronRight, Download, Trash2, AlertTriangle, Mail, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -146,6 +146,34 @@ export function SettingsPage() {
             </div>
             <ChevronRight className="h-4 w-4 text-text-muted group-hover:text-text-primary transition-colors" />
           </Link>
+        </div>
+      )}
+
+      {/* Maintenance — super_admin only */}
+      {isSuperAdmin(user) && (
+        <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-1">
+          <SectionHeader icon={Monitor} title="Maintenance" />
+          <div className="flex items-center justify-between py-2">
+            <div>
+              <span className="text-sm text-text-primary">Clear WinBox Sessions</span>
+              <p className="text-xs text-text-muted">Remove stale sessions and rate limits from Redis</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                try {
+                  const result = await clearWinboxSessions()
+                  toast.success(`Cleared ${result.deleted} key${result.deleted !== 1 ? 's' : ''} from Redis`)
+                } catch {
+                  toast.error('Failed to clear WinBox sessions')
+                }
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+              Clear
+            </Button>
+          </div>
         </div>
       )}
 

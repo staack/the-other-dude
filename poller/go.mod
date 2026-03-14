@@ -1,4 +1,4 @@
-module github.com/mikrotik-portal/poller
+module github.com/staack/the-other-dude/poller
 
 go 1.25.0
 

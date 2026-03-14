@@ -1,0 +1,71 @@
+# The Other Dude — Caddy reverse proxy example
+#
+# This config assumes:
+#   - TOD frontend runs on FRONTEND_HOST:3000
+#   - TOD API runs on API_HOST:8001
+#   - WinBox worker Xpra ports are on WORKER_HOST:10100-10119
+#
+# Replace tod.example.com and the upstream IPs with your values.
+# Caddy handles TLS automatically via Let's Encrypt.
+
+tod.example.com {
+    log {
+        output file /var/log/caddy/tod.log {
+            roll_size 50mb
+            roll_keep 5
+        }
+        format json
+    }
+
+    encode zstd gzip
+
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        -Server
+    }
+
+    # ── Xpra (Remote WinBox) ──────────────────────────────────────────
+    # Proxies the Xpra HTML5 client to winbox-worker Xpra ports.
+    # Port range 10100-10119 (up to 20 concurrent sessions).
+    # Uses scoped compression to avoid corrupting WebSocket binary frames.
+    @xpra path_regexp xpra ^/xpra/(101[0-1][0-9])/(.*)$
+    handle @xpra {
+        # Override parent encode — only compress text assets, NOT WebSocket frames
+        encode {
+            gzip
+            match {
+                header Content-Type text/*
+                header Content-Type application/javascript*
+                header Content-Type application/json*
+            }
+        }
+        uri strip_prefix /xpra/{re.xpra.1}
+        reverse_proxy {$WORKER_HOST:YOUR_TOD_HOST}:{re.xpra.1} {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # ── API ───────────────────────────────────────────────────────────
+    handle /api/* {
+        reverse_proxy http://{$API_HOST:YOUR_TOD_HOST}:8001 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            transport http {
+                dial_timeout 30s
+                response_header_timeout 60s
+            }
+        }
+    }
+
+    # ── Frontend (SPA) ────────────────────────────────────────────────
+    handle {
+        reverse_proxy http://{$FRONTEND_HOST:YOUR_TOD_HOST}:3000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+        }
+    }
+}

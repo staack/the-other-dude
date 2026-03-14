@@ -17,7 +17,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 
-	"github.com/mikrotik-portal/poller/internal/store"
+	"github.com/staack/the-other-dude/poller/internal/store"
 )
 
 // ErrLockNotObtained is returned when a backup lock cannot be acquired

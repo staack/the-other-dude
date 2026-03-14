@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-api
+  name: {{ include "the-other-dude.fullname" . }}-api
   labels:
-    {{- include "mikrotik-portal.apiLabels" . | nindent 4 }}
+    {{- include "the-other-dude.apiLabels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.api.replicaCount }}
   selector:
     matchLabels:
-      {{- include "mikrotik-portal.apiSelectorLabels" . | nindent 6 }}
+      {{- include "the-other-dude.apiSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "mikrotik-portal.apiSelectorLabels" . | nindent 8 }}
+        {{- include "the-other-dude.apiSelectorLabels" . | nindent 8 }}
     spec:
       securityContext:
         runAsNonRoot: true
@@ -29,28 +29,28 @@ spec:
           # Load non-sensitive config from ConfigMap
           envFrom:
             - configMapRef:
-                name: {{ include "mikrotik-portal.fullname" . }}-config
+                name: {{ include "the-other-dude.fullname" . }}-config
           # Load secrets as individual environment variables
           env:
             - name: JWT_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mikrotik-portal.fullname" . }}-secrets
+                  name: {{ include "the-other-dude.fullname" . }}-secrets
                   key: JWT_SECRET_KEY
             - name: CREDENTIAL_ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mikrotik-portal.fullname" . }}-secrets
+                  name: {{ include "the-other-dude.fullname" . }}-secrets
                   key: CREDENTIAL_ENCRYPTION_KEY
             - name: FIRST_ADMIN_EMAIL
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mikrotik-portal.fullname" . }}-secrets
+                  name: {{ include "the-other-dude.fullname" . }}-secrets
                   key: FIRST_ADMIN_EMAIL
             - name: FIRST_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mikrotik-portal.fullname" . }}-secrets
+                  name: {{ include "the-other-dude.fullname" . }}-secrets
                   key: FIRST_ADMIN_PASSWORD
           livenessProbe:
             httpGet:

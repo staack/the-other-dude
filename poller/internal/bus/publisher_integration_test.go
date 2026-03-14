@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mikrotik-portal/poller/internal/bus"
-	"github.com/mikrotik-portal/poller/internal/testutil"
+	"github.com/staack/the-other-dude/poller/internal/bus"
+	"github.com/staack/the-other-dude/poller/internal/testutil"
 )
 
 func TestPublisher_PublishStatus_Integration(t *testing.T) {

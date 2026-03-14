@@ -2,18 +2,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-redis
+  name: {{ include "the-other-dude.fullname" . }}-redis
   labels:
-    {{- include "mikrotik-portal.redisLabels" . | nindent 4 }}
+    {{- include "the-other-dude.redisLabels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "mikrotik-portal.redisSelectorLabels" . | nindent 6 }}
+      {{- include "the-other-dude.redisSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "mikrotik-portal.redisSelectorLabels" . | nindent 8 }}
+        {{- include "the-other-dude.redisSelectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: redis
@@ -45,9 +45,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-redis
+  name: {{ include "the-other-dude.fullname" . }}-redis
   labels:
-    {{- include "mikrotik-portal.redisLabels" . | nindent 4 }}
+    {{- include "the-other-dude.redisLabels" . | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
@@ -56,5 +56,5 @@ spec:
       protocol: TCP
       name: redis
   selector:
-    {{- include "mikrotik-portal.redisSelectorLabels" . | nindent 4 }}
+    {{- include "the-other-dude.redisSelectorLabels" . | nindent 4 }}
 {{- end }}

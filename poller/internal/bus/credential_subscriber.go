@@ -11,7 +11,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 
-	"github.com/mikrotik-portal/poller/internal/vault"
+	"github.com/staack/the-other-dude/poller/internal/vault"
 )
 
 // CredentialSubscriber listens for credential change events and invalidates

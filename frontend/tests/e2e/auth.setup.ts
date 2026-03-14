@@ -8,7 +8,7 @@ setup('authenticate', async ({ page }) => {
 
   // Use legacy-auth test user (no SRP/Secret Key required)
   await page.getByLabel(/email/i).fill(
-    process.env.TEST_ADMIN_EMAIL || 'e2e-test@mikrotik-portal.dev'
+    process.env.TEST_ADMIN_EMAIL || 'e2e-test@the-other-dude.dev'
   )
   await page.getByLabel(/password/i).fill(
     process.env.TEST_ADMIN_PASSWORD || 'admin123'

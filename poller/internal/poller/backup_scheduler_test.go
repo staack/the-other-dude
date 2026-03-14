@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mikrotik-portal/poller/internal/device"
-	"github.com/mikrotik-portal/poller/internal/store"
+	"github.com/staack/the-other-dude/poller/internal/device"
+	"github.com/staack/the-other-dude/poller/internal/store"
 )
 
 // mockSSHHostKeyUpdater implements SSHHostKeyUpdater for testing.

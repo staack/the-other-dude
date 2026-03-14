@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field
 
+from app.schemas.winbox_remote import RemoteWinboxSessionItem
+
 
 class WinboxSessionResponse(BaseModel):
     tunnel_id: str
@@ -37,3 +39,4 @@ class SSHSessionStatusItem(BaseModel):
 class ActiveSessionsResponse(BaseModel):
     winbox_tunnels: list[TunnelStatusItem] = []
     ssh_sessions: list[SSHSessionStatusItem] = []
+    remote_winbox_sessions: list[RemoteWinboxSessionItem] = []

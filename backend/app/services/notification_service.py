@@ -120,7 +120,7 @@ async def _send_email(channel: dict, alert_event: dict, device_hostname: str) ->
         user=channel.get("smtp_user"),
         password=smtp_password,
         use_tls=channel.get("smtp_use_tls", False),
-        from_address=channel.get("from_address") or "alerts@mikrotik-portal.local",
+        from_address=channel.get("from_address") or "alerts@the-other-dude.local",
     )
 
     to = channel.get("to_address")

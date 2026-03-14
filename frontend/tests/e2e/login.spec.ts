@@ -28,7 +28,7 @@ test.describe('Login Flow', () => {
     const loginPage = new LoginPage(page)
     await loginPage.goto()
     await loginPage.login(
-      process.env.TEST_ADMIN_EMAIL || 'e2e-test@mikrotik-portal.dev',
+      process.env.TEST_ADMIN_EMAIL || 'e2e-test@the-other-dude.dev',
       process.env.TEST_ADMIN_PASSWORD || 'admin123'
     )
     // Legacy auth user may trigger SRP upgrade dialog -- handle it

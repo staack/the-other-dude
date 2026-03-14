@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/mikrotik-portal/poller/internal/bus"
-	"github.com/mikrotik-portal/poller/internal/store"
-	"github.com/mikrotik-portal/poller/internal/vault"
+	"github.com/staack/the-other-dude/poller/internal/bus"
+	"github.com/staack/the-other-dude/poller/internal/store"
+	"github.com/staack/the-other-dude/poller/internal/vault"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/ssh"
 	"nhooyr.io/websocket"

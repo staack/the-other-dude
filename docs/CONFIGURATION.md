@@ -71,7 +71,7 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | `SMTP_USER` | *(none)* | SMTP authentication username |
 | `SMTP_PASSWORD` | *(none)* | SMTP authentication password |
 | `SMTP_USE_TLS` | `false` | Enable STARTTLS for SMTP connections |
-| `SMTP_FROM_ADDRESS` | `noreply@mikrotik-portal.local` | Sender address for outbound emails |
+| `SMTP_FROM_ADDRESS` | `noreply@the-other-dude.local` | Sender address for outbound emails |
 
 ### Firmware
 

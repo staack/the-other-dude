@@ -1,0 +1,90 @@
+# The Other Dude — nginx reverse proxy example
+#
+# This config assumes:
+#   - TOD frontend runs on FRONTEND_HOST:3000
+#   - TOD API runs on API_HOST:8001
+#   - WinBox worker Xpra ports are on WORKER_HOST:10100-10119
+#   - TLS is terminated by nginx (or upstream load balancer)
+#
+# Replace tod.example.com and upstream addresses with your values.
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+upstream tod_frontend {
+    server YOUR_TOD_HOST:3000;
+}
+
+upstream tod_api {
+    server YOUR_TOD_HOST:8001;
+}
+
+server {
+    listen 80;
+    server_name tod.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name tod.example.com;
+
+    ssl_certificate     /etc/ssl/certs/tod.example.com.pem;
+    ssl_certificate_key /etc/ssl/private/tod.example.com.key;
+
+    # ── Security headers ──────────────────────────────────────────────
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.tile.openstreetmap.org; font-src 'self'; connect-src 'self' ws: wss:; worker-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self';" always;
+
+    # ── API ───────────────────────────────────────────────────────────
+    location /api/ {
+        proxy_pass http://tod_api;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;
+        proxy_read_timeout 300s;
+        proxy_hide_header Content-Security-Policy;
+    }
+
+    # ── Xpra (Remote WinBox) ─────────────────────────────────────────
+    # Proxies Xpra HTML5 client to winbox-worker ports 10100-10119.
+    # WebSocket support is required. Do NOT enable gzip on this location
+    # — compressing WebSocket binary frames corrupts Xpra mouse/keyboard data.
+    location ~ ^/xpra/(\d+)/(.*) {
+        set $xpra_port $1;
+        set $xpra_path $2;
+
+        proxy_pass http://YOUR_TOD_HOST:$xpra_port/$xpra_path$is_args$args;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 300s;
+        proxy_buffering off;
+
+        # Xpra HTML5 client needs relaxed CSP (inline scripts + eval)
+        # Adding add_header in a location block replaces all server-level headers in nginx
+        add_header Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' ws: wss: data: blob:; frame-ancestors 'self';" always;
+        add_header X-Content-Type-Options "nosniff" always;
+    }
+
+    # ── Frontend (SPA) ────────────────────────────────────────────────
+    location / {
+        proxy_pass http://tod_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

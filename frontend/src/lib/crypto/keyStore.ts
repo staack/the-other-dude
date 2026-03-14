@@ -10,7 +10,7 @@
  * - localStorage and sessionStorage are NEVER used for any key material.
  */
 
-const DB_NAME = 'mikrotik-portal-keys';
+const DB_NAME = 'the-other-dude-keys';
 const DB_VERSION = 1;
 const STORE_NAME = 'secret-keys';
 

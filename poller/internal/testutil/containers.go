@@ -19,7 +19,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/redis"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/mikrotik-portal/poller/internal/store"
+	"github.com/staack/the-other-dude/poller/internal/store"
 )
 
 // devicesSchema is the minimal DDL needed for integration tests against the

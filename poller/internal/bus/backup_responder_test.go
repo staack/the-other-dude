@@ -10,7 +10,7 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 
-	"github.com/mikrotik-portal/poller/internal/store"
+	"github.com/staack/the-other-dude/poller/internal/store"
 )
 
 // mockDeviceStore implements a minimal device store for testing.

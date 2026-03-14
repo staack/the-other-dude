@@ -87,28 +87,28 @@ services:
     command:
       - -c
       - |
-        # Start OpenBao in background
-        bao server -dev -dev-listen-address=0.0.0.0:8200 &
+        bao server -config=/etc/openbao/config.hcl &
         BAO_PID=$$!
-        # Wait for ready and run init
         sleep 2
         /init/init.sh
-        # Wait for OpenBao process
         wait $$BAO_PID
     environment:
-      BAO_DEV_ROOT_TOKEN_ID: dev-openbao-token
-      BAO_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
+      BAO_ADDR: "http://127.0.0.1:8200"
+      BAO_UNSEAL_KEY: "${BAO_UNSEAL_KEY:-}"
+      BAO_TOKEN: "${OPENBAO_TOKEN:-}"
     ports:
       - "8200:8200"
     volumes:
+      - ./infrastructure/openbao/config.hcl:/etc/openbao/config.hcl:ro
       - ./infrastructure/openbao/init.sh:/init/init.sh:ro
-    cap_add:
-      - IPC_LOCK
+      - openbao_data:/openbao/data
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8200/v1/sys/health | grep -q '\"sealed\":false' || exit 1"]
       interval: 5s
       timeout: 3s
-      retries: 5
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
     deploy:
       resources:
         limits:
@@ -159,6 +159,33 @@ services:
         limits:
           memory: 64M
 
+  winbox-worker:
+    build:
+      context: ./winbox-worker
+    platform: linux/amd64
+    container_name: tod_winbox_worker
+    environment:
+      IDLE_TIMEOUT: 600
+      MAX_LIFETIME: 7200
+      MAX_CONCURRENT_SESSIONS: 10
+      LOG_LEVEL: info
+      XDG_RUNTIME_DIR: /run/user/1001
+    ports:
+      - "10100-10119:10100-10119"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    networks:
+      - tod
+      - tod_remote_worker
+
+volumes:
+  openbao_data:
+
 networks:
   tod:
     driver: bridge
+  tod_remote_worker:
+    driver: bridge
+    internal: true

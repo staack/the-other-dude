@@ -13,11 +13,11 @@ import (
 	"github.com/bsm/redislock"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/mikrotik-portal/poller/internal/bus"
-	"github.com/mikrotik-portal/poller/internal/device"
-	"github.com/mikrotik-portal/poller/internal/observability"
-	"github.com/mikrotik-portal/poller/internal/store"
-	"github.com/mikrotik-portal/poller/internal/vault"
+	"github.com/staack/the-other-dude/poller/internal/bus"
+	"github.com/staack/the-other-dude/poller/internal/device"
+	"github.com/staack/the-other-dude/poller/internal/observability"
+	"github.com/staack/the-other-dude/poller/internal/store"
+	"github.com/staack/the-other-dude/poller/internal/vault"
 )
 
 // backupDeviceState tracks per-device backup state.

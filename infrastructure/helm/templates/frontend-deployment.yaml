@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-frontend
+  name: {{ include "the-other-dude.fullname" . }}-frontend
   labels:
-    {{- include "mikrotik-portal.frontendLabels" . | nindent 4 }}
+    {{- include "the-other-dude.frontendLabels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.frontend.replicaCount }}
   selector:
     matchLabels:
-      {{- include "mikrotik-portal.frontendSelectorLabels" . | nindent 6 }}
+      {{- include "the-other-dude.frontendSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "mikrotik-portal.frontendSelectorLabels" . | nindent 8 }}
+        {{- include "the-other-dude.frontendSelectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: frontend
@@ -42,9 +42,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-frontend
+  name: {{ include "the-other-dude.fullname" . }}-frontend
   labels:
-    {{- include "mikrotik-portal.frontendLabels" . | nindent 4 }}
+    {{- include "the-other-dude.frontendLabels" . | nindent 4 }}
 spec:
   type: {{ .Values.frontend.service.type }}
   ports:
@@ -53,4 +53,4 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "mikrotik-portal.frontendSelectorLabels" . | nindent 4 }}
+    {{- include "the-other-dude.frontendSelectorLabels" . | nindent 4 }}

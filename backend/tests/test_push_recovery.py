@@ -16,7 +16,7 @@ async def test_recovery_commits_reachable_device_with_scheduler():
     push_op.device_id = uuid4()
     push_op.tenant_id = uuid4()
     push_op.status = "pending_verification"
-    push_op.scheduler_name = "mikrotik-portal-panic-revert"
+    push_op.scheduler_name = "the-other-dude-panic-revert"
     push_op.started_at = datetime.now(timezone.utc) - timedelta(minutes=10)
 
     device = MagicMock()
@@ -71,7 +71,7 @@ async def test_recovery_marks_unreachable_device_failed():
     push_op.device_id = uuid4()
     push_op.tenant_id = uuid4()
     push_op.status = "pending_verification"
-    push_op.scheduler_name = "mikrotik-portal-panic-revert"
+    push_op.scheduler_name = "the-other-dude-panic-revert"
     push_op.started_at = datetime.now(timezone.utc) - timedelta(minutes=10)
 
     device = MagicMock()

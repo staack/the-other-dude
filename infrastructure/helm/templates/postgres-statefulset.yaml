@@ -2,19 +2,19 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-postgres
+  name: {{ include "the-other-dude.fullname" . }}-postgres
   labels:
-    {{- include "mikrotik-portal.postgresLabels" . | nindent 4 }}
+    {{- include "the-other-dude.postgresLabels" . | nindent 4 }}
 spec:
-  serviceName: {{ include "mikrotik-portal.fullname" . }}-postgres
+  serviceName: {{ include "the-other-dude.fullname" . }}-postgres
   replicas: 1
   selector:
     matchLabels:
-      {{- include "mikrotik-portal.postgresSelectorLabels" . | nindent 6 }}
+      {{- include "the-other-dude.postgresSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "mikrotik-portal.postgresSelectorLabels" . | nindent 8 }}
+        {{- include "the-other-dude.postgresSelectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: postgres
@@ -32,14 +32,14 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mikrotik-portal.fullname" . }}-secrets
+                  name: {{ include "the-other-dude.fullname" . }}-secrets
                   key: DB_PASSWORD
             - name: APP_USER
               value: {{ .Values.postgres.auth.appUsername | quote }}
             - name: APP_USER_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mikrotik-portal.fullname" . }}-secrets
+                  name: {{ include "the-other-dude.fullname" . }}-secrets
                   key: DB_APP_PASSWORD
           volumeMounts:
             - name: postgres-data
@@ -74,7 +74,7 @@ spec:
       volumes:
         - name: init-scripts
           configMap:
-            name: {{ include "mikrotik-portal.fullname" . }}-postgres-init
+            name: {{ include "the-other-dude.fullname" . }}-postgres-init
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
@@ -90,9 +90,9 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-postgres
+  name: {{ include "the-other-dude.fullname" . }}-postgres
   labels:
-    {{- include "mikrotik-portal.postgresLabels" . | nindent 4 }}
+    {{- include "the-other-dude.postgresLabels" . | nindent 4 }}
 spec:
   type: ClusterIP
   clusterIP: None
@@ -102,14 +102,14 @@ spec:
       protocol: TCP
       name: postgres
   selector:
-    {{- include "mikrotik-portal.postgresSelectorLabels" . | nindent 4 }}
+    {{- include "the-other-dude.postgresSelectorLabels" . | nindent 4 }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-postgres-init
+  name: {{ include "the-other-dude.fullname" . }}-postgres-init
   labels:
-    {{- include "mikrotik-portal.postgresLabels" . | nindent 4 }}
+    {{- include "the-other-dude.postgresLabels" . | nindent 4 }}
 data:
   init.sql: |
     -- Create non-superuser app_user role for RLS enforcement

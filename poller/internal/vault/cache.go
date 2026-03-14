@@ -14,7 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/mikrotik-portal/poller/internal/device"
+	"github.com/staack/the-other-dude/poller/internal/device"
 )
 
 // CachedCreds holds decrypted device credentials.

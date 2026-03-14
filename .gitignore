@@ -38,3 +38,7 @@ Thumbs.db
 
 # Playwright MCP logs
 .playwright-mcp/
+
+# Local-only planning and design docs
+.planning/
+docs/superpowers/

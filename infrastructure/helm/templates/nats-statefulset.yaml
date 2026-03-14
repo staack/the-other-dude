@@ -4,9 +4,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-nats-headless
+  name: {{ include "the-other-dude.fullname" . }}-nats-headless
   labels:
-    {{- include "mikrotik-portal.labels" . | nindent 4 }}
+    {{- include "the-other-dude.labels" . | nindent 4 }}
     app.kubernetes.io/component: nats
 spec:
   clusterIP: None
@@ -15,16 +15,16 @@ spec:
       port: 4222
       targetPort: 4222
   selector:
-    {{- include "mikrotik-portal.selectorLabels" . | nindent 4 }}
+    {{- include "the-other-dude.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: nats
 ---
 # NATS ClusterIP service for client access
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-nats
+  name: {{ include "the-other-dude.fullname" . }}-nats
   labels:
-    {{- include "mikrotik-portal.labels" . | nindent 4 }}
+    {{- include "the-other-dude.labels" . | nindent 4 }}
     app.kubernetes.io/component: nats
 spec:
   type: ClusterIP
@@ -36,28 +36,28 @@ spec:
       port: 8222
       targetPort: 8222
   selector:
-    {{- include "mikrotik-portal.selectorLabels" . | nindent 4 }}
+    {{- include "the-other-dude.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: nats
 ---
 # NATS JetStream StatefulSet (needs stable storage)
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-nats
+  name: {{ include "the-other-dude.fullname" . }}-nats
   labels:
-    {{- include "mikrotik-portal.labels" . | nindent 4 }}
+    {{- include "the-other-dude.labels" . | nindent 4 }}
     app.kubernetes.io/component: nats
 spec:
   replicas: 1
-  serviceName: {{ include "mikrotik-portal.fullname" . }}-nats-headless
+  serviceName: {{ include "the-other-dude.fullname" . }}-nats-headless
   selector:
     matchLabels:
-      {{- include "mikrotik-portal.selectorLabels" . | nindent 6 }}
+      {{- include "the-other-dude.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: nats
   template:
     metadata:
       labels:
-        {{- include "mikrotik-portal.selectorLabels" . | nindent 8 }}
+        {{- include "the-other-dude.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: nats
     spec:
       containers:

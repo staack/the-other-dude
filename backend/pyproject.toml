@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "mikrotik-portal-backend"
+name = "the-other-dude-backend"
 version = "9.0.1"
 description = "MikroTik Fleet Management Portal - Backend API"
 requires-python = ">=3.12"

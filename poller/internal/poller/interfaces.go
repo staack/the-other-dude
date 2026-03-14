@@ -3,7 +3,7 @@ package poller
 import (
 	"context"
 
-	"github.com/mikrotik-portal/poller/internal/store"
+	"github.com/staack/the-other-dude/poller/internal/store"
 )
 
 // DeviceFetcher is the subset of store.DeviceStore that the Scheduler needs.

@@ -1,0 +1,71 @@
+# The Other Dude — Apache reverse proxy example
+#
+# Required modules:
+#   a2enmod proxy proxy_http proxy_wstunnel rewrite ssl headers
+#
+# This config assumes:
+#   - TOD frontend runs on FRONTEND_HOST:3000
+#   - TOD API runs on API_HOST:8001
+#   - WinBox worker Xpra ports are on WORKER_HOST:10100-10119
+#
+# Replace tod.example.com and upstream addresses with your values.
+
+<VirtualHost *:80>
+    ServerName tod.example.com
+    RewriteEngine On
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}$1 [R=301,L]
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName tod.example.com
+
+    SSLEngine on
+    SSLCertificateFile    /etc/ssl/certs/tod.example.com.pem
+    SSLCertificateKeyFile /etc/ssl/private/tod.example.com.key
+
+    # ── Security headers ──────────────────────────────────────────────
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # ── Xpra (Remote WinBox) ─────────────────────────────────────────
+    # Must appear BEFORE the general proxy rules.
+    # WebSocket upgrade is required. Do NOT enable mod_deflate on this path
+    # — compressing WebSocket binary frames corrupts Xpra mouse/keyboard data.
+    #
+    # ProxyPassMatch uses regex to capture the port and forward to the worker.
+    # Ports 10100-10119 (up to 20 concurrent sessions).
+    RewriteEngine On
+
+    # WebSocket upgrade for Xpra
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule ^/xpra/(\d+)/(.*)$ ws://YOUR_TOD_HOST:$1/$2 [P,L]
+
+    # Regular HTTP requests for Xpra HTML5 client assets
+    ProxyPassMatch "^/xpra/(\d+)/(.*)" "http://YOUR_TOD_HOST:$1/$2"
+
+    # Relaxed CSP for Xpra HTML5 client (inline scripts + eval)
+    <LocationMatch "^/xpra/">
+        Header always set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' ws: wss: data: blob:; frame-ancestors 'self';"
+        SetEnv no-gzip 1
+    </LocationMatch>
+
+    # ── API ───────────────────────────────────────────────────────────
+    ProxyPass        /api/ http://YOUR_TOD_HOST:8001/api/
+    ProxyPassReverse /api/ http://YOUR_TOD_HOST:8001/api/
+
+    ProxyTimeout 300
+    RequestHeader set X-Forwarded-Proto "https"
+
+    <Location /api/>
+        # Let the API set its own CSP
+        Header unset Content-Security-Policy
+    </Location>
+
+    # ── Frontend (SPA) ────────────────────────────────────────────────
+    ProxyPass        / http://YOUR_TOD_HOST:3000/
+    ProxyPassReverse / http://YOUR_TOD_HOST:3000/
+
+    ProxyPreserveHost On
+</VirtualHost>

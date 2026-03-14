@@ -1,4 +1,4 @@
-# Default values for mikrotik-portal.
+# Default values for the-other-dude.
 # These values should work with `helm install` out of the box for development.
 # Production deployments MUST override secrets.jwtSecretKey, secrets.credentialEncryptionKey,
 # and secrets.firstAdminPassword.
@@ -10,7 +10,7 @@ api:
   replicaCount: 1
 
   image:
-    repository: mikrotik-portal/api
+    repository: the-other-dude/api
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -54,7 +54,7 @@ frontend:
   replicaCount: 1
 
   image:
-    repository: mikrotik-portal/frontend
+    repository: the-other-dude/frontend
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -161,7 +161,7 @@ poller:
   replicaCount: 2
 
   image:
-    repository: mikrotik-portal/poller
+    repository: the-other-dude/poller
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -191,7 +191,7 @@ ingress:
 
   tls:
     enabled: false
-    # secretName: mikrotik-portal-tls
+    # secretName: the-other-dude-tls
 
 # -----------------------------------------------------------------------
 # Secrets
@@ -206,7 +206,7 @@ secrets:
   credentialEncryptionKey: ""
 
   # First admin account (created on first startup)
-  firstAdminEmail: "admin@mikrotik-portal.local"
+  firstAdminEmail: "admin@the-other-dude.local"
   firstAdminPassword: ""
 
   # PostgreSQL superuser password

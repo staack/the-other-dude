@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}-config
+  name: {{ include "the-other-dude.fullname" . }}-config
   labels:
-    {{- include "mikrotik-portal.labels" . | nindent 4 }}
+    {{- include "the-other-dude.labels" . | nindent 4 }}
 data:
-  DATABASE_URL: {{ include "mikrotik-portal.databaseUrl" . | quote }}
-  SYNC_DATABASE_URL: {{ include "mikrotik-portal.syncDatabaseUrl" . | quote }}
-  APP_USER_DATABASE_URL: {{ include "mikrotik-portal.appUserDatabaseUrl" . | quote }}
-  REDIS_URL: {{ include "mikrotik-portal.redisUrl" . | quote }}
-  NATS_URL: {{ printf "nats://%s-nats:%d" (include "mikrotik-portal.fullname" .) (int .Values.nats.service.port) | quote }}
+  DATABASE_URL: {{ include "the-other-dude.databaseUrl" . | quote }}
+  SYNC_DATABASE_URL: {{ include "the-other-dude.syncDatabaseUrl" . | quote }}
+  APP_USER_DATABASE_URL: {{ include "the-other-dude.appUserDatabaseUrl" . | quote }}
+  REDIS_URL: {{ include "the-other-dude.redisUrl" . | quote }}
+  NATS_URL: {{ printf "nats://%s-nats:%d" (include "the-other-dude.fullname" .) (int .Values.nats.service.port) | quote }}
   JWT_ALGORITHM: "HS256"
   JWT_ACCESS_TOKEN_EXPIRE_MINUTES: {{ .Values.api.env.jwtAccessTokenExpireMinutes | quote }}
   JWT_REFRESH_TOKEN_EXPIRE_DAYS: {{ .Values.api.env.jwtRefreshTokenExpireDays | quote }}

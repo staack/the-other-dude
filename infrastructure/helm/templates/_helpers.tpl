@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "mikrotik-portal.name" -}}
+{{- define "the-other-dude.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "mikrotik-portal.fullname" -}}
+{{- define "the-other-dude.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "mikrotik-portal.chart" -}}
+{{- define "the-other-dude.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels applied to all resources.
 */}}
-{{- define "mikrotik-portal.labels" -}}
-helm.sh/chart: {{ include "mikrotik-portal.chart" . }}
-{{ include "mikrotik-portal.selectorLabels" . }}
+{{- define "the-other-dude.labels" -}}
+helm.sh/chart: {{ include "the-other-dude.chart" . }}
+{{ include "the-other-dude.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,81 +45,81 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels — used in Deployments/Services to match pods.
 */}}
-{{- define "mikrotik-portal.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "mikrotik-portal.name" . }}
+{{- define "the-other-dude.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "the-other-dude.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 API component labels
 */}}
-{{- define "mikrotik-portal.apiLabels" -}}
-{{ include "mikrotik-portal.labels" . }}
+{{- define "the-other-dude.apiLabels" -}}
+{{ include "the-other-dude.labels" . }}
 app.kubernetes.io/component: api
 {{- end }}
 
 {{/*
 API selector labels
 */}}
-{{- define "mikrotik-portal.apiSelectorLabels" -}}
-{{ include "mikrotik-portal.selectorLabels" . }}
+{{- define "the-other-dude.apiSelectorLabels" -}}
+{{ include "the-other-dude.selectorLabels" . }}
 app.kubernetes.io/component: api
 {{- end }}
 
 {{/*
 Frontend component labels
 */}}
-{{- define "mikrotik-portal.frontendLabels" -}}
-{{ include "mikrotik-portal.labels" . }}
+{{- define "the-other-dude.frontendLabels" -}}
+{{ include "the-other-dude.labels" . }}
 app.kubernetes.io/component: frontend
 {{- end }}
 
 {{/*
 Frontend selector labels
 */}}
-{{- define "mikrotik-portal.frontendSelectorLabels" -}}
-{{ include "mikrotik-portal.selectorLabels" . }}
+{{- define "the-other-dude.frontendSelectorLabels" -}}
+{{ include "the-other-dude.selectorLabels" . }}
 app.kubernetes.io/component: frontend
 {{- end }}
 
 {{/*
 PostgreSQL component labels
 */}}
-{{- define "mikrotik-portal.postgresLabels" -}}
-{{ include "mikrotik-portal.labels" . }}
+{{- define "the-other-dude.postgresLabels" -}}
+{{ include "the-other-dude.labels" . }}
 app.kubernetes.io/component: postgres
 {{- end }}
 
 {{/*
 PostgreSQL selector labels
 */}}
-{{- define "mikrotik-portal.postgresSelectorLabels" -}}
-{{ include "mikrotik-portal.selectorLabels" . }}
+{{- define "the-other-dude.postgresSelectorLabels" -}}
+{{ include "the-other-dude.selectorLabels" . }}
 app.kubernetes.io/component: postgres
 {{- end }}
 
 {{/*
 Redis component labels
 */}}
-{{- define "mikrotik-portal.redisLabels" -}}
-{{ include "mikrotik-portal.labels" . }}
+{{- define "the-other-dude.redisLabels" -}}
+{{ include "the-other-dude.labels" . }}
 app.kubernetes.io/component: redis
 {{- end }}
 
 {{/*
 Redis selector labels
 */}}
-{{- define "mikrotik-portal.redisSelectorLabels" -}}
-{{ include "mikrotik-portal.selectorLabels" . }}
+{{- define "the-other-dude.redisSelectorLabels" -}}
+{{ include "the-other-dude.selectorLabels" . }}
 app.kubernetes.io/component: redis
 {{- end }}
 
 {{/*
 Create the name of the service account to use.
 */}}
-{{- define "mikrotik-portal.serviceAccountName" -}}
+{{- define "the-other-dude.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "mikrotik-portal.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "the-other-dude.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -129,9 +129,9 @@ Create the name of the service account to use.
 Database URL for the API service (constructed from service names).
 Uses external URL if postgres.enabled=false.
 */}}
-{{- define "mikrotik-portal.databaseUrl" -}}
+{{- define "the-other-dude.databaseUrl" -}}
 {{- if .Values.postgres.enabled }}
-{{- printf "postgresql+asyncpg://%s:%s@%s-postgres:%d/%s" .Values.postgres.auth.username .Values.secrets.dbPassword (include "mikrotik-portal.fullname" .) (int .Values.postgres.service.port) .Values.postgres.auth.database }}
+{{- printf "postgresql+asyncpg://%s:%s@%s-postgres:%d/%s" .Values.postgres.auth.username .Values.secrets.dbPassword (include "the-other-dude.fullname" .) (int .Values.postgres.service.port) .Values.postgres.auth.database }}
 {{- else }}
 {{- .Values.postgres.externalUrl }}
 {{- end }}
@@ -140,9 +140,9 @@ Uses external URL if postgres.enabled=false.
 {{/*
 App user database URL (RLS enforced).
 */}}
-{{- define "mikrotik-portal.appUserDatabaseUrl" -}}
+{{- define "the-other-dude.appUserDatabaseUrl" -}}
 {{- if .Values.postgres.enabled }}
-{{- printf "postgresql+asyncpg://%s:%s@%s-postgres:%d/%s" .Values.postgres.auth.appUsername .Values.secrets.dbAppPassword (include "mikrotik-portal.fullname" .) (int .Values.postgres.service.port) .Values.postgres.auth.database }}
+{{- printf "postgresql+asyncpg://%s:%s@%s-postgres:%d/%s" .Values.postgres.auth.appUsername .Values.secrets.dbAppPassword (include "the-other-dude.fullname" .) (int .Values.postgres.service.port) .Values.postgres.auth.database }}
 {{- else }}
 {{- .Values.postgres.externalUrl }}
 {{- end }}
@@ -151,9 +151,9 @@ App user database URL (RLS enforced).
 {{/*
 Sync database URL for Alembic migrations.
 */}}
-{{- define "mikrotik-portal.syncDatabaseUrl" -}}
+{{- define "the-other-dude.syncDatabaseUrl" -}}
 {{- if .Values.postgres.enabled }}
-{{- printf "postgresql+psycopg2://%s:%s@%s-postgres:%d/%s" .Values.postgres.auth.username .Values.secrets.dbPassword (include "mikrotik-portal.fullname" .) (int .Values.postgres.service.port) .Values.postgres.auth.database }}
+{{- printf "postgresql+psycopg2://%s:%s@%s-postgres:%d/%s" .Values.postgres.auth.username .Values.secrets.dbPassword (include "the-other-dude.fullname" .) (int .Values.postgres.service.port) .Values.postgres.auth.database }}
 {{- else }}
 {{- .Values.postgres.externalUrl | replace "asyncpg" "psycopg2" }}
 {{- end }}
@@ -162,9 +162,9 @@ Sync database URL for Alembic migrations.
 {{/*
 Redis URL (constructed from service name).
 */}}
-{{- define "mikrotik-portal.redisUrl" -}}
+{{- define "the-other-dude.redisUrl" -}}
 {{- if .Values.redis.enabled }}
-{{- printf "redis://%s-redis:%d/0" (include "mikrotik-portal.fullname" .) (int .Values.redis.service.port) }}
+{{- printf "redis://%s-redis:%d/0" (include "the-other-dude.fullname" .) (int .Values.redis.service.port) }}
 {{- else }}
 {{- .Values.redis.externalUrl | default "redis://localhost:6379/0" }}
 {{- end }}

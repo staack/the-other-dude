@@ -28,6 +28,11 @@ export async function updateSMTPSettings(data: {
   await api.put('/api/settings/smtp', data)
 }
 
+export async function clearWinboxSessions(): Promise<{ status: string; deleted: number }> {
+  const res = await api.delete('/api/settings/winbox-sessions')
+  return res.data
+}
+
 export async function testSMTPSettings(data: {
   to: string
   smtp_host?: string

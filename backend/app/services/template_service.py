@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 _env = SandboxedEnvironment()
 
 # Names used on the RouterOS device during template push
-_PANIC_REVERT_SCHEDULER = "mikrotik-portal-template-revert"
+_PANIC_REVERT_SCHEDULER = "the-other-dude-template-revert"
 _PRE_PUSH_BACKUP = "portal-template-pre-push"
 _TEMPLATE_RSC = "portal-template.rsc"
 

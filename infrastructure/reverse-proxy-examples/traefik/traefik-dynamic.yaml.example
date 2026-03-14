@@ -1,0 +1,93 @@
+# The Other Dude — Traefik dynamic configuration example
+#
+# This config assumes:
+#   - TOD frontend runs on FRONTEND_HOST:3000
+#   - TOD API runs on API_HOST:8001
+#   - WinBox worker Xpra ports are on WORKER_HOST:10100-10119
+#   - Traefik entrypoints: web (80) and websecure (443)
+#
+# Replace tod.example.com and upstream addresses with your values.
+#
+# For Docker-based Traefik, labels can replace this file.
+# This example uses file provider for clarity.
+
+http:
+  routers:
+    # ── Xpra (Remote WinBox) ────────────────────────────────────────
+    # Must be higher priority than the frontend catch-all.
+    # Each Xpra port needs its own service since Traefik doesn't
+    # support dynamic port extraction from path regex.
+    # Shown for port 10100; duplicate for 10101-10119 as needed.
+    tod-xpra-10100:
+      rule: "Host(`tod.example.com`) && PathPrefix(`/xpra/10100/`)"
+      entryPoints: [websecure]
+      service: tod-xpra-10100
+      middlewares: [xpra-strip, xpra-headers]
+      tls:
+        certResolver: letsencrypt
+      priority: 30
+
+    # ── API ─────────────────────────────────────────────────────────
+    tod-api:
+      rule: "Host(`tod.example.com`) && PathPrefix(`/api/`)"
+      entryPoints: [websecure]
+      service: tod-api
+      middlewares: [security-headers]
+      tls:
+        certResolver: letsencrypt
+      priority: 20
+
+    # ── Frontend (SPA) ──────────────────────────────────────────────
+    tod-frontend:
+      rule: "Host(`tod.example.com`)"
+      entryPoints: [websecure]
+      service: tod-frontend
+      middlewares: [security-headers]
+      tls:
+        certResolver: letsencrypt
+      priority: 10
+
+  services:
+    tod-xpra-10100:
+      loadBalancer:
+        servers:
+          - url: "http://YOUR_TOD_HOST:10100"
+    # Add tod-xpra-10101 through tod-xpra-10119 as needed
+
+    tod-api:
+      loadBalancer:
+        servers:
+          - url: "http://YOUR_TOD_HOST:8001"
+
+    tod-frontend:
+      loadBalancer:
+        servers:
+          - url: "http://YOUR_TOD_HOST:3000"
+
+  middlewares:
+    xpra-strip:
+      # Strip /xpra/{port} prefix before forwarding
+      stripPrefixRegex:
+        regex: ["^/xpra/[0-9]+"]
+
+    xpra-headers:
+      headers:
+        # Relaxed CSP for Xpra HTML5 client (inline scripts + eval)
+        customResponseHeaders:
+          Content-Security-Policy: "default-src 'self' 'unsafe-inline' 'unsafe-eval' ws: wss: data: blob:; frame-ancestors 'self';"
+          X-Content-Type-Options: "nosniff"
+        # IMPORTANT: Disable compression for Xpra — compressing WebSocket
+        # binary frames corrupts mouse/keyboard coordinate data.
+
+    security-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customResponseHeaders:
+          X-Frame-Options: "SAMEORIGIN"
+
+# IMPORTANT: Disable Traefik's built-in compression for Xpra routes.
+# If using --entrypoints.websecure.http.middlewares=compress@...,
+# exclude the xpra router or WebSocket binary frames will be corrupted.

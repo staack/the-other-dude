@@ -2,9 +2,9 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "mikrotik-portal.fullname" . }}
+  name: {{ include "the-other-dude.fullname" . }}
   labels:
-    {{- include "mikrotik-portal.labels" . | nindent 4 }}
+    {{- include "the-other-dude.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -16,11 +16,11 @@ spec:
   {{- if .Values.ingress.tls.enabled }}
   tls:
     - hosts:
-        - {{ .Values.ingress.host | default "mikrotik-portal.local" | quote }}
-      secretName: {{ .Values.ingress.tls.secretName | default (printf "%s-tls" (include "mikrotik-portal.fullname" .)) | quote }}
+        - {{ .Values.ingress.host | default "the-other-dude.local" | quote }}
+      secretName: {{ .Values.ingress.tls.secretName | default (printf "%s-tls" (include "the-other-dude.fullname" .)) | quote }}
   {{- end }}
   rules:
-    - host: {{ .Values.ingress.host | default "mikrotik-portal.local" | quote }}
+    - host: {{ .Values.ingress.host | default "the-other-dude.local" | quote }}
       http:
         paths:
           # API routes — send /api/* to the FastAPI service
@@ -28,7 +28,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "mikrotik-portal.fullname" . }}-api
+                name: {{ include "the-other-dude.fullname" . }}-api
                 port:
                   number: {{ .Values.api.service.port }}
           # Docs routes — proxy /docs and /redoc to API as well
@@ -36,14 +36,14 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "mikrotik-portal.fullname" . }}-api
+                name: {{ include "the-other-dude.fullname" . }}-api
                 port:
                   number: {{ .Values.api.service.port }}
           - path: /redoc
             pathType: Prefix
             backend:
               service:
-                name: {{ include "mikrotik-portal.fullname" . }}-api
+                name: {{ include "the-other-dude.fullname" . }}-api
                 port:
                   number: {{ .Values.api.service.port }}
           # Frontend SPA — all other routes go to nginx
@@ -51,7 +51,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "mikrotik-portal.fullname" . }}-frontend
+                name: {{ include "the-other-dude.fullname" . }}-frontend
                 port:
                   number: {{ .Values.frontend.service.port }}
 {{- end }}

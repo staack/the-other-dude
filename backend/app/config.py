@@ -22,7 +22,7 @@ KNOWN_INSECURE_DEFAULTS: dict[str, list[str]] = {
     ],
     "OPENBAO_TOKEN": [
         "dev-openbao-token",
-        "CHANGE_ME_IN_PRODUCTION",
+        "",
     ],
 }
 
@@ -43,7 +43,8 @@ def validate_production_settings(settings: "Settings") -> None:
                 f"FATAL: {field} uses a known insecure default in '{settings.ENVIRONMENT}' environment.\n"
                 f"Generate a secure value and set it in your .env.prod file.\n"
                 f"For JWT_SECRET_KEY: python -c \"import secrets; print(secrets.token_urlsafe(64))\"\n"
-                f"For CREDENTIAL_ENCRYPTION_KEY: python -c \"import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())\"",
+                f"For CREDENTIAL_ENCRYPTION_KEY: python -c \"import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())\"\n"
+                f"For OPENBAO_TOKEN: use the token from your OpenBao server (not the dev token)",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -92,7 +93,7 @@ class Settings(BaseSettings):
 
     # OpenBao Transit (KMS for per-tenant credential encryption)
     OPENBAO_ADDR: str = "http://localhost:8200"
-    OPENBAO_TOKEN: str = "dev-openbao-token"
+    OPENBAO_TOKEN: str = ""
 
     # First admin bootstrap
     FIRST_ADMIN_EMAIL: Optional[str] = None
@@ -119,7 +120,7 @@ class Settings(BaseSettings):
     SMTP_USER: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
     SMTP_USE_TLS: bool = False
-    SMTP_FROM_ADDRESS: str = "noreply@mikrotik-portal.local"
+    SMTP_FROM_ADDRESS: str = "noreply@the-other-dude.local"
 
     # Password reset
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30

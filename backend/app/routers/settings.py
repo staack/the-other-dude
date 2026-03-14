@@ -7,6 +7,7 @@ Transit encryption for passwords. Falls back to .env values.
 import logging
 from typing import Optional
 
+import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -153,3 +154,20 @@ async def test_smtp(
         return await send_test_email(data.to, config)
 
     return conn_result
+
+
+@router.delete("/winbox-sessions")
+async def clear_winbox_sessions(user=Depends(require_role("super_admin"))):
+    """Clear all WinBox remote session and rate-limit keys from Redis."""
+    rd = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+    try:
+        deleted = 0
+        for pattern in ["winbox-remote:*", "winbox-remote-rate:*"]:
+            keys = []
+            async for key in rd.scan_iter(match=pattern):
+                keys.append(key)
+            if keys:
+                deleted += await rd.delete(*keys)
+        return {"status": "ok", "deleted": deleted}
+    finally:
+        await rd.aclose()
