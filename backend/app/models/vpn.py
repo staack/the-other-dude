@@ -30,9 +30,10 @@ class VpnConfig(Base):
     )
     server_private_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     server_public_key: Mapped[str] = mapped_column(String(64), nullable=False)
-    subnet: Mapped[str] = mapped_column(String(32), nullable=False, server_default="10.10.0.0/24")
+    subnet_index: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    subnet: Mapped[str] = mapped_column(String(32), nullable=False)
     server_port: Mapped[int] = mapped_column(Integer, nullable=False, server_default="51820")
-    server_address: Mapped[str] = mapped_column(String(32), nullable=False, server_default="10.10.0.1/24")
+    server_address: Mapped[str] = mapped_column(String(32), nullable=False)
     endpoint: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     is_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(
