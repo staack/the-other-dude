@@ -227,7 +227,17 @@ async def delete_tenant(
             detail="Tenant not found",
         )
 
+    # Check if tenant had VPN configured (before cascade deletes it)
+    from app.services.vpn_service import get_vpn_config, sync_wireguard_config
+    had_vpn = await get_vpn_config(db, tenant_id)
+
     await db.delete(tenant)
+    await db.flush()
+
+    # Regenerate wg0.conf without deleted tenant's peers
+    if had_vpn:
+        await sync_wireguard_config(db)
+
     await db.commit()
 
 
