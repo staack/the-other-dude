@@ -910,8 +910,93 @@ GRANT USAGE ON SCHEMA public TO poller_user;
 """
 
     INIT_SQL_PROD.write_text(content)
-    INIT_SQL_PROD.chmod(0o600)
+    INIT_SQL_PROD.chmod(0o644)  # postgres container needs to read this
     ok(f"Wrote {INIT_SQL_PROD.name}")
+
+
+# ── Data directory setup ─────────────────────────────────────────────────────
+
+# UID 1001 = appuser inside the API container
+APPUSER_UID = 1001
+
+# Directories the API container writes to (as appuser)
+API_WRITABLE_DIRS = [
+    "docker-data/git-store",
+    "docker-data/firmware-cache",
+]
+
+# Directories that need broad write access (shared between containers)
+SHARED_WRITABLE_DIRS = [
+    "docker-data/wireguard/wg_confs",
+]
+
+# Directories that just need to exist (owned by their respective containers)
+DATA_DIRS = [
+    "docker-data/postgres",
+    "docker-data/redis",
+    "docker-data/nats",
+    "docker-data/wireguard",
+    "docker-data/wireguard/custom-cont-init.d",
+]
+
+
+def prepare_data_dirs() -> None:
+    """Create data directories with correct ownership and permissions."""
+    section("Preparing Data Directories")
+
+    # Create all directories
+    for d in DATA_DIRS + API_WRITABLE_DIRS + SHARED_WRITABLE_DIRS:
+        path = PROJECT_ROOT / d
+        path.mkdir(parents=True, exist_ok=True)
+
+    # Set ownership for API-writable dirs (appuser uid 1001)
+    for d in API_WRITABLE_DIRS:
+        path = PROJECT_ROOT / d
+        try:
+            os.chown(path, APPUSER_UID, APPUSER_UID)
+            ok(f"{d} (owned by appuser)")
+        except PermissionError:
+            # Try with sudo
+            try:
+                subprocess.run(
+                    ["sudo", "chown", "-R", f"{APPUSER_UID}:{APPUSER_UID}", str(path)],
+                    check=True, timeout=10,
+                )
+                ok(f"{d} (owned by appuser via sudo)")
+            except Exception:
+                warn(f"{d} — could not set ownership, backups/firmware may fail")
+
+    # Set permissions for shared dirs (API + WireGuard container both write)
+    for d in SHARED_WRITABLE_DIRS:
+        path = PROJECT_ROOT / d
+        try:
+            path.chmod(0o777)
+            ok(f"{d} (world-writable for container sharing)")
+        except PermissionError:
+            try:
+                subprocess.run(
+                    ["sudo", "chmod", "-R", "777", str(path)],
+                    check=True, timeout=10,
+                )
+                ok(f"{d} (world-writable via sudo)")
+            except Exception:
+                warn(f"{d} — could not set permissions, VPN config sync may fail")
+
+    # Create WireGuard forwarding init script
+    fwd_script = PROJECT_ROOT / "docker-data/wireguard/custom-cont-init.d/10-forwarding.sh"
+    if not fwd_script.exists():
+        fwd_script.write_text("""\
+#!/bin/sh
+# Enable forwarding between Docker network and WireGuard tunnel
+iptables -A FORWARD -i eth0 -o wg0 -j ACCEPT 2>/dev/null
+iptables -A FORWARD -i wg0 -o eth0 -j ACCEPT 2>/dev/null
+iptables -t nat -A POSTROUTING -o wg0 -j MASQUERADE 2>/dev/null
+echo "WireGuard forwarding rules applied"
+""")
+        fwd_script.chmod(0o755)
+        ok("WireGuard forwarding init script created")
+
+    ok("Data directories ready")
 
 
 # ── Docker operations ────────────────────────────────────────────────────────
@@ -1154,11 +1239,12 @@ def main() -> int:
         info("Setup cancelled.")
         return 1
 
-    # Phase 3: Write files
+    # Phase 3: Write files and prepare directories
     section("Writing Configuration")
     write_env_prod(config)
     write_init_sql_prod(config)
     env_written = True
+    prepare_data_dirs()
 
     # Phase 4: OpenBao
     bao_ok = bootstrap_openbao(config)
