@@ -223,6 +223,7 @@ async def test_app(admin_engine, app_engine):
     from app.routers.templates import router as templates_router
     from app.routers.tenants import router as tenants_router
     from app.routers.users import router as users_router
+    from app.routers.vpn import router as vpn_router
 
     app.include_router(auth_router, prefix="/api")
     app.include_router(tenants_router, prefix="/api")
@@ -236,6 +237,7 @@ async def test_app(admin_engine, app_engine):
     app.include_router(alerts_router, prefix="/api")
     app.include_router(config_editor_router, prefix="/api")
     app.include_router(templates_router, prefix="/api")
+    app.include_router(vpn_router, prefix="/api")
 
     # Register rate limiter (auth endpoints use @limiter.limit)
     from app.middleware.rate_limit import setup_rate_limiting
