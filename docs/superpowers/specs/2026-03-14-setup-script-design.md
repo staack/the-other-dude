@@ -181,7 +181,7 @@ CONFIG_BACKUP_MAX_CONCURRENT=10
 ### Phase 4: OpenBao Bootstrap
 
 1. Start postgres and openbao containers only: `docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d postgres openbao`
-2. Wait for openbao container to be healthy (timeout 30s)
+2. Wait for openbao container to be healthy (timeout 60s)
 3. Run `docker compose logs openbao 2>&1` and parse the `OPENBAO_TOKEN=` and `BAO_UNSEAL_KEY=` lines using regex (init.sh prints these to stdout during container startup, which is captured in Docker logs)
 4. Update `.env.prod` by replacing the `PLACEHOLDER_RUN_SETUP` values with the captured credentials
 5. On failure: `.env.prod` retains placeholders, print instructions for manual capture via `docker compose logs openbao`
