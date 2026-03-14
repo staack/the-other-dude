@@ -41,11 +41,11 @@ from sqlalchemy.ext.asyncio import (
 
 TEST_DATABASE_URL = os.environ.get(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/mikrotik_test",
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/tod_test",
 )
 TEST_APP_USER_DATABASE_URL = os.environ.get(
     "TEST_APP_USER_DATABASE_URL",
-    "postgresql+asyncpg://app_user:app_password@localhost:5432/mikrotik_test",
+    "postgresql+asyncpg://app_user:app_password@localhost:5432/tod_test",
 )
 
 

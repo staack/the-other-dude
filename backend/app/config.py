@@ -62,12 +62,12 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "dev"
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/mikrotik"
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/tod"
     # Sync URL used by Alembic only
-    SYNC_DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/mikrotik"
+    SYNC_DATABASE_URL: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/tod"
 
     # App user for RLS enforcement (cannot bypass RLS)
-    APP_USER_DATABASE_URL: str = "postgresql+asyncpg://app_user:app_password@localhost:5432/mikrotik"
+    APP_USER_DATABASE_URL: str = "postgresql+asyncpg://app_user:app_password@localhost:5432/tod"
 
     # Database connection pool
     DB_POOL_SIZE: int = 20

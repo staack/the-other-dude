@@ -56,7 +56,7 @@ def upgrade() -> None:
         $$
     """))
 
-    conn.execute(sa.text("GRANT CONNECT ON DATABASE mikrotik TO poller_user"))
+    conn.execute(sa.text("GRANT CONNECT ON DATABASE tod TO poller_user"))
     conn.execute(sa.text("GRANT USAGE ON SCHEMA public TO poller_user"))
 
     # SELECT on devices only — poller needs to read encrypted_credentials
@@ -79,7 +79,7 @@ def downgrade() -> None:
         pass
 
     try:
-        conn.execute(sa.text("REVOKE CONNECT ON DATABASE mikrotik FROM poller_user"))
+        conn.execute(sa.text("REVOKE CONNECT ON DATABASE tod FROM poller_user"))
     except Exception:
         pass
 
