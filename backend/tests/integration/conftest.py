@@ -165,6 +165,13 @@ async def admin_session(admin_engine) -> AsyncGenerator[AsyncSession, None]:
     Cleanup deletes all rows from test tables after the test.
     """
     session = AsyncSession(admin_engine, expire_on_commit=False)
+    # Clean up any leftover data from previous tests/runs BEFORE yielding
+    for table in _CLEANUP_TABLES:
+        try:
+            await session.execute(text(f"DELETE FROM {table}"))
+        except Exception:
+            pass
+    await session.commit()
     try:
         yield session
     finally:
