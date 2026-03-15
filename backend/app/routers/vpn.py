@@ -92,6 +92,29 @@ async def setup_vpn(
     return VpnConfigResponse.model_validate(config)
 
 
+@router.delete("/tenants/{tenant_id}/vpn", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("5/minute")
+async def delete_vpn_config(
+    request: Request,
+    tenant_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete VPN configuration and all peers for this tenant."""
+    await _check_tenant_access(current_user, tenant_id, db)
+    _require_operator(current_user)
+    config = await vpn_service.get_vpn_config(db, tenant_id)
+    if not config:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="VPN not configured")
+    # Delete all peers first
+    peers = await vpn_service.get_peers(db, tenant_id)
+    for peer in peers:
+        await db.delete(peer)
+    await db.delete(config)
+    await db.flush()
+    await vpn_service._commit_and_sync(db)
+
+
 @router.patch("/tenants/{tenant_id}/vpn", response_model=VpnConfigResponse)
 @limiter.limit("20/minute")
 async def update_vpn_config(

@@ -1136,6 +1136,9 @@ export const vpnApi = {
   updateConfig: (tenantId: string, data: { endpoint?: string; is_enabled?: boolean }) =>
     api.patch<VpnConfigResponse>(`/api/tenants/${tenantId}/vpn`, data).then((r) => r.data),
 
+  deleteConfig: (tenantId: string) =>
+    api.delete(`/api/tenants/${tenantId}/vpn`),
+
   listPeers: (tenantId: string) =>
     api.get<VpnPeerResponse[]>(`/api/tenants/${tenantId}/vpn/peers`).then((r) => r.data),
 

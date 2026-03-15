@@ -96,7 +96,7 @@ async def _get_or_create_global_server_key(db: AsyncSession) -> tuple[str, str]:
     )
     await db.flush()
 
-    logger.info("vpn_global_server_keypair_generated", event="vpn_audit")
+    logger.info("vpn_global_server_keypair_generated", audit=True)
     return private_key_b64, public_key_b64
 
 
@@ -114,11 +114,15 @@ def _allocate_subnet_index_from_used(used: set[int]) -> int:
 async def _allocate_subnet_index(db: AsyncSession) -> int:
     """Allocate next available subnet_index from the database.
 
-    Uses gap-filling: finds the lowest integer in [1,255] not already used.
+    Uses an admin session to see ALL tenants' subnet indices (bypasses RLS).
     The UNIQUE constraint on subnet_index protects against races.
     """
-    result = await db.execute(select(VpnConfig.subnet_index))
-    used = {row[0] for row in result.all()}
+    from app.database import AdminAsyncSessionLocal
+    from sqlalchemy import text as sa_text
+
+    async with AdminAsyncSessionLocal() as admin_db:
+        result = await admin_db.execute(sa_text("SELECT subnet_index FROM vpn_config"))
+        used = {row[0] for row in result.fetchall()}
     return _allocate_subnet_index_from_used(used)
 
 
@@ -158,7 +162,8 @@ async def _commit_and_sync(db: AsyncSession) -> None:
     first for their changes to be visible. This helper combines both steps
     and provides a single patch point for tests.
     """
-    await _commit_and_sync(db)
+    await db.commit()
+    await sync_wireguard_config()
 
 
 async def sync_wireguard_config() -> None:
@@ -244,11 +249,33 @@ async def sync_wireguard_config() -> None:
             tmp_path.write_text("\n".join(lines))
             os.rename(str(tmp_path), str(conf_path))
 
+            # Write per-tenant SNAT rules for poller→device routing
+            # Docker traffic (172.16.0.0/12) going to each tenant's subnet
+            # gets SNATted to that tenant's gateway IP (.1) so the router
+            # can route replies back through the tunnel.
+            nat_lines = ["#!/bin/sh",
+                         "# Auto-generated per-tenant SNAT rules",
+                         "# Remove old rules",
+                         "iptables -t nat -F POSTROUTING 2>/dev/null",
+                         "# Re-add Docker DNS rules",
+                         ]
+            for config in configs:
+                gateway_ip = config.server_address.split("/")[0]  # e.g. 10.10.3.1
+                subnet = config.subnet  # e.g. 10.10.3.0/24
+                nat_lines.append(
+                    f"iptables -t nat -A POSTROUTING -s 172.16.0.0/12 -d {subnet} -o wg0 -j SNAT --to-source {gateway_ip}"
+                )
+            nat_path = wg_confs_dir / "nat_rules.sh"
+            nat_tmp = wg_confs_dir / "nat_rules.sh.tmp"
+            nat_tmp.write_text("\n".join(nat_lines) + "\n")
+            os.rename(str(nat_tmp), str(nat_path))
+            os.chmod(str(nat_path), 0o755)
+
             # Signal WireGuard container to reload
             reload_flag = wg_confs_dir / ".reload"
             reload_flag.write_text("1")
 
-            logger.info("wireguard_config_synced", event="vpn_audit",
+            logger.info("wireguard_config_synced", audit=True,
                         tenants=len(configs), peers=total_peers)
 
         finally:
@@ -304,6 +331,18 @@ async def setup_vpn(
     if existing:
         raise ValueError("VPN already configured for this tenant")
 
+    # Auto-set endpoint from CORS_ORIGINS if not provided
+    if not endpoint:
+        origins = getattr(settings, "CORS_ORIGINS", "")
+        if isinstance(origins, list):
+            host = origins[0] if origins else ""
+        else:
+            host = str(origins).split(",")[0].strip()
+        # Extract hostname from URL, append WireGuard port
+        if host:
+            host = host.replace("https://", "").replace("http://", "").split("/")[0]
+            endpoint = f"{host}:51820"
+
     # Get or create global server keypair
     _, public_key_b64 = await _get_or_create_global_server_key(db)
 
@@ -332,7 +371,7 @@ async def setup_vpn(
     db.add(config)
     await db.flush()
 
-    logger.info("vpn_subnet_allocated", event="vpn_audit",
+    logger.info("vpn_subnet_allocated", audit=True,
                 tenant_id=str(tenant_id), subnet_index=subnet_index, subnet=subnet)
 
     await _commit_and_sync(db)
@@ -464,7 +503,7 @@ async def get_peer_config(db: AsyncSession, tenant_id: uuid.UUID, peer_id: uuid.
         f'/interface wireguard add name=wg-portal listen-port=13231 private-key="{private_key}"',
         f'/interface wireguard peers add interface=wg-portal public-key="{config.server_public_key}" '
         f'endpoint-address={endpoint.split(":")[0]} endpoint-port={endpoint.split(":")[-1]} '
-        f'allowed-address={config.subnet} persistent-keepalive=25'
+        f'allowed-address=10.10.0.0/16 persistent-keepalive=25'
         + (f' preshared-key="{psk}"' if psk else ""),
         f"/ip address add address={peer.assigned_ip} interface=wg-portal",
     ]
@@ -545,7 +584,7 @@ async def onboard_device(
         f'/interface wireguard add name=wg-portal listen-port=13231 private-key="{private_key_b64}"',
         f'/interface wireguard peers add interface=wg-portal public-key="{config.server_public_key}" '
         f'endpoint-address={endpoint.split(":")[0]} endpoint-port={endpoint.split(":")[-1]} '
-        f'allowed-address={config.subnet} persistent-keepalive=25'
+        f'allowed-address=10.10.0.0/16 persistent-keepalive=25'
         f' preshared-key="{psk_decrypted}"',
         f"/ip address add address={assigned_ip} interface=wg-portal",
     ]

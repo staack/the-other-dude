@@ -195,3 +195,18 @@ async def stop_backup_scheduler() -> None:
         _scheduler.shutdown(wait=False)
         _scheduler = None
         logger.info("Backup scheduler stopped")
+
+
+class _SchedulerProxy:
+    """Proxy to access the module-level scheduler from other modules.
+
+    Usage: `from app.services.backup_scheduler import backup_scheduler`
+    then `backup_scheduler.add_job(...)`.
+    """
+    def __getattr__(self, name):
+        if _scheduler is None:
+            raise RuntimeError("Backup scheduler not started yet")
+        return getattr(_scheduler, name)
+
+
+backup_scheduler = _SchedulerProxy()

@@ -134,6 +134,16 @@ export function VpnPage() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: () => vpnApi.deleteConfig(tenantId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vpn-config'] })
+      queryClient.invalidateQueries({ queryKey: ['vpn-peers'] })
+      toast({ title: 'VPN configuration deleted' })
+    },
+    onError: (e: any) => toast({ title: e?.response?.data?.detail || 'Failed to delete VPN', variant: 'destructive' }),
+  })
+
   // ── Helpers ──
 
   const connectedPeerIds = new Set(peers.map((p) => p.device_id))
@@ -195,22 +205,6 @@ export function VpnPage() {
               </p>
             </div>
 
-            <div className="space-y-3 text-left">
-              <Label htmlFor="endpoint" className="text-text-secondary">
-                Server Address <span className="text-text-muted">(optional)</span>
-              </Label>
-              <Input
-                id="endpoint"
-                placeholder="your-server.example.com:51820"
-                value={endpoint}
-                onChange={(e) => setEndpoint(e.target.value)}
-                className="text-center"
-              />
-              <p className="text-xs text-text-muted">
-                The public hostname or IP where devices will connect. You can set this later.
-              </p>
-            </div>
-
             {writable && (
               <Button
                 onClick={() => setupMutation.mutate()}
@@ -263,6 +257,19 @@ export function VpnPage() {
               </Button>
               <Button size="sm" onClick={() => setShowAddDevice(true)}>
                 <Plus className="h-4 w-4 mr-1" /> Add Device
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-400 border-red-800 hover:bg-red-900/30"
+                onClick={() => {
+                  if (confirm('Delete VPN configuration? All peers will be removed.')) {
+                    deleteMutation.mutate()
+                  }
+                }}
+                disabled={deleteMutation.isPending}
+              >
+                Delete VPN
               </Button>
             </>
           )}
