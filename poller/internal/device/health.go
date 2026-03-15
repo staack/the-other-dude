@@ -1,7 +1,6 @@
 package device
 
 import (
-	"fmt"
 	"log/slog"
 
 	routeros "github.com/go-routeros/routeros/v3"
@@ -103,8 +102,3 @@ func collectTemperature(client *routeros.Client, majorVersion int) string {
 	return ""
 }
 
-// collectHealthError returns an error for CollectHealth callers when the
-// primary resource query fails completely.
-func collectHealthError(err error) error {
-	return fmt.Errorf("collecting health metrics: %w", err)
-}

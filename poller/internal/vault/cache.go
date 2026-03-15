@@ -113,7 +113,7 @@ func (c *CredentialCache) GetCredentials(
 			go c.logKeyAccess(deviceID, tenantID, "decrypt_credentials", "poller_poll")
 		}
 
-	} else if legacyCiphertext != nil && len(legacyCiphertext) > 0 {
+	} else if len(legacyCiphertext) > 0 {
 		// Fall back to legacy AES-256-GCM decryption
 		if c.legacy == nil {
 			return "", "", fmt.Errorf("legacy ciphertext present but encryption key not configured")

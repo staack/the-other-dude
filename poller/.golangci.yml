@@ -1,0 +1,22 @@
+version: "2"
+
+linters:
+  default: standard
+  disable:
+    # errcheck generates excessive noise for idiomatic defer Close() patterns
+    # and goroutine-internal writes where errors cannot be propagated. The
+    # codebase handles errors where they matter (network, DB, crypto ops).
+    - errcheck
+  settings:
+    staticcheck:
+      checks:
+        - "all"
+        - "-SA1019" # nhooyr.io/websocket deprecation — library is maintained, just rebranded
+        - "-ST1000" # package comment — not all packages need a doc comment
+
+issues:
+  exclude-rules:
+    # Suppress unused linter for internal helpers in test support packages.
+    - path: "internal/testutil/"
+      linters:
+        - unused

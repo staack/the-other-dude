@@ -24,9 +24,26 @@ import (
 
 // devicesSchema is the minimal DDL needed for integration tests against the
 // devices table. It mirrors the production schema but omits RLS policies and
-// other tables the poller doesn't read.
+// unrelated tables. Must stay in sync with the columns read by FetchDevices /
+// GetDevice (see store/devices.go).
 const devicesSchema = `
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- certificate_authorities is LEFT JOINed by FetchDevices/GetDevice when
+-- tls_mode = 'portal_ca'. We create a minimal version here.
+CREATE TABLE IF NOT EXISTS certificate_authorities (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    tenant_id UUID NOT NULL UNIQUE,
+    common_name VARCHAR(255) NOT NULL,
+    cert_pem TEXT NOT NULL,
+    encrypted_private_key BYTEA NOT NULL,
+    serial_number VARCHAR(64) NOT NULL,
+    fingerprint_sha256 VARCHAR(95) NOT NULL,
+    not_valid_before TIMESTAMPTZ NOT NULL,
+    not_valid_after TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS devices (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL,
@@ -42,6 +59,12 @@ CREATE TABLE IF NOT EXISTS devices (
     uptime_seconds INTEGER,
     last_seen TIMESTAMPTZ,
     encrypted_credentials BYTEA,
+    encrypted_credentials_transit TEXT,
+    tls_mode VARCHAR(20) NOT NULL DEFAULT 'auto',
+    ssh_port INTEGER DEFAULT 22,
+    ssh_host_key_fingerprint TEXT,
+    ssh_host_key_first_seen TIMESTAMPTZ,
+    ssh_host_key_last_verified TIMESTAMPTZ,
     status VARCHAR(20) NOT NULL DEFAULT 'unknown',
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
