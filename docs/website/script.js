@@ -190,7 +190,7 @@
   /*  7. Active nav link (landing page)                 */
   /* -------------------------------------------------- */
   function initActiveNav() {
-    var navLinks = document.querySelectorAll('.nav-link[href^="index.html#"]');
+    var navLinks = document.querySelectorAll('.nav-link[href^="#"]');
     if (!navLinks.length) return;
 
     /* only run on landing page */
