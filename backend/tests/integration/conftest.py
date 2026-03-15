@@ -292,12 +292,17 @@ async def test_app(admin_engine, app_engine):
 
     setup_rate_limiting(app)
 
-    test_session_factory = async_sessionmaker(
+    # get_db uses app_engine (RLS-enforced) so tenant isolation is tested correctly
+    test_app_session_factory = async_sessionmaker(
+        app_engine, class_=AsyncSession, expire_on_commit=False
+    )
+    # get_admin_db uses admin_engine (superuser) for auth/bootstrap routes
+    test_admin_session_factory = async_sessionmaker(
         admin_engine, class_=AsyncSession, expire_on_commit=False
     )
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
-        async with test_session_factory() as session:
+        async with test_app_session_factory() as session:
             try:
                 yield session
                 await session.commit()
@@ -306,7 +311,7 @@ async def test_app(admin_engine, app_engine):
                 raise
 
     async def override_get_admin_db() -> AsyncGenerator[AsyncSession, None]:
-        async with test_session_factory() as session:
+        async with test_admin_session_factory() as session:
             try:
                 yield session
                 await session.commit()
