@@ -10,15 +10,8 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import DeclarativeBase
-
 from app.config import settings
-
-
-class Base(DeclarativeBase):
-    """Base class for all SQLAlchemy ORM models."""
-
-    pass
+from app.models.base import Base  # noqa: F401 — re-exported for backwards compat
 
 
 # Primary engine using postgres superuser (for migrations/admin)

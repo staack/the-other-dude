@@ -8,7 +8,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, Stri
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.database import Base
+from app.models.base import Base
 
 
 class VpnConfig(Base):

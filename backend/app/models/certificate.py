@@ -12,7 +12,7 @@ from sqlalchemy import DateTime, ForeignKey, LargeBinary, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.database import Base
+from app.models.base import Base
 
 
 class CertificateAuthority(Base):

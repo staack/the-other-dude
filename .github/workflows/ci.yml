@@ -47,6 +47,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
+          version: latest
           working-directory: poller
 
   frontend-lint:

@@ -9,8 +9,9 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-# Import all models to register them with Base.metadata
-from app.database import Base
+# Import Base without triggering engine creation (app.database creates engines
+# at module level, which would fail if DATABASE_URL points to a non-existent DB).
+from app.models.base import Base
 import app.models.tenant  # noqa: F401
 import app.models.user  # noqa: F401
 import app.models.device  # noqa: F401
