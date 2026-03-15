@@ -92,27 +92,29 @@ def setup_database():
 # ---------------------------------------------------------------------------
 
 
-# Module-level engines — created once, reused across all tests.
-# Avoids per-test engine creation/disposal which triggers asyncpg
-# event loop issues during pytest-asyncio teardown.
-_admin_engine = create_async_engine(
-    TEST_DATABASE_URL, echo=False, pool_pre_ping=True, pool_size=5, max_overflow=5
-)
-_app_engine = create_async_engine(
-    TEST_APP_USER_DATABASE_URL, echo=False, pool_pre_ping=True, pool_size=5, max_overflow=5
-)
+@pytest_asyncio.fixture
+async def admin_engine():
+    """Admin engine (superuser) -- bypasses RLS.
+
+    Function-scoped: created fresh per-test on the test's event loop.
+    Not disposed explicitly — asyncpg's pool_pre_ping=False + NullPool
+    avoids the event loop teardown crash.
+    """
+    from sqlalchemy.pool import NullPool
+
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False, poolclass=NullPool)
+    yield engine
+    # Do NOT dispose — asyncpg teardown races with pytest-asyncio loop closure.
+    # NullPool creates/destroys connections on demand so nothing leaks.
 
 
-@pytest.fixture
-def admin_engine():
-    """Admin engine (superuser) -- bypasses RLS."""
-    return _admin_engine
-
-
-@pytest.fixture
-def app_engine():
+@pytest_asyncio.fixture
+async def app_engine():
     """App-user engine -- RLS enforced."""
-    return _app_engine
+    from sqlalchemy.pool import NullPool
+
+    engine = create_async_engine(TEST_APP_USER_DATABASE_URL, echo=False, poolclass=NullPool)
+    yield engine
 
 
 # ---------------------------------------------------------------------------
