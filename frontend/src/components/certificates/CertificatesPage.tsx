@@ -9,11 +9,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useUIStore } from '@/lib/store'
 import { Shield, Building2 } from 'lucide-react'
-import {
-  certificatesApi,
-  type CAResponse,
-  type DeviceCertResponse,
-} from '@/lib/certificatesApi'
+import { certificatesApi } from '@/lib/certificatesApi'
 import { useAuth, isSuperAdmin } from '@/lib/auth'
 import { canWrite } from '@/lib/auth'
 import { CAStatusCard } from './CAStatusCard'

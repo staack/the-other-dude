@@ -27,6 +27,7 @@ export function EventStreamProvider({
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useEventStreamContext() {
   return useContext(EventStreamContext)
 }

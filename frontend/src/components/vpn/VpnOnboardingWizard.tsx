@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { CheckCircle2, Copy, Loader2, AlertTriangle, Wifi } from 'lucide-react'
+import { CheckCircle2, Copy, AlertTriangle, Wifi } from 'lucide-react'
 import { vpnApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -61,6 +61,7 @@ export function VpnOnboardingWizard({ tenantId, onSuccess, onCancel }: Props) {
   // Timer for waiting step
   useEffect(() => {
     if (step !== 'waiting') return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setElapsed(0)
     const interval = setInterval(() => setElapsed((e) => e + 1), 1000)
     return () => clearInterval(interval)

@@ -162,7 +162,7 @@ export function ClientsTab({ tenantId, deviceId, active }: ClientsTabProps) {
       }
       return sortDir === 'asc' ? cmp : -cmp
     })
-  }, [data?.clients, searchQuery, sortField, sortDir])
+  }, [data, searchQuery, sortField, sortDir])
 
   // Stats
   const totalClients = data?.clients.length ?? 0

@@ -7,10 +7,10 @@
  * users can browse RouterOS menu paths and manage entries.
  */
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Terminal, ChevronRight, Loader2, WifiOff, Building2 } from 'lucide-react'
-import { configEditorApi, type BrowseResponse } from '@/lib/configEditorApi'
+import { configEditorApi } from '@/lib/configEditorApi'
 import { metricsApi } from '@/lib/api'
 import { useAuth, isSuperAdmin } from '@/lib/auth'
 import { useUIStore } from '@/lib/store'

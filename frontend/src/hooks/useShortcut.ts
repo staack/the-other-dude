@@ -6,7 +6,9 @@ import { useEffect, useRef } from 'react'
  */
 export function useShortcut(key: string, callback: () => void, enabled = true) {
   const callbackRef = useRef(callback)
-  callbackRef.current = callback
+  useEffect(() => {
+    callbackRef.current = callback
+  })
 
   useEffect(() => {
     if (!enabled) return
@@ -43,7 +45,9 @@ export function useSequenceShortcut(
   enabled = true,
 ) {
   const callbackRef = useRef(callback)
-  callbackRef.current = callback
+  useEffect(() => {
+    callbackRef.current = callback
+  })
   const pendingRef = useRef<string | null>(null)
   const timeoutRef = useRef<number | null>(null)
 

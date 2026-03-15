@@ -26,15 +26,10 @@ import {
 import {
   vpnApi,
   devicesApi,
-  type VpnConfigResponse,
-  type VpnPeerResponse,
-  type VpnPeerConfig,
   type DeviceResponse,
 } from '@/lib/api'
 import { useAuth, isSuperAdmin, canWrite } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -63,7 +58,6 @@ export function VpnPage() {
 
   const [showAddDevice, setShowAddDevice] = useState(false)
   const [showConfig, setShowConfig] = useState<string | null>(null)
-  const [endpoint, setEndpoint] = useState('')
   const [selectedDevice, setSelectedDevice] = useState('')
   const [copied, setCopied] = useState(false)
 
@@ -83,7 +77,11 @@ export function VpnPage() {
 
   const { data: devices = [] } = useQuery({
     queryKey: ['devices', tenantId],
-    queryFn: () => devicesApi.list(tenantId).then((r: any) => r.items ?? r.devices ?? []),
+    queryFn: () => devicesApi.list(tenantId).then((r: unknown) => {
+      const result = r as { items?: DeviceResponse[]; devices?: DeviceResponse[] } | DeviceResponse[]
+      if (Array.isArray(result)) return result
+      return result.items ?? result.devices ?? []
+    }),
     enabled: !!tenantId && showAddDevice,
   })
 
@@ -96,12 +94,15 @@ export function VpnPage() {
   // ── Mutations ──
 
   const setupMutation = useMutation({
-    mutationFn: () => vpnApi.setup(tenantId, endpoint || undefined),
+    mutationFn: () => vpnApi.setup(tenantId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vpn-config'] })
       toast({ title: 'VPN enabled successfully' })
     },
-    onError: (e: any) => toast({ title: e?.response?.data?.detail || 'Failed to enable VPN', variant: 'destructive' }),
+    onError: (e: unknown) => {
+      const err = e as { response?: { data?: { detail?: string } } }
+      toast({ title: err?.response?.data?.detail || 'Failed to enable VPN', variant: 'destructive' })
+    },
   })
 
   const addPeerMutation = useMutation({
@@ -113,7 +114,10 @@ export function VpnPage() {
       setSelectedDevice('')
       toast({ title: 'Device added to VPN' })
     },
-    onError: (e: any) => toast({ title: e?.response?.data?.detail || 'Failed to add device', variant: 'destructive' }),
+    onError: (e: unknown) => {
+      const err = e as { response?: { data?: { detail?: string } } }
+      toast({ title: err?.response?.data?.detail || 'Failed to add device', variant: 'destructive' })
+    },
   })
 
   const removePeerMutation = useMutation({
@@ -123,7 +127,10 @@ export function VpnPage() {
       queryClient.invalidateQueries({ queryKey: ['vpn-config'] })
       toast({ title: 'Device removed from VPN' })
     },
-    onError: (e: any) => toast({ title: e?.response?.data?.detail || 'Failed to remove device', variant: 'destructive' }),
+    onError: (e: unknown) => {
+      const err = e as { response?: { data?: { detail?: string } } }
+      toast({ title: err?.response?.data?.detail || 'Failed to remove device', variant: 'destructive' })
+    },
   })
 
   const toggleMutation = useMutation({
@@ -141,7 +148,10 @@ export function VpnPage() {
       queryClient.invalidateQueries({ queryKey: ['vpn-peers'] })
       toast({ title: 'VPN configuration deleted' })
     },
-    onError: (e: any) => toast({ title: e?.response?.data?.detail || 'Failed to delete VPN', variant: 'destructive' }),
+    onError: (e: unknown) => {
+      const err = e as { response?: { data?: { detail?: string } } }
+      toast({ title: err?.response?.data?.detail || 'Failed to delete VPN', variant: 'destructive' })
+    },
   })
 
   // ── Helpers ──

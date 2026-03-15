@@ -336,7 +336,7 @@ function placeFormatInfo(matrix: boolean[][], size: number) {
   // After BCH: 0x77c0... Let's use the precomputed value
   // EC L = 01, mask 0 = 000 -> data = 01000
   // Format string after BCH and XOR with 101010000010010:
-  const formatBits = 0x77c0 // L, mask 0
+  // const formatBits = 0x77c0 // L, mask 0 (unused, computed via getFormatInfo below)
   // Actually, let's compute it properly
   // data = 01 000 = 0b01000 = 8
   // Generator: 10100110111 (0x537)

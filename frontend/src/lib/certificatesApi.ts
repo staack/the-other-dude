@@ -78,8 +78,9 @@ export const certificatesApi = {
         params: tenantParams(tenantId),
       })
       return data
-    } catch (err: any) {
-      if (err?.response?.status === 404) return null
+    } catch (err: unknown) {
+      const e = err as { response?: { status?: number } }
+      if (e?.response?.status === 404) return null
       throw err
     }
   },

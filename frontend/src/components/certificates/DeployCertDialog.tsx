@@ -58,7 +58,7 @@ export function DeployCertDialog({
     queryFn: async () => {
       const result = await devicesApi.list(tenantId)
       // The list endpoint returns { items, total, ... } or an array
-      return (result as any).items ?? result
+      return (result as { items?: DeviceResponse[] }).items ?? (result as DeviceResponse[])
     },
     enabled: !!tenantId && open,
   })
@@ -110,9 +110,10 @@ export function DeployCertDialog({
         setErrorMsg(result.error ?? 'Deployment failed')
         toast({ title: result.error ?? 'Deployment failed', variant: 'destructive' })
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       setStep('error')
-      const detail = e?.response?.data?.detail || 'Failed to deploy certificate'
+      const err = e as { response?: { data?: { detail?: string } } }
+      const detail = err?.response?.data?.detail || 'Failed to deploy certificate'
       setErrorMsg(detail)
       toast({ title: detail, variant: 'destructive' })
     }

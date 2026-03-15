@@ -35,6 +35,7 @@ export function WifiSimplePanel({ tenantId, deviceId, active, routerosVersion }:
   const [formState, setFormState] = useState<Record<string, Record<string, string>>>({})
 
   // Sync form state from browse data
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const newState: Record<string, Record<string, string>> = {}
     wireless.entries.forEach((entry) => {
@@ -60,6 +61,7 @@ export function WifiSimplePanel({ tenantId, deviceId, active, routerosVersion }:
       }
     })
     if (Object.keys(newState).length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormState((prev) => ({ ...prev, ...newState }))
     }
   }, [wireless.entries, isV7])

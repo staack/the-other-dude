@@ -22,7 +22,6 @@ import {
 import { SafetyToggle } from './SafetyToggle'
 import { ChangePreviewModal } from './ChangePreviewModal'
 import { useConfigBrowse, useConfigPanel } from '@/hooks/useConfigPanel'
-import { cn } from '@/lib/utils'
 import type { ConfigPanelProps } from '@/lib/configPanelTypes'
 
 // ---------------------------------------------------------------------------
@@ -47,8 +46,6 @@ interface AddressListForm {
 }
 
 const EMPTY_FORM: AddressListForm = { list: '', address: '', comment: '' }
-
-type PanelHook = ReturnType<typeof useConfigPanel>
 
 // ---------------------------------------------------------------------------
 // AddressListPanel

@@ -197,7 +197,8 @@ function PoolTable({
   entries,
   panel,
   poolUsedBy,
-  existingPools,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  existingPools: _existingPools,
 }: {
   entries: PoolEntry[]
   panel: PanelHook

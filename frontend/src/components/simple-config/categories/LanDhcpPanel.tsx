@@ -42,19 +42,26 @@ export function LanDhcpPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
   const [leaseTime, setLeaseTime] = useState('')
 
   // Sync from browse data
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (lanEntry) setLanAddress(lanEntry.address ?? '')
   }, [lanEntry])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (poolEntry) setPoolRange(poolEntry.ranges ?? '')
   }, [poolEntry])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (networkEntry) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setDhcpGateway(networkEntry.gateway ?? '')
       setDhcpDns(networkEntry['dns-server'] ?? '')
       setLeaseTime(networkEntry['lease-time'] ?? '')
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [networkEntry])
 

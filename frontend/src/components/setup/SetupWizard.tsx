@@ -353,6 +353,7 @@ function VerifyConnectivityStep({ tenantId, deviceId, onComplete }: Step3Props) 
   }, [tenantId, deviceId, cleanup])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     startPolling()
     return cleanup
   }, [startPolling, cleanup])

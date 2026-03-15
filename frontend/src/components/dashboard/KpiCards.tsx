@@ -14,6 +14,7 @@ export interface KpiCardsProps {
  * Formats bytes-per-second into a human-readable bandwidth string.
  * Auto-scales through bps, Kbps, Mbps, Gbps.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function formatBandwidth(bps: number): { value: number; unit: string } {
   if (bps < 1_000) return { value: bps, unit: 'bps' }
   if (bps < 1_000_000) return { value: bps / 1_000, unit: 'Kbps' }

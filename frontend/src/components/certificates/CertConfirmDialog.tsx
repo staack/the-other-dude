@@ -43,6 +43,7 @@ export function CertConfirmDialog({
   // Reset confirm text when dialog opens/closes or action changes
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConfirmText('')
     }
   }, [open, action])

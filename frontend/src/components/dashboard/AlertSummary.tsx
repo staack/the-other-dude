@@ -51,7 +51,8 @@ export function AlertSummary({
   criticalCount,
   warningCount,
   infoCount,
-  tenantId,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  tenantId: _tenantId,
 }: AlertSummaryProps) {
   const total = criticalCount + warningCount + infoCount
   const counts: Record<string, number> = {

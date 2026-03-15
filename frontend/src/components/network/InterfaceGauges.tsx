@@ -53,7 +53,7 @@ interface GaugeBarProps {
   direction: 'RX' | 'TX'
 }
 
-function GaugeBar({ label, value, maxSpeed, direction }: GaugeBarProps) {
+function GaugeBar({ value, maxSpeed, direction }: GaugeBarProps) {
   const pct = Math.min((value / maxSpeed) * 100, 100)
   const colorClass = getBarColor(pct)
 

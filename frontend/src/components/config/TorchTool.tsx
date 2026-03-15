@@ -29,15 +29,6 @@ interface TorchEntry {
   rx: string
 }
 
-function formatBytes(val: string): string {
-  const n = parseInt(val, 10)
-  if (isNaN(n)) return val || '-'
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)} GB`
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} MB`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)} KB`
-  return `${n} B`
-}
-
 function formatBps(val: string): string {
   const n = parseInt(val, 10)
   if (isNaN(n)) return val || '-'

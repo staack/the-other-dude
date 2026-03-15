@@ -29,7 +29,6 @@ const N_HEX =
 const N = BigInt('0x' + N_HEX);
 const g = 2n;
 const N_BYTES = 256; // 2048 bits = 256 bytes
-const N_HEX_LEN = N_BYTES * 2; // 512 hex chars
 
 // ---- Utility Functions ----
 
@@ -37,16 +36,6 @@ const N_HEX_LEN = N_BYTES * 2; // 512 hex chars
 function toHex(n: bigint): string {
   const hex = n.toString(16);
   return hex;
-}
-
-/** Pad a hex string to N's byte length (512 hex chars) with leading zeros. */
-function padHex(hex: string): string {
-  return hex.padStart(N_HEX_LEN, '0');
-}
-
-/** Convert BigInt to padded hex bytes (for hash inputs involving N-sized values). */
-function bigintToPaddedHex(n: bigint): string {
-  return padHex(toHex(n));
 }
 
 /** Convert hex string to Uint8Array. */
@@ -91,12 +80,6 @@ async function H(...inputs: Uint8Array[]): Promise<Uint8Array> {
 /** Convert BigInt to minimal-length bytes (matches srptools int_to_bytes). */
 function bigintToBytes(n: bigint): Uint8Array {
   return hexToBytes(toHex(n));
-}
-
-/** Hash BigInt values (unpadded, matching srptools int_to_bytes) and return bytes. */
-async function hashBigInt(...values: bigint[]): Promise<Uint8Array> {
-  const inputs = values.map((v) => bigintToBytes(v));
-  return H(...inputs);
 }
 
 /** Pad a BigInt value to N's byte length (256 bytes) matching srptools context.pad(). */

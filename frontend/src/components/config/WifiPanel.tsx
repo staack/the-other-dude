@@ -618,8 +618,6 @@ function WirelessEditDialog({
 }) {
   const [showPassphrase, setShowPassphrase] = useState(false)
 
-  const ssid = entry?.ssid || entry?.['configuration.ssid'] || ''
-
   const [formData, setFormData] = useState<WirelessFormData>({
     ssid: '',
     band: '',
@@ -631,7 +629,8 @@ function WirelessEditDialog({
   })
 
   // Reset form when entry changes
-  const entryId = entry?.['.id'] || ''
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _entryId = entry?.['.id'] || ''
   useState(() => {
     if (entry) {
       setFormData({

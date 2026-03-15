@@ -58,6 +58,7 @@ function getScoreTier(score: number): ScoreTier {
  * - Memory healthy % (weight 0.2) -- % of online devices with memory < 80%
  * - Critical alert penalty (weight 0.2) -- 100 if 0 critical, 50 if 1-2, 0 if 3+
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function computeHealthScore(
   devices: HealthScoreProps['devices'],
   criticalAlerts: number,
@@ -115,7 +116,6 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
 export function HealthScore({
   devices,
-  activeAlerts: _activeAlerts,
   criticalAlerts,
 }: HealthScoreProps) {
   const totalDevices = devices.length

@@ -56,7 +56,7 @@ export function BulkDeployDialog({
     queryKey: ['devices-for-cert', tenantId],
     queryFn: async () => {
       const result = await devicesApi.list(tenantId)
-      return (result as any).items ?? result
+      return (result as { items?: DeviceResponse[] }).items ?? (result as DeviceResponse[])
     },
     enabled: !!tenantId && open,
   })
@@ -128,14 +128,15 @@ export function BulkDeployDialog({
           variant: 'destructive',
         })
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } }
       setResult({
         success: 0,
         failed: selected.size,
         errors: [
           {
             device_id: 'bulk',
-            error: e?.response?.data?.detail || 'Bulk deployment failed',
+            error: err?.response?.data?.detail || 'Bulk deployment failed',
           },
         ],
       })

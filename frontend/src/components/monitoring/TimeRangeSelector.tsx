@@ -22,6 +22,7 @@ function toDatetimeLocal(iso: string): string {
 /**
  * Returns start/end ISO strings for a given preset range or custom range.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function getTimeRange(
   range: string,
   customStart?: string,
@@ -64,6 +65,7 @@ export function getTimeRange(
  * Returns refetchInterval (ms) for short ranges, false for longer ones.
  * Per user decision: 1h and 6h auto-refresh every 60 seconds.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function shouldAutoRefresh(range: string): number | false {
   if (range === '1h' || range === '6h') return 60_000
   return false

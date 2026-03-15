@@ -32,7 +32,9 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
         (s) => s.status === 'active' || s.status === 'creating',
       )
       if (active) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSession(active)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setState(active.status === 'active' ? 'active' : 'connecting')
       }
     }
@@ -66,6 +68,7 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
   // Countdown timer for session expiry
   useEffect(() => {
     if (state !== 'active' || !session?.expires_at) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCountdown(null)
       return
     }
@@ -96,9 +99,10 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
         setState('connecting')
       }
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { detail?: string } } }
       setState('failed')
-      setError(err.response?.data?.detail || 'Failed to create session')
+      setError(e.response?.data?.detail || 'Failed to create session')
     },
   })
 
@@ -113,9 +117,10 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
       setError(null)
       queryClient.invalidateQueries({ queryKey: ['remote-winbox-sessions', tenantId, deviceId] })
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { detail?: string } } }
       setState('failed')
-      setError(err.response?.data?.detail || 'Failed to close session')
+      setError(e.response?.data?.detail || 'Failed to close session')
     },
   })
 
@@ -129,12 +134,6 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
     setState('closing')
     closeMutation.mutate()
   }, [closeMutation])
-
-  const handleRetry = useCallback(() => {
-    setSession(null)
-    setError(null)
-    handleOpen()
-  }, [handleOpen])
 
   const handleReset = useCallback(async () => {
     try {

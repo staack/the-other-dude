@@ -22,7 +22,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { performRegistration, assertWebCryptoAvailable } from '@/lib/crypto/registration'
+import { performRegistration } from '@/lib/crypto/registration'
 import { keyStore } from '@/lib/crypto/keyStore'
 import { authApi } from '@/lib/api'
 import { EmergencyKitDialog } from './EmergencyKitDialog'

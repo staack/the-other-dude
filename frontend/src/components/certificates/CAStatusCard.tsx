@@ -36,11 +36,13 @@ export function CAStatusCard({ ca, canWrite: writable, tenantId }: CAStatusCardP
       void queryClient.invalidateQueries({ queryKey: ['ca'] })
       toast({ title: 'Certificate Authority initialized' })
     },
-    onError: (e: any) =>
+    onError: (e: unknown) => {
+      const err = e as { response?: { data?: { detail?: string } } }
       toast({
-        title: e?.response?.data?.detail || 'Failed to initialize CA',
+        title: err?.response?.data?.detail || 'Failed to initialize CA',
         variant: 'destructive',
-      }),
+      })
+    },
   })
 
   const handleDownloadPEM = async () => {

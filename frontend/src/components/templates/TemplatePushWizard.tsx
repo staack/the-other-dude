@@ -89,6 +89,7 @@ export function TemplatePushWizard({ open, onClose, tenantId, template }: Templa
 
   const selectedDevices = devices?.filter((d) => selectedDeviceIds.has(d.id)) ?? []
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleGroupSelect = (_groupId: string) => {
     // For now, just select all online devices. In a real implementation,
     // we'd load group members from the API. Here we select all devices

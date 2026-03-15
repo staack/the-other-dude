@@ -149,7 +149,7 @@ interface TooltipData {
   y: number
 }
 
-function NodeTooltip({ data, onClose }: { data: TooltipData; onClose: () => void }) {
+function NodeTooltip({ data }: { data: TooltipData; onClose?: () => void }) {
   return (
     <div
       className="absolute z-50 rounded-lg border border-border bg-elevated shadow-lg px-3 py-2 text-xs pointer-events-none"

@@ -32,9 +32,10 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
                 window.open(data.winbox_uri, '_blank')
             }
         },
-        onError: (err: any) => {
+        onError: (err: unknown) => {
+            const e = err as { response?: { data?: { detail?: string } } }
             setState('error')
-            setError(err.response?.data?.detail || 'Failed to open tunnel')
+            setError(e.response?.data?.detail || 'Failed to open tunnel')
         },
     })
 

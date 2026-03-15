@@ -7,7 +7,6 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ShieldCheck,
-  ShieldAlert,
   Plus,
   Layers,
   MoreHorizontal,
@@ -132,11 +131,13 @@ export function DeviceCertTable({
         toast({ title: result.error ?? 'Deployment failed', variant: 'destructive' })
       }
     },
-    onError: (e: any) =>
+    onError: (e: unknown) => {
+      const err = e as { response?: { data?: { detail?: string } } }
       toast({
-        title: e?.response?.data?.detail || 'Failed to deploy certificate',
+        title: err?.response?.data?.detail || 'Failed to deploy certificate',
         variant: 'destructive',
-      }),
+      })
+    },
   })
 
   const rotateMutation = useMutation({
@@ -149,11 +150,13 @@ export function DeviceCertTable({
         toast({ title: result.error ?? 'Rotation failed', variant: 'destructive' })
       }
     },
-    onError: (e: any) =>
+    onError: (e: unknown) => {
+      const err = e as { response?: { data?: { detail?: string } } }
       toast({
-        title: e?.response?.data?.detail || 'Failed to rotate certificate',
+        title: err?.response?.data?.detail || 'Failed to rotate certificate',
         variant: 'destructive',
-      }),
+      })
+    },
   })
 
   const revokeMutation = useMutation({
@@ -162,11 +165,13 @@ export function DeviceCertTable({
       void queryClient.invalidateQueries({ queryKey: ['deviceCerts'] })
       toast({ title: 'Certificate revoked' })
     },
-    onError: (e: any) =>
+    onError: (e: unknown) => {
+      const err = e as { response?: { data?: { detail?: string } } }
       toast({
-        title: e?.response?.data?.detail || 'Failed to revoke certificate',
+        title: err?.response?.data?.detail || 'Failed to revoke certificate',
         variant: 'destructive',
-      }),
+      })
+    },
   })
 
   // ── Filtering ──

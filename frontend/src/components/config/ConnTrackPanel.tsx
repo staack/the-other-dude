@@ -22,14 +22,11 @@ import {
 import { SafetyToggle } from './SafetyToggle'
 import { ChangePreviewModal } from './ChangePreviewModal'
 import { useConfigBrowse, useConfigPanel } from '@/hooks/useConfigPanel'
-import { cn } from '@/lib/utils'
 import type { ConfigPanelProps } from '@/lib/configPanelTypes'
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-type PanelHook = ReturnType<typeof useConfigPanel>
 
 // Timeout fields we expose for editing
 const TIMEOUT_FIELDS = [

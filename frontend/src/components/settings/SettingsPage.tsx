@@ -5,7 +5,7 @@ import { useAuth, isSuperAdmin, isTenantAdmin } from '@/lib/auth'
 import { authApi } from '@/lib/api'
 import { getSMTPSettings, updateSMTPSettings, testSMTPSettings, clearWinboxSessions } from '@/lib/settingsApi'
 import { SMTP_PRESETS } from '@/lib/smtpPresets'
-import { Settings, User, Shield, Info, Key, Lock, ChevronRight, Download, Trash2, AlertTriangle, Mail, Monitor } from 'lucide-react'
+import { User, Shield, Info, Key, Lock, ChevronRight, Download, Trash2, AlertTriangle, Mail, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -365,8 +365,9 @@ function SMTPSettingsSection() {
       if (result.success) {
         saveMutation.mutate()
       }
-    } catch (e: any) {
-      setTestResult({ success: false, message: e.response?.data?.message || e.message })
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } }; message?: string }
+      setTestResult({ success: false, message: err.response?.data?.message || err.message || 'Unknown error' })
     } finally {
       setTesting(false)
     }

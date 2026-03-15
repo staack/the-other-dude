@@ -48,12 +48,6 @@ export function BridgeVlanPanel({ tenantId, deviceId, active }: ConfigPanelProps
     [ports.entries],
   )
 
-  // Check if VLAN filtering is enabled on any bridge
-  const vlanFilteringBridges = useMemo(
-    () => bridges.entries.filter((b) => b['vlan-filtering'] === 'true' || b['vlan-filtering'] === 'yes'),
-    [bridges.entries],
-  )
-
   const handleAdd = useCallback(() => {
     setEditEntry(null)
     setFormData({

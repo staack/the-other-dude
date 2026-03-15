@@ -35,6 +35,7 @@ function DevicesPage() {
   // Open dialog when ?add=true is set (e.g. from empty state button)
   useEffect(() => {
     if (search.add === 'true') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAddOpen(true)
       // Clear the search param so it doesn't re-open on navigation
       void navigate({

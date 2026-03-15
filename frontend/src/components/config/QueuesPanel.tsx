@@ -44,7 +44,7 @@ import { cn } from '@/lib/utils'
 import { useConfigBrowse, useConfigPanel } from '@/hooks/useConfigPanel'
 import { SafetyToggle } from '@/components/config/SafetyToggle'
 import { ChangePreviewModal } from '@/components/config/ChangePreviewModal'
-import type { ConfigPanelProps, ConfigChange } from '@/lib/configPanelTypes'
+import type { ConfigPanelProps } from '@/lib/configPanelTypes'
 
 // ---------------------------------------------------------------------------
 // Types

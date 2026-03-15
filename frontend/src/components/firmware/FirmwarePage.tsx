@@ -16,7 +16,6 @@ import {
 } from 'lucide-react'
 import {
   firmwareApi,
-  type FirmwareOverview,
   type DeviceFirmwareStatus,
   type FirmwareVersionGroup,
 } from '@/lib/firmwareApi'
@@ -24,7 +23,6 @@ import { useUIStore } from '@/lib/store'
 import { useAuth, isSuperAdmin, canWrite } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,

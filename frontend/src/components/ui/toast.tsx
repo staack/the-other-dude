@@ -25,6 +25,7 @@ interface ToastOptions {
   variant?: 'default' | 'destructive'
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function toast(options: ToastOptions) {
   if (options.variant === 'destructive') {
     sonnerToast.error(options.title, {
@@ -45,4 +46,5 @@ export const Toast = () => null
 export const ToastTitle = () => null
 export const ToastDescription = () => null
 export const ToastClose = () => null
+// eslint-disable-next-line react-refresh/only-export-components
 export const useToasts = () => ({ toasts: [] as never[], dismiss: () => {} })

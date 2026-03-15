@@ -3,7 +3,7 @@
  * in a dynamic table with edit/delete action buttons.
  */
 
-import { Pencil, Trash2, Plus, Loader2 } from 'lucide-react'
+import { Pencil, Trash2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { canWrite } from '@/lib/auth'
@@ -19,8 +19,6 @@ interface EntryTableProps {
   onAdd: () => void
 }
 
-/** Read-only fields that should not have edit buttons */
-const READ_ONLY_FIELDS = new Set(['.id', 'running', 'dynamic', 'default', 'invalid'])
 
 export function EntryTable({
   entries,

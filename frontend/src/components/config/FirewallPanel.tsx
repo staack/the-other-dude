@@ -6,15 +6,13 @@
  * provides a visual rule builder form, and supports move up/down reordering.
  */
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import {
   Plus,
   MoreHorizontal,
   Pencil,
   Trash2,
-  ArrowUp,
-  ArrowDown,
   Eye,
   EyeOff,
   Shield,
@@ -471,11 +469,6 @@ export function FirewallPanel({ tenantId, deviceId, active }: ConfigPanelProps) 
     panel.applyChanges()
     setPreviewOpen(false)
   }, [panel])
-
-  const afterApply = useMemo(() => {
-    // When applyChanges succeeds, the hook auto-refetches via queryClient.invalidateQueries
-    return panel.pendingChanges.length
-  }, [panel.pendingChanges.length])
 
   // -------------------------------------------------------------------------
   // Render

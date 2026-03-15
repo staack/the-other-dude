@@ -31,7 +31,7 @@ interface TemplateEditorProps {
 
 const VARIABLE_TYPES = ['string', 'ip', 'integer', 'boolean', 'subnet'] as const
 
-export function TemplateEditor({ tenantId: _tenantId, template, onSave, onCancel }: TemplateEditorProps) {
+export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorProps) {
   const [name, setName] = useState(template?.name ?? '')
   const [description, setDescription] = useState(template?.description ?? '')
   const [content, setContent] = useState(template?.content ?? '')

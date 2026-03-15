@@ -5,7 +5,7 @@
  * Simpler than the Standard DnsPanel: no TTL, no MX/TXT types, no advanced settings.
  */
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Server, Globe, Plus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

@@ -60,23 +60,6 @@ export function MaintenanceForm({
 
   const devices = deviceData?.items ?? []
 
-  // Populate form when editing
-  useEffect(() => {
-    if (editWindow) {
-      setName(editWindow.name)
-      // Convert ISO to datetime-local format
-      setStartAt(toDatetimeLocal(editWindow.start_at))
-      setEndAt(toDatetimeLocal(editWindow.end_at))
-      setSuppressAlerts(editWindow.suppress_alerts)
-      setNotes(editWindow.notes ?? '')
-      const hasDevices = editWindow.device_ids.length > 0
-      setAllDevices(!hasDevices)
-      setSelectedDevices(hasDevices ? editWindow.device_ids : [])
-    } else {
-      resetForm()
-    }
-  }, [editWindow, open])
-
   function resetForm() {
     setName('')
     setStartAt('')
@@ -93,6 +76,25 @@ export function MaintenanceForm({
     const local = new Date(d.getTime() - offset * 60000)
     return local.toISOString().slice(0, 16)
   }
+
+  // Populate form when editing
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (editWindow) {
+      setName(editWindow.name)
+      // Convert ISO to datetime-local format
+      setStartAt(toDatetimeLocal(editWindow.start_at))
+      setEndAt(toDatetimeLocal(editWindow.end_at))
+      setSuppressAlerts(editWindow.suppress_alerts)
+      setNotes(editWindow.notes ?? '')
+      const hasDevices = editWindow.device_ids.length > 0
+      setAllDevices(!hasDevices)
+      setSelectedDevices(hasDevices ? editWindow.device_ids : [])
+    } else {
+      resetForm()
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [editWindow, open])
 
   const createMutation = useMutation({
     mutationFn: (data: MaintenanceWindowCreate) =>

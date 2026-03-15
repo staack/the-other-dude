@@ -25,7 +25,6 @@ import {
   devicesApi,
   deviceGroupsApi,
   type DeviceResponse,
-  type DeviceGroupResponse,
 } from '@/lib/api'
 import { configEditorApi } from '@/lib/configEditorApi'
 import { Button } from '@/components/ui/button'
