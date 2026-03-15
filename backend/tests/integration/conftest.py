@@ -396,11 +396,15 @@ def create_test_device():
 
 
 @pytest.fixture
-def auth_headers_factory(client, create_test_tenant, create_test_user):
+def auth_headers_factory(create_test_tenant, create_test_user):
     """Factory to create authenticated headers for a test user.
 
-    Creates a tenant + user, logs in via the test client, and returns
-    the Authorization headers dict ready for use in subsequent requests.
+    Creates a tenant + user, generates a JWT directly (no HTTP login
+    round-trip), and returns the Authorization headers dict.
+
+    We mint the token directly rather than going through /api/auth/login
+    because the test admin_session uses a savepoint transaction that is
+    invisible to the login endpoint's own DB session.
     """
 
     async def _create(
@@ -411,7 +415,9 @@ def auth_headers_factory(client, create_test_tenant, create_test_user):
         tenant_name: str | None = None,
         existing_tenant_id: uuid.UUID | None = None,
     ) -> dict[str, Any]:
-        """Create user, login, return headers + tenant/user info."""
+        """Create user, mint JWT, return headers + tenant/user info."""
+        from app.services.auth import create_access_token
+
         if existing_tenant_id:
             tenant_id = existing_tenant_id
         else:
@@ -425,25 +431,21 @@ def auth_headers_factory(client, create_test_tenant, create_test_user):
             password=password,
             role=role,
         )
-        await admin_session.commit()
+        await admin_session.flush()
 
-        user_email = user.email
-
-        # Login via the API
-        login_resp = await client.post(
-            "/api/auth/login",
-            json={"email": user_email, "password": password},
+        access_token = create_access_token(
+            user_id=user.id,
+            tenant_id=tenant_id,
+            role=role,
         )
-        assert login_resp.status_code == 200, f"Login failed: {login_resp.text}"
-        tokens = login_resp.json()
 
         return {
-            "headers": {"Authorization": f"Bearer {tokens['access_token']}"},
-            "access_token": tokens["access_token"],
-            "refresh_token": tokens.get("refresh_token"),
+            "headers": {"Authorization": f"Bearer {access_token}"},
+            "access_token": access_token,
+            "refresh_token": None,
             "tenant_id": str(tenant_id),
             "user_id": str(user.id),
-            "user_email": user_email,
+            "user_email": user.email,
         }
 
     return _create
