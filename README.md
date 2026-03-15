@@ -49,7 +49,7 @@ Web UI
 |-------|------------|
 | Frontend | React 19, TanStack Router + Query, Tailwind CSS, Vite |
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2.0 async, asyncpg |
-| Poller | Go 1.24, go-routeros/v3, pgx/v5, nats.go |
+| Poller | Go 1.25, go-routeros/v3, pgx/v5, nats.go |
 | Database | PostgreSQL 17 + TimescaleDB, Row-Level Security |
 | Cache / Locks | Redis 7 |
 | Message Bus | NATS with JetStream |
