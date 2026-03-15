@@ -19,7 +19,6 @@ import { alertsApi, type AlertEvent, type AlertsFilterParams } from '@/lib/alert
 import { useAuth, isSuperAdmin } from '@/lib/auth'
 import { useUIStore } from '@/lib/store'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Select,

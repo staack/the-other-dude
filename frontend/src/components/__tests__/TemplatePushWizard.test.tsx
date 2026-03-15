@@ -8,9 +8,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor, within } from '@/test/test-utils'
+import { render, screen, waitFor } from '@/test/test-utils'
 import userEvent from '@testing-library/user-event'
-import type { TemplateResponse, VariableDef } from '@/lib/templatesApi'
+import type { TemplateResponse } from '@/lib/templatesApi'
 import type { FleetDevice, DeviceGroupResponse } from '@/lib/api'
 
 // --------------------------------------------------------------------------
@@ -454,7 +454,7 @@ describe('TemplatePushWizard', () => {
   })
 
   it('renders nothing when closed', () => {
-    const { container } = render(
+    render(
       <TemplatePushWizard
         open={false}
         onClose={vi.fn()}

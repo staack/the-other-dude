@@ -3,7 +3,7 @@
  * error display, and loading state for the login flow.
  */
 
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@/test/test-utils'
 import userEvent from '@testing-library/user-event'
 
@@ -34,8 +34,14 @@ let authState = {
   clearError: mockClearError,
 }
 
+// useAuth needs a .getState() static method because login.tsx calls useAuth.getState()
+// after login to check isUpgrading/needsSecretKey before navigating.
+const useAuthMock = Object.assign(() => authState, {
+  getState: () => ({ isUpgrading: false, needsSecretKey: false }),
+})
+
 vi.mock('@/lib/auth', () => ({
-  useAuth: () => authState,
+  useAuth: useAuthMock,
 }))
 
 // --------------------------------------------------------------------------
@@ -82,6 +88,9 @@ vi.mock('@tanstack/react-router', () => {
       return { component: opts.component }
     },
     useNavigate: () => mockNavigate,
+    Link: ({ children, ...props }: { children: React.ReactNode; to?: string }) => (
+      <a href={props.to ?? '#'}>{children}</a>
+    ),
   }
 })
 

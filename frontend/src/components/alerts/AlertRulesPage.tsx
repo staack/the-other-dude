@@ -22,7 +22,6 @@ import {
   type AlertRuleCreateData,
   type ChannelCreateData,
 } from '@/lib/alertsApi'
-import { devicesApi, deviceGroupsApi } from '@/lib/api'
 import { useUIStore } from '@/lib/store'
 import { useAuth, isSuperAdmin, canWrite } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
@@ -365,8 +364,9 @@ function ChannelFormDialog({
         to_address: toAddress,
       })
       setTestResult(result)
-    } catch (e: any) {
-      setTestResult({ success: false, message: e.response?.data?.detail || e.message })
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } }; message?: string }
+      setTestResult({ success: false, message: err.response?.data?.detail ?? err.message ?? 'Unknown error' })
     } finally {
       setTesting(false)
     }

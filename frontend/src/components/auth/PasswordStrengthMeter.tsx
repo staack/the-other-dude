@@ -30,6 +30,7 @@ zxcvbnOptions.setOptions(options)
 // Exported helper for form validation
 // ---------------------------------------------------------------------------
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function getPasswordScore(password: string): number {
   if (!password) return 0
   return zxcvbn(password).score
