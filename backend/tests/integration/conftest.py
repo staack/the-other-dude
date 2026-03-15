@@ -130,20 +130,30 @@ async def app_engine():
 
 
 @pytest_asyncio.fixture
-async def admin_session(admin_engine) -> AsyncGenerator[AsyncSession, None]:
-    """Per-test admin session with transaction rollback.
+async def admin_conn(admin_engine):
+    """Shared admin connection with transaction rollback.
 
-    Each test gets a clean transaction that is rolled back after the test,
-    ensuring no state leakage between tests.
+    Both admin_session and test_app bind to the same connection so that
+    data created in the test (via admin_session) is visible to API
+    endpoints (via get_db / get_admin_db overrides).
     """
-    async with admin_engine.connect() as conn:
-        trans = await conn.begin()
-        session = AsyncSession(bind=conn, expire_on_commit=False)
-        try:
-            yield session
-        finally:
-            await trans.rollback()
-            await session.close()
+    conn = await admin_engine.connect()
+    trans = await conn.begin()
+    try:
+        yield conn
+    finally:
+        await trans.rollback()
+        await conn.close()
+
+
+@pytest_asyncio.fixture
+async def admin_session(admin_conn) -> AsyncGenerator[AsyncSession, None]:
+    """Per-test admin session sharing the admin_conn transaction."""
+    session = AsyncSession(bind=admin_conn, expire_on_commit=False)
+    try:
+        yield session
+    finally:
+        await session.close()
 
 
 @pytest_asyncio.fixture
@@ -201,19 +211,12 @@ def app_session_factory(app_engine):
 
 
 @pytest_asyncio.fixture
-async def test_app(admin_engine, app_engine):
+async def test_app(admin_conn, app_engine):
     """Create a FastAPI app instance with test database dependency overrides.
 
-    Both get_db and get_admin_db share the same *connection* (and therefore
-    the same transaction) as the test's admin_session fixture.  This means
-    data created via admin_session (inside a savepoint) is visible to the
-    API endpoints under test, and everything rolls back after the test.
-
-    We use the admin_engine for both overrides because:
-    - RLS isolation is tested separately in test_rls_isolation.py using
-      the app_session_factory (which gets its own RLS-enforced connections).
-    - API-level tests need to see test-created data (tenants, users),
-      which requires sharing the same connection/transaction.
+    Both get_db and get_admin_db bind to admin_conn (the shared connection
+    from admin_conn fixture).  This means data created via admin_session
+    is visible to API endpoints, and everything rolls back after the test.
     """
     from fastapi import FastAPI
 
@@ -256,20 +259,17 @@ async def test_app(admin_engine, app_engine):
 
     setup_rate_limiting(app)
 
-    # Share a single connection for both get_db and get_admin_db so that
-    # test data created in admin_session (savepoint) is visible to the API.
-    conn = await admin_engine.connect()
-    trans = await conn.begin()
-
+    # API endpoints bind to the same shared connection as admin_session
+    # so test-created data is visible across the transaction.
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
-        session = AsyncSession(bind=conn, expire_on_commit=False)
+        session = AsyncSession(bind=admin_conn, expire_on_commit=False)
         try:
             yield session
         finally:
             await session.close()
 
     async def override_get_admin_db() -> AsyncGenerator[AsyncSession, None]:
-        session = AsyncSession(bind=conn, expire_on_commit=False)
+        session = AsyncSession(bind=admin_conn, expire_on_commit=False)
         try:
             yield session
         finally:
@@ -281,8 +281,6 @@ async def test_app(admin_engine, app_engine):
     yield app
 
     app.dependency_overrides.clear()
-    await trans.rollback()
-    await conn.close()
 
 
 @pytest_asyncio.fixture
