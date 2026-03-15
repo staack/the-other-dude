@@ -72,9 +72,7 @@ def _ensure_database_setup():
     # Migration 029 (VPN tenant isolation) encrypts a WireGuard server private key
     # and requires CREDENTIAL_ENCRYPTION_KEY.  Provide the dev default if the
     # environment does not already supply it (CI always sets this explicitly).
-    env.setdefault(
-        "CREDENTIAL_ENCRYPTION_KEY", "LLLjnfBZTSycvL2U07HDSxUeTtLxb9cZzryQl0R9E4w="
-    )
+    env.setdefault("CREDENTIAL_ENCRYPTION_KEY", "LLLjnfBZTSycvL2U07HDSxUeTtLxb9cZzryQl0R9E4w=")
 
     # Run Alembic migrations via subprocess (handles DB creation and schema)
     result = subprocess.run(
