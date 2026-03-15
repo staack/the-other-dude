@@ -99,7 +99,10 @@ async def admin_engine():
         TEST_DATABASE_URL, echo=False, pool_pre_ping=True, pool_size=5, max_overflow=5
     )
     yield engine
-    await engine.dispose()
+    try:
+        await engine.dispose()
+    except RuntimeError:
+        pass  # Event loop may be closed during final teardown
 
 
 @pytest_asyncio.fixture
@@ -109,7 +112,10 @@ async def app_engine():
         TEST_APP_USER_DATABASE_URL, echo=False, pool_pre_ping=True, pool_size=5, max_overflow=5
     )
     yield engine
-    await engine.dispose()
+    try:
+        await engine.dispose()
+    except RuntimeError:
+        pass  # Event loop may be closed during final teardown
 
 
 # ---------------------------------------------------------------------------
