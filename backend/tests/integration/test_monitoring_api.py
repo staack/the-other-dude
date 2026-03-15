@@ -36,9 +36,7 @@ class TestHealthMetrics:
     ):
         """GET health metrics for a device with no data returns 200 + empty list."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
 
         device = await create_test_device(admin_session, tenant.id)
@@ -68,9 +66,7 @@ class TestHealthMetrics:
     ):
         """GET health metrics returns bucketed data when rows exist."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
         device = await create_test_device(admin_session, tenant.id)
         await admin_session.flush()
@@ -131,9 +127,7 @@ class TestInterfaceMetrics:
     ):
         """GET interface metrics for device with no data returns 200 + empty list."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
         device = await create_test_device(admin_session, tenant.id)
         await admin_session.commit()
@@ -160,9 +154,7 @@ class TestInterfaceMetrics:
     ):
         """GET interface list for device with no data returns 200 + empty list."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
         device = await create_test_device(admin_session, tenant.id)
         await admin_session.commit()
@@ -188,9 +180,7 @@ class TestSparkline:
     ):
         """GET sparkline for device with no data returns 200 + empty list."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
         device = await create_test_device(admin_session, tenant.id)
         await admin_session.commit()
@@ -215,9 +205,7 @@ class TestFleetSummary:
     ):
         """GET /api/tenants/{tenant_id}/fleet/summary returns 200 with empty fleet."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
 
         resp = await client.get(
@@ -238,9 +226,7 @@ class TestFleetSummary:
     ):
         """GET fleet summary returns device data when devices exist."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
 
         await create_test_device(admin_session, tenant.id, hostname="fleet-dev-1")
@@ -279,9 +265,7 @@ class TestWirelessMetrics:
     ):
         """GET wireless metrics for device with no data returns 200 + empty list."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
         device = await create_test_device(admin_session, tenant.id)
         await admin_session.commit()
@@ -308,9 +292,7 @@ class TestWirelessMetrics:
     ):
         """GET wireless latest for device with no data returns 200 + empty list."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
         device = await create_test_device(admin_session, tenant.id)
         await admin_session.commit()

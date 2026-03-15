@@ -238,11 +238,13 @@ def list_device_commits(
                 # Device wasn't in parent but is in this commit — it's the first entry.
                 pass
 
-        results.append({
-            "sha": str(commit.id),
-            "message": commit.message.strip(),
-            "timestamp": commit.commit_time,
-        })
+        results.append(
+            {
+                "sha": str(commit.id),
+                "message": commit.message.strip(),
+                "timestamp": commit.commit_time,
+            }
+        )
 
     return results
 

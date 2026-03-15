@@ -20,7 +20,7 @@ from app.database import get_admin_db
 from app.middleware.rbac import require_tenant_admin_or_above
 from app.middleware.tenant_context import CurrentUser
 from app.models.tenant import Tenant
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.services.auth import hash_password
 
@@ -69,11 +69,7 @@ async def list_users(
     """
     await _check_tenant_access(tenant_id, current_user, db)
 
-    result = await db.execute(
-        select(User)
-        .where(User.tenant_id == tenant_id)
-        .order_by(User.name)
-    )
+    result = await db.execute(select(User).where(User.tenant_id == tenant_id).order_by(User.name))
     users = result.scalars().all()
 
     return [UserResponse.model_validate(user) for user in users]
@@ -103,9 +99,7 @@ async def create_user(
     await _check_tenant_access(tenant_id, current_user, db)
 
     # Check email uniqueness (global, not per-tenant)
-    existing = await db.execute(
-        select(User).where(User.email == data.email.lower())
-    )
+    existing = await db.execute(select(User).where(User.email == data.email.lower()))
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -138,9 +132,7 @@ async def get_user(
     """Get user detail."""
     await _check_tenant_access(tenant_id, current_user, db)
 
-    result = await db.execute(
-        select(User).where(User.id == user_id, User.tenant_id == tenant_id)
-    )
+    result = await db.execute(select(User).where(User.id == user_id, User.tenant_id == tenant_id))
     user = result.scalar_one_or_none()
 
     if not user:
@@ -168,9 +160,7 @@ async def update_user(
     """
     await _check_tenant_access(tenant_id, current_user, db)
 
-    result = await db.execute(
-        select(User).where(User.id == user_id, User.tenant_id == tenant_id)
-    )
+    result = await db.execute(select(User).where(User.id == user_id, User.tenant_id == tenant_id))
     user = result.scalar_one_or_none()
 
     if not user:
@@ -194,7 +184,11 @@ async def update_user(
     return UserResponse.model_validate(user)
 
 
-@router.delete("/{tenant_id}/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Deactivate a user")
+@router.delete(
+    "/{tenant_id}/users/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Deactivate a user",
+)
 @limiter.limit("5/minute")
 async def deactivate_user(
     request: Request,
@@ -209,9 +203,7 @@ async def deactivate_user(
     """
     await _check_tenant_access(tenant_id, current_user, db)
 
-    result = await db.execute(
-        select(User).where(User.id == user_id, User.tenant_id == tenant_id)
-    )
+    result = await db.execute(select(User).where(User.id == user_id, User.tenant_id == tenant_id))
     user = result.scalar_one_or_none()
 
     if not user:

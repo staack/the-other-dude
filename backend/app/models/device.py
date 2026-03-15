@@ -5,7 +5,6 @@ from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import (
-    Boolean,
     DateTime,
     Float,
     ForeignKey,
@@ -24,6 +23,7 @@ from app.database import Base
 
 class DeviceStatus(str, Enum):
     """Device connection status."""
+
     UNKNOWN = "unknown"
     ONLINE = "online"
     OFFLINE = "offline"
@@ -31,9 +31,7 @@ class DeviceStatus(str, Enum):
 
 class Device(Base):
     __tablename__ = "devices"
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "hostname", name="uq_devices_tenant_hostname"),
-    )
+    __table_args__ = (UniqueConstraint("tenant_id", "hostname", name="uq_devices_tenant_hostname"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -59,7 +57,9 @@ class Device(Base):
     uptime_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
     last_cpu_load: Mapped[int | None] = mapped_column(Integer, nullable=True)
     last_memory_used_pct: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    architecture: Mapped[str | None] = mapped_column(Text, nullable=True)  # CPU arch (arm, arm64, mipsbe, etc.)
+    architecture: Mapped[str | None] = mapped_column(
+        Text, nullable=True
+    )  # CPU arch (arm, arm64, mipsbe, etc.)
     preferred_channel: Mapped[str] = mapped_column(
         Text, default="stable", server_default="stable", nullable=False
     )  # Firmware release channel
@@ -108,9 +108,7 @@ class Device(Base):
 
 class DeviceGroup(Base):
     __tablename__ = "device_groups"
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "name", name="uq_device_groups_tenant_name"),
-    )
+    __table_args__ = (UniqueConstraint("tenant_id", "name", name="uq_device_groups_tenant_name"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -147,9 +145,7 @@ class DeviceGroup(Base):
 
 class DeviceTag(Base):
     __tablename__ = "device_tags"
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "name", name="uq_device_tags_tenant_name"),
-    )
+    __table_args__ = (UniqueConstraint("tenant_id", "name", name="uq_device_tags_tenant_name"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

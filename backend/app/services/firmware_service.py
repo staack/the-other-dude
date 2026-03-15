@@ -13,7 +13,6 @@ Version discovery comes from two sources:
 """
 
 import logging
-import os
 from pathlib import Path
 
 import httpx
@@ -51,13 +50,12 @@ async def check_latest_versions() -> list[dict]:
     async with httpx.AsyncClient(timeout=30.0) as client:
         for channel_file, channel, major in _VERSION_SOURCES:
             try:
-                resp = await client.get(
-                    f"https://download.mikrotik.com/routeros/{channel_file}"
-                )
+                resp = await client.get(f"https://download.mikrotik.com/routeros/{channel_file}")
                 if resp.status_code != 200:
                     logger.warning(
                         "MikroTik version check returned %d for %s",
-                        resp.status_code, channel_file,
+                        resp.status_code,
+                        channel_file,
                     )
                     continue
 
@@ -72,12 +70,14 @@ async def check_latest_versions() -> list[dict]:
                         f"https://download.mikrotik.com/routeros/"
                         f"{version}/routeros-{version}-{arch}.npk"
                     )
-                    results.append({
-                        "architecture": arch,
-                        "channel": channel,
-                        "version": version,
-                        "npk_url": npk_url,
-                    })
+                    results.append(
+                        {
+                            "architecture": arch,
+                            "channel": channel,
+                            "version": version,
+                            "npk_url": npk_url,
+                        }
+                    )
 
             except Exception as e:
                 logger.warning("Failed to check %s: %s", channel_file, e)
@@ -242,15 +242,15 @@ async def get_firmware_overview(tenant_id: str) -> dict:
     groups = []
     for ver, devs in sorted(version_groups.items()):
         # A version is "latest" if it matches the latest for any arch/channel combo
-        is_latest = any(
-            v["version"] == ver for v in latest_versions.values()
+        is_latest = any(v["version"] == ver for v in latest_versions.values())
+        groups.append(
+            {
+                "version": ver,
+                "count": len(devs),
+                "is_latest": is_latest,
+                "devices": devs,
+            }
         )
-        groups.append({
-            "version": ver,
-            "count": len(devs),
-            "is_latest": is_latest,
-            "devices": devs,
-        })
 
     return {
         "devices": device_list,
@@ -272,12 +272,14 @@ async def get_cached_firmware() -> list[dict]:
             continue
         for npk_file in sorted(version_dir.iterdir()):
             if npk_file.suffix == ".npk":
-                cached.append({
-                    "path": str(npk_file),
-                    "version": version_dir.name,
-                    "filename": npk_file.name,
-                    "size_bytes": npk_file.stat().st_size,
-                })
+                cached.append(
+                    {
+                        "path": str(npk_file),
+                        "version": version_dir.name,
+                        "filename": npk_file.name,
+                        "size_bytes": npk_file.stat().st_size,
+                    }
+                )
 
     return cached
 

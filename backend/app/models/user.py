@@ -13,6 +13,7 @@ from app.database import Base
 
 class UserRole(str, Enum):
     """User roles with increasing privilege levels."""
+
     SUPER_ADMIN = "super_admin"
     TENANT_ADMIN = "tenant_admin"
     OPERATOR = "operator"

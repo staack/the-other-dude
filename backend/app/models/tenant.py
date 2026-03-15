@@ -40,10 +40,18 @@ class Tenant(Base):
     openbao_key_name: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships — passive_deletes=True lets the DB ON DELETE CASCADE handle cleanup
-    users: Mapped[list["User"]] = relationship("User", back_populates="tenant", passive_deletes=True)  # type: ignore[name-defined]
-    devices: Mapped[list["Device"]] = relationship("Device", back_populates="tenant", passive_deletes=True)  # type: ignore[name-defined]
-    device_groups: Mapped[list["DeviceGroup"]] = relationship("DeviceGroup", back_populates="tenant", passive_deletes=True)  # type: ignore[name-defined]
-    device_tags: Mapped[list["DeviceTag"]] = relationship("DeviceTag", back_populates="tenant", passive_deletes=True)  # type: ignore[name-defined]
+    users: Mapped[list["User"]] = relationship(
+        "User", back_populates="tenant", passive_deletes=True
+    )  # type: ignore[name-defined]
+    devices: Mapped[list["Device"]] = relationship(
+        "Device", back_populates="tenant", passive_deletes=True
+    )  # type: ignore[name-defined]
+    device_groups: Mapped[list["DeviceGroup"]] = relationship(
+        "DeviceGroup", back_populates="tenant", passive_deletes=True
+    )  # type: ignore[name-defined]
+    device_tags: Mapped[list["DeviceTag"]] = relationship(
+        "DeviceTag", back_populates="tenant", passive_deletes=True
+    )  # type: ignore[name-defined]
 
     def __repr__(self) -> str:
         return f"<Tenant id={self.id} name={self.name!r}>"

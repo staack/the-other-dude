@@ -77,9 +77,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        "fk_key_access_log_device_id", "key_access_log", type_="foreignkey"
-    )
+    op.drop_constraint("fk_key_access_log_device_id", "key_access_log", type_="foreignkey")
     op.drop_column("key_access_log", "correlation_id")
     op.drop_column("key_access_log", "justification")
     op.drop_column("key_access_log", "device_id")

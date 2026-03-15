@@ -33,8 +33,7 @@ def upgrade() -> None:
 
     # Flag all bcrypt-only users for upgrade (auth_version=1 and no SRP verifier)
     op.execute(
-        "UPDATE users SET must_upgrade_auth = true "
-        "WHERE auth_version = 1 AND srp_verifier IS NULL"
+        "UPDATE users SET must_upgrade_auth = true WHERE auth_version = 1 AND srp_verifier IS NULL"
     )
 
     # Make hashed_password nullable (SRP users don't need it)
@@ -44,8 +43,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     # Restore NOT NULL (set a dummy value for any NULLs first)
     op.execute(
-        "UPDATE users SET hashed_password = '$2b$12$placeholder' "
-        "WHERE hashed_password IS NULL"
+        "UPDATE users SET hashed_password = '$2b$12$placeholder' WHERE hashed_password IS NULL"
     )
     op.alter_column("users", "hashed_password", nullable=False)
 

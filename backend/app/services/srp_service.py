@@ -16,9 +16,7 @@ from srptools.constants import PRIME_2048, PRIME_2048_GEN
 _SRP_HASH = hashlib.sha256
 
 
-async def create_srp_verifier(
-    salt_hex: str, verifier_hex: str
-) -> tuple[bytes, bytes]:
+async def create_srp_verifier(salt_hex: str, verifier_hex: str) -> tuple[bytes, bytes]:
     """Convert client-provided hex salt and verifier to bytes for storage.
 
     The client computes v = g^x mod N using 2SKD-derived SRP-x.
@@ -31,9 +29,7 @@ async def create_srp_verifier(
     return bytes.fromhex(salt_hex), bytes.fromhex(verifier_hex)
 
 
-async def srp_init(
-    email: str, srp_verifier_hex: str
-) -> tuple[str, str]:
+async def srp_init(email: str, srp_verifier_hex: str) -> tuple[str, str]:
     """SRP Step 1: Generate server ephemeral (B) and private key (b).
 
     Args:
@@ -47,14 +43,15 @@ async def srp_init(
     Raises:
         ValueError: If SRP initialization fails for any reason.
     """
+
     def _init() -> tuple[str, str]:
         context = SRPContext(
-            email, prime=PRIME_2048, generator=PRIME_2048_GEN,
+            email,
+            prime=PRIME_2048,
+            generator=PRIME_2048_GEN,
             hash_func=_SRP_HASH,
         )
-        server_session = SRPServerSession(
-            context, srp_verifier_hex
-        )
+        server_session = SRPServerSession(context, srp_verifier_hex)
         return server_session.public, server_session.private
 
     try:
@@ -85,26 +82,27 @@ async def srp_verify(
         Tuple of (is_valid, server_proof_hex_or_none).
         If valid, server_proof is M2 for the client to verify.
     """
+
     def _verify() -> tuple[bool, str | None]:
-        import logging
-        log = logging.getLogger("srp_debug")
         context = SRPContext(
-            email, prime=PRIME_2048, generator=PRIME_2048_GEN,
+            email,
+            prime=PRIME_2048,
+            generator=PRIME_2048_GEN,
             hash_func=_SRP_HASH,
         )
-        server_session = SRPServerSession(
-            context, srp_verifier_hex, private=server_private
-        )
+        server_session = SRPServerSession(context, srp_verifier_hex, private=server_private)
         _key, _key_proof, _key_proof_hash = server_session.process(client_public, srp_salt_hex)
         # srptools verify_proof has a Python 3 bug: hexlify() returns bytes
         # but client_proof is str, so bytes == str is always False.
         # Compare manually with consistent types.
-        server_m1 = _key_proof if isinstance(_key_proof, str) else _key_proof.decode('ascii')
+        server_m1 = _key_proof if isinstance(_key_proof, str) else _key_proof.decode("ascii")
         is_valid = client_proof.lower() == server_m1.lower()
         if not is_valid:
             return False, None
         # Return M2 (key_proof_hash), also fixing the bytes/str issue
-        m2 = _key_proof_hash if isinstance(_key_proof_hash, str) else _key_proof_hash.decode('ascii')
+        m2 = (
+            _key_proof_hash if isinstance(_key_proof_hash, str) else _key_proof_hash.decode("ascii")
+        )
         return True, m2
 
     try:

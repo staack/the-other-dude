@@ -62,24 +62,31 @@ async def test_snapshot_created_audit_event():
 
     mock_log_action = AsyncMock()
 
-    with patch(
-        "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.config_snapshot_subscriber.OpenBaoTransitService",
-        return_value=mock_openbao,
-    ), patch(
-        "app.services.config_snapshot_subscriber.generate_and_store_diff",
-        new_callable=AsyncMock,
-    ), patch(
-        "app.services.config_snapshot_subscriber.log_action",
-        mock_log_action,
+    with (
+        patch(
+            "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.generate_and_store_diff",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.log_action",
+            mock_log_action,
+        ),
     ):
         await handle_config_snapshot(msg)
 
     # log_action should have been called with config_snapshot_created
-    actions = [call.kwargs.get("action", call.args[4] if len(call.args) > 4 else None)
-               for call in mock_log_action.call_args_list]
+    actions = [
+        call.kwargs.get("action", call.args[4] if len(call.args) > 4 else None)
+        for call in mock_log_action.call_args_list
+    ]
     assert "config_snapshot_created" in actions
 
 
@@ -103,21 +110,27 @@ async def test_snapshot_skipped_duplicate_audit_event():
 
     mock_log_action = AsyncMock()
 
-    with patch(
-        "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.config_snapshot_subscriber.OpenBaoTransitService",
-        return_value=AsyncMock(),
-    ), patch(
-        "app.services.config_snapshot_subscriber.log_action",
-        mock_log_action,
+    with (
+        patch(
+            "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.OpenBaoTransitService",
+            return_value=AsyncMock(),
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.log_action",
+            mock_log_action,
+        ),
     ):
         await handle_config_snapshot(msg)
 
     # log_action should have been called with config_snapshot_skipped_duplicate
-    actions = [call.kwargs.get("action", call.args[4] if len(call.args) > 4 else None)
-               for call in mock_log_action.call_args_list]
+    actions = [
+        call.kwargs.get("action", call.args[4] if len(call.args) > 4 else None)
+        for call in mock_log_action.call_args_list
+    ]
     assert "config_snapshot_skipped_duplicate" in actions
 
 
@@ -150,22 +163,28 @@ async def test_diff_generated_audit_event():
     mock_session.commit = AsyncMock()
 
     mock_openbao = AsyncMock()
-    mock_openbao.decrypt = AsyncMock(side_effect=[
-        old_config.encode("utf-8"),
-        new_config.encode("utf-8"),
-    ])
+    mock_openbao.decrypt = AsyncMock(
+        side_effect=[
+            old_config.encode("utf-8"),
+            new_config.encode("utf-8"),
+        ]
+    )
 
     mock_log_action = AsyncMock()
 
-    with patch(
-        "app.services.config_diff_service.OpenBaoTransitService",
-        return_value=mock_openbao,
-    ), patch(
-        "app.services.config_diff_service.parse_diff_changes",
-        return_value=[],
-    ), patch(
-        "app.services.audit_service.log_action",
-        mock_log_action,
+    with (
+        patch(
+            "app.services.config_diff_service.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
+        patch(
+            "app.services.config_diff_service.parse_diff_changes",
+            return_value=[],
+        ),
+        patch(
+            "app.services.audit_service.log_action",
+            mock_log_action,
+        ),
     ):
         await generate_and_store_diff(device_id, tenant_id, new_snapshot_id, mock_session)
 
@@ -217,13 +236,21 @@ async def test_manual_trigger_audit_event():
     original_enabled = limiter.enabled
     limiter.enabled = False
     try:
-        with patch.object(
-            cb_module, "_get_nats", return_value=mock_nc,
-        ), patch.object(
-            cb_module, "_check_tenant_access", new_callable=AsyncMock,
-        ), patch(
-            "app.services.audit_service.log_action",
-            mock_log_action,
+        with (
+            patch.object(
+                cb_module,
+                "_get_nats",
+                return_value=mock_nc,
+            ),
+            patch.object(
+                cb_module,
+                "_check_tenant_access",
+                new_callable=AsyncMock,
+            ),
+            patch(
+                "app.services.audit_service.log_action",
+                mock_log_action,
+            ),
         ):
             result = await cb_module.trigger_config_snapshot(
                 request=mock_request,

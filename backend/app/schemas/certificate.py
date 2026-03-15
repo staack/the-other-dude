@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 # Request schemas
 # ---------------------------------------------------------------------------
 
+
 class CACreateRequest(BaseModel):
     """Request to generate a new root CA for the tenant."""
 
@@ -33,6 +34,7 @@ class BulkCertDeployRequest(BaseModel):
 # ---------------------------------------------------------------------------
 # Response schemas
 # ---------------------------------------------------------------------------
+
 
 class CAResponse(BaseModel):
     """Public details of a tenant's Certificate Authority (no private key)."""

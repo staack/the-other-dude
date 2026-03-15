@@ -11,9 +11,7 @@ down_revision = "024"
 
 
 def upgrade() -> None:
-    op.drop_constraint(
-        "fk_key_access_log_device_id", "key_access_log", type_="foreignkey"
-    )
+    op.drop_constraint("fk_key_access_log_device_id", "key_access_log", type_="foreignkey")
     op.create_foreign_key(
         "fk_key_access_log_device_id",
         "key_access_log",
@@ -25,9 +23,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        "fk_key_access_log_device_id", "key_access_log", type_="foreignkey"
-    )
+    op.drop_constraint("fk_key_access_log_device_id", "key_access_log", type_="foreignkey")
     op.create_foreign_key(
         "fk_key_access_log_device_id",
         "key_access_log",

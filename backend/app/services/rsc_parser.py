@@ -7,20 +7,33 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 HIGH_RISK_PATHS = {
-    "/ip address", "/ip route", "/ip firewall filter", "/ip firewall nat",
-    "/interface", "/interface bridge", "/interface vlan",
-    "/system identity", "/ip service", "/ip ssh", "/user",
+    "/ip address",
+    "/ip route",
+    "/ip firewall filter",
+    "/ip firewall nat",
+    "/interface",
+    "/interface bridge",
+    "/interface vlan",
+    "/system identity",
+    "/ip service",
+    "/ip ssh",
+    "/user",
 }
 
 MANAGEMENT_PATTERNS = [
-    (re.compile(r"chain=input.*dst-port=(22|8291|8728|8729|443|80)", re.I),
-     "Modifies firewall rules for management ports (SSH/WinBox/API/Web)"),
-    (re.compile(r"chain=input.*action=drop", re.I),
-     "Adds drop rule on input chain — may block management access"),
-    (re.compile(r"/ip service", re.I),
-     "Modifies IP services — may disable API/SSH/WinBox access"),
-    (re.compile(r"/user.*set.*password", re.I),
-     "Changes user password — may affect automated access"),
+    (
+        re.compile(r"chain=input.*dst-port=(22|8291|8728|8729|443|80)", re.I),
+        "Modifies firewall rules for management ports (SSH/WinBox/API/Web)",
+    ),
+    (
+        re.compile(r"chain=input.*action=drop", re.I),
+        "Adds drop rule on input chain — may block management access",
+    ),
+    (re.compile(r"/ip service", re.I), "Modifies IP services — may disable API/SSH/WinBox access"),
+    (
+        re.compile(r"/user.*set.*password", re.I),
+        "Changes user password — may affect automated access",
+    ),
 ]
 
 
@@ -73,7 +86,14 @@ def parse_rsc(text: str) -> dict[str, Any]:
             else:
                 # Check if second part starts with a known command verb
                 cmd_check = parts[1].strip().split(None, 1)
-                if cmd_check and cmd_check[0] in ("add", "set", "remove", "print", "enable", "disable"):
+                if cmd_check and cmd_check[0] in (
+                    "add",
+                    "set",
+                    "remove",
+                    "print",
+                    "enable",
+                    "disable",
+                ):
                     current_path = parts[0]
                     line = parts[1].strip()
                 else:
@@ -184,12 +204,14 @@ def compute_impact(
         risk = "none"
         if has_changes:
             risk = "high" if path in HIGH_RISK_PATHS else "low"
-        result_categories.append({
-            "path": path,
-            "adds": added,
-            "removes": removed,
-            "risk": risk,
-        })
+        result_categories.append(
+            {
+                "path": path,
+                "adds": added,
+                "removes": removed,
+                "risk": risk,
+            }
+        )
 
     # Check target commands against management patterns
     target_text = "\n".join(

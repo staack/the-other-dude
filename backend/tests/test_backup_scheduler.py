@@ -1,7 +1,7 @@
 """Tests for dynamic backup scheduling."""
 
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import MagicMock
 
 from app.services.backup_scheduler import (
     build_schedule_map,

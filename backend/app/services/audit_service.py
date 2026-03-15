@@ -56,9 +56,7 @@ async def log_action(
             try:
                 from app.services.crypto import encrypt_data_transit
 
-                encrypted_details = await encrypt_data_transit(
-                    details_json, str(tenant_id)
-                )
+                encrypted_details = await encrypt_data_transit(details_json, str(tenant_id))
                 # Encryption succeeded — clear plaintext details
                 details_json = _json.dumps({})
             except Exception:

@@ -28,7 +28,8 @@ def upgrade() -> None:
     conn = op.get_bind()
 
     # ── 1. Create maintenance_windows table ────────────────────────────────
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE TABLE IF NOT EXISTS maintenance_windows (
             id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id     UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -44,18 +45,22 @@ def upgrade() -> None:
 
             CONSTRAINT chk_maintenance_window_dates CHECK (end_at > start_at)
         )
-    """))
+    """)
+    )
 
     # ── 2. Composite index for active window queries ───────────────────────
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE INDEX IF NOT EXISTS idx_maintenance_windows_tenant_time
         ON maintenance_windows (tenant_id, start_at, end_at)
-    """))
+    """)
+    )
 
     # ── 3. RLS policy ─────────────────────────────────────────────────────
     conn.execute(sa.text("ALTER TABLE maintenance_windows ENABLE ROW LEVEL SECURITY"))
 
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         DO $$
         BEGIN
             IF NOT EXISTS (
@@ -67,10 +72,12 @@ def upgrade() -> None:
             END IF;
         END
         $$
-    """))
+    """)
+    )
 
     # ── 4. Grant permissions to app_user ───────────────────────────────────
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         DO $$
         BEGIN
             IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_user') THEN
@@ -78,7 +85,8 @@ def upgrade() -> None:
             END IF;
         END
         $$
-    """))
+    """)
+    )
 
 
 def downgrade() -> None:

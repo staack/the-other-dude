@@ -75,7 +75,9 @@ class VpnPeer(Base):
     assigned_ip: Mapped[str] = mapped_column(String(32), nullable=False)
     additional_allowed_ips: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     is_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
-    last_handshake: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_handshake: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

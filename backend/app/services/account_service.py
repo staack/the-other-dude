@@ -86,11 +86,7 @@ async def delete_user_account(
 
     # Null out encrypted_details (may contain encrypted PII)
     await db.execute(
-        text(
-            "UPDATE audit_logs "
-            "SET encrypted_details = NULL "
-            "WHERE user_id = :user_id"
-        ),
+        text("UPDATE audit_logs SET encrypted_details = NULL WHERE user_id = :user_id"),
         {"user_id": user_id},
     )
 
@@ -177,16 +173,18 @@ async def export_user_data(
     )
     api_keys = []
     for row in result.mappings().all():
-        api_keys.append({
-            "id": str(row["id"]),
-            "name": row["name"],
-            "key_prefix": row["key_prefix"],
-            "scopes": row["scopes"],
-            "created_at": row["created_at"].isoformat() if row["created_at"] else None,
-            "expires_at": row["expires_at"].isoformat() if row["expires_at"] else None,
-            "revoked_at": row["revoked_at"].isoformat() if row["revoked_at"] else None,
-            "last_used_at": row["last_used_at"].isoformat() if row["last_used_at"] else None,
-        })
+        api_keys.append(
+            {
+                "id": str(row["id"]),
+                "name": row["name"],
+                "key_prefix": row["key_prefix"],
+                "scopes": row["scopes"],
+                "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+                "expires_at": row["expires_at"].isoformat() if row["expires_at"] else None,
+                "revoked_at": row["revoked_at"].isoformat() if row["revoked_at"] else None,
+                "last_used_at": row["last_used_at"].isoformat() if row["last_used_at"] else None,
+            }
+        )
 
     # ── Audit logs (limit 1000, most recent first) ───────────────────────
     result = await db.execute(
@@ -201,15 +199,17 @@ async def export_user_data(
     audit_logs = []
     for row in result.mappings().all():
         details = row["details"] if row["details"] else {}
-        audit_logs.append({
-            "id": str(row["id"]),
-            "action": row["action"],
-            "resource_type": row["resource_type"],
-            "resource_id": row["resource_id"],
-            "details": details,
-            "ip_address": row["ip_address"],
-            "created_at": row["created_at"].isoformat() if row["created_at"] else None,
-        })
+        audit_logs.append(
+            {
+                "id": str(row["id"]),
+                "action": row["action"],
+                "resource_type": row["resource_type"],
+                "resource_id": row["resource_id"],
+                "details": details,
+                "ip_address": row["ip_address"],
+                "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+            }
+        )
 
     # ── Key access log (limit 1000, most recent first) ───────────────────
     result = await db.execute(
@@ -222,13 +222,15 @@ async def export_user_data(
     )
     key_access_entries = []
     for row in result.mappings().all():
-        key_access_entries.append({
-            "id": str(row["id"]),
-            "action": row["action"],
-            "resource_type": row["resource_type"],
-            "ip_address": row["ip_address"],
-            "created_at": row["created_at"].isoformat() if row["created_at"] else None,
-        })
+        key_access_entries.append(
+            {
+                "id": str(row["id"]),
+                "action": row["action"],
+                "resource_type": row["resource_type"],
+                "ip_address": row["ip_address"],
+                "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+            }
+        )
 
     return {
         "export_date": datetime.now(UTC).isoformat(),

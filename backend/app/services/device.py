@@ -29,8 +29,6 @@ from app.models.device import (
     DeviceTagAssignment,
 )
 from app.schemas.device import (
-    BulkAddRequest,
-    BulkAddResult,
     DeviceCreate,
     DeviceGroupCreate,
     DeviceGroupResponse,
@@ -43,9 +41,7 @@ from app.schemas.device import (
 )
 from app.config import settings
 from app.services.crypto import (
-    decrypt_credentials,
     decrypt_credentials_hybrid,
-    encrypt_credentials,
     encrypt_credentials_transit,
 )
 
@@ -58,9 +54,7 @@ from app.services.crypto import (
 async def _tcp_reachable(ip: str, port: int, timeout: float = 3.0) -> bool:
     """Return True if a TCP connection to ip:port succeeds within timeout."""
     try:
-        _, writer = await asyncio.wait_for(
-            asyncio.open_connection(ip, port), timeout=timeout
-        )
+        _, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout=timeout)
         writer.close()
         try:
             await writer.wait_closed()
@@ -151,6 +145,7 @@ async def create_device(
 
     if not api_reachable and not ssl_reachable:
         from fastapi import HTTPException, status
+
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(
@@ -162,9 +157,7 @@ async def create_device(
 
     # Encrypt credentials via OpenBao Transit (new writes go through Transit)
     credentials_json = json.dumps({"username": data.username, "password": data.password})
-    transit_ciphertext = await encrypt_credentials_transit(
-        credentials_json, str(tenant_id)
-    )
+    transit_ciphertext = await encrypt_credentials_transit(credentials_json, str(tenant_id))
 
     device = Device(
         tenant_id=tenant_id,
@@ -180,9 +173,7 @@ async def create_device(
     await db.refresh(device)
 
     # Re-query with relationships loaded
-    result = await db.execute(
-        _device_with_relations().where(Device.id == device.id)
-    )
+    result = await db.execute(_device_with_relations().where(Device.id == device.id))
     device = result.scalar_one()
     return _build_device_response(device)
 
@@ -223,9 +214,7 @@ async def get_devices(
     if tag_id:
         base_q = base_q.where(
             Device.id.in_(
-                select(DeviceTagAssignment.device_id).where(
-                    DeviceTagAssignment.tag_id == tag_id
-                )
+                select(DeviceTagAssignment.device_id).where(DeviceTagAssignment.tag_id == tag_id)
             )
         )
 
@@ -274,9 +263,7 @@ async def get_device(
     """Get a single device by ID."""
     from fastapi import HTTPException, status
 
-    result = await db.execute(
-        _device_with_relations().where(Device.id == device_id)
-    )
+    result = await db.execute(_device_with_relations().where(Device.id == device_id))
     device = result.scalar_one_or_none()
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
@@ -295,9 +282,7 @@ async def update_device(
     """
     from fastapi import HTTPException, status
 
-    result = await db.execute(
-        _device_with_relations().where(Device.id == device_id)
-    )
+    result = await db.execute(_device_with_relations().where(Device.id == device_id))
     device = result.scalar_one_or_none()
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
@@ -323,7 +308,9 @@ async def update_device(
     if data.password is not None:
         # Decrypt existing to get current username if no new username given
         current_username: str = data.username or ""
-        if not current_username and (device.encrypted_credentials_transit or device.encrypted_credentials):
+        if not current_username and (
+            device.encrypted_credentials_transit or device.encrypted_credentials
+        ):
             try:
                 existing_json = await decrypt_credentials_hybrid(
                     device.encrypted_credentials_transit,
@@ -336,17 +323,21 @@ async def update_device(
             except Exception:
                 current_username = ""
 
-        credentials_json = json.dumps({
-            "username": data.username if data.username is not None else current_username,
-            "password": data.password,
-        })
+        credentials_json = json.dumps(
+            {
+                "username": data.username if data.username is not None else current_username,
+                "password": data.password,
+            }
+        )
         # New writes go through Transit
         device.encrypted_credentials_transit = await encrypt_credentials_transit(
             credentials_json, str(device.tenant_id)
         )
         device.encrypted_credentials = None  # Clear legacy (Transit is canonical)
         credentials_changed = True
-    elif data.username is not None and (device.encrypted_credentials_transit or device.encrypted_credentials):
+    elif data.username is not None and (
+        device.encrypted_credentials_transit or device.encrypted_credentials
+    ):
         # Only username changed — update it without changing the password
         try:
             existing_json = await decrypt_credentials_hybrid(
@@ -373,6 +364,7 @@ async def update_device(
     if credentials_changed:
         try:
             from app.services.event_publisher import publish_event
+
             await publish_event(
                 f"device.credential_changed.{device_id}",
                 {"device_id": str(device_id), "tenant_id": str(tenant_id)},
@@ -380,9 +372,7 @@ async def update_device(
         except Exception:
             pass  # Never fail the update due to NATS issues
 
-    result2 = await db.execute(
-        _device_with_relations().where(Device.id == device_id)
-    )
+    result2 = await db.execute(_device_with_relations().where(Device.id == device_id))
     device = result2.scalar_one()
     return _build_device_response(device)
 
@@ -526,11 +516,7 @@ async def get_groups(
     tenant_id: uuid.UUID,
 ) -> list[DeviceGroupResponse]:
     """Return all device groups for the current tenant with device counts."""
-    result = await db.execute(
-        select(DeviceGroup).options(
-            selectinload(DeviceGroup.memberships)
-        )
-    )
+    result = await db.execute(select(DeviceGroup).options(selectinload(DeviceGroup.memberships)))
     groups = result.scalars().all()
     return [
         DeviceGroupResponse(
@@ -554,9 +540,9 @@ async def update_group(
     from fastapi import HTTPException, status
 
     result = await db.execute(
-        select(DeviceGroup).options(
-            selectinload(DeviceGroup.memberships)
-        ).where(DeviceGroup.id == group_id)
+        select(DeviceGroup)
+        .options(selectinload(DeviceGroup.memberships))
+        .where(DeviceGroup.id == group_id)
     )
     group = result.scalar_one_or_none()
     if not group:
@@ -571,9 +557,9 @@ async def update_group(
     await db.refresh(group)
 
     result2 = await db.execute(
-        select(DeviceGroup).options(
-            selectinload(DeviceGroup.memberships)
-        ).where(DeviceGroup.id == group_id)
+        select(DeviceGroup)
+        .options(selectinload(DeviceGroup.memberships))
+        .where(DeviceGroup.id == group_id)
     )
     group = result2.scalar_one()
     return DeviceGroupResponse(

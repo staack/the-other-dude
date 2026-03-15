@@ -221,29 +221,38 @@ async def list_audit_logs(
         all_rows = result.mappings().all()
 
         # Decrypt encrypted details concurrently
-        decrypted_details = await _decrypt_details_batch(
-            all_rows, str(tenant_id)
-        )
+        decrypted_details = await _decrypt_details_batch(all_rows, str(tenant_id))
 
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow([
-            "ID", "User Email", "Action", "Resource Type",
-            "Resource ID", "Device", "Details", "IP Address", "Timestamp",
-        ])
+        writer.writerow(
+            [
+                "ID",
+                "User Email",
+                "Action",
+                "Resource Type",
+                "Resource ID",
+                "Device",
+                "Details",
+                "IP Address",
+                "Timestamp",
+            ]
+        )
         for row, details in zip(all_rows, decrypted_details):
             details_str = json.dumps(details) if details else "{}"
-            writer.writerow([
-                str(row["id"]),
-                row["user_email"] or "",
-                row["action"],
-                row["resource_type"] or "",
-                row["resource_id"] or "",
-                row["device_name"] or "",
-                details_str,
-                row["ip_address"] or "",
-                str(row["created_at"]),
-            ])
+            writer.writerow(
+                [
+                    str(row["id"]),
+                    row["user_email"] or "",
+                    row["action"],
+                    row["resource_type"] or "",
+                    row["resource_id"] or "",
+                    row["device_name"] or "",
+                    details_str,
+                    row["ip_address"] or "",
+                    str(row["created_at"]),
+                ]
+            )
 
         output.seek(0)
         return StreamingResponse(

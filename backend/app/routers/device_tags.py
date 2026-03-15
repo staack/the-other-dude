@@ -72,9 +72,7 @@ async def update_tag(
 ) -> DeviceTagResponse:
     """Update a device tag. Requires operator role or above."""
     await _check_tenant_access(current_user, tenant_id, db)
-    return await device_service.update_tag(
-        db=db, tenant_id=tenant_id, tag_id=tag_id, data=data
-    )
+    return await device_service.update_tag(db=db, tenant_id=tenant_id, tag_id=tag_id, data=data)
 
 
 @router.delete(

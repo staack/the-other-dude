@@ -13,7 +13,6 @@ jobs may span multiple tenants and run in background asyncio tasks.
 """
 
 import asyncio
-import io
 import json
 import logging
 from datetime import datetime, timezone
@@ -99,10 +98,19 @@ async def _run_upgrade(job_id: str) -> None:
         return
 
     (
-        _, device_id, tenant_id, target_version,
-        architecture, channel, status, confirmed_major,
-        ip_address, hostname, encrypted_credentials,
-        current_version, encrypted_credentials_transit,
+        _,
+        device_id,
+        tenant_id,
+        target_version,
+        architecture,
+        channel,
+        status,
+        confirmed_major,
+        ip_address,
+        hostname,
+        encrypted_credentials,
+        current_version,
+        encrypted_credentials_transit,
     ) = row
 
     device_id = str(device_id)
@@ -116,12 +124,22 @@ async def _run_upgrade(job_id: str) -> None:
 
     logger.info(
         "Starting firmware upgrade for %s (%s): %s -> %s",
-        hostname, ip_address, current_version, target_version,
+        hostname,
+        ip_address,
+        current_version,
+        target_version,
     )
 
     # Step 2: Update status to downloading
     await _update_job(job_id, status="downloading", started_at=datetime.now(timezone.utc))
-    await _publish_upgrade_progress(tenant_id, device_id, job_id, "downloading", target_version, f"Downloading firmware {target_version} for {hostname}")
+    await _publish_upgrade_progress(
+        tenant_id,
+        device_id,
+        job_id,
+        "downloading",
+        target_version,
+        f"Downloading firmware {target_version} for {hostname}",
+    )
 
     # Step 3: Check major version upgrade confirmation
     if current_version and target_version:
@@ -133,13 +151,22 @@ async def _run_upgrade(job_id: str) -> None:
                 status="failed",
                 error_message="Major version upgrade requires explicit confirmation",
             )
-            await _publish_upgrade_progress(tenant_id, device_id, job_id, "failed", target_version, f"Major version upgrade requires explicit confirmation for {hostname}", error="Major version upgrade requires explicit confirmation")
+            await _publish_upgrade_progress(
+                tenant_id,
+                device_id,
+                job_id,
+                "failed",
+                target_version,
+                f"Major version upgrade requires explicit confirmation for {hostname}",
+                error="Major version upgrade requires explicit confirmation",
+            )
             return
 
     # Step 4: Mandatory config backup
     logger.info("Running mandatory pre-upgrade backup for %s", hostname)
     try:
         from app.services import backup_service
+
         backup_result = await backup_service.run_backup(
             device_id=device_id,
             tenant_id=tenant_id,
@@ -155,13 +182,22 @@ async def _run_upgrade(job_id: str) -> None:
             status="failed",
             error_message=f"Pre-upgrade backup failed: {backup_err}",
         )
-        await _publish_upgrade_progress(tenant_id, device_id, job_id, "failed", target_version, f"Pre-upgrade backup failed for {hostname}", error=str(backup_err))
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"Pre-upgrade backup failed for {hostname}",
+            error=str(backup_err),
+        )
         return
 
     # Step 5: Download NPK
     logger.info("Downloading firmware %s for %s/%s", target_version, architecture, channel)
     try:
         from app.services.firmware_service import download_firmware
+
         npk_path = await download_firmware(architecture, channel, target_version)
         logger.info("Firmware cached at %s", npk_path)
     except Exception as dl_err:
@@ -171,24 +207,51 @@ async def _run_upgrade(job_id: str) -> None:
             status="failed",
             error_message=f"Firmware download failed: {dl_err}",
         )
-        await _publish_upgrade_progress(tenant_id, device_id, job_id, "failed", target_version, f"Firmware download failed for {hostname}", error=str(dl_err))
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"Firmware download failed for {hostname}",
+            error=str(dl_err),
+        )
         return
 
     # Step 6: Upload NPK to device via SFTP
     await _update_job(job_id, status="uploading")
-    await _publish_upgrade_progress(tenant_id, device_id, job_id, "uploading", target_version, f"Uploading firmware to {hostname}")
+    await _publish_upgrade_progress(
+        tenant_id,
+        device_id,
+        job_id,
+        "uploading",
+        target_version,
+        f"Uploading firmware to {hostname}",
+    )
 
     # Decrypt device credentials (dual-read: Transit preferred, legacy fallback)
     if not encrypted_credentials_transit and not encrypted_credentials:
         await _update_job(job_id, status="failed", error_message="Device has no stored credentials")
-        await _publish_upgrade_progress(tenant_id, device_id, job_id, "failed", target_version, f"No stored credentials for {hostname}", error="Device has no stored credentials")
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"No stored credentials for {hostname}",
+            error="Device has no stored credentials",
+        )
         return
 
     try:
         from app.services.crypto import decrypt_credentials_hybrid
+
         key = settings.get_encryption_key_bytes()
         creds_json = await decrypt_credentials_hybrid(
-            encrypted_credentials_transit, encrypted_credentials, tenant_id, key,
+            encrypted_credentials_transit,
+            encrypted_credentials,
+            tenant_id,
+            key,
         )
         creds = json.loads(creds_json)
         ssh_username = creds.get("username", "")
@@ -199,7 +262,15 @@ async def _run_upgrade(job_id: str) -> None:
             status="failed",
             error_message=f"Failed to decrypt credentials: {cred_err}",
         )
-        await _publish_upgrade_progress(tenant_id, device_id, job_id, "failed", target_version, f"Failed to decrypt credentials for {hostname}", error=str(cred_err))
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"Failed to decrypt credentials for {hostname}",
+            error=str(cred_err),
+        )
         return
 
     try:
@@ -225,12 +296,27 @@ async def _run_upgrade(job_id: str) -> None:
             status="failed",
             error_message=f"NPK upload failed: {upload_err}",
         )
-        await _publish_upgrade_progress(tenant_id, device_id, job_id, "failed", target_version, f"NPK upload failed for {hostname}", error=str(upload_err))
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"NPK upload failed for {hostname}",
+            error=str(upload_err),
+        )
         return
 
     # Step 7: Trigger reboot
     await _update_job(job_id, status="rebooting")
-    await _publish_upgrade_progress(tenant_id, device_id, job_id, "rebooting", target_version, f"Rebooting {hostname} for firmware install")
+    await _publish_upgrade_progress(
+        tenant_id,
+        device_id,
+        job_id,
+        "rebooting",
+        target_version,
+        f"Rebooting {hostname} for firmware install",
+    )
     try:
         async with asyncssh.connect(
             ip_address,
@@ -245,7 +331,9 @@ async def _run_upgrade(job_id: str) -> None:
             logger.info("Reboot command sent to %s", hostname)
     except Exception as reboot_err:
         # Device may drop connection during reboot — this is expected
-        logger.info("Device %s dropped connection after reboot command (expected): %s", hostname, reboot_err)
+        logger.info(
+            "Device %s dropped connection after reboot command (expected): %s", hostname, reboot_err
+        )
 
     # Step 8: Wait for reconnect
     logger.info("Waiting %ds before polling %s for reconnect", _INITIAL_WAIT, hostname)
@@ -267,36 +355,69 @@ async def _run_upgrade(job_id: str) -> None:
             status="failed",
             error_message=f"Device did not reconnect within {_RECONNECT_TIMEOUT // 60} minutes after reboot",
         )
-        await _publish_upgrade_progress(tenant_id, device_id, job_id, "failed", target_version, f"Device {hostname} did not reconnect within {_RECONNECT_TIMEOUT // 60} minutes", error="Reconnect timeout")
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"Device {hostname} did not reconnect within {_RECONNECT_TIMEOUT // 60} minutes",
+            error="Reconnect timeout",
+        )
         return
 
     # Step 9: Verify upgrade
     await _update_job(job_id, status="verifying")
-    await _publish_upgrade_progress(tenant_id, device_id, job_id, "verifying", target_version, f"Verifying firmware version on {hostname}")
+    await _publish_upgrade_progress(
+        tenant_id,
+        device_id,
+        job_id,
+        "verifying",
+        target_version,
+        f"Verifying firmware version on {hostname}",
+    )
     try:
         actual_version = await _get_device_version(ip_address, ssh_username, ssh_password)
         if actual_version and target_version in actual_version:
             logger.info(
                 "Firmware upgrade verified for %s: %s",
-                hostname, actual_version,
+                hostname,
+                actual_version,
             )
             await _update_job(
                 job_id,
                 status="completed",
                 completed_at=datetime.now(timezone.utc),
             )
-            await _publish_upgrade_progress(tenant_id, device_id, job_id, "completed", target_version, f"Firmware upgrade to {target_version} completed on {hostname}")
+            await _publish_upgrade_progress(
+                tenant_id,
+                device_id,
+                job_id,
+                "completed",
+                target_version,
+                f"Firmware upgrade to {target_version} completed on {hostname}",
+            )
         else:
             logger.error(
                 "Version mismatch for %s: expected %s, got %s",
-                hostname, target_version, actual_version,
+                hostname,
+                target_version,
+                actual_version,
             )
             await _update_job(
                 job_id,
                 status="failed",
                 error_message=f"Expected {target_version} but got {actual_version}",
             )
-            await _publish_upgrade_progress(tenant_id, device_id, job_id, "failed", target_version, f"Version mismatch on {hostname}: expected {target_version}, got {actual_version}", error=f"Expected {target_version} but got {actual_version}")
+            await _publish_upgrade_progress(
+                tenant_id,
+                device_id,
+                job_id,
+                "failed",
+                target_version,
+                f"Version mismatch on {hostname}: expected {target_version}, got {actual_version}",
+                error=f"Expected {target_version} but got {actual_version}",
+            )
     except Exception as verify_err:
         logger.error("Post-upgrade verification failed for %s: %s", hostname, verify_err)
         await _update_job(
@@ -304,7 +425,15 @@ async def _run_upgrade(job_id: str) -> None:
             status="failed",
             error_message=f"Post-upgrade verification failed: {verify_err}",
         )
-        await _publish_upgrade_progress(tenant_id, device_id, job_id, "failed", target_version, f"Post-upgrade verification failed for {hostname}", error=str(verify_err))
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"Post-upgrade verification failed for {hostname}",
+            error=str(verify_err),
+        )
 
 
 async def start_mass_upgrade(rollout_group_id: str) -> dict:
@@ -457,7 +586,7 @@ async def resume_mass_upgrade(rollout_group_id: str) -> None:
     """Resume a paused mass rollout from where it left off."""
     # Reset first paused job to pending, then restart sequential processing
     async with AdminAsyncSessionLocal() as session:
-        result = await session.execute(
+        await session.execute(
             text("""
                 UPDATE firmware_upgrade_jobs
                 SET status = 'pending'
@@ -519,7 +648,7 @@ async def _update_job(job_id: str, **kwargs) -> None:
         await session.execute(
             text(f"""
                 UPDATE firmware_upgrade_jobs
-                SET {', '.join(sets)}
+                SET {", ".join(sets)}
                 WHERE id = CAST(:job_id AS uuid)
             """),
             params,

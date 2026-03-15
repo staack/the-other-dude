@@ -57,6 +57,7 @@ class RemoteWinboxDuplicateDetail(BaseModel):
 
 class RemoteWinboxSessionItem(BaseModel):
     """Used in the combined active sessions list."""
+
     session_id: uuid.UUID
     status: RemoteWinboxState
     created_at: datetime

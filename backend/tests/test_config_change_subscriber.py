@@ -1,8 +1,7 @@
 """Tests for config change NATS subscriber."""
 
 import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 from app.services.config_change_subscriber import handle_config_changed
@@ -18,13 +17,16 @@ async def test_triggers_backup_on_config_change():
         "new_timestamp": "2026-03-07 12:00:00",
     }
 
-    with patch(
-        "app.services.config_change_subscriber.backup_service.run_backup",
-        new_callable=AsyncMock,
-    ) as mock_backup, patch(
-        "app.services.config_change_subscriber._last_backup_within_dedup_window",
-        new_callable=AsyncMock,
-        return_value=False,
+    with (
+        patch(
+            "app.services.config_change_subscriber.backup_service.run_backup",
+            new_callable=AsyncMock,
+        ) as mock_backup,
+        patch(
+            "app.services.config_change_subscriber._last_backup_within_dedup_window",
+            new_callable=AsyncMock,
+            return_value=False,
+        ),
     ):
         await handle_config_changed(event)
 
@@ -42,13 +44,16 @@ async def test_skips_backup_within_dedup_window():
         "new_timestamp": "2026-03-07 12:00:00",
     }
 
-    with patch(
-        "app.services.config_change_subscriber.backup_service.run_backup",
-        new_callable=AsyncMock,
-    ) as mock_backup, patch(
-        "app.services.config_change_subscriber._last_backup_within_dedup_window",
-        new_callable=AsyncMock,
-        return_value=True,
+    with (
+        patch(
+            "app.services.config_change_subscriber.backup_service.run_backup",
+            new_callable=AsyncMock,
+        ) as mock_backup,
+        patch(
+            "app.services.config_change_subscriber._last_backup_within_dedup_window",
+            new_callable=AsyncMock,
+            return_value=True,
+        ),
     ):
         await handle_config_changed(event)
 

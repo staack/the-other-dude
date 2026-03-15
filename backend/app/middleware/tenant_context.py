@@ -178,7 +178,6 @@ async def get_current_user_ws(
     Raises:
         WebSocketException 1008: If no token is provided or the token is invalid.
     """
-    from starlette.websockets import WebSocket, WebSocketState
     from fastapi import WebSocketException
 
     # 1. Try cookie

@@ -1,7 +1,7 @@
 """Tests for push rollback NATS subscriber."""
 
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 from app.services.push_rollback_subscriber import (

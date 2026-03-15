@@ -69,7 +69,9 @@ async def on_device_status(msg) -> None:
         uptime_seconds = _parse_uptime(data.get("uptime", ""))
 
         if not device_id or not status:
-            logger.warning("Received device.status event with missing device_id or status — skipping")
+            logger.warning(
+                "Received device.status event with missing device_id or status — skipping"
+            )
             await msg.ack()
             return
 
@@ -115,12 +117,15 @@ async def on_device_status(msg) -> None:
         # Alert evaluation for offline/online status changes — non-fatal
         try:
             from app.services import alert_evaluator
+
             if status == "offline":
                 await alert_evaluator.evaluate_offline(device_id, data.get("tenant_id", ""))
             elif status == "online":
                 await alert_evaluator.evaluate_online(device_id, data.get("tenant_id", ""))
         except Exception as e:
-            logger.warning("Alert evaluation failed for device %s status=%s: %s", device_id, status, e)
+            logger.warning(
+                "Alert evaluation failed for device %s status=%s: %s", device_id, status, e
+            )
 
         logger.info(
             "Device status updated",

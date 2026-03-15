@@ -146,16 +146,16 @@ async def _delete_session_from_redis(session_id: str) -> None:
     await rd.delete(f"{REDIS_PREFIX}{session_id}")
 
 
-async def _open_tunnel(
-    device_id: uuid.UUID, tenant_id: uuid.UUID, user_id: uuid.UUID
-) -> dict:
+async def _open_tunnel(device_id: uuid.UUID, tenant_id: uuid.UUID, user_id: uuid.UUID) -> dict:
     """Open a TCP tunnel to device port 8291 via NATS request-reply."""
-    payload = json.dumps({
-        "device_id": str(device_id),
-        "tenant_id": str(tenant_id),
-        "user_id": str(user_id),
-        "target_port": 8291,
-    }).encode()
+    payload = json.dumps(
+        {
+            "device_id": str(device_id),
+            "tenant_id": str(tenant_id),
+            "user_id": str(user_id),
+            "target_port": 8291,
+        }
+    ).encode()
 
     try:
         nc = await _get_nats()
@@ -176,9 +176,7 @@ async def _open_tunnel(
         )
 
     if "error" in data:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=data["error"]
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=data["error"])
 
     return data
 
@@ -250,9 +248,7 @@ async def create_winbox_remote_session(
                 except Exception:
                     worker_info = None
                 if worker_info is None:
-                    logger.warning(
-                        "Cleaning stale Redis session %s (worker 404)", stale_sid
-                    )
+                    logger.warning("Cleaning stale Redis session %s (worker 404)", stale_sid)
                     tunnel_id = sess.get("tunnel_id")
                     if tunnel_id:
                         await _close_tunnel(tunnel_id)
@@ -333,12 +329,8 @@ async def create_winbox_remote_session(
             username = ""  # noqa: F841
             password = ""  # noqa: F841
 
-        expires_at = datetime.fromisoformat(
-            worker_resp.get("expires_at", now.isoformat())
-        )
-        max_expires_at = datetime.fromisoformat(
-            worker_resp.get("max_expires_at", now.isoformat())
-        )
+        expires_at = datetime.fromisoformat(worker_resp.get("expires_at", now.isoformat()))
+        max_expires_at = datetime.fromisoformat(worker_resp.get("max_expires_at", now.isoformat()))
 
         # Save session to Redis
         session_data = {
@@ -375,8 +367,7 @@ async def create_winbox_remote_session(
             pass
 
         ws_path = (
-            f"/api/tenants/{tenant_id}/devices/{device_id}"
-            f"/winbox-remote-sessions/{session_id}/ws"
+            f"/api/tenants/{tenant_id}/devices/{device_id}/winbox-remote-sessions/{session_id}/ws"
         )
 
         return RemoteWinboxSessionResponse(
@@ -425,14 +416,10 @@ async def get_winbox_remote_session(
 
     sess = await _get_session_from_redis(str(session_id))
     if sess is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
     if sess.get("tenant_id") != str(tenant_id) or sess.get("device_id") != str(device_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
     return RemoteWinboxStatusResponse(
         session_id=uuid.UUID(sess["session_id"]),
@@ -478,10 +465,7 @@ async def list_winbox_remote_sessions(
                 sess = json.loads(raw)
             except Exception:
                 continue
-            if (
-                sess.get("tenant_id") == str(tenant_id)
-                and sess.get("device_id") == str(device_id)
-            ):
+            if sess.get("tenant_id") == str(tenant_id) and sess.get("device_id") == str(device_id):
                 sessions.append(
                     RemoteWinboxStatusResponse(
                         session_id=uuid.UUID(sess["session_id"]),
@@ -533,9 +517,7 @@ async def terminate_winbox_remote_session(
         )
 
     if sess.get("tenant_id") != str(tenant_id):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Session not found")
 
     # Rollback order: worker -> tunnel -> redis -> audit
     await worker_terminate_session(str(session_id))
@@ -574,14 +556,12 @@ async def terminate_winbox_remote_session(
 
 
 @router.get(
-    "/tenants/{tenant_id}/devices/{device_id}"
-    "/winbox-remote-sessions/{session_id}/xpra/{path:path}",
+    "/tenants/{tenant_id}/devices/{device_id}/winbox-remote-sessions/{session_id}/xpra/{path:path}",
     summary="Proxy Xpra HTML5 client files",
     dependencies=[Depends(require_operator_or_above)],
 )
 @router.get(
-    "/tenants/{tenant_id}/devices/{device_id}"
-    "/winbox-remote-sessions/{session_id}/xpra",
+    "/tenants/{tenant_id}/devices/{device_id}/winbox-remote-sessions/{session_id}/xpra",
     summary="Proxy Xpra HTML5 client (root)",
     dependencies=[Depends(require_operator_or_above)],
 )
@@ -626,7 +606,8 @@ async def proxy_xpra_html(
         content=proxy_resp.content,
         status_code=proxy_resp.status_code,
         headers={
-            k: v for k, v in proxy_resp.headers.items()
+            k: v
+            for k, v in proxy_resp.headers.items()
             if k.lower() in ("content-type", "cache-control", "content-encoding")
         },
     )
@@ -637,9 +618,7 @@ async def proxy_xpra_html(
 # ---------------------------------------------------------------------------
 
 
-@router.websocket(
-    "/tenants/{tenant_id}/devices/{device_id}/winbox-remote-sessions/{session_id}/ws"
-)
+@router.websocket("/tenants/{tenant_id}/devices/{device_id}/winbox-remote-sessions/{session_id}/ws")
 async def winbox_remote_ws_proxy(
     websocket: WebSocket,
     tenant_id: uuid.UUID,

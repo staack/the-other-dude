@@ -23,7 +23,6 @@ from app.database import get_db
 from app.middleware.rate_limit import limiter
 from app.services.audit_service import log_action
 from app.middleware.rbac import (
-    require_min_role,
     require_operator_or_above,
     require_scope,
     require_tenant_admin_or_above,
@@ -57,6 +56,7 @@ async def _check_tenant_access(
     if current_user.is_super_admin:
         # Re-set tenant context to the target tenant so RLS allows the operation
         from app.database import set_tenant_context
+
         await set_tenant_context(db, str(tenant_id))
         return
     if current_user.tenant_id != tenant_id:
@@ -138,8 +138,12 @@ async def create_device(
     )
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "device_create",
-            resource_type="device", resource_id=str(result.id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "device_create",
+            resource_type="device",
+            resource_id=str(result.id),
             details={"hostname": data.hostname, "ip_address": data.ip_address},
             ip_address=request.client.host if request.client else None,
         )
@@ -191,8 +195,12 @@ async def update_device(
     )
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "device_update",
-            resource_type="device", resource_id=str(device_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "device_update",
+            resource_type="device",
+            resource_id=str(device_id),
             device_id=device_id,
             details={"changes": data.model_dump(exclude_unset=True)},
             ip_address=request.client.host if request.client else None,
@@ -220,8 +228,12 @@ async def delete_device(
     await _check_tenant_access(current_user, tenant_id, db)
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "device_delete",
-            resource_type="device", resource_id=str(device_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "device_delete",
+            resource_type="device",
+            resource_id=str(device_id),
             device_id=device_id,
             ip_address=request.client.host if request.client else None,
         )
@@ -262,14 +274,21 @@ async def scan_devices(
 
     discovered = await scan_subnet(data.cidr)
     import ipaddress
+
     network = ipaddress.ip_network(data.cidr, strict=False)
-    total_scanned = network.num_addresses - 2 if network.num_addresses > 2 else network.num_addresses
+    total_scanned = (
+        network.num_addresses - 2 if network.num_addresses > 2 else network.num_addresses
+    )
 
     # Audit log the scan (fire-and-forget — never breaks the response)
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "subnet_scan",
-            resource_type="network", resource_id=data.cidr,
+            db,
+            tenant_id,
+            current_user.user_id,
+            "subnet_scan",
+            resource_type="network",
+            resource_id=data.cidr,
             details={
                 "cidr": data.cidr,
                 "devices_found": len(discovered),
@@ -322,10 +341,12 @@ async def bulk_add_devices(
         password = dev_data.password or data.shared_password
 
         if not username or not password:
-            failed.append({
-                "ip_address": dev_data.ip_address,
-                "error": "No credentials provided (set per-device or shared credentials)",
-            })
+            failed.append(
+                {
+                    "ip_address": dev_data.ip_address,
+                    "error": "No credentials provided (set per-device or shared credentials)",
+                }
+            )
             continue
 
         create_data = DeviceCreate(
@@ -347,9 +368,16 @@ async def bulk_add_devices(
             added.append(device)
             try:
                 await log_action(
-                    db, tenant_id, current_user.user_id, "device_adopt",
-                    resource_type="device", resource_id=str(device.id),
-                    details={"hostname": create_data.hostname, "ip_address": create_data.ip_address},
+                    db,
+                    tenant_id,
+                    current_user.user_id,
+                    "device_adopt",
+                    resource_type="device",
+                    resource_id=str(device.id),
+                    details={
+                        "hostname": create_data.hostname,
+                        "ip_address": create_data.ip_address,
+                    },
                     ip_address=request.client.host if request.client else None,
                 )
             except Exception:

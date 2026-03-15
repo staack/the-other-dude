@@ -29,12 +29,14 @@ router = APIRouter(tags=["device-logs"])
 # Helpers (same pattern as config_editor.py)
 # ---------------------------------------------------------------------------
 
+
 async def _check_tenant_access(
     current_user: CurrentUser, tenant_id: uuid.UUID, db: AsyncSession
 ) -> None:
     """Verify the current user is allowed to access the given tenant."""
     if current_user.is_super_admin:
         from app.database import set_tenant_context
+
         await set_tenant_context(db, str(tenant_id))
         return
     if current_user.tenant_id != tenant_id:
@@ -44,16 +46,12 @@ async def _check_tenant_access(
         )
 
 
-async def _check_device_exists(
-    db: AsyncSession, device_id: uuid.UUID
-) -> None:
+async def _check_device_exists(db: AsyncSession, device_id: uuid.UUID) -> None:
     """Verify the device exists (does not require online status for logs)."""
     from sqlalchemy import select
     from app.models.device import Device
 
-    result = await db.execute(
-        select(Device).where(Device.id == device_id)
-    )
+    result = await db.execute(select(Device).where(Device.id == device_id))
     device = result.scalar_one_or_none()
     if device is None:
         raise HTTPException(
@@ -65,6 +63,7 @@ async def _check_device_exists(
 # ---------------------------------------------------------------------------
 # Response model
 # ---------------------------------------------------------------------------
+
 
 class LogEntry(BaseModel):
     time: str
@@ -81,6 +80,7 @@ class LogsResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Endpoint
 # ---------------------------------------------------------------------------
+
 
 @router.get(
     "/tenants/{tenant_id}/devices/{device_id}/logs",

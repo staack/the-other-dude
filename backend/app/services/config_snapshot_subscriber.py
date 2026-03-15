@@ -89,9 +89,11 @@ async def handle_config_snapshot(msg) -> None:
 
     collected_at_raw = data.get("collected_at")
     try:
-        collected_at = datetime.fromisoformat(
-            collected_at_raw.replace("Z", "+00:00")
-        ) if collected_at_raw else datetime.now(timezone.utc)
+        collected_at = (
+            datetime.fromisoformat(collected_at_raw.replace("Z", "+00:00"))
+            if collected_at_raw
+            else datetime.now(timezone.utc)
+        )
     except (ValueError, AttributeError):
         collected_at = datetime.now(timezone.utc)
 
@@ -131,9 +133,7 @@ async def handle_config_snapshot(msg) -> None:
         # --- Encrypt via OpenBao Transit ---
         openbao = OpenBaoTransitService()
         try:
-            encrypted_text = await openbao.encrypt(
-                tenant_id, config_text.encode("utf-8")
-            )
+            encrypted_text = await openbao.encrypt(tenant_id, config_text.encode("utf-8"))
         except Exception as exc:
             logger.warning(
                 "Transit encrypt failed for device %s tenant %s: %s",
@@ -207,7 +207,8 @@ async def handle_config_snapshot(msg) -> None:
         except Exception as exc:
             logger.warning(
                 "Diff generation failed for device %s (non-fatal): %s",
-                device_id, exc,
+                device_id,
+                exc,
             )
 
     logger.info(
@@ -233,9 +234,7 @@ async def _subscribe_with_retry(js) -> None:
                 stream="DEVICE_EVENTS",
                 manual_ack=True,
             )
-            logger.info(
-                "NATS: subscribed to config.snapshot.> (durable: config_snapshot_ingest)"
-            )
+            logger.info("NATS: subscribed to config.snapshot.> (durable: config_snapshot_ingest)")
             return
         except Exception as exc:
             if attempt < max_attempts:

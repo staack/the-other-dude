@@ -28,34 +28,81 @@ def upgrade() -> None:
     # ── vpn_config: one row per tenant ──
     op.create_table(
         "vpn_config",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column("tenant_id", UUID(as_uuid=True), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, unique=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
+        sa.Column(
+            "tenant_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+            nullable=False,
+            unique=True,
+        ),
         sa.Column("server_private_key", sa.LargeBinary(), nullable=False),  # AES-256-GCM encrypted
         sa.Column("server_public_key", sa.String(64), nullable=False),
         sa.Column("subnet", sa.String(32), nullable=False, server_default="10.10.0.0/24"),
         sa.Column("server_port", sa.Integer(), nullable=False, server_default="51820"),
         sa.Column("server_address", sa.String(32), nullable=False, server_default="10.10.0.1/24"),
-        sa.Column("endpoint", sa.String(255), nullable=True),  # public hostname:port for devices to connect to
+        sa.Column(
+            "endpoint", sa.String(255), nullable=True
+        ),  # public hostname:port for devices to connect to
         sa.Column("is_enabled", sa.Boolean(), nullable=False, server_default="false"),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
     )
 
     # ── vpn_peers: one per device VPN connection ──
     op.create_table(
         "vpn_peers",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column("tenant_id", UUID(as_uuid=True), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("device_id", UUID(as_uuid=True), sa.ForeignKey("devices.id", ondelete="CASCADE"), nullable=False, unique=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
+        sa.Column(
+            "tenant_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "device_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("devices.id", ondelete="CASCADE"),
+            nullable=False,
+            unique=True,
+        ),
         sa.Column("peer_private_key", sa.LargeBinary(), nullable=False),  # AES-256-GCM encrypted
         sa.Column("peer_public_key", sa.String(64), nullable=False),
-        sa.Column("preshared_key", sa.LargeBinary(), nullable=True),  # AES-256-GCM encrypted, optional
+        sa.Column(
+            "preshared_key", sa.LargeBinary(), nullable=True
+        ),  # AES-256-GCM encrypted, optional
         sa.Column("assigned_ip", sa.String(32), nullable=False),  # e.g. 10.10.0.2/24
-        sa.Column("additional_allowed_ips", sa.String(512), nullable=True),  # comma-separated subnets for site-to-site
+        sa.Column(
+            "additional_allowed_ips", sa.String(512), nullable=True
+        ),  # comma-separated subnets for site-to-site
         sa.Column("is_enabled", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("last_handshake", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
     )
 
     # Indexes

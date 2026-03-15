@@ -41,7 +41,7 @@ async def on_device_firmware(msg) -> None:
     try:
         data = json.loads(msg.data)
         device_id = data.get("device_id")
-        tenant_id = data.get("tenant_id")
+        _tenant_id = data.get("tenant_id")
         architecture = data.get("architecture")
         installed_version = data.get("installed_version")
         latest_version = data.get("latest_version")
@@ -126,9 +126,7 @@ async def _subscribe_with_retry(js: JetStreamContext) -> None:
                 durable="api-firmware-consumer",
                 stream="DEVICE_EVENTS",
             )
-            logger.info(
-                "NATS: subscribed to device.firmware.> (durable: api-firmware-consumer)"
-            )
+            logger.info("NATS: subscribed to device.firmware.> (durable: api-firmware-consumer)")
             return
         except Exception as exc:
             if attempt < max_attempts:

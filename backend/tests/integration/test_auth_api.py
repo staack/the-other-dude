@@ -19,7 +19,7 @@ from app.services.auth import hash_password
 
 pytestmark = pytest.mark.integration
 
-from tests.integration.conftest import TEST_DATABASE_URL
+from tests.integration.conftest import TEST_DATABASE_URL  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -93,7 +93,6 @@ async def test_login_success(client, admin_engine):
         assert len(body["refresh_token"]) > 0
 
         # Verify httpOnly cookie is set
-        cookies = resp.cookies
         # Cookie may or may not appear in httpx depending on secure flag
         # Just verify the response contains Set-Cookie header
         set_cookie = resp.headers.get("set-cookie", "")
@@ -193,7 +192,6 @@ async def test_token_refresh(client, admin_engine):
         assert login_resp.status_code == 200
         tokens = login_resp.json()
         refresh_token = tokens["refresh_token"]
-        original_access = tokens["access_token"]
 
         # Use refresh token to get new access token
         refresh_resp = await client.post(

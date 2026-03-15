@@ -2,7 +2,14 @@
 
 from app.models.tenant import Tenant
 from app.models.user import User, UserRole
-from app.models.device import Device, DeviceGroup, DeviceTag, DeviceGroupMembership, DeviceTagAssignment, DeviceStatus
+from app.models.device import (
+    Device,
+    DeviceGroup,
+    DeviceTag,
+    DeviceGroupMembership,
+    DeviceTagAssignment,
+    DeviceStatus,
+)
 from app.models.alert import AlertRule, NotificationChannel, AlertRuleChannel, AlertEvent
 from app.models.firmware import FirmwareVersion, FirmwareUpgradeJob
 from app.models.config_template import ConfigTemplate, ConfigTemplateTag, TemplatePushJob

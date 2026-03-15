@@ -88,9 +88,7 @@ async def browse_menu(device_id: str, path: str) -> dict[str, Any]:
     return await execute_command(device_id, command)
 
 
-async def add_entry(
-    device_id: str, path: str, properties: dict[str, str]
-) -> dict[str, Any]:
+async def add_entry(device_id: str, path: str, properties: dict[str, str]) -> dict[str, Any]:
     """Add a new entry to a RouterOS menu path.
 
     Args:
@@ -124,9 +122,7 @@ async def update_entry(
     return await execute_command(device_id, f"{path}/set", args)
 
 
-async def remove_entry(
-    device_id: str, path: str, entry_id: str
-) -> dict[str, Any]:
+async def remove_entry(device_id: str, path: str, entry_id: str) -> dict[str, Any]:
     """Remove an entry from a RouterOS menu path.
 
     Args:

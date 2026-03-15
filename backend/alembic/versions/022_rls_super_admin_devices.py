@@ -25,7 +25,8 @@ def upgrade() -> None:
     conn = op.get_bind()
     for table in _TABLES:
         conn.execute(sa.text(f"DROP POLICY IF EXISTS tenant_isolation ON {table}"))
-        conn.execute(sa.text(f"""
+        conn.execute(
+            sa.text(f"""
             CREATE POLICY tenant_isolation ON {table}
             USING (
                 tenant_id::text = current_setting('app.current_tenant', true)
@@ -35,15 +36,18 @@ def upgrade() -> None:
                 tenant_id::text = current_setting('app.current_tenant', true)
                 OR current_setting('app.current_tenant', true) = 'super_admin'
             )
-        """))
+        """)
+        )
 
 
 def downgrade() -> None:
     conn = op.get_bind()
     for table in _TABLES:
         conn.execute(sa.text(f"DROP POLICY IF EXISTS tenant_isolation ON {table}"))
-        conn.execute(sa.text(f"""
+        conn.execute(
+            sa.text(f"""
             CREATE POLICY tenant_isolation ON {table}
             USING (tenant_id::text = current_setting('app.current_tenant', true))
             WITH CHECK (tenant_id::text = current_setting('app.current_tenant', true))
-        """))
+        """)
+        )

@@ -39,21 +39,13 @@ class CertificateAuthority(Base):
     )
     common_name: Mapped[str] = mapped_column(String(255), nullable=False)
     cert_pem: Mapped[str] = mapped_column(Text, nullable=False)
-    encrypted_private_key: Mapped[bytes] = mapped_column(
-        LargeBinary, nullable=False
-    )
+    encrypted_private_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     serial_number: Mapped[str] = mapped_column(String(64), nullable=False)
     fingerprint_sha256: Mapped[str] = mapped_column(String(95), nullable=False)
-    not_valid_before: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    not_valid_after: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    not_valid_before: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    not_valid_after: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     # OpenBao Transit ciphertext (dual-write migration)
-    encrypted_private_key_transit: Mapped[str | None] = mapped_column(
-        Text, nullable=True
-    )
+    encrypted_private_key_transit: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -62,8 +54,7 @@ class CertificateAuthority(Base):
 
     def __repr__(self) -> str:
         return (
-            f"<CertificateAuthority id={self.id} "
-            f"cn={self.common_name!r} tenant={self.tenant_id}>"
+            f"<CertificateAuthority id={self.id} cn={self.common_name!r} tenant={self.tenant_id}>"
         )
 
 
@@ -103,25 +94,13 @@ class DeviceCertificate(Base):
     serial_number: Mapped[str] = mapped_column(String(64), nullable=False)
     fingerprint_sha256: Mapped[str] = mapped_column(String(95), nullable=False)
     cert_pem: Mapped[str] = mapped_column(Text, nullable=False)
-    encrypted_private_key: Mapped[bytes] = mapped_column(
-        LargeBinary, nullable=False
-    )
-    not_valid_before: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
-    not_valid_after: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False
-    )
+    encrypted_private_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    not_valid_before: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    not_valid_after: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     # OpenBao Transit ciphertext (dual-write migration)
-    encrypted_private_key_transit: Mapped[str | None] = mapped_column(
-        Text, nullable=True
-    )
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, server_default="issued"
-    )
-    deployed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    encrypted_private_key_transit: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default="issued")
+    deployed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -134,7 +113,4 @@ class DeviceCertificate(Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"<DeviceCertificate id={self.id} "
-            f"cn={self.common_name!r} status={self.status}>"
-        )
+        return f"<DeviceCertificate id={self.id} cn={self.common_name!r} status={self.status}>"

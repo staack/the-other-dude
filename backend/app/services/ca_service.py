@@ -48,6 +48,7 @@ _VALID_TRANSITIONS: dict[str, set[str]] = {
 # CA Generation
 # ---------------------------------------------------------------------------
 
+
 async def generate_ca(
     db: AsyncSession,
     tenant_id: UUID,
@@ -84,10 +85,12 @@ async def generate_ca(
     now = datetime.datetime.now(datetime.timezone.utc)
     expiry = now + datetime.timedelta(days=365 * validity_years)
 
-    subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "The Other Dude"),
-        x509.NameAttribute(NameOID.COMMON_NAME, common_name),
-    ])
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "The Other Dude"),
+            x509.NameAttribute(NameOID.COMMON_NAME, common_name),
+        ]
+    )
 
     ca_cert = (
         x509.CertificateBuilder()
@@ -97,9 +100,7 @@ async def generate_ca(
         .serial_number(x509.random_serial_number())
         .not_valid_before(now)
         .not_valid_after(expiry)
-        .add_extension(
-            x509.BasicConstraints(ca=True, path_length=0), critical=True
-        )
+        .add_extension(x509.BasicConstraints(ca=True, path_length=0), critical=True)
         .add_extension(
             x509.KeyUsage(
                 digital_signature=True,
@@ -166,6 +167,7 @@ async def generate_ca(
 # Device Certificate Signing
 # ---------------------------------------------------------------------------
 
+
 async def sign_device_cert(
     db: AsyncSession,
     ca: CertificateAuthority,
@@ -196,9 +198,7 @@ async def sign_device_cert(
         str(ca.tenant_id),
         encryption_key,
     )
-    ca_key = serialization.load_pem_private_key(
-        ca_key_pem.encode("utf-8"), password=None
-    )
+    ca_key = serialization.load_pem_private_key(ca_key_pem.encode("utf-8"), password=None)
 
     # Load CA certificate for issuer info and AuthorityKeyIdentifier
     ca_cert = x509.load_pem_x509_certificate(ca.cert_pem.encode("utf-8"))
@@ -212,19 +212,19 @@ async def sign_device_cert(
     device_cert = (
         x509.CertificateBuilder()
         .subject_name(
-            x509.Name([
-                x509.NameAttribute(NameOID.ORGANIZATION_NAME, "The Other Dude"),
-                x509.NameAttribute(NameOID.COMMON_NAME, hostname),
-            ])
+            x509.Name(
+                [
+                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, "The Other Dude"),
+                    x509.NameAttribute(NameOID.COMMON_NAME, hostname),
+                ]
+            )
         )
         .issuer_name(ca_cert.subject)
         .public_key(device_key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(now)
         .not_valid_after(expiry)
-        .add_extension(
-            x509.BasicConstraints(ca=False, path_length=None), critical=True
-        )
+        .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
         .add_extension(
             x509.KeyUsage(
                 digital_signature=True,
@@ -244,17 +244,17 @@ async def sign_device_cert(
             critical=False,
         )
         .add_extension(
-            x509.SubjectAlternativeName([
-                x509.IPAddress(ipaddress.ip_address(ip_address)),
-                x509.DNSName(hostname),
-            ]),
+            x509.SubjectAlternativeName(
+                [
+                    x509.IPAddress(ipaddress.ip_address(ip_address)),
+                    x509.DNSName(hostname),
+                ]
+            ),
             critical=False,
         )
         .add_extension(
             x509.AuthorityKeyIdentifier.from_issuer_subject_key_identifier(
-                ca_cert.extensions.get_extension_for_class(
-                    x509.SubjectKeyIdentifier
-                ).value
+                ca_cert.extensions.get_extension_for_class(x509.SubjectKeyIdentifier).value
             ),
             critical=False,
         )
@@ -308,15 +308,14 @@ async def sign_device_cert(
 # Queries
 # ---------------------------------------------------------------------------
 
+
 async def get_ca_for_tenant(
     db: AsyncSession,
     tenant_id: UUID,
 ) -> CertificateAuthority | None:
     """Return the tenant's CA, or None if not yet initialized."""
     result = await db.execute(
-        select(CertificateAuthority).where(
-            CertificateAuthority.tenant_id == tenant_id
-        )
+        select(CertificateAuthority).where(CertificateAuthority.tenant_id == tenant_id)
     )
     return result.scalar_one_or_none()
 
@@ -352,6 +351,7 @@ async def get_device_certs(
 # Status Management
 # ---------------------------------------------------------------------------
 
+
 async def update_cert_status(
     db: AsyncSession,
     cert_id: UUID,
@@ -377,9 +377,7 @@ async def update_cert_status(
     Raises:
         ValueError: If the certificate is not found or the transition is invalid.
     """
-    result = await db.execute(
-        select(DeviceCertificate).where(DeviceCertificate.id == cert_id)
-    )
+    result = await db.execute(select(DeviceCertificate).where(DeviceCertificate.id == cert_id))
     cert = result.scalar_one_or_none()
     if cert is None:
         raise ValueError(f"Device certificate {cert_id} not found")
@@ -413,6 +411,7 @@ async def update_cert_status(
 # Cert Data for Deployment
 # ---------------------------------------------------------------------------
 
+
 async def get_cert_for_deploy(
     db: AsyncSession,
     cert_id: UUID,
@@ -434,18 +433,14 @@ async def get_cert_for_deploy(
     Raises:
         ValueError: If the certificate or its CA is not found.
     """
-    result = await db.execute(
-        select(DeviceCertificate).where(DeviceCertificate.id == cert_id)
-    )
+    result = await db.execute(select(DeviceCertificate).where(DeviceCertificate.id == cert_id))
     cert = result.scalar_one_or_none()
     if cert is None:
         raise ValueError(f"Device certificate {cert_id} not found")
 
     # Fetch the CA for the ca_cert_pem
     ca_result = await db.execute(
-        select(CertificateAuthority).where(
-            CertificateAuthority.id == cert.ca_id
-        )
+        select(CertificateAuthority).where(CertificateAuthority.id == cert.ca_id)
     )
     ca = ca_result.scalar_one_or_none()
     if ca is None:

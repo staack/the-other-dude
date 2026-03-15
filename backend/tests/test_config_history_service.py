@@ -10,7 +10,9 @@ from uuid import uuid4
 from datetime import datetime, timezone
 
 
-def _make_change_row(change_id, component, summary, created_at, diff_id, lines_added, lines_removed, snapshot_id):
+def _make_change_row(
+    change_id, component, summary, created_at, diff_id, lines_added, lines_removed, snapshot_id
+):
     """Create a mock row matching the JOIN query result."""
     row = MagicMock()
     row._mapping = {
@@ -41,7 +43,9 @@ async def test_returns_formatted_entries():
     mock_session = AsyncMock()
     result_mock = MagicMock()
     result_mock.fetchall.return_value = [
-        _make_change_row(change_id, "ip/firewall/filter", "Added 1 rule", ts, diff_id, 3, 1, snapshot_id),
+        _make_change_row(
+            change_id, "ip/firewall/filter", "Added 1 rule", ts, diff_id, 3, 1, snapshot_id
+        ),
     ]
     mock_session.execute = AsyncMock(return_value=result_mock)
 

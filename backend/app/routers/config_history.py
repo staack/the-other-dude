@@ -43,6 +43,7 @@ async def _check_tenant_access(
     """
     if current_user.is_super_admin:
         from app.database import set_tenant_context
+
         await set_tenant_context(db, str(tenant_id))
         return
     if current_user.tenant_id != tenant_id:
@@ -115,9 +116,7 @@ async def view_snapshot(
             session=db,
         )
     except Exception:
-        logger.exception(
-            "Failed to decrypt snapshot %s for device %s", snapshot_id, device_id
-        )
+        logger.exception("Failed to decrypt snapshot %s for device %s", snapshot_id, device_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to decrypt snapshot content",

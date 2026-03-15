@@ -12,11 +12,15 @@ from pydantic import BaseModel
 
 class VpnSetupRequest(BaseModel):
     """Request to enable VPN for a tenant."""
-    endpoint: Optional[str] = None  # public hostname:port — if blank, devices must be configured manually
+
+    endpoint: Optional[str] = (
+        None  # public hostname:port — if blank, devices must be configured manually
+    )
 
 
 class VpnConfigResponse(BaseModel):
     """VPN server configuration (never exposes private key)."""
+
     model_config = {"from_attributes": True}
 
     id: uuid.UUID
@@ -33,6 +37,7 @@ class VpnConfigResponse(BaseModel):
 
 class VpnConfigUpdate(BaseModel):
     """Update VPN configuration."""
+
     endpoint: Optional[str] = None
     is_enabled: Optional[bool] = None
 
@@ -42,12 +47,14 @@ class VpnConfigUpdate(BaseModel):
 
 class VpnPeerCreate(BaseModel):
     """Add a device as a VPN peer."""
+
     device_id: uuid.UUID
     additional_allowed_ips: Optional[str] = None  # comma-separated subnets for site-to-site routing
 
 
 class VpnPeerResponse(BaseModel):
     """VPN peer info (never exposes private key)."""
+
     model_config = {"from_attributes": True}
 
     id: uuid.UUID
@@ -66,6 +73,7 @@ class VpnPeerResponse(BaseModel):
 
 class VpnOnboardRequest(BaseModel):
     """Combined device creation + VPN peer onboarding."""
+
     hostname: str
     username: str
     password: str
@@ -73,6 +81,7 @@ class VpnOnboardRequest(BaseModel):
 
 class VpnOnboardResponse(BaseModel):
     """Response from onboarding — device, peer, and RouterOS commands."""
+
     device_id: uuid.UUID
     peer_id: uuid.UUID
     hostname: str
@@ -82,6 +91,7 @@ class VpnOnboardResponse(BaseModel):
 
 class VpnPeerConfig(BaseModel):
     """Full peer config for display/export — includes private key for device setup."""
+
     peer_private_key: str
     peer_public_key: str
     assigned_ip: str

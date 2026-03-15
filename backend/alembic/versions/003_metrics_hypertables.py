@@ -34,7 +34,8 @@ def upgrade() -> None:
     # Stores per-interface byte counters from /interface/print on every poll cycle.
     # rx_bps/tx_bps are stored as NULL — computed at query time via LAG() window
     # function to avoid delta state in the poller.
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE TABLE IF NOT EXISTS interface_metrics (
             time        TIMESTAMPTZ NOT NULL,
             device_id   UUID        NOT NULL,
@@ -45,23 +46,28 @@ def upgrade() -> None:
             rx_bps      BIGINT,
             tx_bps      BIGINT
         )
-    """))
+    """)
+    )
 
-    conn.execute(sa.text(
-        "SELECT create_hypertable('interface_metrics', 'time', if_not_exists => TRUE)"
-    ))
+    conn.execute(
+        sa.text("SELECT create_hypertable('interface_metrics', 'time', if_not_exists => TRUE)")
+    )
 
-    conn.execute(sa.text(
-        "CREATE INDEX IF NOT EXISTS idx_interface_metrics_device_time "
-        "ON interface_metrics (device_id, time DESC)"
-    ))
+    conn.execute(
+        sa.text(
+            "CREATE INDEX IF NOT EXISTS idx_interface_metrics_device_time "
+            "ON interface_metrics (device_id, time DESC)"
+        )
+    )
 
     conn.execute(sa.text("ALTER TABLE interface_metrics ENABLE ROW LEVEL SECURITY"))
 
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE POLICY tenant_isolation ON interface_metrics
             USING (tenant_id::text = current_setting('app.current_tenant'))
-    """))
+    """)
+    )
 
     conn.execute(sa.text("GRANT SELECT, INSERT ON interface_metrics TO app_user"))
     conn.execute(sa.text("GRANT SELECT, INSERT ON interface_metrics TO poller_user"))
@@ -72,7 +78,8 @@ def upgrade() -> None:
     # Stores per-device system health metrics from /system/resource/print and
     # /system/health/print on every poll cycle.
     # temperature is nullable — not all RouterOS devices have temperature sensors.
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE TABLE IF NOT EXISTS health_metrics (
             time         TIMESTAMPTZ NOT NULL,
             device_id    UUID        NOT NULL,
@@ -84,23 +91,28 @@ def upgrade() -> None:
             total_disk   BIGINT,
             temperature  SMALLINT
         )
-    """))
+    """)
+    )
 
-    conn.execute(sa.text(
-        "SELECT create_hypertable('health_metrics', 'time', if_not_exists => TRUE)"
-    ))
+    conn.execute(
+        sa.text("SELECT create_hypertable('health_metrics', 'time', if_not_exists => TRUE)")
+    )
 
-    conn.execute(sa.text(
-        "CREATE INDEX IF NOT EXISTS idx_health_metrics_device_time "
-        "ON health_metrics (device_id, time DESC)"
-    ))
+    conn.execute(
+        sa.text(
+            "CREATE INDEX IF NOT EXISTS idx_health_metrics_device_time "
+            "ON health_metrics (device_id, time DESC)"
+        )
+    )
 
     conn.execute(sa.text("ALTER TABLE health_metrics ENABLE ROW LEVEL SECURITY"))
 
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE POLICY tenant_isolation ON health_metrics
             USING (tenant_id::text = current_setting('app.current_tenant'))
-    """))
+    """)
+    )
 
     conn.execute(sa.text("GRANT SELECT, INSERT ON health_metrics TO app_user"))
     conn.execute(sa.text("GRANT SELECT, INSERT ON health_metrics TO poller_user"))
@@ -113,7 +125,8 @@ def upgrade() -> None:
     # /interface/wifi/registration-table/print (v7).
     # ccq may be 0 on RouterOS v7 (not available in the WiFi API path).
     # avg_signal is dBm (negative integer, e.g. -67).
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE TABLE IF NOT EXISTS wireless_metrics (
             time         TIMESTAMPTZ NOT NULL,
             device_id    UUID        NOT NULL,
@@ -124,23 +137,28 @@ def upgrade() -> None:
             ccq          SMALLINT,
             frequency    INTEGER
         )
-    """))
+    """)
+    )
 
-    conn.execute(sa.text(
-        "SELECT create_hypertable('wireless_metrics', 'time', if_not_exists => TRUE)"
-    ))
+    conn.execute(
+        sa.text("SELECT create_hypertable('wireless_metrics', 'time', if_not_exists => TRUE)")
+    )
 
-    conn.execute(sa.text(
-        "CREATE INDEX IF NOT EXISTS idx_wireless_metrics_device_time "
-        "ON wireless_metrics (device_id, time DESC)"
-    ))
+    conn.execute(
+        sa.text(
+            "CREATE INDEX IF NOT EXISTS idx_wireless_metrics_device_time "
+            "ON wireless_metrics (device_id, time DESC)"
+        )
+    )
 
     conn.execute(sa.text("ALTER TABLE wireless_metrics ENABLE ROW LEVEL SECURITY"))
 
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE POLICY tenant_isolation ON wireless_metrics
             USING (tenant_id::text = current_setting('app.current_tenant'))
-    """))
+    """)
+    )
 
     conn.execute(sa.text("GRANT SELECT, INSERT ON wireless_metrics TO app_user"))
     conn.execute(sa.text("GRANT SELECT, INSERT ON wireless_metrics TO poller_user"))

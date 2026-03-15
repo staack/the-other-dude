@@ -42,8 +42,8 @@ def validate_production_settings(settings: "Settings") -> None:
             print(
                 f"FATAL: {field} uses a known insecure default in '{settings.ENVIRONMENT}' environment.\n"
                 f"Generate a secure value and set it in your .env.prod file.\n"
-                f"For JWT_SECRET_KEY: python -c \"import secrets; print(secrets.token_urlsafe(64))\"\n"
-                f"For CREDENTIAL_ENCRYPTION_KEY: python -c \"import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())\"\n"
+                f'For JWT_SECRET_KEY: python -c "import secrets; print(secrets.token_urlsafe(64))"\n'
+                f'For CREDENTIAL_ENCRYPTION_KEY: python -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"\n'
                 f"For OPENBAO_TOKEN: use the token from your OpenBao server (not the dev token)",
                 file=sys.stderr,
             )

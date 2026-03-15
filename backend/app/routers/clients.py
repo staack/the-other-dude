@@ -43,6 +43,7 @@ async def _check_tenant_access(
     """Verify the current user is allowed to access the given tenant."""
     if current_user.is_super_admin:
         from app.database import set_tenant_context
+
         await set_tenant_context(db, str(tenant_id))
         return
     if current_user.tenant_id != tenant_id:
@@ -52,9 +53,7 @@ async def _check_tenant_access(
         )
 
 
-async def _check_device_online(
-    db: AsyncSession, device_id: uuid.UUID
-) -> Device:
+async def _check_device_online(db: AsyncSession, device_id: uuid.UUID) -> Device:
     """Verify the device exists and is online. Returns the Device object."""
     result = await db.execute(
         select(Device).where(Device.id == device_id)  # type: ignore[arg-type]

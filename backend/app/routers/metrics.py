@@ -65,6 +65,7 @@ async def _check_tenant_access(
     if current_user.is_super_admin:
         # Re-set tenant context to the target tenant so RLS allows the operation
         from app.database import set_tenant_context
+
         await set_tenant_context(db, str(tenant_id))
         return
     if current_user.tenant_id != tenant_id:

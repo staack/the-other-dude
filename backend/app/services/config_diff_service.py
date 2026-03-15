@@ -65,9 +65,7 @@ async def generate_and_store_diff(
 
         # 2. No previous snapshot = first snapshot for device
         if prev_row is None:
-            logger.debug(
-                "First snapshot for device %s, no diff to generate", device_id
-            )
+            logger.debug("First snapshot for device %s, no diff to generate", device_id)
             return
 
         old_snapshot_id = prev_row._mapping["id"]
@@ -103,9 +101,7 @@ async def generate_and_store_diff(
         # 6. Generate unified diff
         old_lines = old_plaintext.decode("utf-8").splitlines()
         new_lines = new_plaintext.decode("utf-8").splitlines()
-        diff_lines = list(
-            difflib.unified_diff(old_lines, new_lines, lineterm="", n=3)
-        )
+        diff_lines = list(difflib.unified_diff(old_lines, new_lines, lineterm="", n=3))
 
         # 7. If empty diff, skip INSERT
         diff_text = "\n".join(diff_lines)
@@ -118,12 +114,10 @@ async def generate_and_store_diff(
 
         # 8. Count lines added/removed (exclude +++ and --- headers)
         lines_added = sum(
-            1 for line in diff_lines
-            if line.startswith("+") and not line.startswith("++")
+            1 for line in diff_lines if line.startswith("+") and not line.startswith("++")
         )
         lines_removed = sum(
-            1 for line in diff_lines
-            if line.startswith("-") and not line.startswith("--")
+            1 for line in diff_lines if line.startswith("-") and not line.startswith("--")
         )
 
         # 9. INSERT into router_config_diffs (RETURNING id for change parser)
@@ -165,6 +159,7 @@ async def generate_and_store_diff(
         try:
             from app.services.audit_service import log_action
             import uuid as _uuid
+
             await log_action(
                 db=None,
                 tenant_id=_uuid.UUID(tenant_id),
@@ -207,12 +202,16 @@ async def generate_and_store_diff(
                 await session.commit()
                 logger.info(
                     "Stored %d config changes for device %s diff %s",
-                    len(changes), device_id, diff_id,
+                    len(changes),
+                    device_id,
+                    diff_id,
                 )
         except Exception as exc:
             logger.warning(
                 "Change parser error for device %s diff %s (non-fatal): %s",
-                device_id, diff_id, exc,
+                device_id,
+                diff_id,
+                exc,
             )
             config_diff_errors_total.labels(error_type="change_parser").inc()
 

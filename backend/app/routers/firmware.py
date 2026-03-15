@@ -67,6 +67,7 @@ async def get_firmware_overview(
     await _check_tenant_access(current_user, tenant_id, db)
 
     from app.services.firmware_service import get_firmware_overview as _get_overview
+
     return await _get_overview(str(tenant_id))
 
 
@@ -206,6 +207,7 @@ async def trigger_firmware_check(
         raise HTTPException(status_code=403, detail="Super admin only")
 
     from app.services.firmware_service import check_latest_versions
+
     results = await check_latest_versions()
     return {"status": "ok", "versions_discovered": len(results), "versions": results}
 
@@ -221,6 +223,7 @@ async def list_firmware_cache(
         raise HTTPException(status_code=403, detail="Super admin only")
 
     from app.services.firmware_service import get_cached_firmware
+
     return await get_cached_firmware()
 
 
@@ -236,6 +239,7 @@ async def download_firmware(
         raise HTTPException(status_code=403, detail="Super admin only")
 
     from app.services.firmware_service import download_firmware as _download
+
     path = await _download(body.architecture, body.channel, body.version)
     return {"status": "ok", "path": path}
 
@@ -324,15 +328,21 @@ async def start_firmware_upgrade(
     # Schedule or start immediately
     if body.scheduled_at:
         from app.services.upgrade_service import schedule_upgrade
+
         schedule_upgrade(job_id, datetime.fromisoformat(body.scheduled_at))
     else:
         from app.services.upgrade_service import start_upgrade
+
         asyncio.create_task(start_upgrade(job_id))
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "firmware_upgrade",
-            resource_type="firmware", resource_id=job_id,
+            db,
+            tenant_id,
+            current_user.user_id,
+            "firmware_upgrade",
+            resource_type="firmware",
+            resource_id=job_id,
             device_id=uuid.UUID(body.device_id),
             details={"target_version": body.target_version, "channel": body.channel},
         )
@@ -406,9 +416,11 @@ async def start_mass_firmware_upgrade(
     # Schedule or start immediately
     if body.scheduled_at:
         from app.services.upgrade_service import schedule_mass_upgrade
+
         schedule_mass_upgrade(rollout_group_id, datetime.fromisoformat(body.scheduled_at))
     else:
         from app.services.upgrade_service import start_mass_upgrade
+
         asyncio.create_task(start_mass_upgrade(rollout_group_id))
 
     return {
@@ -639,6 +651,7 @@ async def cancel_upgrade_endpoint(
         raise HTTPException(403, "Viewers cannot cancel upgrades")
 
     from app.services.upgrade_service import cancel_upgrade
+
     await cancel_upgrade(str(job_id))
     return {"status": "ok", "message": "Upgrade cancelled"}
 
@@ -662,6 +675,7 @@ async def retry_upgrade_endpoint(
         raise HTTPException(403, "Viewers cannot retry upgrades")
 
     from app.services.upgrade_service import retry_failed_upgrade
+
     await retry_failed_upgrade(str(job_id))
     return {"status": "ok", "message": "Upgrade retry started"}
 
@@ -685,6 +699,7 @@ async def resume_rollout_endpoint(
         raise HTTPException(403, "Viewers cannot resume rollouts")
 
     from app.services.upgrade_service import resume_mass_upgrade
+
     await resume_mass_upgrade(str(rollout_group_id))
     return {"status": "ok", "message": "Rollout resumed"}
 
@@ -708,5 +723,6 @@ async def abort_rollout_endpoint(
         raise HTTPException(403, "Viewers cannot abort rollouts")
 
     from app.services.upgrade_service import abort_mass_upgrade
+
     aborted = await abort_mass_upgrade(str(rollout_group_id))
     return {"status": "ok", "aborted_count": aborted}

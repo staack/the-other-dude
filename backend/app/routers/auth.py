@@ -103,7 +103,11 @@ async def get_redis() -> aioredis.Redis:
 # ─── SRP Zero-Knowledge Authentication ───────────────────────────────────────
 
 
-@router.post("/srp/init", response_model=SRPInitResponse, summary="SRP Step 1: return salt and server ephemeral B")
+@router.post(
+    "/srp/init",
+    response_model=SRPInitResponse,
+    summary="SRP Step 1: return salt and server ephemeral B",
+)
 @limiter.limit("5/minute")
 async def srp_init_endpoint(
     request: StarletteRequest,
@@ -137,9 +141,7 @@ async def srp_init_endpoint(
 
     # Generate server ephemeral
     try:
-        server_public, server_private = await srp_init(
-            user.email, user.srp_verifier.hex()
-        )
+        server_public, server_private = await srp_init(user.email, user.srp_verifier.hex())
     except ValueError as e:
         logger.error("SRP init failed for %s: %s", user.email, e)
         raise HTTPException(
@@ -150,13 +152,15 @@ async def srp_init_endpoint(
     # Store session in Redis with 60s TTL
     session_id = secrets.token_urlsafe(16)
     redis = await get_redis()
-    session_data = json.dumps({
-        "email": user.email,
-        "server_private": server_private,
-        "srp_verifier_hex": user.srp_verifier.hex(),
-        "srp_salt_hex": user.srp_salt.hex(),
-        "user_id": str(user.id),
-    })
+    session_data = json.dumps(
+        {
+            "email": user.email,
+            "server_private": server_private,
+            "srp_verifier_hex": user.srp_verifier.hex(),
+            "srp_salt_hex": user.srp_salt.hex(),
+            "user_id": str(user.id),
+        }
+    )
     await redis.set(f"srp:session:{session_id}", session_data, ex=60)
 
     return SRPInitResponse(
@@ -168,7 +172,11 @@ async def srp_init_endpoint(
     )
 
 
-@router.post("/srp/verify", response_model=SRPVerifyResponse, summary="SRP Step 2: verify client proof and return tokens")
+@router.post(
+    "/srp/verify",
+    response_model=SRPVerifyResponse,
+    summary="SRP Step 2: verify client proof and return tokens",
+)
 @limiter.limit("5/minute")
 async def srp_verify_endpoint(
     request: StarletteRequest,
@@ -236,7 +244,9 @@ async def srp_verify_endpoint(
 
     # Update last_login and clear upgrade flag on successful SRP login
     await db.execute(
-        update(User).where(User.id == user.id).values(
+        update(User)
+        .where(User.id == user.id)
+        .values(
             last_login=datetime.now(UTC),
             must_upgrade_auth=False,
         )
@@ -323,9 +333,7 @@ async def login(
     Rate limited to 5 requests per minute per IP.
     """
     # Look up user by email (case-insensitive)
-    result = await db.execute(
-        select(User).where(User.email == body.email.lower())
-    )
+    result = await db.execute(select(User).where(User.email == body.email.lower()))
     user = result.scalar_one_or_none()
 
     # Generic error — do not reveal whether email exists (no user enumeration)
@@ -389,7 +397,9 @@ async def login(
 
         # Update last_login
         await db.execute(
-            update(User).where(User.id == user.id).values(
+            update(User)
+            .where(User.id == user.id)
+            .values(
                 last_login=datetime.now(UTC),
             )
         )
@@ -404,7 +414,10 @@ async def login(
                     user_id=user.id,
                     action="login_upgrade" if user.must_upgrade_auth else "login",
                     resource_type="auth",
-                    details={"email": user.email, **({"upgrade": "bcrypt_to_srp"} if user.must_upgrade_auth else {})},
+                    details={
+                        "email": user.email,
+                        **({"upgrade": "bcrypt_to_srp"} if user.must_upgrade_auth else {}),
+                    },
                     ip_address=request.client.host if request.client else None,
                 )
                 await audit_db.commit()
@@ -440,7 +453,9 @@ async def refresh_token(
     Rate limited to 10 requests per minute per IP.
     """
     # Resolve token: body takes precedence over cookie
-    raw_token = (body.refresh_token if body and body.refresh_token else None) or refresh_token_cookie
+    raw_token = (
+        body.refresh_token if body and body.refresh_token else None
+    ) or refresh_token_cookie
     if not raw_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -518,7 +533,9 @@ async def refresh_token(
     )
 
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT, summary="Log out and clear session cookie")
+@router.post(
+    "/logout", status_code=status.HTTP_204_NO_CONTENT, summary="Log out and clear session cookie"
+)
 @limiter.limit("10/minute")
 async def logout(
     request: StarletteRequest,
@@ -535,7 +552,10 @@ async def logout(
         tenant_id = current_user.tenant_id or uuid.UUID(int=0)
         async with AdminAsyncSessionLocal() as audit_db:
             await log_action(
-                audit_db, tenant_id, current_user.user_id, "logout",
+                audit_db,
+                tenant_id,
+                current_user.user_id,
+                "logout",
                 resource_type="auth",
                 ip_address=request.client.host if request.client else None,
             )
@@ -558,7 +578,11 @@ async def logout(
     )
 
 
-@router.post("/change-password", response_model=MessageResponse, summary="Change password for authenticated user")
+@router.post(
+    "/change-password",
+    response_model=MessageResponse,
+    summary="Change password for authenticated user",
+)
 @limiter.limit("3/minute")
 async def change_password(
     request: StarletteRequest,
@@ -602,7 +626,9 @@ async def change_password(
                 existing_ks.hkdf_salt = base64.b64decode(body.hkdf_salt or "")
     else:
         # Legacy bcrypt user — verify current password
-        if not user.hashed_password or not verify_password(body.current_password, user.hashed_password):
+        if not user.hashed_password or not verify_password(
+            body.current_password, user.hashed_password
+        ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Current password is incorrect",
@@ -822,7 +848,9 @@ async def get_emergency_kit_template(
     )
 
 
-@router.post("/register-srp", response_model=MessageResponse, summary="Register SRP credentials for a user")
+@router.post(
+    "/register-srp", response_model=MessageResponse, summary="Register SRP credentials for a user"
+)
 @limiter.limit("3/minute")
 async def register_srp(
     request: StarletteRequest,
@@ -845,7 +873,9 @@ async def register_srp(
 
     # Update user with SRP credentials and clear upgrade flag
     await db.execute(
-        update(User).where(User.id == user.id).values(
+        update(User)
+        .where(User.id == user.id)
+        .values(
             srp_salt=bytes.fromhex(body.srp_salt),
             srp_verifier=bytes.fromhex(body.srp_verifier),
             auth_version=2,
@@ -873,8 +903,11 @@ async def register_srp(
     try:
         async with AdminAsyncSessionLocal() as audit_db:
             await log_key_access(
-                audit_db, user.tenant_id or uuid.UUID(int=0), user.id,
-                "create_key_set", resource_type="user_key_set",
+                audit_db,
+                user.tenant_id or uuid.UUID(int=0),
+                user.id,
+                "create_key_set",
+                resource_type="user_key_set",
                 ip_address=request.client.host if request.client else None,
             )
             await audit_db.commit()
@@ -901,11 +934,17 @@ async def create_sse_token(
     token = secrets.token_urlsafe(32)
     key = f"sse_token:{token}"
     # Store user context for the SSE endpoint to retrieve
-    await redis.set(key, json.dumps({
-        "user_id": str(current_user.user_id),
-        "tenant_id": str(current_user.tenant_id) if current_user.tenant_id else None,
-        "role": current_user.role,
-    }), ex=30)  # 30 second TTL
+    await redis.set(
+        key,
+        json.dumps(
+            {
+                "user_id": str(current_user.user_id),
+                "tenant_id": str(current_user.tenant_id) if current_user.tenant_id else None,
+                "role": current_user.role,
+            }
+        ),
+        ex=30,
+    )  # 30 second TTL
     return {"token": token}
 
 
@@ -977,9 +1016,7 @@ async def forgot_password(
     """
     generic_msg = "If an account with that email exists, a reset link has been sent."
 
-    result = await db.execute(
-        select(User).where(User.email == body.email.lower())
-    )
+    result = await db.execute(select(User).where(User.email == body.email.lower()))
     user = result.scalar_one_or_none()
 
     if not user or not user.is_active:
@@ -988,9 +1025,7 @@ async def forgot_password(
     # Generate a secure token
     raw_token = secrets.token_urlsafe(32)
     token_hash = _hash_token(raw_token)
-    expires_at = datetime.now(UTC) + timedelta(
-        minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES
-    )
+    expires_at = datetime.now(UTC) + timedelta(minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES)
 
     # Insert token record (using raw SQL to avoid importing the model globally)
     from sqlalchemy import text

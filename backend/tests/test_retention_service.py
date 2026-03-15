@@ -23,12 +23,15 @@ async def test_cleanup_deletes_expired_snapshots():
     mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
     mock_ctx.__aexit__ = AsyncMock(return_value=False)
 
-    with patch(
-        "app.services.retention_service.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.retention_service.settings",
-    ) as mock_settings:
+    with (
+        patch(
+            "app.services.retention_service.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.retention_service.settings",
+        ) as mock_settings,
+    ):
         mock_settings.CONFIG_RETENTION_DAYS = 90
         count = await cleanup_expired_snapshots()
 
@@ -60,12 +63,15 @@ async def test_cleanup_keeps_snapshots_within_retention_window():
     mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
     mock_ctx.__aexit__ = AsyncMock(return_value=False)
 
-    with patch(
-        "app.services.retention_service.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.retention_service.settings",
-    ) as mock_settings:
+    with (
+        patch(
+            "app.services.retention_service.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.retention_service.settings",
+        ) as mock_settings,
+    ):
         mock_settings.CONFIG_RETENTION_DAYS = 90
         count = await cleanup_expired_snapshots()
 
@@ -87,12 +93,15 @@ async def test_cleanup_returns_deleted_count():
     mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
     mock_ctx.__aexit__ = AsyncMock(return_value=False)
 
-    with patch(
-        "app.services.retention_service.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.retention_service.settings",
-    ) as mock_settings:
+    with (
+        patch(
+            "app.services.retention_service.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.retention_service.settings",
+        ) as mock_settings,
+    ):
         mock_settings.CONFIG_RETENTION_DAYS = 30
         count = await cleanup_expired_snapshots()
 
@@ -114,12 +123,15 @@ async def test_cleanup_handles_empty_table():
     mock_ctx.__aenter__ = AsyncMock(return_value=mock_session)
     mock_ctx.__aexit__ = AsyncMock(return_value=False)
 
-    with patch(
-        "app.services.retention_service.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.retention_service.settings",
-    ) as mock_settings:
+    with (
+        patch(
+            "app.services.retention_service.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.retention_service.settings",
+        ) as mock_settings,
+    ):
         mock_settings.CONFIG_RETENTION_DAYS = 90
         count = await cleanup_expired_snapshots()
 

@@ -253,7 +253,9 @@ async def _get_device_groups(device_id: str) -> list[str]:
     """Get group IDs for a device."""
     async with AdminAsyncSessionLocal() as session:
         result = await session.execute(
-            text("SELECT group_id FROM device_group_memberships WHERE device_id = CAST(:device_id AS uuid)"),
+            text(
+                "SELECT group_id FROM device_group_memberships WHERE device_id = CAST(:device_id AS uuid)"
+            ),
             {"device_id": device_id},
         )
         return [str(row[0]) for row in result.fetchall()]
@@ -344,30 +346,36 @@ async def _create_alert_event(
 
     # Publish real-time event to NATS for SSE pipeline (fire-and-forget)
     if status in ("firing", "flapping"):
-        await publish_event(f"alert.fired.{tenant_id}", {
-            "event_type": "alert_fired",
-            "tenant_id": tenant_id,
-            "device_id": device_id,
-            "alert_event_id": alert_data["id"],
-            "severity": severity,
-            "metric": metric,
-            "current_value": value,
-            "threshold": threshold,
-            "message": message,
-            "is_flapping": is_flapping,
-            "fired_at": datetime.now(timezone.utc).isoformat(),
-        })
+        await publish_event(
+            f"alert.fired.{tenant_id}",
+            {
+                "event_type": "alert_fired",
+                "tenant_id": tenant_id,
+                "device_id": device_id,
+                "alert_event_id": alert_data["id"],
+                "severity": severity,
+                "metric": metric,
+                "current_value": value,
+                "threshold": threshold,
+                "message": message,
+                "is_flapping": is_flapping,
+                "fired_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
     elif status == "resolved":
-        await publish_event(f"alert.resolved.{tenant_id}", {
-            "event_type": "alert_resolved",
-            "tenant_id": tenant_id,
-            "device_id": device_id,
-            "alert_event_id": alert_data["id"],
-            "severity": severity,
-            "metric": metric,
-            "message": message,
-            "resolved_at": datetime.now(timezone.utc).isoformat(),
-        })
+        await publish_event(
+            f"alert.resolved.{tenant_id}",
+            {
+                "event_type": "alert_resolved",
+                "tenant_id": tenant_id,
+                "device_id": device_id,
+                "alert_event_id": alert_data["id"],
+                "severity": severity,
+                "metric": metric,
+                "message": message,
+                "resolved_at": datetime.now(timezone.utc).isoformat(),
+            },
+        )
 
     return alert_data
 
@@ -470,6 +478,7 @@ async def _dispatch_async(alert_event: dict, channels: list[dict], device_hostna
     """Fire-and-forget notification dispatch."""
     try:
         from app.services.notification_service import dispatch_notifications
+
         await dispatch_notifications(alert_event, channels, device_hostname)
     except Exception as e:
         logger.warning("Notification dispatch failed: %s", e)
@@ -500,7 +509,8 @@ async def evaluate(
     if await _is_device_in_maintenance(tenant_id, device_id):
         logger.debug(
             "Alert suppressed by maintenance window for device %s tenant %s",
-            device_id, tenant_id,
+            device_id,
+            tenant_id,
         )
         return
 
@@ -573,7 +583,8 @@ async def evaluate(
                 if is_flapping:
                     logger.info(
                         "Alert %s for device %s is flapping — notifications suppressed",
-                        rule["name"], device_id,
+                        rule["name"],
+                        device_id,
                     )
                 else:
                     channels = await _get_channels_for_rule(rule["id"])

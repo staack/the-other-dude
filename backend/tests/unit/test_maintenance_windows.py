@@ -7,11 +7,9 @@ Tests cover:
 - Router registration in main app
 """
 
-import uuid
 from datetime import datetime, timezone, timedelta
 
 import pytest
-from pydantic import ValidationError
 
 
 class TestMaintenanceWindowModel:
@@ -19,20 +17,31 @@ class TestMaintenanceWindowModel:
 
     def test_model_importable(self):
         from app.models.maintenance_window import MaintenanceWindow
+
         assert MaintenanceWindow.__tablename__ == "maintenance_windows"
 
     def test_model_exported_from_init(self):
         from app.models import MaintenanceWindow
+
         assert MaintenanceWindow.__tablename__ == "maintenance_windows"
 
     def test_model_has_required_columns(self):
         from app.models.maintenance_window import MaintenanceWindow
+
         mapper = MaintenanceWindow.__mapper__
         column_names = {c.key for c in mapper.columns}
         expected = {
-            "id", "tenant_id", "name", "device_ids",
-            "start_at", "end_at", "suppress_alerts",
-            "notes", "created_by", "created_at", "updated_at",
+            "id",
+            "tenant_id",
+            "name",
+            "device_ids",
+            "start_at",
+            "end_at",
+            "suppress_alerts",
+            "notes",
+            "created_by",
+            "created_at",
+            "updated_at",
         }
         assert expected.issubset(column_names), f"Missing columns: {expected - column_names}"
 
@@ -42,6 +51,7 @@ class TestMaintenanceWindowSchemas:
 
     def test_create_schema_valid(self):
         from app.routers.maintenance_windows import MaintenanceWindowCreate
+
         data = MaintenanceWindowCreate(
             name="Nightly update",
             device_ids=["abc-123"],
@@ -55,6 +65,7 @@ class TestMaintenanceWindowSchemas:
 
     def test_create_schema_defaults(self):
         from app.routers.maintenance_windows import MaintenanceWindowCreate
+
         data = MaintenanceWindowCreate(
             name="Quick reboot",
             device_ids=[],
@@ -66,12 +77,14 @@ class TestMaintenanceWindowSchemas:
 
     def test_update_schema_partial(self):
         from app.routers.maintenance_windows import MaintenanceWindowUpdate
+
         data = MaintenanceWindowUpdate(name="Updated name")
         assert data.name == "Updated name"
         assert data.device_ids is None  # all optional
 
     def test_response_schema(self):
         from app.routers.maintenance_windows import MaintenanceWindowResponse
+
         data = MaintenanceWindowResponse(
             id="abc",
             tenant_id="def",
@@ -92,10 +105,12 @@ class TestRouterRegistration:
 
     def test_router_importable(self):
         from app.routers.maintenance_windows import router
+
         assert router is not None
 
     def test_router_has_routes(self):
         from app.routers.maintenance_windows import router
+
         paths = [r.path for r in router.routes]
         assert any("maintenance-windows" in p for p in paths)
 
@@ -114,8 +129,10 @@ class TestAlertEvaluatorMaintenance:
 
     def test_maintenance_cache_exists(self):
         from app.services import alert_evaluator
+
         assert hasattr(alert_evaluator, "_maintenance_cache")
 
     def test_is_device_in_maintenance_function_exists(self):
         from app.services.alert_evaluator import _is_device_in_maintenance
+
         assert callable(_is_device_in_maintenance)

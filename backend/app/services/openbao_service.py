@@ -7,6 +7,7 @@ material never leaves OpenBao -- the application only sees ciphertext.
 
 Ciphertext format: "vault:v1:base64..." (compatible with Vault Transit format)
 """
+
 import base64
 import logging
 from typing import Optional

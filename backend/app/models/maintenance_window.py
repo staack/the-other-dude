@@ -20,6 +20,7 @@ class MaintenanceWindow(Base):
     device_ids is a JSONB array of device UUID strings.
     An empty array means "all devices in tenant".
     """
+
     __tablename__ = "maintenance_windows"
 
     id: Mapped[uuid.UUID] = mapped_column(

@@ -164,9 +164,7 @@ async def list_transparency_logs(
 
     # Count total
     count_result = await db.execute(
-        select(func.count())
-        .select_from(text("key_access_log k"))
-        .where(where_clause),
+        select(func.count()).select_from(text("key_access_log k")).where(where_clause),
         params,
     )
     total = count_result.scalar() or 0
@@ -353,39 +351,41 @@ async def export_transparency_logs(
 
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "ID",
-        "Action",
-        "Device Name",
-        "Device ID",
-        "Justification",
-        "Operator Email",
-        "Correlation ID",
-        "Resource Type",
-        "Resource ID",
-        "IP Address",
-        "Timestamp",
-    ])
+    writer.writerow(
+        [
+            "ID",
+            "Action",
+            "Device Name",
+            "Device ID",
+            "Justification",
+            "Operator Email",
+            "Correlation ID",
+            "Resource Type",
+            "Resource ID",
+            "IP Address",
+            "Timestamp",
+        ]
+    )
     for row in all_rows:
-        writer.writerow([
-            str(row["id"]),
-            row["action"],
-            row["device_name"] or "",
-            str(row["device_id"]) if row["device_id"] else "",
-            row["justification"] or "",
-            row["operator_email"] or "",
-            row["correlation_id"] or "",
-            row["resource_type"] or "",
-            row["resource_id"] or "",
-            row["ip_address"] or "",
-            str(row["created_at"]),
-        ])
+        writer.writerow(
+            [
+                str(row["id"]),
+                row["action"],
+                row["device_name"] or "",
+                str(row["device_id"]) if row["device_id"] else "",
+                row["justification"] or "",
+                row["operator_email"] or "",
+                row["correlation_id"] or "",
+                row["resource_type"] or "",
+                row["resource_id"] or "",
+                row["ip_address"] or "",
+                str(row["created_at"]),
+            ]
+        )
 
     output.seek(0)
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
-        headers={
-            "Content-Disposition": "attachment; filename=transparency-logs.csv"
-        },
+        headers={"Content-Disposition": "attachment; filename=transparency-logs.csv"},
     )

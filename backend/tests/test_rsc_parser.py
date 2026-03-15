@@ -1,6 +1,5 @@
 """Tests for RouterOS RSC export parser."""
 
-import pytest
 from app.services.rsc_parser import parse_rsc, validate_rsc, compute_impact
 
 
@@ -74,7 +73,7 @@ class TestValidateRsc:
         assert any("quote" in e.lower() for e in result["errors"])
 
     def test_truncated_continuation_detected(self):
-        bad = '/ip address\nadd address=192.168.1.1/24 \\\n'
+        bad = "/ip address\nadd address=192.168.1.1/24 \\\n"
         result = validate_rsc(bad)
         assert result["valid"] is False
         assert any("truncat" in e.lower() or "continuation" in e.lower() for e in result["errors"])
@@ -82,25 +81,25 @@ class TestValidateRsc:
 
 class TestComputeImpact:
     def test_high_risk_for_firewall_input(self):
-        current = '/ip firewall filter\nadd action=accept chain=input\n'
-        target = '/ip firewall filter\nadd action=drop chain=input\n'
+        current = "/ip firewall filter\nadd action=accept chain=input\n"
+        target = "/ip firewall filter\nadd action=drop chain=input\n"
         result = compute_impact(parse_rsc(current), parse_rsc(target))
         assert any(c["risk"] == "high" for c in result["categories"])
 
     def test_high_risk_for_ip_address_changes(self):
-        current = '/ip address\nadd address=192.168.1.1/24 interface=ether1\n'
-        target = '/ip address\nadd address=10.0.0.1/24 interface=ether1\n'
+        current = "/ip address\nadd address=192.168.1.1/24 interface=ether1\n"
+        target = "/ip address\nadd address=10.0.0.1/24 interface=ether1\n"
         result = compute_impact(parse_rsc(current), parse_rsc(target))
         ip_cat = next(c for c in result["categories"] if c["path"] == "/ip address")
         assert ip_cat["risk"] in ("high", "medium")
 
     def test_warnings_for_management_access(self):
         current = ""
-        target = '/ip firewall filter\nadd action=drop chain=input protocol=tcp dst-port=22\n'
+        target = "/ip firewall filter\nadd action=drop chain=input protocol=tcp dst-port=22\n"
         result = compute_impact(parse_rsc(current), parse_rsc(target))
         assert len(result["warnings"]) > 0
 
     def test_no_changes_no_warnings(self):
-        same = '/ip dns\nset servers=8.8.8.8\n'
+        same = "/ip dns\nset servers=8.8.8.8\n"
         result = compute_impact(parse_rsc(same), parse_rsc(same))
         assert result["warnings"] == [] or all(c["risk"] == "none" for c in result["categories"])

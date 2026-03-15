@@ -11,7 +11,6 @@ These are pure function tests -- no database or async required.
 
 import uuid
 from datetime import UTC, datetime, timedelta
-from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException
@@ -83,9 +82,7 @@ class TestAccessToken:
         assert payload["role"] == "super_admin"
 
     def test_contains_expiry(self):
-        token = create_access_token(
-            user_id=uuid.uuid4(), tenant_id=uuid.uuid4(), role="viewer"
-        )
+        token = create_access_token(user_id=uuid.uuid4(), tenant_id=uuid.uuid4(), role="viewer")
         payload = verify_token(token, expected_type="access")
         assert "exp" in payload
         assert "iat" in payload

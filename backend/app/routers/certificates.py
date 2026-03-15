@@ -12,9 +12,7 @@ RBAC: viewer = read-only (GET); tenant_admin and above = mutating actions.
 """
 
 import json
-import logging
 import uuid
-from datetime import datetime, timezone
 
 import nats
 import nats.aio.client
@@ -30,7 +28,7 @@ from app.database import get_db, set_tenant_context
 from app.middleware.rate_limit import limiter
 from app.middleware.rbac import require_min_role
 from app.middleware.tenant_context import CurrentUser, get_current_user
-from app.models.certificate import CertificateAuthority, DeviceCertificate
+from app.models.certificate import DeviceCertificate
 from app.models.device import Device
 from app.schemas.certificate import (
     BulkCertDeployRequest,
@@ -87,13 +85,15 @@ async def _deploy_cert_via_nats(
         Dict with success, cert_name_on_device, and error fields.
     """
     nc = await _get_nats()
-    payload = json.dumps({
-        "device_id": device_id,
-        "cert_pem": cert_pem,
-        "key_pem": key_pem,
-        "cert_name": cert_name,
-        "ssh_port": ssh_port,
-    }).encode()
+    payload = json.dumps(
+        {
+            "device_id": device_id,
+            "cert_pem": cert_pem,
+            "key_pem": key_pem,
+            "cert_name": cert_name,
+            "ssh_port": ssh_port,
+        }
+    ).encode()
 
     try:
         reply = await nc.request(
@@ -121,9 +121,7 @@ async def _get_device_for_tenant(
     db: AsyncSession, device_id: uuid.UUID, current_user: CurrentUser
 ) -> Device:
     """Fetch a device and verify tenant ownership."""
-    result = await db.execute(
-        select(Device).where(Device.id == device_id)
-    )
+    result = await db.execute(select(Device).where(Device.id == device_id))
     device = result.scalar_one_or_none()
     if device is None:
         raise HTTPException(
@@ -164,9 +162,7 @@ async def _get_cert_with_tenant_check(
     db: AsyncSession, cert_id: uuid.UUID, tenant_id: uuid.UUID
 ) -> DeviceCertificate:
     """Fetch a device certificate and verify tenant ownership."""
-    result = await db.execute(
-        select(DeviceCertificate).where(DeviceCertificate.id == cert_id)
-    )
+    result = await db.execute(select(DeviceCertificate).where(DeviceCertificate.id == cert_id))
     cert = result.scalar_one_or_none()
     if cert is None:
         raise HTTPException(
@@ -226,8 +222,12 @@ async def create_ca(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "ca_create",
-            resource_type="certificate_authority", resource_id=str(ca.id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "ca_create",
+            resource_type="certificate_authority",
+            resource_id=str(ca.id),
             details={"common_name": body.common_name, "validity_years": body.validity_years},
         )
     except Exception:
@@ -332,8 +332,12 @@ async def sign_cert(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "cert_sign",
-            resource_type="device_certificate", resource_id=str(cert.id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "cert_sign",
+            resource_type="device_certificate",
+            resource_id=str(cert.id),
             device_id=body.device_id,
             details={"hostname": device.hostname, "validity_days": body.validity_days},
         )
@@ -404,17 +408,19 @@ async def deploy_cert(
         await update_cert_status(db, cert_id, "deployed")
 
         # Update device tls_mode to portal_ca
-        device_result = await db.execute(
-            select(Device).where(Device.id == cert.device_id)
-        )
+        device_result = await db.execute(select(Device).where(Device.id == cert.device_id))
         device = device_result.scalar_one_or_none()
         if device is not None:
             device.tls_mode = "portal_ca"
 
         try:
             await log_action(
-                db, tenant_id, current_user.user_id, "cert_deploy",
-                resource_type="device_certificate", resource_id=str(cert_id),
+                db,
+                tenant_id,
+                current_user.user_id,
+                "cert_deploy",
+                resource_type="device_certificate",
+                resource_id=str(cert_id),
                 device_id=cert.device_id,
                 details={"cert_name_on_device": result.get("cert_name_on_device")},
             )
@@ -528,36 +534,47 @@ async def bulk_deploy(
                 await update_cert_status(db, issued_cert.id, "deployed")
                 device.tls_mode = "portal_ca"
 
-                results.append(CertDeployResponse(
-                    success=True,
-                    device_id=device_id,
-                    cert_name_on_device=result.get("cert_name_on_device"),
-                ))
+                results.append(
+                    CertDeployResponse(
+                        success=True,
+                        device_id=device_id,
+                        cert_name_on_device=result.get("cert_name_on_device"),
+                    )
+                )
             else:
                 await update_cert_status(db, issued_cert.id, "issued")
-                results.append(CertDeployResponse(
-                    success=False,
-                    device_id=device_id,
-                    error=result.get("error"),
-                ))
+                results.append(
+                    CertDeployResponse(
+                        success=False,
+                        device_id=device_id,
+                        error=result.get("error"),
+                    )
+                )
 
         except HTTPException as e:
-            results.append(CertDeployResponse(
-                success=False,
-                device_id=device_id,
-                error=e.detail,
-            ))
+            results.append(
+                CertDeployResponse(
+                    success=False,
+                    device_id=device_id,
+                    error=e.detail,
+                )
+            )
         except Exception as e:
             logger.error("Bulk deploy error", device_id=str(device_id), error=str(e))
-            results.append(CertDeployResponse(
-                success=False,
-                device_id=device_id,
-                error=str(e),
-            ))
+            results.append(
+                CertDeployResponse(
+                    success=False,
+                    device_id=device_id,
+                    error=str(e),
+                )
+            )
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "cert_bulk_deploy",
+            db,
+            tenant_id,
+            current_user.user_id,
+            "cert_bulk_deploy",
             resource_type="device_certificate",
             details={
                 "device_count": len(body.device_ids),
@@ -619,17 +636,19 @@ async def revoke_cert(
         )
 
     # Reset device tls_mode to insecure
-    device_result = await db.execute(
-        select(Device).where(Device.id == cert.device_id)
-    )
+    device_result = await db.execute(select(Device).where(Device.id == cert.device_id))
     device = device_result.scalar_one_or_none()
     if device is not None:
         device.tls_mode = "insecure"
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "cert_revoke",
-            resource_type="device_certificate", resource_id=str(cert_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "cert_revoke",
+            resource_type="device_certificate",
+            resource_id=str(cert_id),
             device_id=cert.device_id,
         )
     except Exception:
@@ -661,9 +680,7 @@ async def rotate_cert(
     old_cert = await _get_cert_with_tenant_check(db, cert_id, tenant_id)
 
     # Get the device for hostname/IP
-    device_result = await db.execute(
-        select(Device).where(Device.id == old_cert.device_id)
-    )
+    device_result = await db.execute(select(Device).where(Device.id == old_cert.device_id))
     device = device_result.scalar_one_or_none()
     if device is None:
         raise HTTPException(
@@ -722,8 +739,12 @@ async def rotate_cert(
 
         try:
             await log_action(
-                db, tenant_id, current_user.user_id, "cert_rotate",
-                resource_type="device_certificate", resource_id=str(new_cert.id),
+                db,
+                tenant_id,
+                current_user.user_id,
+                "cert_rotate",
+                resource_type="device_certificate",
+                resource_id=str(new_cert.id),
                 device_id=old_cert.device_id,
                 details={
                     "old_cert_id": str(cert_id),

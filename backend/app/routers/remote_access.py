@@ -81,9 +81,12 @@ async def _get_device(db: AsyncSession, tenant_id: uuid.UUID, device_id: uuid.UU
     return device
 
 
-async def _check_tenant_access(current_user: CurrentUser, tenant_id: uuid.UUID, db: AsyncSession) -> None:
+async def _check_tenant_access(
+    current_user: CurrentUser, tenant_id: uuid.UUID, db: AsyncSession
+) -> None:
     if current_user.is_super_admin:
         from app.database import set_tenant_context
+
         await set_tenant_context(db, str(tenant_id))
         return
     if current_user.tenant_id != tenant_id:
@@ -124,8 +127,12 @@ async def open_winbox_session(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "winbox_tunnel_open",
-            resource_type="device", resource_id=str(device_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "winbox_tunnel_open",
+            resource_type="device",
+            resource_id=str(device_id),
             device_id=device_id,
             details={"source_ip": source_ip},
             ip_address=source_ip,
@@ -133,24 +140,31 @@ async def open_winbox_session(
     except Exception:
         pass
 
-    payload = json.dumps({
-        "device_id": str(device_id),
-        "tenant_id": str(tenant_id),
-        "user_id": str(current_user.user_id),
-        "target_port": 8291,
-    }).encode()
+    payload = json.dumps(
+        {
+            "device_id": str(device_id),
+            "tenant_id": str(tenant_id),
+            "user_id": str(current_user.user_id),
+            "target_port": 8291,
+        }
+    ).encode()
 
     try:
         nc = await _get_nats()
         msg = await nc.request("tunnel.open", payload, timeout=10)
     except Exception as exc:
         logger.error("NATS tunnel.open failed: %s", exc)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Tunnel service unavailable")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Tunnel service unavailable"
+        )
 
     try:
         data = json.loads(msg.data)
     except Exception:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Invalid response from tunnel service")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Invalid response from tunnel service",
+        )
 
     if "error" in data:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=data["error"])
@@ -158,11 +172,16 @@ async def open_winbox_session(
     port = data.get("local_port")
     tunnel_id = data.get("tunnel_id", "")
     if not isinstance(port, int) or not (49000 <= port <= 49100):
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Invalid port allocation from tunnel service")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Invalid port allocation from tunnel service",
+        )
 
     # Derive the tunnel host from the request so remote clients get the server's
     # address rather than 127.0.0.1 (which would point to the user's own machine).
-    tunnel_host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "127.0.0.1")
+    tunnel_host = (
+        request.headers.get("x-forwarded-host") or request.headers.get("host") or "127.0.0.1"
+    )
     # Strip port from host header (e.g. "10.101.0.175:8001" → "10.101.0.175")
     tunnel_host = tunnel_host.split(":")[0]
 
@@ -213,8 +232,12 @@ async def open_ssh_session(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "ssh_session_open",
-            resource_type="device", resource_id=str(device_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "ssh_session_open",
+            resource_type="device",
+            resource_id=str(device_id),
             device_id=device_id,
             details={"source_ip": source_ip, "cols": body.cols, "rows": body.rows},
             ip_address=source_ip,
@@ -223,22 +246,26 @@ async def open_ssh_session(
         pass
 
     token = secrets.token_urlsafe(32)
-    token_payload = json.dumps({
-        "device_id": str(device_id),
-        "tenant_id": str(tenant_id),
-        "user_id": str(current_user.user_id),
-        "source_ip": source_ip,
-        "cols": body.cols,
-        "rows": body.rows,
-        "created_at": int(time.time()),
-    })
+    token_payload = json.dumps(
+        {
+            "device_id": str(device_id),
+            "tenant_id": str(tenant_id),
+            "user_id": str(current_user.user_id),
+            "source_ip": source_ip,
+            "cols": body.cols,
+            "rows": body.rows,
+            "created_at": int(time.time()),
+        }
+    )
 
     try:
         rd = await _get_redis()
         await rd.setex(f"ssh:token:{token}", 120, token_payload)
     except Exception as exc:
         logger.error("Redis setex failed for SSH token: %s", exc)
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Session store unavailable")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Session store unavailable"
+        )
 
     return SSHSessionResponse(
         token=token,
@@ -274,8 +301,12 @@ async def close_winbox_session(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "winbox_tunnel_close",
-            resource_type="device", resource_id=str(device_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "winbox_tunnel_close",
+            resource_type="device",
+            resource_id=str(device_id),
             device_id=device_id,
             details={"tunnel_id": tunnel_id, "source_ip": source_ip},
             ip_address=source_ip,

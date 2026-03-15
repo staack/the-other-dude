@@ -49,6 +49,7 @@ def require_role(*allowed_roles: str) -> Callable:
     Returns:
         FastAPI dependency that raises 403 if the role is insufficient
     """
+
     async def dependency(
         current_user: CurrentUser = Depends(get_current_user),
     ) -> CurrentUser:
@@ -56,7 +57,7 @@ def require_role(*allowed_roles: str) -> Callable:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied. Required roles: {', '.join(allowed_roles)}. "
-                       f"Your role: {current_user.role}",
+                f"Your role: {current_user.role}",
             )
         return current_user
 
@@ -82,7 +83,7 @@ def require_min_role(min_role: str) -> Callable:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied. Minimum required role: {min_role}. "
-                       f"Your role: {current_user.role}",
+                f"Your role: {current_user.role}",
             )
         return current_user
 
@@ -96,6 +97,7 @@ def require_write_access() -> Callable:
     Viewers are NOT allowed on POST/PUT/PATCH/DELETE endpoints.
     Call this on any mutating endpoint to deny viewers.
     """
+
     async def dependency(
         request: Request,
         current_user: CurrentUser = Depends(get_current_user),
@@ -105,7 +107,7 @@ def require_write_access() -> Callable:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Viewers have read-only access. "
-                           "Contact your administrator to request elevated permissions.",
+                    "Contact your administrator to request elevated permissions.",
                 )
         return current_user
 
@@ -127,6 +129,7 @@ def require_scope(scope: str) -> DependsClass:
     Raises:
         HTTPException 403 if the API key is missing the required scope.
     """
+
     async def _check_scope(
         current_user: CurrentUser = Depends(get_current_user),
     ) -> CurrentUser:
@@ -142,6 +145,7 @@ def require_scope(scope: str) -> DependsClass:
 
 
 # Pre-built convenience dependencies
+
 
 async def require_super_admin(
     current_user: CurrentUser = Depends(get_current_user),

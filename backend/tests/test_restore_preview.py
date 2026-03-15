@@ -60,25 +60,32 @@ class TestPreviewRestoreFunction:
         mock_scalar.scalar_one_or_none.return_value = mock_device
         mock_db.execute.return_value = mock_scalar
 
-        with patch(
-            "app.routers.config_backups._check_tenant_access",
-            new_callable=AsyncMock,
-        ), patch(
-            "app.routers.config_backups.limiter.enabled",
-            False,
-        ), patch(
-            "app.routers.config_backups.git_store.read_file",
-            return_value=target_export.encode(),
-        ), patch(
-            "app.routers.config_backups.backup_service.capture_export",
-            new_callable=AsyncMock,
-            return_value=current_export,
-        ), patch(
-            "app.routers.config_backups.decrypt_credentials_hybrid",
-            new_callable=AsyncMock,
-            return_value='{"username": "admin", "password": "pass"}',
-        ), patch(
-            "app.routers.config_backups.settings",
+        with (
+            patch(
+                "app.routers.config_backups._check_tenant_access",
+                new_callable=AsyncMock,
+            ),
+            patch(
+                "app.routers.config_backups.limiter.enabled",
+                False,
+            ),
+            patch(
+                "app.routers.config_backups.git_store.read_file",
+                return_value=target_export.encode(),
+            ),
+            patch(
+                "app.routers.config_backups.backup_service.capture_export",
+                new_callable=AsyncMock,
+                return_value=current_export,
+            ),
+            patch(
+                "app.routers.config_backups.decrypt_credentials_hybrid",
+                new_callable=AsyncMock,
+                return_value='{"username": "admin", "password": "pass"}',
+            ),
+            patch(
+                "app.routers.config_backups.settings",
+            ),
         ):
             result = await preview_restore(
                 request=mock_request,
@@ -140,25 +147,32 @@ class TestPreviewRestoreFunction:
                 return current_export.encode()
             return b""
 
-        with patch(
-            "app.routers.config_backups._check_tenant_access",
-            new_callable=AsyncMock,
-        ), patch(
-            "app.routers.config_backups.limiter.enabled",
-            False,
-        ), patch(
-            "app.routers.config_backups.git_store.read_file",
-            side_effect=mock_read_file,
-        ), patch(
-            "app.routers.config_backups.backup_service.capture_export",
-            new_callable=AsyncMock,
-            side_effect=ConnectionError("Device unreachable"),
-        ), patch(
-            "app.routers.config_backups.decrypt_credentials_hybrid",
-            new_callable=AsyncMock,
-            return_value='{"username": "admin", "password": "pass"}',
-        ), patch(
-            "app.routers.config_backups.settings",
+        with (
+            patch(
+                "app.routers.config_backups._check_tenant_access",
+                new_callable=AsyncMock,
+            ),
+            patch(
+                "app.routers.config_backups.limiter.enabled",
+                False,
+            ),
+            patch(
+                "app.routers.config_backups.git_store.read_file",
+                side_effect=mock_read_file,
+            ),
+            patch(
+                "app.routers.config_backups.backup_service.capture_export",
+                new_callable=AsyncMock,
+                side_effect=ConnectionError("Device unreachable"),
+            ),
+            patch(
+                "app.routers.config_backups.decrypt_credentials_hybrid",
+                new_callable=AsyncMock,
+                return_value='{"username": "admin", "password": "pass"}',
+            ),
+            patch(
+                "app.routers.config_backups.settings",
+            ),
         ):
             result = await preview_restore(
                 request=mock_request,
@@ -188,15 +202,19 @@ class TestPreviewRestoreFunction:
         mock_request = MagicMock()
         body = RestoreRequest(commit_sha="nonexistent")
 
-        with patch(
-            "app.routers.config_backups._check_tenant_access",
-            new_callable=AsyncMock,
-        ), patch(
-            "app.routers.config_backups.limiter.enabled",
-            False,
-        ), patch(
-            "app.routers.config_backups.git_store.read_file",
-            side_effect=KeyError("not found"),
+        with (
+            patch(
+                "app.routers.config_backups._check_tenant_access",
+                new_callable=AsyncMock,
+            ),
+            patch(
+                "app.routers.config_backups.limiter.enabled",
+                False,
+            ),
+            patch(
+                "app.routers.config_backups.git_store.read_file",
+                side_effect=KeyError("not found"),
+            ),
         ):
             with pytest.raises(HTTPException) as exc_info:
                 await preview_restore(

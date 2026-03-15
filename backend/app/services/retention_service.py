@@ -53,7 +53,9 @@ async def cleanup_expired_snapshots() -> int:
             deleted = result.rowcount
 
     config_snapshots_cleaned_total.inc(deleted)
-    logger.info("retention cleanup complete", extra={"deleted_snapshots": deleted, "retention_days": days})
+    logger.info(
+        "retention cleanup complete", extra={"deleted_snapshots": deleted, "retention_days": days}
+    )
     return deleted
 
 

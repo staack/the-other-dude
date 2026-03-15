@@ -8,7 +8,7 @@ Tests cover:
 """
 
 import uuid
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -18,15 +18,24 @@ class TestAuditLogModel:
 
     def test_model_importable(self):
         from app.models.audit_log import AuditLog
+
         assert AuditLog.__tablename__ == "audit_logs"
 
     def test_model_has_required_columns(self):
         from app.models.audit_log import AuditLog
+
         mapper = AuditLog.__table__.columns
         expected_columns = {
-            "id", "tenant_id", "user_id", "action",
-            "resource_type", "resource_id", "device_id",
-            "details", "ip_address", "created_at",
+            "id",
+            "tenant_id",
+            "user_id",
+            "action",
+            "resource_type",
+            "resource_id",
+            "device_id",
+            "details",
+            "ip_address",
+            "created_at",
         }
         actual_columns = {c.name for c in mapper}
         assert expected_columns.issubset(actual_columns), (
@@ -35,6 +44,7 @@ class TestAuditLogModel:
 
     def test_model_exported_from_init(self):
         from app.models import AuditLog
+
         assert AuditLog.__tablename__ == "audit_logs"
 
 
@@ -43,6 +53,7 @@ class TestAuditService:
 
     def test_log_action_importable(self):
         from app.services.audit_service import log_action
+
         assert callable(log_action)
 
     @pytest.mark.asyncio
@@ -67,9 +78,11 @@ class TestAuditRouter:
 
     def test_router_importable(self):
         from app.routers.audit_logs import router
+
         assert router is not None
 
     def test_router_has_audit_logs_endpoint(self):
         from app.routers.audit_logs import router
+
         paths = [route.path for route in router.routes]
         assert "/audit-logs" in paths or any("/audit-logs" in p for p in paths)

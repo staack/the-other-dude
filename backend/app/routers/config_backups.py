@@ -25,7 +25,6 @@ import asyncio
 import json
 import logging
 import uuid
-from datetime import timezone, datetime
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -67,6 +66,7 @@ async def _check_tenant_access(
     """
     if current_user.is_super_admin:
         from app.database import set_tenant_context
+
         await set_tenant_context(db, str(tenant_id))
         return
     if current_user.tenant_id != tenant_id:
@@ -291,14 +291,14 @@ async def get_export(
         try:
             from app.services.crypto import decrypt_data_transit
 
-            plaintext = await decrypt_data_transit(
-                content_bytes.decode("utf-8"), str(tenant_id)
-            )
+            plaintext = await decrypt_data_transit(content_bytes.decode("utf-8"), str(tenant_id))
             content_bytes = plaintext.encode("utf-8")
         except Exception as dec_err:
             logger.error(
                 "Failed to decrypt export for device %s sha %s: %s",
-                device_id, commit_sha, dec_err,
+                device_id,
+                commit_sha,
+                dec_err,
             )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -370,7 +370,9 @@ async def get_binary(
         except Exception as dec_err:
             logger.error(
                 "Failed to decrypt binary backup for device %s sha %s: %s",
-                device_id, commit_sha, dec_err,
+                device_id,
+                commit_sha,
+                dec_err,
             )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -380,9 +382,7 @@ async def get_binary(
     return Response(
         content=content_bytes,
         media_type="application/octet-stream",
-        headers={
-            "Content-Disposition": f'attachment; filename="backup-{commit_sha[:8]}.bin"'
-        },
+        headers={"Content-Disposition": f'attachment; filename="backup-{commit_sha[:8]}.bin"'},
     )
 
 
@@ -445,6 +445,7 @@ async def preview_restore(
                 key,
             )
             import json
+
             creds = json.loads(creds_json)
             current_text = await backup_service.capture_export(
                 device.ip_address,
@@ -578,9 +579,7 @@ async def emergency_rollback(
         .where(
             ConfigBackupRun.device_id == device_id,  # type: ignore[arg-type]
             ConfigBackupRun.tenant_id == tenant_id,  # type: ignore[arg-type]
-            ConfigBackupRun.trigger_type.in_(
-                ["pre-restore", "checkpoint", "pre-template-push"]
-            ),
+            ConfigBackupRun.trigger_type.in_(["pre-restore", "checkpoint", "pre-template-push"]),
         )
         .order_by(ConfigBackupRun.created_at.desc())
         .limit(1)
@@ -735,6 +734,7 @@ async def update_schedule(
 
     # Hot-reload the scheduler so changes take effect immediately
     from app.services.backup_scheduler import on_schedule_change
+
     await on_schedule_change(tenant_id, device_id)
 
     return {
@@ -758,6 +758,7 @@ async def _get_nats():
     Reuses the same lazy-init pattern as routeros_proxy._get_nats().
     """
     from app.services.routeros_proxy import _get_nats as _proxy_get_nats
+
     return await _proxy_get_nats()
 
 
@@ -839,6 +840,7 @@ async def trigger_config_snapshot(
     if reply_data.get("status") == "success":
         try:
             from app.services.audit_service import log_action
+
             await log_action(
                 db,
                 tenant_id,

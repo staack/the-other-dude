@@ -26,7 +26,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.models.device import Device
 from app.models.vpn import VpnConfig, VpnPeer
-from app.services.crypto import decrypt_credentials, encrypt_credentials, encrypt_credentials_transit
+from app.services.crypto import (
+    decrypt_credentials,
+    encrypt_credentials,
+    encrypt_credentials_transit,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -62,7 +66,9 @@ async def _get_or_create_global_server_key(db: AsyncSession) -> tuple[str, str]:
     await db.execute(sa_text("SELECT pg_advisory_xact_lock(hashtext('vpn_server_keygen'))"))
 
     result = await db.execute(
-        sa_text("SELECT key, value, encrypted_value FROM system_settings WHERE key IN ('vpn_server_public_key', 'vpn_server_private_key')")
+        sa_text(
+            "SELECT key, value, encrypted_value FROM system_settings WHERE key IN ('vpn_server_public_key', 'vpn_server_private_key')"
+        )
     )
     rows = {row[0]: row for row in result.fetchall()}
 
@@ -188,7 +194,9 @@ async def sync_wireguard_config() -> None:
 
             # Query ALL enabled VPN configs (admin session bypasses RLS)
             configs_result = await admin_db.execute(
-                select(VpnConfig).where(VpnConfig.is_enabled.is_(True)).order_by(VpnConfig.subnet_index)
+                select(VpnConfig)
+                .where(VpnConfig.is_enabled.is_(True))
+                .order_by(VpnConfig.subnet_index)
             )
             configs = configs_result.scalars().all()
 
@@ -228,7 +236,9 @@ async def sync_wireguard_config() -> None:
                     peer_ip = peer.assigned_ip.split("/")[0]
                     allowed_ips = [f"{peer_ip}/32"]
                     if peer.additional_allowed_ips:
-                        extra = [s.strip() for s in peer.additional_allowed_ips.split(",") if s.strip()]
+                        extra = [
+                            s.strip() for s in peer.additional_allowed_ips.split(",") if s.strip()
+                        ]
                         allowed_ips.extend(extra)
                     lines.append("[Peer]")
                     lines.append(f"PublicKey = {peer.peer_public_key}")
@@ -253,12 +263,13 @@ async def sync_wireguard_config() -> None:
             # Docker traffic (172.16.0.0/12) going to each tenant's subnet
             # gets SNATted to that tenant's gateway IP (.1) so the router
             # can route replies back through the tunnel.
-            nat_lines = ["#!/bin/sh",
-                         "# Auto-generated per-tenant SNAT rules",
-                         "# Remove old rules",
-                         "iptables -t nat -F POSTROUTING 2>/dev/null",
-                         "# Re-add Docker DNS rules",
-                         ]
+            nat_lines = [
+                "#!/bin/sh",
+                "# Auto-generated per-tenant SNAT rules",
+                "# Remove old rules",
+                "iptables -t nat -F POSTROUTING 2>/dev/null",
+                "# Re-add Docker DNS rules",
+            ]
             for config in configs:
                 gateway_ip = config.server_address.split("/")[0]  # e.g. 10.10.3.1
                 subnet = config.subnet  # e.g. 10.10.3.0/24
@@ -275,12 +286,15 @@ async def sync_wireguard_config() -> None:
             reload_flag = wg_confs_dir / ".reload"
             reload_flag.write_text("1")
 
-            logger.info("wireguard_config_synced", audit=True,
-                        tenants=len(configs), peers=total_peers)
+            logger.info(
+                "wireguard_config_synced", audit=True, tenants=len(configs), peers=total_peers
+            )
 
         finally:
             # Release advisory lock explicitly (session-level lock, not xact-level)
-            await admin_db.execute(sa_text("SELECT pg_advisory_unlock(hashtext('wireguard_config'))"))
+            await admin_db.execute(
+                sa_text("SELECT pg_advisory_unlock(hashtext('wireguard_config'))")
+            )
 
 
 # ── Live Status ──
@@ -371,15 +385,23 @@ async def setup_vpn(
     db.add(config)
     await db.flush()
 
-    logger.info("vpn_subnet_allocated", audit=True,
-                tenant_id=str(tenant_id), subnet_index=subnet_index, subnet=subnet)
+    logger.info(
+        "vpn_subnet_allocated",
+        audit=True,
+        tenant_id=str(tenant_id),
+        subnet_index=subnet_index,
+        subnet=subnet,
+    )
 
     await _commit_and_sync(db)
     return config
 
 
 async def update_vpn_config(
-    db: AsyncSession, tenant_id: uuid.UUID, endpoint: Optional[str] = None, is_enabled: Optional[bool] = None
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    endpoint: Optional[str] = None,
+    is_enabled: Optional[bool] = None,
 ) -> VpnConfig:
     """Update VPN config settings."""
     config = await get_vpn_config(db, tenant_id)
@@ -422,14 +444,21 @@ async def _next_available_ip(db: AsyncSession, tenant_id: uuid.UUID, config: Vpn
     raise ValueError("No available IPs in VPN subnet")
 
 
-async def add_peer(db: AsyncSession, tenant_id: uuid.UUID, device_id: uuid.UUID, additional_allowed_ips: Optional[str] = None) -> VpnPeer:
+async def add_peer(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    device_id: uuid.UUID,
+    additional_allowed_ips: Optional[str] = None,
+) -> VpnPeer:
     """Add a device as a VPN peer."""
     config = await get_vpn_config(db, tenant_id)
     if not config:
         raise ValueError("VPN not configured — enable VPN first")
 
     # Check device exists
-    device = await db.execute(select(Device).where(Device.id == device_id, Device.tenant_id == tenant_id))
+    device = await db.execute(
+        select(Device).where(Device.id == device_id, Device.tenant_id == tenant_id)
+    )
     if not device.scalar_one_or_none():
         raise ValueError("Device not found")
 
@@ -497,13 +526,12 @@ async def get_peer_config(db: AsyncSession, tenant_id: uuid.UUID, peer_id: uuid.
     psk = decrypt_credentials(peer.preshared_key, key_bytes) if peer.preshared_key else None
 
     endpoint = config.endpoint or "YOUR_SERVER_IP:51820"
-    peer_ip_no_cidr = peer.assigned_ip.split("/")[0]
 
     routeros_commands = [
         f'/interface wireguard add name=wg-portal listen-port=13231 private-key="{private_key}"',
         f'/interface wireguard peers add interface=wg-portal public-key="{config.server_public_key}" '
-        f'endpoint-address={endpoint.split(":")[0]} endpoint-port={endpoint.split(":")[-1]} '
-        f'allowed-address=10.10.0.0/16 persistent-keepalive=25'
+        f"endpoint-address={endpoint.split(':')[0]} endpoint-port={endpoint.split(':')[-1]} "
+        f"allowed-address=10.10.0.0/16 persistent-keepalive=25"
         + (f' preshared-key="{psk}"' if psk else ""),
         f"/ip address add address={peer.assigned_ip} interface=wg-portal",
     ]
@@ -583,8 +611,8 @@ async def onboard_device(
     routeros_commands = [
         f'/interface wireguard add name=wg-portal listen-port=13231 private-key="{private_key_b64}"',
         f'/interface wireguard peers add interface=wg-portal public-key="{config.server_public_key}" '
-        f'endpoint-address={endpoint.split(":")[0]} endpoint-port={endpoint.split(":")[-1]} '
-        f'allowed-address=10.10.0.0/16 persistent-keepalive=25'
+        f"endpoint-address={endpoint.split(':')[0]} endpoint-port={endpoint.split(':')[-1]} "
+        f"allowed-address=10.10.0.0/16 persistent-keepalive=25"
         f' preshared-key="{psk_decrypted}"',
         f"/ip address add address={assigned_ip} interface=wg-portal",
     ]

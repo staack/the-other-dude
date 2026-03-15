@@ -31,17 +31,14 @@ def upgrade() -> None:
     # =========================================================================
     # ALTER devices TABLE — add latitude and longitude columns
     # =========================================================================
-    conn.execute(sa.text(
-        "ALTER TABLE devices ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION"
-    ))
-    conn.execute(sa.text(
-        "ALTER TABLE devices ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION"
-    ))
+    conn.execute(sa.text("ALTER TABLE devices ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION"))
+    conn.execute(sa.text("ALTER TABLE devices ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION"))
 
     # =========================================================================
     # CREATE config_templates TABLE
     # =========================================================================
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE TABLE IF NOT EXISTS config_templates (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -53,12 +50,14 @@ def upgrade() -> None:
             updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
             UNIQUE(tenant_id, name)
         )
-    """))
+    """)
+    )
 
     # =========================================================================
     # CREATE config_template_tags TABLE
     # =========================================================================
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE TABLE IF NOT EXISTS config_template_tags (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -66,12 +65,14 @@ def upgrade() -> None:
             template_id UUID NOT NULL REFERENCES config_templates(id) ON DELETE CASCADE,
             UNIQUE(template_id, name)
         )
-    """))
+    """)
+    )
 
     # =========================================================================
     # CREATE template_push_jobs TABLE
     # =========================================================================
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE TABLE IF NOT EXISTS template_push_jobs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -86,48 +87,57 @@ def upgrade() -> None:
             completed_at TIMESTAMPTZ,
             created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
-    """))
+    """)
+    )
 
     # =========================================================================
     # RLS POLICIES
     # =========================================================================
     for table in ("config_templates", "config_template_tags", "template_push_jobs"):
         conn.execute(sa.text(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY"))
-        conn.execute(sa.text(f"""
+        conn.execute(
+            sa.text(f"""
             CREATE POLICY {table}_tenant_isolation ON {table}
             USING (tenant_id = current_setting('app.current_tenant')::uuid)
-        """))
-        conn.execute(sa.text(
-            f"GRANT SELECT, INSERT, UPDATE, DELETE ON {table} TO app_user"
-        ))
+        """)
+        )
+        conn.execute(sa.text(f"GRANT SELECT, INSERT, UPDATE, DELETE ON {table} TO app_user"))
         conn.execute(sa.text(f"GRANT ALL ON {table} TO poller_user"))
 
     # =========================================================================
     # INDEXES
     # =========================================================================
-    conn.execute(sa.text(
-        "CREATE INDEX IF NOT EXISTS idx_config_templates_tenant "
-        "ON config_templates (tenant_id)"
-    ))
-    conn.execute(sa.text(
-        "CREATE INDEX IF NOT EXISTS idx_config_template_tags_template "
-        "ON config_template_tags (template_id)"
-    ))
-    conn.execute(sa.text(
-        "CREATE INDEX IF NOT EXISTS idx_template_push_jobs_tenant_rollout "
-        "ON template_push_jobs (tenant_id, rollout_id)"
-    ))
-    conn.execute(sa.text(
-        "CREATE INDEX IF NOT EXISTS idx_template_push_jobs_device_status "
-        "ON template_push_jobs (device_id, status)"
-    ))
+    conn.execute(
+        sa.text(
+            "CREATE INDEX IF NOT EXISTS idx_config_templates_tenant ON config_templates (tenant_id)"
+        )
+    )
+    conn.execute(
+        sa.text(
+            "CREATE INDEX IF NOT EXISTS idx_config_template_tags_template "
+            "ON config_template_tags (template_id)"
+        )
+    )
+    conn.execute(
+        sa.text(
+            "CREATE INDEX IF NOT EXISTS idx_template_push_jobs_tenant_rollout "
+            "ON template_push_jobs (tenant_id, rollout_id)"
+        )
+    )
+    conn.execute(
+        sa.text(
+            "CREATE INDEX IF NOT EXISTS idx_template_push_jobs_device_status "
+            "ON template_push_jobs (device_id, status)"
+        )
+    )
 
     # =========================================================================
     # SEED STARTER TEMPLATES for all existing tenants
     # =========================================================================
 
     # 1. Basic Firewall
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         INSERT INTO config_templates (id, tenant_id, name, description, content, variables)
         SELECT
             gen_random_uuid(),
@@ -146,10 +156,12 @@ add chain=forward action=drop',
             '[{"name":"wan_interface","type":"string","default":"ether1","description":"WAN-facing interface"},{"name":"allowed_network","type":"subnet","default":"192.168.1.0/24","description":"Allowed source network"}]'::jsonb
         FROM tenants t
         ON CONFLICT DO NOTHING
-    """))
+    """)
+    )
 
     # 2. DHCP Server Setup
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         INSERT INTO config_templates (id, tenant_id, name, description, content, variables)
         SELECT
             gen_random_uuid(),
@@ -162,10 +174,12 @@ add chain=forward action=drop',
             '[{"name":"pool_start","type":"ip","default":"192.168.1.100","description":"DHCP pool start address"},{"name":"pool_end","type":"ip","default":"192.168.1.254","description":"DHCP pool end address"},{"name":"gateway","type":"ip","default":"192.168.1.1","description":"Default gateway"},{"name":"dns_server","type":"ip","default":"8.8.8.8","description":"DNS server address"},{"name":"interface","type":"string","default":"bridge1","description":"Interface to serve DHCP on"}]'::jsonb
         FROM tenants t
         ON CONFLICT DO NOTHING
-    """))
+    """)
+    )
 
     # 3. Wireless AP Config
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         INSERT INTO config_templates (id, tenant_id, name, description, content, variables)
         SELECT
             gen_random_uuid(),
@@ -177,10 +191,12 @@ add chain=forward action=drop',
             '[{"name":"ssid","type":"string","default":"MikroTik-AP","description":"Wireless network name"},{"name":"password","type":"string","default":"","description":"WPA2 pre-shared key (min 8 characters)"},{"name":"frequency","type":"integer","default":"2412","description":"Wireless frequency in MHz"},{"name":"channel_width","type":"string","default":"20/40mhz-XX","description":"Channel width setting"}]'::jsonb
         FROM tenants t
         ON CONFLICT DO NOTHING
-    """))
+    """)
+    )
 
     # 4. Initial Device Setup
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         INSERT INTO config_templates (id, tenant_id, name, description, content, variables)
         SELECT
             gen_random_uuid(),
@@ -196,7 +212,8 @@ add chain=forward action=drop',
             '[{"name":"ntp_server","type":"ip","default":"pool.ntp.org","description":"NTP server address"},{"name":"dns_servers","type":"string","default":"8.8.8.8,8.8.4.4","description":"Comma-separated DNS servers"}]'::jsonb
         FROM tenants t
         ON CONFLICT DO NOTHING
-    """))
+    """)
+    )
 
 
 def downgrade() -> None:

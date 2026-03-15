@@ -4,9 +4,8 @@ Tests the generate_and_store_diff function with mocked DB sessions
 and OpenBao Transit service.
 """
 
-import json
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 
@@ -51,17 +50,22 @@ async def test_diff_generated_and_stored():
     mock_session.commit = AsyncMock()
 
     mock_openbao = AsyncMock()
-    mock_openbao.decrypt = AsyncMock(side_effect=[
-        old_config.encode("utf-8"),
-        new_config.encode("utf-8"),
-    ])
+    mock_openbao.decrypt = AsyncMock(
+        side_effect=[
+            old_config.encode("utf-8"),
+            new_config.encode("utf-8"),
+        ]
+    )
 
-    with patch(
-        "app.services.config_diff_service.OpenBaoTransitService",
-        return_value=mock_openbao,
-    ), patch(
-        "app.services.config_diff_service.parse_diff_changes",
-        return_value=[],
+    with (
+        patch(
+            "app.services.config_diff_service.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
+        patch(
+            "app.services.config_diff_service.parse_diff_changes",
+            return_value=[],
+        ),
     ):
         await generate_and_store_diff(device_id, tenant_id, new_snapshot_id, mock_session)
 
@@ -178,17 +182,22 @@ async def test_line_counts_correct():
     mock_session.commit = AsyncMock()
 
     mock_openbao = AsyncMock()
-    mock_openbao.decrypt = AsyncMock(side_effect=[
-        old_config.encode("utf-8"),
-        new_config.encode("utf-8"),
-    ])
+    mock_openbao.decrypt = AsyncMock(
+        side_effect=[
+            old_config.encode("utf-8"),
+            new_config.encode("utf-8"),
+        ]
+    )
 
-    with patch(
-        "app.services.config_diff_service.OpenBaoTransitService",
-        return_value=mock_openbao,
-    ), patch(
-        "app.services.config_diff_service.parse_diff_changes",
-        return_value=[],
+    with (
+        patch(
+            "app.services.config_diff_service.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
+        patch(
+            "app.services.config_diff_service.parse_diff_changes",
+            return_value=[],
+        ),
     ):
         await generate_and_store_diff(device_id, tenant_id, new_snapshot_id, mock_session)
 
@@ -222,10 +231,12 @@ async def test_empty_diff_skips_insert():
     mock_session.commit = AsyncMock()
 
     mock_openbao = AsyncMock()
-    mock_openbao.decrypt = AsyncMock(side_effect=[
-        same_config.encode("utf-8"),
-        same_config.encode("utf-8"),
-    ])
+    mock_openbao.decrypt = AsyncMock(
+        side_effect=[
+            same_config.encode("utf-8"),
+            same_config.encode("utf-8"),
+        ]
+    )
 
     with patch(
         "app.services.config_diff_service.OpenBaoTransitService",
@@ -271,22 +282,31 @@ async def test_change_parser_called_and_changes_stored():
     mock_session.commit = AsyncMock()
 
     mock_openbao = AsyncMock()
-    mock_openbao.decrypt = AsyncMock(side_effect=[
-        old_config.encode("utf-8"),
-        new_config.encode("utf-8"),
-    ])
+    mock_openbao.decrypt = AsyncMock(
+        side_effect=[
+            old_config.encode("utf-8"),
+            new_config.encode("utf-8"),
+        ]
+    )
 
     mock_changes = [
-        {"component": "ip/firewall/filter", "summary": "Added 1 firewall filter rule", "raw_line": "+add chain=forward action=drop"},
+        {
+            "component": "ip/firewall/filter",
+            "summary": "Added 1 firewall filter rule",
+            "raw_line": "+add chain=forward action=drop",
+        },
     ]
 
-    with patch(
-        "app.services.config_diff_service.OpenBaoTransitService",
-        return_value=mock_openbao,
-    ), patch(
-        "app.services.config_diff_service.parse_diff_changes",
-        return_value=mock_changes,
-    ) as mock_parser:
+    with (
+        patch(
+            "app.services.config_diff_service.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
+        patch(
+            "app.services.config_diff_service.parse_diff_changes",
+            return_value=mock_changes,
+        ) as mock_parser,
+    ):
         await generate_and_store_diff(device_id, tenant_id, new_snapshot_id, mock_session)
 
     # parse_diff_changes called with the diff text
@@ -332,17 +352,22 @@ async def test_change_parser_error_does_not_block_diff():
     mock_session.commit = AsyncMock()
 
     mock_openbao = AsyncMock()
-    mock_openbao.decrypt = AsyncMock(side_effect=[
-        old_config.encode("utf-8"),
-        new_config.encode("utf-8"),
-    ])
+    mock_openbao.decrypt = AsyncMock(
+        side_effect=[
+            old_config.encode("utf-8"),
+            new_config.encode("utf-8"),
+        ]
+    )
 
-    with patch(
-        "app.services.config_diff_service.OpenBaoTransitService",
-        return_value=mock_openbao,
-    ), patch(
-        "app.services.config_diff_service.parse_diff_changes",
-        side_effect=Exception("Parser exploded"),
+    with (
+        patch(
+            "app.services.config_diff_service.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
+        patch(
+            "app.services.config_diff_service.parse_diff_changes",
+            side_effect=Exception("Parser exploded"),
+        ),
     ):
         # Should NOT raise
         await generate_and_store_diff(device_id, tenant_id, new_snapshot_id, mock_session)

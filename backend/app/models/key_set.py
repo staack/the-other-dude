@@ -37,32 +37,18 @@ class UserKeySet(Base):
         ForeignKey("tenants.id", ondelete="CASCADE"),
         nullable=True,  # NULL for super_admin
     )
-    encrypted_private_key: Mapped[bytes] = mapped_column(
-        LargeBinary, nullable=False
-    )
-    private_key_nonce: Mapped[bytes] = mapped_column(
-        LargeBinary, nullable=False
-    )
-    encrypted_vault_key: Mapped[bytes] = mapped_column(
-        LargeBinary, nullable=False
-    )
-    vault_key_nonce: Mapped[bytes] = mapped_column(
-        LargeBinary, nullable=False
-    )
-    public_key: Mapped[bytes] = mapped_column(
-        LargeBinary, nullable=False
-    )
+    encrypted_private_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    private_key_nonce: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    encrypted_vault_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    vault_key_nonce: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    public_key: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     pbkdf2_iterations: Mapped[int] = mapped_column(
         Integer,
         server_default=func.literal_column("650000"),
         nullable=False,
     )
-    pbkdf2_salt: Mapped[bytes] = mapped_column(
-        LargeBinary, nullable=False
-    )
-    hkdf_salt: Mapped[bytes] = mapped_column(
-        LargeBinary, nullable=False
-    )
+    pbkdf2_salt: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    hkdf_salt: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
     key_version: Mapped[int] = mapped_column(
         Integer,
         server_default=func.literal_column("1"),

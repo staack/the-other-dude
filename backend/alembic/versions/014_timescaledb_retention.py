@@ -35,9 +35,7 @@ def upgrade() -> None:
 
     for table in HYPERTABLES:
         # Drop chunks older than 90 days
-        conn.execute(sa.text(
-            f"SELECT add_retention_policy('{table}', INTERVAL '90 days')"
-        ))
+        conn.execute(sa.text(f"SELECT add_retention_policy('{table}', INTERVAL '90 days')"))
 
 
 def downgrade() -> None:
@@ -45,6 +43,4 @@ def downgrade() -> None:
 
     for table in HYPERTABLES:
         # Remove retention policy
-        conn.execute(sa.text(
-            f"SELECT remove_retention_policy('{table}', if_exists => true)"
-        ))
+        conn.execute(sa.text(f"SELECT remove_retention_policy('{table}', if_exists => true)"))

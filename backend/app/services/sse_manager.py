@@ -137,7 +137,9 @@ class SSEConnectionManager:
         if last_event_id is not None:
             try:
                 start_seq = int(last_event_id) + 1
-                consumer_cfg = ConsumerConfig(deliver_policy=DeliverPolicy.BY_START_SEQUENCE, opt_start_seq=start_seq)
+                consumer_cfg = ConsumerConfig(
+                    deliver_policy=DeliverPolicy.BY_START_SEQUENCE, opt_start_seq=start_seq
+                )
             except (ValueError, TypeError):
                 consumer_cfg = ConsumerConfig(deliver_policy=DeliverPolicy.NEW)
         else:
@@ -173,18 +175,32 @@ class SSEConnectionManager:
             except Exception as exc:
                 if "stream not found" in str(exc):
                     try:
-                        await js.add_stream(StreamConfig(
-                            name="ALERT_EVENTS",
-                            subjects=_ALERT_EVENT_SUBJECTS,
-                            max_age=3600,
-                        ))
-                        sub = await js.subscribe(subject, stream="ALERT_EVENTS", config=consumer_cfg)
+                        await js.add_stream(
+                            StreamConfig(
+                                name="ALERT_EVENTS",
+                                subjects=_ALERT_EVENT_SUBJECTS,
+                                max_age=3600,
+                            )
+                        )
+                        sub = await js.subscribe(
+                            subject, stream="ALERT_EVENTS", config=consumer_cfg
+                        )
                         self._subscriptions.append(sub)
                         logger.info("sse.stream_created_lazily", stream="ALERT_EVENTS")
                     except Exception as retry_exc:
-                        logger.warning("sse.subscribe_failed", subject=subject, stream="ALERT_EVENTS", error=str(retry_exc))
+                        logger.warning(
+                            "sse.subscribe_failed",
+                            subject=subject,
+                            stream="ALERT_EVENTS",
+                            error=str(retry_exc),
+                        )
                 else:
-                    logger.warning("sse.subscribe_failed", subject=subject, stream="ALERT_EVENTS", error=str(exc))
+                    logger.warning(
+                        "sse.subscribe_failed",
+                        subject=subject,
+                        stream="ALERT_EVENTS",
+                        error=str(exc),
+                    )
 
         # Subscribe to operation events (OPERATION_EVENTS stream)
         for subject in _OPERATION_EVENT_SUBJECTS:
@@ -198,18 +214,32 @@ class SSEConnectionManager:
             except Exception as exc:
                 if "stream not found" in str(exc):
                     try:
-                        await js.add_stream(StreamConfig(
-                            name="OPERATION_EVENTS",
-                            subjects=_OPERATION_EVENT_SUBJECTS,
-                            max_age=3600,
-                        ))
-                        sub = await js.subscribe(subject, stream="OPERATION_EVENTS", config=consumer_cfg)
+                        await js.add_stream(
+                            StreamConfig(
+                                name="OPERATION_EVENTS",
+                                subjects=_OPERATION_EVENT_SUBJECTS,
+                                max_age=3600,
+                            )
+                        )
+                        sub = await js.subscribe(
+                            subject, stream="OPERATION_EVENTS", config=consumer_cfg
+                        )
                         self._subscriptions.append(sub)
                         logger.info("sse.stream_created_lazily", stream="OPERATION_EVENTS")
                     except Exception as retry_exc:
-                        logger.warning("sse.subscribe_failed", subject=subject, stream="OPERATION_EVENTS", error=str(retry_exc))
+                        logger.warning(
+                            "sse.subscribe_failed",
+                            subject=subject,
+                            stream="OPERATION_EVENTS",
+                            error=str(retry_exc),
+                        )
                 else:
-                    logger.warning("sse.subscribe_failed", subject=subject, stream="OPERATION_EVENTS", error=str(exc))
+                    logger.warning(
+                        "sse.subscribe_failed",
+                        subject=subject,
+                        stream="OPERATION_EVENTS",
+                        error=str(exc),
+                    )
 
         # Start background task to pull messages from subscriptions into the queue
         asyncio.create_task(self._pump_messages())

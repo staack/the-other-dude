@@ -90,16 +90,18 @@ async def list_events(
         for row in alert_result.fetchall():
             alert_status = row[1] or "firing"
             metric = row[3] or "unknown"
-            events.append({
-                "id": str(row[0]),
-                "event_type": "alert",
-                "severity": row[2],
-                "title": f"{alert_status}: {metric}",
-                "description": row[4] or f"Alert {alert_status} for {metric}",
-                "device_hostname": row[7],
-                "device_id": str(row[6]) if row[6] else None,
-                "timestamp": row[5].isoformat() if row[5] else None,
-            })
+            events.append(
+                {
+                    "id": str(row[0]),
+                    "event_type": "alert",
+                    "severity": row[2],
+                    "title": f"{alert_status}: {metric}",
+                    "description": row[4] or f"Alert {alert_status} for {metric}",
+                    "device_hostname": row[7],
+                    "device_id": str(row[6]) if row[6] else None,
+                    "timestamp": row[5].isoformat() if row[5] else None,
+                }
+            )
 
     # 2. Device status changes (inferred from current status + last_seen)
     if not event_type or event_type == "status_change":
@@ -117,16 +119,18 @@ async def list_events(
             device_status = row[2] or "unknown"
             hostname = row[1] or "Unknown device"
             severity = "info" if device_status == "online" else "warning"
-            events.append({
-                "id": f"status-{row[0]}",
-                "event_type": "status_change",
-                "severity": severity,
-                "title": f"Device {device_status}",
-                "description": f"{hostname} is now {device_status}",
-                "device_hostname": hostname,
-                "device_id": str(row[0]),
-                "timestamp": row[3].isoformat() if row[3] else None,
-            })
+            events.append(
+                {
+                    "id": f"status-{row[0]}",
+                    "event_type": "status_change",
+                    "severity": severity,
+                    "title": f"Device {device_status}",
+                    "description": f"{hostname} is now {device_status}",
+                    "device_hostname": hostname,
+                    "device_id": str(row[0]),
+                    "timestamp": row[3].isoformat() if row[3] else None,
+                }
+            )
 
     # 3. Config backup runs
     if not event_type or event_type == "config_backup":
@@ -144,16 +148,18 @@ async def list_events(
         for row in backup_result.fetchall():
             trigger_type = row[1] or "manual"
             hostname = row[4] or "Unknown device"
-            events.append({
-                "id": str(row[0]),
-                "event_type": "config_backup",
-                "severity": "info",
-                "title": "Config backup",
-                "description": f"{trigger_type} backup completed for {hostname}",
-                "device_hostname": hostname,
-                "device_id": str(row[3]) if row[3] else None,
-                "timestamp": row[2].isoformat() if row[2] else None,
-            })
+            events.append(
+                {
+                    "id": str(row[0]),
+                    "event_type": "config_backup",
+                    "severity": "info",
+                    "title": "Config backup",
+                    "description": f"{trigger_type} backup completed for {hostname}",
+                    "device_hostname": hostname,
+                    "device_id": str(row[3]) if row[3] else None,
+                    "timestamp": row[2].isoformat() if row[2] else None,
+                }
+            )
 
     # Sort all events by timestamp descending, then apply final limit
     events.sort(

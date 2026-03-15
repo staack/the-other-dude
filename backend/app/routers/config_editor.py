@@ -64,9 +64,7 @@ async def _check_tenant_access(
     await set_tenant_context(db, str(tenant_id))
 
 
-async def _check_device_online(
-    db: AsyncSession, device_id: uuid.UUID
-) -> Device:
+async def _check_device_online(db: AsyncSession, device_id: uuid.UUID) -> Device:
     """Verify the device exists and is online. Returns the Device object."""
     result = await db.execute(
         select(Device).where(Device.id == device_id)  # type: ignore[arg-type]
@@ -201,8 +199,12 @@ async def add_entry(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "config_add",
-            resource_type="config", resource_id=str(device_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "config_add",
+            resource_type="config",
+            resource_id=str(device_id),
             device_id=device_id,
             details={"path": body.path, "properties": body.properties},
         )
@@ -255,8 +257,12 @@ async def set_entry(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "config_set",
-            resource_type="config", resource_id=str(device_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "config_set",
+            resource_type="config",
+            resource_id=str(device_id),
             device_id=device_id,
             details={"path": body.path, "entry_id": body.entry_id, "properties": body.properties},
         )
@@ -286,9 +292,7 @@ async def remove_entry(
     await _check_device_online(db, device_id)
     check_path_safety(body.path, write=True)
 
-    result = await routeros_proxy.remove_entry(
-        str(device_id), body.path, body.entry_id
-    )
+    result = await routeros_proxy.remove_entry(str(device_id), body.path, body.entry_id)
 
     if not result.get("success"):
         raise HTTPException(
@@ -309,8 +313,12 @@ async def remove_entry(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "config_remove",
-            resource_type="config", resource_id=str(device_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "config_remove",
+            resource_type="config",
+            resource_id=str(device_id),
             device_id=device_id,
             details={"path": body.path, "entry_id": body.entry_id},
         )
@@ -360,8 +368,12 @@ async def execute_command(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "config_execute",
-            resource_type="config", resource_id=str(device_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "config_execute",
+            resource_type="config",
+            resource_id=str(device_id),
             device_id=device_id,
             details={"command": body.command},
         )

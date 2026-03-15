@@ -32,8 +32,12 @@ def _cron_to_trigger(cron_expr: str) -> Optional[CronTrigger]:
             return None
         minute, hour, day, month, day_of_week = parts
         return CronTrigger(
-            minute=minute, hour=hour, day=day, month=month,
-            day_of_week=day_of_week, timezone="UTC",
+            minute=minute,
+            hour=hour,
+            day=day,
+            month=month,
+            day_of_week=day_of_week,
+            timezone="UTC",
         )
     except Exception as e:
         logger.warning("Invalid cron expression '%s': %s", cron_expr, e)
@@ -52,10 +56,12 @@ def build_schedule_map(schedules: list) -> dict[str, list[dict]]:
         cron = s.cron_expression or DEFAULT_CRON
         if cron not in schedule_map:
             schedule_map[cron] = []
-        schedule_map[cron].append({
-            "device_id": str(s.device_id),
-            "tenant_id": str(s.tenant_id),
-        })
+        schedule_map[cron].append(
+            {
+                "device_id": str(s.device_id),
+                "tenant_id": str(s.tenant_id),
+            }
+        )
     return schedule_map
 
 
@@ -79,13 +85,15 @@ async def _run_scheduled_backups(devices: list[dict]) -> None:
         except Exception as e:
             logger.error(
                 "Scheduled backup FAILED: device %s: %s",
-                dev_info["device_id"], e,
+                dev_info["device_id"],
+                e,
             )
             failure_count += 1
 
     logger.info(
         "Backup batch complete — %d succeeded, %d failed",
-        success_count, failure_count,
+        success_count,
+        failure_count,
     )
 
 
@@ -108,7 +116,7 @@ async def _load_effective_schedules() -> list:
 
     # Index: device-specific and tenant defaults
     device_schedules = {}  # device_id -> schedule
-    tenant_defaults = {}   # tenant_id -> schedule
+    tenant_defaults = {}  # tenant_id -> schedule
 
     for s in schedules:
         if s.device_id:
@@ -129,12 +137,14 @@ async def _load_effective_schedules() -> list:
             # No schedule configured — use system default
             sched = None
 
-        effective.append(SimpleNamespace(
-            device_id=dev_id,
-            tenant_id=tenant_id,
-            cron_expression=sched.cron_expression if sched else DEFAULT_CRON,
-            enabled=sched.enabled if sched else True,
-        ))
+        effective.append(
+            SimpleNamespace(
+                device_id=dev_id,
+                tenant_id=tenant_id,
+                cron_expression=sched.cron_expression if sched else DEFAULT_CRON,
+                enabled=sched.enabled if sched else True,
+            )
+        )
 
     return effective
 
@@ -203,6 +213,7 @@ class _SchedulerProxy:
     Usage: `from app.services.backup_scheduler import backup_scheduler`
     then `backup_scheduler.add_job(...)`.
     """
+
     def __getattr__(self, name):
         if _scheduler is None:
             raise RuntimeError("Backup scheduler not started yet")

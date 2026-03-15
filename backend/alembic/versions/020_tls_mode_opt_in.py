@@ -14,7 +14,6 @@ Existing 'insecure' devices become 'auto' since the old behavior was
 an implicit auto-fallback. portal_ca devices keep their mode.
 """
 
-import sqlalchemy as sa
 from alembic import op
 
 revision = "020"

@@ -138,62 +138,44 @@ def upgrade() -> None:
     conn = op.get_bind()
 
     # certificate_authorities RLS
-    conn.execute(sa.text(
-        "ALTER TABLE certificate_authorities ENABLE ROW LEVEL SECURITY"
-    ))
-    conn.execute(sa.text(
-        "GRANT SELECT, INSERT, UPDATE, DELETE ON certificate_authorities TO app_user"
-    ))
-    conn.execute(sa.text(
-        "CREATE POLICY tenant_isolation ON certificate_authorities FOR ALL "
-        "USING (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid) "
-        "WITH CHECK (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid)"
-    ))
-    conn.execute(sa.text(
-        "GRANT SELECT ON certificate_authorities TO poller_user"
-    ))
+    conn.execute(sa.text("ALTER TABLE certificate_authorities ENABLE ROW LEVEL SECURITY"))
+    conn.execute(
+        sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON certificate_authorities TO app_user")
+    )
+    conn.execute(
+        sa.text(
+            "CREATE POLICY tenant_isolation ON certificate_authorities FOR ALL "
+            "USING (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid) "
+            "WITH CHECK (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid)"
+        )
+    )
+    conn.execute(sa.text("GRANT SELECT ON certificate_authorities TO poller_user"))
 
     # device_certificates RLS
-    conn.execute(sa.text(
-        "ALTER TABLE device_certificates ENABLE ROW LEVEL SECURITY"
-    ))
-    conn.execute(sa.text(
-        "GRANT SELECT, INSERT, UPDATE, DELETE ON device_certificates TO app_user"
-    ))
-    conn.execute(sa.text(
-        "CREATE POLICY tenant_isolation ON device_certificates FOR ALL "
-        "USING (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid) "
-        "WITH CHECK (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid)"
-    ))
-    conn.execute(sa.text(
-        "GRANT SELECT ON device_certificates TO poller_user"
-    ))
+    conn.execute(sa.text("ALTER TABLE device_certificates ENABLE ROW LEVEL SECURITY"))
+    conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON device_certificates TO app_user"))
+    conn.execute(
+        sa.text(
+            "CREATE POLICY tenant_isolation ON device_certificates FOR ALL "
+            "USING (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid) "
+            "WITH CHECK (tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid)"
+        )
+    )
+    conn.execute(sa.text("GRANT SELECT ON device_certificates TO poller_user"))
 
 
 def downgrade() -> None:
     conn = op.get_bind()
 
     # Drop RLS policies
-    conn.execute(sa.text(
-        "DROP POLICY IF EXISTS tenant_isolation ON device_certificates"
-    ))
-    conn.execute(sa.text(
-        "DROP POLICY IF EXISTS tenant_isolation ON certificate_authorities"
-    ))
+    conn.execute(sa.text("DROP POLICY IF EXISTS tenant_isolation ON device_certificates"))
+    conn.execute(sa.text("DROP POLICY IF EXISTS tenant_isolation ON certificate_authorities"))
 
     # Revoke grants
-    conn.execute(sa.text(
-        "REVOKE ALL ON device_certificates FROM app_user"
-    ))
-    conn.execute(sa.text(
-        "REVOKE ALL ON device_certificates FROM poller_user"
-    ))
-    conn.execute(sa.text(
-        "REVOKE ALL ON certificate_authorities FROM app_user"
-    ))
-    conn.execute(sa.text(
-        "REVOKE ALL ON certificate_authorities FROM poller_user"
-    ))
+    conn.execute(sa.text("REVOKE ALL ON device_certificates FROM app_user"))
+    conn.execute(sa.text("REVOKE ALL ON device_certificates FROM poller_user"))
+    conn.execute(sa.text("REVOKE ALL ON certificate_authorities FROM app_user"))
+    conn.execute(sa.text("REVOKE ALL ON certificate_authorities FROM poller_user"))
 
     # Drop tls_mode column from devices
     op.drop_column("devices", "tls_mode")

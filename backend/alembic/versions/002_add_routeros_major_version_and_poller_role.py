@@ -46,7 +46,8 @@ def upgrade() -> None:
     # to read all devices across all tenants, which is required for polling.
     conn = op.get_bind()
 
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'poller_user') THEN
@@ -54,7 +55,8 @@ def upgrade() -> None:
             END IF;
         END
         $$
-    """))
+    """)
+    )
 
     conn.execute(sa.text("GRANT CONNECT ON DATABASE tod TO poller_user"))
     conn.execute(sa.text("GRANT USAGE ON SCHEMA public TO poller_user"))

@@ -12,22 +12,18 @@ separate scheduler and file names to avoid conflicts with restore operations.
 """
 
 import asyncio
-import io
 import ipaddress
 import json
 import logging
-import uuid
 from datetime import datetime, timezone
 
 import asyncssh
 from jinja2 import meta
 from jinja2.sandbox import SandboxedEnvironment
-from sqlalchemy import select, text
+from sqlalchemy import text
 
 from app.config import settings
 from app.database import AdminAsyncSessionLocal
-from app.models.config_template import TemplatePushJob
-from app.models.device import Device
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +141,9 @@ async def push_to_devices(rollout_id: str) -> dict:
     except Exception as exc:
         logger.error(
             "Uncaught exception in template push rollout %s: %s",
-            rollout_id, exc, exc_info=True,
+            rollout_id,
+            exc,
+            exc_info=True,
         )
         return {"completed": 0, "failed": 1, "pending": 0}
 
@@ -181,7 +179,9 @@ async def _run_push_rollout(rollout_id: str) -> dict:
 
         logger.info(
             "Template push rollout %s: pushing to device %s (job %s)",
-            rollout_id, hostname, job_id,
+            rollout_id,
+            hostname,
+            job_id,
         )
 
         await push_single_device(job_id)
@@ -200,7 +200,9 @@ async def _run_push_rollout(rollout_id: str) -> dict:
             failed = True
             logger.error(
                 "Template push rollout %s paused: device %s %s",
-                rollout_id, hostname, row[0],
+                rollout_id,
+                hostname,
+                row[0],
             )
             break
 
@@ -232,7 +234,9 @@ async def push_single_device(job_id: str) -> None:
     except Exception as exc:
         logger.error(
             "Uncaught exception in template push job %s: %s",
-            job_id, exc, exc_info=True,
+            job_id,
+            exc,
+            exc_info=True,
         )
         await _update_job(job_id, status="failed", error_message=f"Unexpected error: {exc}")
 
@@ -260,8 +264,13 @@ async def _run_single_push(job_id: str) -> None:
         return
 
     (
-        _, device_id, tenant_id, rendered_content,
-        ip_address, hostname, encrypted_credentials,
+        _,
+        device_id,
+        tenant_id,
+        rendered_content,
+        ip_address,
+        hostname,
+        encrypted_credentials,
         encrypted_credentials_transit,
     ) = row
 
@@ -279,16 +288,21 @@ async def _run_single_push(job_id: str) -> None:
 
     try:
         from app.services.crypto import decrypt_credentials_hybrid
+
         key = settings.get_encryption_key_bytes()
         creds_json = await decrypt_credentials_hybrid(
-            encrypted_credentials_transit, encrypted_credentials, tenant_id, key,
+            encrypted_credentials_transit,
+            encrypted_credentials,
+            tenant_id,
+            key,
         )
         creds = json.loads(creds_json)
         ssh_username = creds.get("username", "")
         ssh_password = creds.get("password", "")
     except Exception as cred_err:
         await _update_job(
-            job_id, status="failed",
+            job_id,
+            status="failed",
             error_message=f"Failed to decrypt credentials: {cred_err}",
         )
         return
@@ -297,6 +311,7 @@ async def _run_single_push(job_id: str) -> None:
     logger.info("Running mandatory pre-push backup for device %s (%s)", hostname, ip_address)
     try:
         from app.services import backup_service
+
         backup_result = await backup_service.run_backup(
             device_id=device_id,
             tenant_id=tenant_id,
@@ -308,7 +323,8 @@ async def _run_single_push(job_id: str) -> None:
     except Exception as backup_err:
         logger.error("Pre-push backup failed for %s: %s", hostname, backup_err)
         await _update_job(
-            job_id, status="failed",
+            job_id,
+            status="failed",
             error_message=f"Pre-push backup failed: {backup_err}",
         )
         return
@@ -316,7 +332,8 @@ async def _run_single_push(job_id: str) -> None:
     # Step 5: SSH to device - install panic-revert, push config
     logger.info(
         "Pushing template to device %s (%s): installing panic-revert and uploading config",
-        hostname, ip_address,
+        hostname,
+        ip_address,
     )
 
     try:
@@ -359,7 +376,8 @@ async def _run_single_push(job_id: str) -> None:
             )
             logger.info(
                 "Template import result for device %s: exit_status=%s stdout=%r",
-                hostname, import_result.exit_status,
+                hostname,
+                import_result.exit_status,
                 (import_result.stdout or "")[:200],
             )
 
@@ -369,16 +387,21 @@ async def _run_single_push(job_id: str) -> None:
             except Exception as cleanup_err:
                 logger.warning(
                     "Failed to clean up %s from device %s: %s",
-                    _TEMPLATE_RSC, ip_address, cleanup_err,
+                    _TEMPLATE_RSC,
+                    ip_address,
+                    cleanup_err,
                 )
 
     except Exception as push_err:
         logger.error(
             "SSH push phase failed for device %s (%s): %s",
-            hostname, ip_address, push_err,
+            hostname,
+            ip_address,
+            push_err,
         )
         await _update_job(
-            job_id, status="failed",
+            job_id,
+            status="failed",
             error_message=f"Config push failed during SSH phase: {push_err}",
         )
         return
@@ -395,9 +418,12 @@ async def _run_single_push(job_id: str) -> None:
         logger.info("Device %s (%s) is reachable after push - committing", hostname, ip_address)
         try:
             async with asyncssh.connect(
-                ip_address, port=22,
-                username=ssh_username, password=ssh_password,
-                known_hosts=None, connect_timeout=30,
+                ip_address,
+                port=22,
+                username=ssh_username,
+                password=ssh_password,
+                known_hosts=None,
+                connect_timeout=30,
             ) as conn:
                 await conn.run(
                     f'/system scheduler remove "{_PANIC_REVERT_SCHEDULER}"',
@@ -410,11 +436,13 @@ async def _run_single_push(job_id: str) -> None:
         except Exception as cleanup_err:
             logger.warning(
                 "Failed to clean up panic-revert scheduler/backup on device %s: %s",
-                hostname, cleanup_err,
+                hostname,
+                cleanup_err,
             )
 
         await _update_job(
-            job_id, status="committed",
+            job_id,
+            status="committed",
             completed_at=datetime.now(timezone.utc),
         )
     else:
@@ -422,10 +450,13 @@ async def _run_single_push(job_id: str) -> None:
         logger.warning(
             "Device %s (%s) is unreachable after push - panic-revert scheduler "
             "will auto-revert to %s.backup",
-            hostname, ip_address, _PRE_PUSH_BACKUP,
+            hostname,
+            ip_address,
+            _PRE_PUSH_BACKUP,
         )
         await _update_job(
-            job_id, status="reverted",
+            job_id,
+            status="reverted",
             error_message="Device unreachable after push; auto-reverted via panic-revert scheduler",
             completed_at=datetime.now(timezone.utc),
         )
@@ -440,9 +471,12 @@ async def _check_reachability(ip: str, username: str, password: str) -> bool:
     """Check if a RouterOS device is reachable via SSH."""
     try:
         async with asyncssh.connect(
-            ip, port=22,
-            username=username, password=password,
-            known_hosts=None, connect_timeout=30,
+            ip,
+            port=22,
+            username=username,
+            password=password,
+            known_hosts=None,
+            connect_timeout=30,
         ) as conn:
             result = await conn.run("/system identity print", check=True)
             logger.debug("Reachability check OK for %s: %r", ip, result.stdout[:50])
@@ -459,7 +493,12 @@ async def _update_job(job_id: str, **kwargs) -> None:
 
     for key, value in kwargs.items():
         param_name = f"v_{key}"
-        if value is None and key in ("error_message", "started_at", "completed_at", "pre_push_backup_sha"):
+        if value is None and key in (
+            "error_message",
+            "started_at",
+            "completed_at",
+            "pre_push_backup_sha",
+        ):
             sets.append(f"{key} = NULL")
         else:
             sets.append(f"{key} = :{param_name}")
@@ -472,7 +511,7 @@ async def _update_job(job_id: str, **kwargs) -> None:
         await session.execute(
             text(f"""
                 UPDATE template_push_jobs
-                SET {', '.join(sets)}
+                SET {", ".join(sets)}
                 WHERE id = CAST(:job_id AS uuid)
             """),
             params,

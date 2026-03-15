@@ -82,7 +82,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from app.services.retention_service import start_retention_scheduler, stop_retention_scheduler
     from app.services.metrics_subscriber import start_metrics_subscriber, stop_metrics_subscriber
     from app.services.nats_subscriber import start_nats_subscriber, stop_nats_subscriber
-    from app.services.session_audit_subscriber import start_session_audit_subscriber, stop_session_audit_subscriber
+    from app.services.session_audit_subscriber import (
+        start_session_audit_subscriber,
+        stop_session_audit_subscriber,
+    )
     from app.services.sse_manager import ensure_sse_streams
 
     # Configure structured logging FIRST -- before any other startup work
@@ -201,6 +204,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             start_config_change_subscriber,
             stop_config_change_subscriber,
         )
+
         config_change_nc = await start_config_change_subscriber()
     except Exception as e:
         logger.error("Config change subscriber failed to start (non-fatal): %s", e)
@@ -212,6 +216,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             start_push_rollback_subscriber,
             stop_push_rollback_subscriber,
         )
+
         push_rollback_nc = await start_push_rollback_subscriber()
     except Exception as e:
         logger.error("Push rollback subscriber failed to start (non-fatal): %s", e)
@@ -223,6 +228,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             start_config_snapshot_subscriber,
             stop_config_snapshot_subscriber,
         )
+
         config_snapshot_nc = await start_config_snapshot_subscriber()
     except Exception as e:
         logger.error("Config snapshot subscriber failed to start (non-fatal): %s", e)
@@ -231,14 +237,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     try:
         await start_retention_scheduler()
     except Exception as exc:
-        logger.warning("retention scheduler could not start (API will run without it)", error=str(exc))
+        logger.warning(
+            "retention scheduler could not start (API will run without it)", error=str(exc)
+        )
 
     # Start Remote WinBox session reconciliation loop (60s interval).
     # Detects orphaned sessions (worker lost them) and cleans up Redis + tunnels.
     winbox_reconcile_task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
     try:
         from app.routers.winbox_remote import _get_redis as _wb_get_redis, _close_tunnel
-        from app.services.winbox_remote import get_session as _wb_worker_get, health_check as _wb_health
+        from app.services.winbox_remote import get_session as _wb_worker_get
 
         async def _winbox_reconcile_loop() -> None:
             """Scan Redis for winbox-remote:* keys and reconcile with worker."""

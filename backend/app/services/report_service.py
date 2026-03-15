@@ -164,16 +164,18 @@ async def _device_inventory(
         uptime_str = _format_uptime(row[6]) if row[6] else None
         last_seen_str = row[5].strftime("%Y-%m-%d %H:%M") if row[5] else None
 
-        devices.append({
-            "hostname": row[0],
-            "ip_address": row[1],
-            "model": row[2],
-            "routeros_version": row[3],
-            "status": status,
-            "last_seen": last_seen_str,
-            "uptime": uptime_str,
-            "groups": row[7] if row[7] else None,
-        })
+        devices.append(
+            {
+                "hostname": row[0],
+                "ip_address": row[1],
+                "model": row[2],
+                "routeros_version": row[3],
+                "status": status,
+                "last_seen": last_seen_str,
+                "uptime": uptime_str,
+                "groups": row[7] if row[7] else None,
+            }
+        )
 
     return {
         "report_title": "Device Inventory",
@@ -224,16 +226,18 @@ async def _metrics_summary(
 
     devices = []
     for row in rows:
-        devices.append({
-            "hostname": row[0],
-            "avg_cpu": float(row[1]) if row[1] is not None else None,
-            "peak_cpu": float(row[2]) if row[2] is not None else None,
-            "avg_mem": float(row[3]) if row[3] is not None else None,
-            "peak_mem": float(row[4]) if row[4] is not None else None,
-            "avg_disk": float(row[5]) if row[5] is not None else None,
-            "avg_temp": float(row[6]) if row[6] is not None else None,
-            "data_points": row[7],
-        })
+        devices.append(
+            {
+                "hostname": row[0],
+                "avg_cpu": float(row[1]) if row[1] is not None else None,
+                "peak_cpu": float(row[2]) if row[2] is not None else None,
+                "avg_mem": float(row[3]) if row[3] is not None else None,
+                "peak_mem": float(row[4]) if row[4] is not None else None,
+                "avg_disk": float(row[5]) if row[5] is not None else None,
+                "avg_temp": float(row[6]) if row[6] is not None else None,
+                "data_points": row[7],
+            }
+        )
 
     return {
         "report_title": "Metrics Summary",
@@ -287,14 +291,16 @@ async def _alert_history(
         if duration_secs is not None:
             resolved_durations.append(duration_secs)
 
-        alerts.append({
-            "fired_at": row[0].strftime("%Y-%m-%d %H:%M") if row[0] else "-",
-            "hostname": row[5],
-            "severity": severity,
-            "status": row[3],
-            "message": row[4],
-            "duration": _format_duration(duration_secs) if duration_secs is not None else None,
-        })
+        alerts.append(
+            {
+                "fired_at": row[0].strftime("%Y-%m-%d %H:%M") if row[0] else "-",
+                "hostname": row[5],
+                "severity": severity,
+                "status": row[3],
+                "message": row[4],
+                "duration": _format_duration(duration_secs) if duration_secs is not None else None,
+            }
+        )
 
     mttr_minutes = None
     mttr_display = None
@@ -374,13 +380,15 @@ async def _change_log_from_audit(
 
     entries = []
     for row in rows:
-        entries.append({
-            "timestamp": row[0].strftime("%Y-%m-%d %H:%M") if row[0] else "-",
-            "user": row[1],
-            "action": row[2],
-            "device": row[3],
-            "details": row[4] or row[5] or "",
-        })
+        entries.append(
+            {
+                "timestamp": row[0].strftime("%Y-%m-%d %H:%M") if row[0] else "-",
+                "user": row[1],
+                "action": row[2],
+                "device": row[3],
+                "details": row[4] or row[5] or "",
+            }
+        )
 
     return {
         "report_title": "Change Log",
@@ -436,21 +444,25 @@ async def _change_log_from_backups(
     # Merge and sort by timestamp descending
     entries = []
     for row in backup_rows:
-        entries.append({
-            "timestamp": row[0].strftime("%Y-%m-%d %H:%M") if row[0] else "-",
-            "user": row[1],
-            "action": row[2],
-            "device": row[3],
-            "details": row[4] or "",
-        })
+        entries.append(
+            {
+                "timestamp": row[0].strftime("%Y-%m-%d %H:%M") if row[0] else "-",
+                "user": row[1],
+                "action": row[2],
+                "device": row[3],
+                "details": row[4] or "",
+            }
+        )
     for row in alert_rows:
-        entries.append({
-            "timestamp": row[0].strftime("%Y-%m-%d %H:%M") if row[0] else "-",
-            "user": row[1],
-            "action": row[2],
-            "device": row[3],
-            "details": row[4] or "",
-        })
+        entries.append(
+            {
+                "timestamp": row[0].strftime("%Y-%m-%d %H:%M") if row[0] else "-",
+                "user": row[1],
+                "action": row[2],
+                "device": row[3],
+                "details": row[4] or "",
+            }
+        )
 
     # Sort by timestamp string descending
     entries.sort(key=lambda e: e["timestamp"], reverse=True)
@@ -486,54 +498,102 @@ def _render_csv(report_type: str, data: dict[str, Any]) -> bytes:
     writer = csv.writer(output)
 
     if report_type == "device_inventory":
-        writer.writerow([
-            "Hostname", "IP Address", "Model", "RouterOS Version",
-            "Status", "Last Seen", "Uptime", "Groups",
-        ])
+        writer.writerow(
+            [
+                "Hostname",
+                "IP Address",
+                "Model",
+                "RouterOS Version",
+                "Status",
+                "Last Seen",
+                "Uptime",
+                "Groups",
+            ]
+        )
         for d in data.get("devices", []):
-            writer.writerow([
-                d["hostname"], d["ip_address"], d["model"] or "",
-                d["routeros_version"] or "", d["status"],
-                d["last_seen"] or "", d["uptime"] or "",
-                d["groups"] or "",
-            ])
+            writer.writerow(
+                [
+                    d["hostname"],
+                    d["ip_address"],
+                    d["model"] or "",
+                    d["routeros_version"] or "",
+                    d["status"],
+                    d["last_seen"] or "",
+                    d["uptime"] or "",
+                    d["groups"] or "",
+                ]
+            )
 
     elif report_type == "metrics_summary":
-        writer.writerow([
-            "Hostname", "Avg CPU %", "Peak CPU %", "Avg Memory %",
-            "Peak Memory %", "Avg Disk %", "Avg Temp", "Data Points",
-        ])
+        writer.writerow(
+            [
+                "Hostname",
+                "Avg CPU %",
+                "Peak CPU %",
+                "Avg Memory %",
+                "Peak Memory %",
+                "Avg Disk %",
+                "Avg Temp",
+                "Data Points",
+            ]
+        )
         for d in data.get("devices", []):
-            writer.writerow([
-                d["hostname"],
-                f"{d['avg_cpu']:.1f}" if d["avg_cpu"] is not None else "",
-                f"{d['peak_cpu']:.1f}" if d["peak_cpu"] is not None else "",
-                f"{d['avg_mem']:.1f}" if d["avg_mem"] is not None else "",
-                f"{d['peak_mem']:.1f}" if d["peak_mem"] is not None else "",
-                f"{d['avg_disk']:.1f}" if d["avg_disk"] is not None else "",
-                f"{d['avg_temp']:.1f}" if d["avg_temp"] is not None else "",
-                d["data_points"],
-            ])
+            writer.writerow(
+                [
+                    d["hostname"],
+                    f"{d['avg_cpu']:.1f}" if d["avg_cpu"] is not None else "",
+                    f"{d['peak_cpu']:.1f}" if d["peak_cpu"] is not None else "",
+                    f"{d['avg_mem']:.1f}" if d["avg_mem"] is not None else "",
+                    f"{d['peak_mem']:.1f}" if d["peak_mem"] is not None else "",
+                    f"{d['avg_disk']:.1f}" if d["avg_disk"] is not None else "",
+                    f"{d['avg_temp']:.1f}" if d["avg_temp"] is not None else "",
+                    d["data_points"],
+                ]
+            )
 
     elif report_type == "alert_history":
-        writer.writerow([
-            "Timestamp", "Device", "Severity", "Message", "Status", "Duration",
-        ])
+        writer.writerow(
+            [
+                "Timestamp",
+                "Device",
+                "Severity",
+                "Message",
+                "Status",
+                "Duration",
+            ]
+        )
         for a in data.get("alerts", []):
-            writer.writerow([
-                a["fired_at"], a["hostname"] or "", a["severity"],
-                a["message"] or "", a["status"], a["duration"] or "",
-            ])
+            writer.writerow(
+                [
+                    a["fired_at"],
+                    a["hostname"] or "",
+                    a["severity"],
+                    a["message"] or "",
+                    a["status"],
+                    a["duration"] or "",
+                ]
+            )
 
     elif report_type == "change_log":
-        writer.writerow([
-            "Timestamp", "User", "Action", "Device", "Details",
-        ])
+        writer.writerow(
+            [
+                "Timestamp",
+                "User",
+                "Action",
+                "Device",
+                "Details",
+            ]
+        )
         for e in data.get("entries", []):
-            writer.writerow([
-                e["timestamp"], e["user"] or "", e["action"],
-                e["device"] or "", e["details"] or "",
-            ])
+            writer.writerow(
+                [
+                    e["timestamp"],
+                    e["user"] or "",
+                    e["action"],
+                    e["device"] or "",
+                    e["details"] or "",
+                ]
+            )
 
     return output.getvalue().encode("utf-8")
 

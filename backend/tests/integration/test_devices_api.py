@@ -10,7 +10,6 @@ All tests are independent and create their own test data.
 import uuid
 
 import pytest
-import pytest_asyncio
 
 
 pytestmark = pytest.mark.integration
@@ -90,9 +89,7 @@ class TestDevicesCRUD:
     ):
         """GET /api/tenants/{tenant_id}/devices/{device_id} returns correct device."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
 
         device = await create_test_device(admin_session, tenant.id)
@@ -178,9 +175,7 @@ class TestDevicesCRUD:
     ):
         """GET /api/tenants/{tenant_id}/devices?status=online returns filtered results."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
 
         # Create devices with different statuses

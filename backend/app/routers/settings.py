@@ -72,7 +72,11 @@ async def _set_system_settings(updates: dict, user_id: str) -> None:
                     ON CONFLICT (key) DO UPDATE
                     SET value = :value, updated_by = CAST(:user_id AS uuid), updated_at = now()
                 """),
-                {"key": key, "value": str(value) if value is not None else None, "user_id": user_id},
+                {
+                    "key": key,
+                    "value": str(value) if value is not None else None,
+                    "user_id": user_id,
+                },
             )
         await session.commit()
 
@@ -100,7 +104,8 @@ async def get_smtp_settings(user=Depends(require_role("super_admin"))):
         "smtp_host": db_settings.get("smtp_host") or settings.SMTP_HOST,
         "smtp_port": int(db_settings.get("smtp_port") or settings.SMTP_PORT),
         "smtp_user": db_settings.get("smtp_user") or settings.SMTP_USER or "",
-        "smtp_use_tls": (db_settings.get("smtp_use_tls") or str(settings.SMTP_USE_TLS)).lower() == "true",
+        "smtp_use_tls": (db_settings.get("smtp_use_tls") or str(settings.SMTP_USE_TLS)).lower()
+        == "true",
         "smtp_from_address": db_settings.get("smtp_from_address") or settings.SMTP_FROM_ADDRESS,
         "smtp_provider": db_settings.get("smtp_provider") or "custom",
         "smtp_password_set": bool(db_settings.get("smtp_password") or settings.SMTP_PASSWORD),

@@ -1,7 +1,10 @@
 """Unit tests for VPN subnet allocation and allowed-IPs validation."""
 
 import pytest
-from app.services.vpn_service import _allocate_subnet_index_from_used, _validate_additional_allowed_ips
+from app.services.vpn_service import (
+    _allocate_subnet_index_from_used,
+    _validate_additional_allowed_ips,
+)
 
 
 class TestSubnetAllocation:

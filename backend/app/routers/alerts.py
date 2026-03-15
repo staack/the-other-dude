@@ -12,10 +12,8 @@ RLS enforced via get_db() (app_user engine with tenant context).
 RBAC: viewer = read-only (GET); operator and above = write (POST/PUT/PATCH/DELETE).
 """
 
-import base64
 import logging
 import uuid
-from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -66,8 +64,13 @@ def _require_write(current_user: CurrentUser) -> None:
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
 ALLOWED_METRICS = {
-    "cpu_load", "memory_used_pct", "disk_used_pct", "temperature",
-    "signal_strength", "ccq", "client_count",
+    "cpu_load",
+    "memory_used_pct",
+    "disk_used_pct",
+    "temperature",
+    "signal_strength",
+    "ccq",
+    "client_count",
 }
 ALLOWED_OPERATORS = {"gt", "lt", "gte", "lte"}
 ALLOWED_SEVERITIES = {"critical", "warning", "info"}
@@ -252,7 +255,9 @@ async def create_alert_rule(
     if body.operator not in ALLOWED_OPERATORS:
         raise HTTPException(422, f"operator must be one of: {', '.join(sorted(ALLOWED_OPERATORS))}")
     if body.severity not in ALLOWED_SEVERITIES:
-        raise HTTPException(422, f"severity must be one of: {', '.join(sorted(ALLOWED_SEVERITIES))}")
+        raise HTTPException(
+            422, f"severity must be one of: {', '.join(sorted(ALLOWED_SEVERITIES))}"
+        )
 
     rule_id = str(uuid.uuid4())
 
@@ -296,8 +301,12 @@ async def create_alert_rule(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "alert_rule_create",
-            resource_type="alert_rule", resource_id=rule_id,
+            db,
+            tenant_id,
+            current_user.user_id,
+            "alert_rule_create",
+            resource_type="alert_rule",
+            resource_id=rule_id,
             details={"name": body.name, "metric": body.metric, "severity": body.severity},
         )
     except Exception:
@@ -338,7 +347,9 @@ async def update_alert_rule(
     if body.operator not in ALLOWED_OPERATORS:
         raise HTTPException(422, f"operator must be one of: {', '.join(sorted(ALLOWED_OPERATORS))}")
     if body.severity not in ALLOWED_SEVERITIES:
-        raise HTTPException(422, f"severity must be one of: {', '.join(sorted(ALLOWED_SEVERITIES))}")
+        raise HTTPException(
+            422, f"severity must be one of: {', '.join(sorted(ALLOWED_SEVERITIES))}"
+        )
 
     result = await db.execute(
         text("""
@@ -384,8 +395,12 @@ async def update_alert_rule(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "alert_rule_update",
-            resource_type="alert_rule", resource_id=str(rule_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "alert_rule_update",
+            resource_type="alert_rule",
+            resource_id=str(rule_id),
             details={"name": body.name, "metric": body.metric, "severity": body.severity},
         )
     except Exception:
@@ -439,8 +454,12 @@ async def delete_alert_rule(
 
     try:
         await log_action(
-            db, tenant_id, current_user.user_id, "alert_rule_delete",
-            resource_type="alert_rule", resource_id=str(rule_id),
+            db,
+            tenant_id,
+            current_user.user_id,
+            "alert_rule_delete",
+            resource_type="alert_rule",
+            resource_id=str(rule_id),
         )
     except Exception:
         pass
@@ -592,7 +611,8 @@ async def create_notification_channel(
     encrypted_password_transit = None
     if body.smtp_password:
         encrypted_password_transit = await encrypt_credentials_transit(
-            body.smtp_password, str(tenant_id),
+            body.smtp_password,
+            str(tenant_id),
         )
 
     await db.execute(
@@ -665,10 +685,14 @@ async def update_notification_channel(
 
     # Build SET clauses dynamically based on which secrets are provided
     set_parts = [
-        "name = :name", "channel_type = :channel_type",
-        "smtp_host = :smtp_host", "smtp_port = :smtp_port",
-        "smtp_user = :smtp_user", "smtp_use_tls = :smtp_use_tls",
-        "from_address = :from_address", "to_address = :to_address",
+        "name = :name",
+        "channel_type = :channel_type",
+        "smtp_host = :smtp_host",
+        "smtp_port = :smtp_port",
+        "smtp_user = :smtp_user",
+        "smtp_use_tls = :smtp_use_tls",
+        "from_address = :from_address",
+        "to_address = :to_address",
         "webhook_url = :webhook_url",
         "slack_webhook_url = :slack_webhook_url",
     ]
@@ -689,7 +713,8 @@ async def update_notification_channel(
     if body.smtp_password:
         set_parts.append("smtp_password_transit = :smtp_password_transit")
         params["smtp_password_transit"] = await encrypt_credentials_transit(
-            body.smtp_password, str(tenant_id),
+            body.smtp_password,
+            str(tenant_id),
         )
         # Clear legacy column
         set_parts.append("smtp_password = NULL")
@@ -799,6 +824,7 @@ async def test_notification_channel(
     }
 
     from app.services.notification_service import send_test_notification
+
     try:
         success = await send_test_notification(channel)
         if success:

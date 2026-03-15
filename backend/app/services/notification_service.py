@@ -39,7 +39,9 @@ async def dispatch_notifications(
         except Exception as e:
             logger.warning(
                 "Notification delivery failed for channel %s (%s): %s",
-                channel.get("name"), channel.get("channel_type"), e,
+                channel.get("name"),
+                channel.get("channel_type"),
+                e,
             )
 
 
@@ -100,14 +102,18 @@ async def _send_email(channel: dict, alert_event: dict, device_hostname: str) ->
     if transit_cipher and tenant_id:
         try:
             from app.services.kms_service import decrypt_transit
+
             smtp_password = await decrypt_transit(transit_cipher, tenant_id)
         except Exception:
-            logger.warning("Transit decryption failed for channel %s, trying legacy", channel.get("id"))
+            logger.warning(
+                "Transit decryption failed for channel %s, trying legacy", channel.get("id")
+            )
 
     if not smtp_password and legacy_cipher:
         try:
             from app.config import settings as app_settings
             from cryptography.fernet import Fernet
+
             raw = bytes(legacy_cipher) if isinstance(legacy_cipher, memoryview) else legacy_cipher
             f = Fernet(app_settings.CREDENTIAL_ENCRYPTION_KEY.encode())
             smtp_password = f.decrypt(raw).decode()
@@ -163,7 +169,8 @@ async def _send_webhook(
         response = await client.post(webhook_url, json=payload)
         logger.info(
             "Webhook notification sent to %s — status %d",
-            webhook_url, response.status_code,
+            webhook_url,
+            response.status_code,
         )
 
 
@@ -180,13 +187,18 @@ async def _send_slack(
     value = alert_event.get("value")
     threshold = alert_event.get("threshold")
 
-    color = {"CRITICAL": "#dc2626", "WARNING": "#f59e0b", "INFO": "#3b82f6"}.get(severity, "#6b7280")
+    color = {"CRITICAL": "#dc2626", "WARNING": "#f59e0b", "INFO": "#3b82f6"}.get(
+        severity, "#6b7280"
+    )
     status_label = "RESOLVED" if status == "resolved" else status
 
     blocks = [
         {
             "type": "header",
-            "text": {"type": "plain_text", "text": f"{'✅' if status == 'resolved' else '🚨'} [{severity}] {status_label.upper()}"},
+            "text": {
+                "type": "plain_text",
+                "text": f"{'✅' if status == 'resolved' else '🚨'} [{severity}] {status_label.upper()}",
+            },
         },
         {
             "type": "section",
@@ -205,7 +217,9 @@ async def _send_slack(
         blocks.append({"type": "section", "fields": fields})
 
     if message_text:
-        blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": f"*Message:*\n{message_text}"}})
+        blocks.append(
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Message:*\n{message_text}"}}
+        )
 
     blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": "TOD Alert System"}]})
 

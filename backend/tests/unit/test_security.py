@@ -9,7 +9,6 @@ for startup validation, async only for middleware tests.
 """
 
 from types import SimpleNamespace
-from unittest.mock import patch
 
 import pytest
 
@@ -114,7 +113,9 @@ class TestSecurityHeadersMiddleware:
             response = await client.get("/test")
 
         assert response.status_code == 200
-        assert response.headers["strict-transport-security"] == "max-age=31536000; includeSubDomains"
+        assert (
+            response.headers["strict-transport-security"] == "max-age=31536000; includeSubDomains"
+        )
         assert response.headers["x-content-type-options"] == "nosniff"
         assert response.headers["x-frame-options"] == "DENY"
         assert response.headers["cache-control"] == "no-store"

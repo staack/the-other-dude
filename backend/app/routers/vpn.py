@@ -68,7 +68,11 @@ async def get_vpn_config(
     return resp
 
 
-@router.post("/tenants/{tenant_id}/vpn", response_model=VpnConfigResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/tenants/{tenant_id}/vpn",
+    response_model=VpnConfigResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @limiter.limit("20/minute")
 async def setup_vpn(
     request: Request,
@@ -177,7 +181,11 @@ async def list_peers(
     return responses
 
 
-@router.post("/tenants/{tenant_id}/vpn/peers", response_model=VpnPeerResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/tenants/{tenant_id}/vpn/peers",
+    response_model=VpnPeerResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @limiter.limit("20/minute")
 async def add_peer(
     request: Request,
@@ -190,7 +198,9 @@ async def add_peer(
     await _check_tenant_access(current_user, tenant_id, db)
     _require_operator(current_user)
     try:
-        peer = await vpn_service.add_peer(db, tenant_id, body.device_id, additional_allowed_ips=body.additional_allowed_ips)
+        peer = await vpn_service.add_peer(
+            db, tenant_id, body.device_id, additional_allowed_ips=body.additional_allowed_ips
+        )
     except ValueError as e:
         msg = str(e)
         if "must not overlap" in msg:
@@ -208,7 +218,11 @@ async def add_peer(
     return resp
 
 
-@router.post("/tenants/{tenant_id}/vpn/peers/onboard", response_model=VpnOnboardResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/tenants/{tenant_id}/vpn/peers/onboard",
+    response_model=VpnOnboardResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 @limiter.limit("10/minute")
 async def onboard_device(
     request: Request,
@@ -222,7 +236,8 @@ async def onboard_device(
     _require_operator(current_user)
     try:
         result = await vpn_service.onboard_device(
-            db, tenant_id,
+            db,
+            tenant_id,
             hostname=body.hostname,
             username=body.username,
             password=body.password,

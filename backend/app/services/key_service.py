@@ -52,6 +52,7 @@ async def store_user_key_set(
     """
     # Remove any existing key set (e.g. from a failed prior upgrade attempt)
     from sqlalchemy import delete
+
     await db.execute(delete(UserKeySet).where(UserKeySet.user_id == user_id))
 
     key_set = UserKeySet(
@@ -71,9 +72,7 @@ async def store_user_key_set(
     return key_set
 
 
-async def get_user_key_set(
-    db: AsyncSession, user_id: UUID
-) -> UserKeySet | None:
+async def get_user_key_set(db: AsyncSession, user_id: UUID) -> UserKeySet | None:
     """Retrieve encrypted key bundle for login response.
 
     Args:
@@ -83,9 +82,7 @@ async def get_user_key_set(
     Returns:
         The UserKeySet if found, None otherwise.
     """
-    result = await db.execute(
-        select(UserKeySet).where(UserKeySet.user_id == user_id)
-    )
+    result = await db.execute(select(UserKeySet).where(UserKeySet.user_id == user_id))
     return result.scalar_one_or_none()
 
 
@@ -163,9 +160,7 @@ async def provision_tenant_key(db: AsyncSession, tenant_id: UUID) -> str:
     await openbao.create_tenant_key(str(tenant_id))
 
     # Update tenant record with key name
-    result = await db.execute(
-        select(Tenant).where(Tenant.id == tenant_id)
-    )
+    result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = result.scalar_one_or_none()
     if tenant:
         tenant.openbao_key_name = key_name
@@ -210,13 +205,18 @@ async def migrate_tenant_credentials(db: AsyncSession, tenant_id: UUID) -> dict:
         select(Device).where(
             Device.tenant_id == tenant_id,
             Device.encrypted_credentials.isnot(None),
-            (Device.encrypted_credentials_transit.is_(None) | (Device.encrypted_credentials_transit == "")),
+            (
+                Device.encrypted_credentials_transit.is_(None)
+                | (Device.encrypted_credentials_transit == "")
+            ),
         )
     )
     for device in result.scalars().all():
         try:
             plaintext = decrypt_credentials(device.encrypted_credentials, legacy_key)
-            device.encrypted_credentials_transit = await openbao.encrypt(tid, plaintext.encode("utf-8"))
+            device.encrypted_credentials_transit = await openbao.encrypt(
+                tid, plaintext.encode("utf-8")
+            )
             counts["devices"] += 1
         except Exception as e:
             logger.error("Failed to migrate device %s credentials: %s", device.id, e)
@@ -227,7 +227,10 @@ async def migrate_tenant_credentials(db: AsyncSession, tenant_id: UUID) -> dict:
         select(CertificateAuthority).where(
             CertificateAuthority.tenant_id == tenant_id,
             CertificateAuthority.encrypted_private_key.isnot(None),
-            (CertificateAuthority.encrypted_private_key_transit.is_(None) | (CertificateAuthority.encrypted_private_key_transit == "")),
+            (
+                CertificateAuthority.encrypted_private_key_transit.is_(None)
+                | (CertificateAuthority.encrypted_private_key_transit == "")
+            ),
         )
     )
     for ca in result.scalars().all():
@@ -244,13 +247,18 @@ async def migrate_tenant_credentials(db: AsyncSession, tenant_id: UUID) -> dict:
         select(DeviceCertificate).where(
             DeviceCertificate.tenant_id == tenant_id,
             DeviceCertificate.encrypted_private_key.isnot(None),
-            (DeviceCertificate.encrypted_private_key_transit.is_(None) | (DeviceCertificate.encrypted_private_key_transit == "")),
+            (
+                DeviceCertificate.encrypted_private_key_transit.is_(None)
+                | (DeviceCertificate.encrypted_private_key_transit == "")
+            ),
         )
     )
     for cert in result.scalars().all():
         try:
             plaintext = decrypt_credentials(cert.encrypted_private_key, legacy_key)
-            cert.encrypted_private_key_transit = await openbao.encrypt(tid, plaintext.encode("utf-8"))
+            cert.encrypted_private_key_transit = await openbao.encrypt(
+                tid, plaintext.encode("utf-8")
+            )
             counts["certs"] += 1
         except Exception as e:
             logger.error("Failed to migrate cert %s private key: %s", cert.id, e)
@@ -303,7 +311,14 @@ async def provision_existing_tenants(db: AsyncSession) -> dict:
     result = await db.execute(select(Tenant))
     tenants = result.scalars().all()
 
-    total = {"tenants": len(tenants), "devices": 0, "cas": 0, "certs": 0, "channels": 0, "errors": 0}
+    total = {
+        "tenants": len(tenants),
+        "devices": 0,
+        "cas": 0,
+        "certs": 0,
+        "channels": 0,
+        "errors": 0,
+    }
 
     for tenant in tenants:
         try:

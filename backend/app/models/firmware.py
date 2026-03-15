@@ -7,7 +7,6 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     DateTime,
-    Integer,
     Text,
     UniqueConstraint,
     func,
@@ -24,10 +23,9 @@ class FirmwareVersion(Base):
 
     Not tenant-scoped — firmware versions are global data shared across all tenants.
     """
+
     __tablename__ = "firmware_versions"
-    __table_args__ = (
-        UniqueConstraint("architecture", "channel", "version"),
-    )
+    __table_args__ = (UniqueConstraint("architecture", "channel", "version"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -56,6 +54,7 @@ class FirmwareUpgradeJob(Base):
 
     Multiple jobs can share a rollout_group_id for mass upgrades.
     """
+
     __tablename__ = "firmware_upgrade_jobs"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -99,4 +98,6 @@ class FirmwareUpgradeJob(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<FirmwareUpgradeJob id={self.id} status={self.status} target={self.target_version}>"
+        return (
+            f"<FirmwareUpgradeJob id={self.id} status={self.status} target={self.target_version}>"
+        )

@@ -255,7 +255,12 @@ async def run_backup(
         if prior_commits:
             try:
                 prior_export_bytes = await loop.run_in_executor(
-                    None, git_store.read_file, tenant_id, prior_commits[0]["sha"], device_id, "export.rsc"
+                    None,
+                    git_store.read_file,
+                    tenant_id,
+                    prior_commits[0]["sha"],
+                    device_id,
+                    "export.rsc",
                 )
                 prior_text = prior_export_bytes.decode("utf-8", errors="replace")
                 lines_added, lines_removed = await loop.run_in_executor(
@@ -284,9 +289,7 @@ async def run_backup(
         try:
             from app.services.crypto import encrypt_data_transit
 
-            encrypted_export = await encrypt_data_transit(
-                export_text, tenant_id
-            )
+            encrypted_export = await encrypt_data_transit(export_text, tenant_id)
             encrypted_binary = await encrypt_data_transit(
                 base64.b64encode(binary_backup).decode(), tenant_id
             )
@@ -302,8 +305,7 @@ async def run_backup(
         except Exception as enc_err:
             # Transit unavailable — fall back to plaintext (non-fatal)
             logger.warning(
-                "Transit encryption failed for %s backup of device %s, "
-                "storing plaintext: %s",
+                "Transit encryption failed for %s backup of device %s, storing plaintext: %s",
                 trigger_type,
                 device_id,
                 enc_err,
@@ -313,9 +315,7 @@ async def run_backup(
         # -----------------------------------------------------------------------
         # Step 6: Commit to git (wrapped in run_in_executor — pygit2 is sync C bindings)
         # -----------------------------------------------------------------------
-        commit_message = (
-            f"{trigger_type}: {hostname} ({ip}) at {ts}"
-        )
+        commit_message = f"{trigger_type}: {hostname} ({ip}) at {ts}"
 
         commit_sha = await loop.run_in_executor(
             None,

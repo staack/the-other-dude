@@ -56,15 +56,19 @@ async def test_new_snapshot_encrypted_and_stored():
     mock_openbao = AsyncMock()
     mock_openbao.encrypt.return_value = "vault:v1:encrypted_data"
 
-    with patch(
-        "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.config_snapshot_subscriber.OpenBaoTransitService",
-        return_value=mock_openbao,
-    ), patch(
-        "app.services.config_snapshot_subscriber.generate_and_store_diff",
-        new_callable=AsyncMock,
+    with (
+        patch(
+            "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.generate_and_store_diff",
+            new_callable=AsyncMock,
+        ),
     ):
         await handle_config_snapshot(msg)
 
@@ -102,12 +106,15 @@ async def test_duplicate_snapshot_skipped():
 
     mock_openbao = AsyncMock()
 
-    with patch(
-        "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.config_snapshot_subscriber.OpenBaoTransitService",
-        return_value=mock_openbao,
+    with (
+        patch(
+            "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
     ):
         await handle_config_snapshot(msg)
 
@@ -141,12 +148,15 @@ async def test_transit_encrypt_failure_causes_nak():
     mock_openbao = AsyncMock()
     mock_openbao.encrypt.side_effect = Exception("Transit unavailable")
 
-    with patch(
-        "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.config_snapshot_subscriber.OpenBaoTransitService",
-        return_value=mock_openbao,
+    with (
+        patch(
+            "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
     ):
         await handle_config_snapshot(msg)
 
@@ -168,11 +178,14 @@ async def test_malformed_message_acked_and_discarded():
 
     mock_openbao = AsyncMock()
 
-    with patch(
-        "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
-    ) as mock_session_cls, patch(
-        "app.services.config_snapshot_subscriber.OpenBaoTransitService",
-        return_value=mock_openbao,
+    with (
+        patch(
+            "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
     ):
         await handle_config_snapshot(msg)
 
@@ -209,12 +222,15 @@ async def test_orphan_device_acked_and_discarded():
     mock_openbao = AsyncMock()
     mock_openbao.encrypt.return_value = "vault:v1:encrypted_data"
 
-    with patch(
-        "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.config_snapshot_subscriber.OpenBaoTransitService",
-        return_value=mock_openbao,
+    with (
+        patch(
+            "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
     ):
         await handle_config_snapshot(msg)
 
@@ -245,15 +261,19 @@ async def test_first_snapshot_for_device_always_stored():
     mock_openbao = AsyncMock()
     mock_openbao.encrypt.return_value = "vault:v1:first_snapshot_encrypted"
 
-    with patch(
-        "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
-        return_value=mock_ctx,
-    ), patch(
-        "app.services.config_snapshot_subscriber.OpenBaoTransitService",
-        return_value=mock_openbao,
-    ), patch(
-        "app.services.config_snapshot_subscriber.generate_and_store_diff",
-        new_callable=AsyncMock,
+    with (
+        patch(
+            "app.services.config_snapshot_subscriber.AdminAsyncSessionLocal",
+            return_value=mock_ctx,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.OpenBaoTransitService",
+            return_value=mock_openbao,
+        ),
+        patch(
+            "app.services.config_snapshot_subscriber.generate_and_store_diff",
+            new_callable=AsyncMock,
+        ),
     ):
         await handle_config_snapshot(msg)
 

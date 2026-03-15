@@ -14,7 +14,6 @@ Builds a topology graph of managed devices by:
 import asyncio
 import ipaddress
 import json
-import logging
 import uuid
 from typing import Any
 
@@ -265,7 +264,7 @@ async def get_topology(
     nodes: list[TopologyNode] = []
     ip_to_device: dict[str, str] = {}
     online_device_ids: list[str] = []
-    devices_by_id: dict[str, Any] = {}
+    _devices_by_id: dict[str, Any] = {}
 
     for row in rows:
         device_id = str(row.id)
@@ -288,9 +287,7 @@ async def get_topology(
 
     if online_device_ids:
         tasks = [
-            routeros_proxy.execute_command(
-                device_id, "/ip/neighbor/print", timeout=10.0
-            )
+            routeros_proxy.execute_command(device_id, "/ip/neighbor/print", timeout=10.0)
             for device_id in online_device_ids
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)

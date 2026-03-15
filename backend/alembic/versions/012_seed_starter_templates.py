@@ -22,7 +22,8 @@ def upgrade() -> None:
     conn = op.get_bind()
 
     # 1. Basic Router — comprehensive starter for a typical SOHO/branch router
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         INSERT INTO config_templates (id, tenant_id, name, description, content, variables)
         SELECT
             gen_random_uuid(),
@@ -75,10 +76,12 @@ add chain=forward action=drop comment="Drop everything else"
             SELECT 1 FROM config_templates ct
             WHERE ct.tenant_id = t.id AND ct.name = 'Basic Router'
         )
-    """))
+    """)
+    )
 
     # 2. Re-seed Basic Firewall (for tenants missing it)
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         INSERT INTO config_templates (id, tenant_id, name, description, content, variables)
         SELECT
             gen_random_uuid(),
@@ -100,10 +103,12 @@ add chain=forward action=drop',
             SELECT 1 FROM config_templates ct
             WHERE ct.tenant_id = t.id AND ct.name = 'Basic Firewall'
         )
-    """))
+    """)
+    )
 
     # 3. Re-seed DHCP Server Setup
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         INSERT INTO config_templates (id, tenant_id, name, description, content, variables)
         SELECT
             gen_random_uuid(),
@@ -119,10 +124,12 @@ add chain=forward action=drop',
             SELECT 1 FROM config_templates ct
             WHERE ct.tenant_id = t.id AND ct.name = 'DHCP Server Setup'
         )
-    """))
+    """)
+    )
 
     # 4. Re-seed Wireless AP Config
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         INSERT INTO config_templates (id, tenant_id, name, description, content, variables)
         SELECT
             gen_random_uuid(),
@@ -137,10 +144,12 @@ add chain=forward action=drop',
             SELECT 1 FROM config_templates ct
             WHERE ct.tenant_id = t.id AND ct.name = 'Wireless AP Config'
         )
-    """))
+    """)
+    )
 
     # 5. Re-seed Initial Device Setup
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         INSERT INTO config_templates (id, tenant_id, name, description, content, variables)
         SELECT
             gen_random_uuid(),
@@ -159,11 +168,10 @@ add chain=forward action=drop',
             SELECT 1 FROM config_templates ct
             WHERE ct.tenant_id = t.id AND ct.name = 'Initial Device Setup'
         )
-    """))
+    """)
+    )
 
 
 def downgrade() -> None:
     conn = op.get_bind()
-    conn.execute(sa.text(
-        "DELETE FROM config_templates WHERE name = 'Basic Router'"
-    ))
+    conn.execute(sa.text("DELETE FROM config_templates WHERE name = 'Basic Router'"))

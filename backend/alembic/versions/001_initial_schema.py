@@ -220,7 +220,8 @@ def upgrade() -> None:
     # Super admin sees all; tenant users see only their tenant
     conn.execute(sa.text("ALTER TABLE tenants ENABLE ROW LEVEL SECURITY"))
     conn.execute(sa.text("ALTER TABLE tenants FORCE ROW LEVEL SECURITY"))
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE POLICY tenant_isolation ON tenants
         USING (
             id::text = current_setting('app.current_tenant', true)
@@ -230,13 +231,15 @@ def upgrade() -> None:
             id::text = current_setting('app.current_tenant', true)
             OR current_setting('app.current_tenant', true) = 'super_admin'
         )
-    """))
+    """)
+    )
 
     # --- USERS RLS ---
     # Users see only other users in their tenant; super_admin sees all
     conn.execute(sa.text("ALTER TABLE users ENABLE ROW LEVEL SECURITY"))
     conn.execute(sa.text("ALTER TABLE users FORCE ROW LEVEL SECURITY"))
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE POLICY tenant_isolation ON users
         USING (
             tenant_id::text = current_setting('app.current_tenant', true)
@@ -246,41 +249,49 @@ def upgrade() -> None:
             tenant_id::text = current_setting('app.current_tenant', true)
             OR current_setting('app.current_tenant', true) = 'super_admin'
         )
-    """))
+    """)
+    )
 
     # --- DEVICES RLS ---
     conn.execute(sa.text("ALTER TABLE devices ENABLE ROW LEVEL SECURITY"))
     conn.execute(sa.text("ALTER TABLE devices FORCE ROW LEVEL SECURITY"))
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE POLICY tenant_isolation ON devices
         USING (tenant_id::text = current_setting('app.current_tenant', true))
         WITH CHECK (tenant_id::text = current_setting('app.current_tenant', true))
-    """))
+    """)
+    )
 
     # --- DEVICE GROUPS RLS ---
     conn.execute(sa.text("ALTER TABLE device_groups ENABLE ROW LEVEL SECURITY"))
     conn.execute(sa.text("ALTER TABLE device_groups FORCE ROW LEVEL SECURITY"))
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE POLICY tenant_isolation ON device_groups
         USING (tenant_id::text = current_setting('app.current_tenant', true))
         WITH CHECK (tenant_id::text = current_setting('app.current_tenant', true))
-    """))
+    """)
+    )
 
     # --- DEVICE TAGS RLS ---
     conn.execute(sa.text("ALTER TABLE device_tags ENABLE ROW LEVEL SECURITY"))
     conn.execute(sa.text("ALTER TABLE device_tags FORCE ROW LEVEL SECURITY"))
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE POLICY tenant_isolation ON device_tags
         USING (tenant_id::text = current_setting('app.current_tenant', true))
         WITH CHECK (tenant_id::text = current_setting('app.current_tenant', true))
-    """))
+    """)
+    )
 
     # --- DEVICE GROUP MEMBERSHIPS RLS ---
     # These are filtered by joining through devices/groups (which already have RLS)
     # But we also add direct RLS via a join to the devices table
     conn.execute(sa.text("ALTER TABLE device_group_memberships ENABLE ROW LEVEL SECURITY"))
     conn.execute(sa.text("ALTER TABLE device_group_memberships FORCE ROW LEVEL SECURITY"))
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE POLICY tenant_isolation ON device_group_memberships
         USING (
             EXISTS (
@@ -296,12 +307,14 @@ def upgrade() -> None:
                 AND d.tenant_id::text = current_setting('app.current_tenant', true)
             )
         )
-    """))
+    """)
+    )
 
     # --- DEVICE TAG ASSIGNMENTS RLS ---
     conn.execute(sa.text("ALTER TABLE device_tag_assignments ENABLE ROW LEVEL SECURITY"))
     conn.execute(sa.text("ALTER TABLE device_tag_assignments FORCE ROW LEVEL SECURITY"))
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE POLICY tenant_isolation ON device_tag_assignments
         USING (
             EXISTS (
@@ -317,7 +330,8 @@ def upgrade() -> None:
                 AND d.tenant_id::text = current_setting('app.current_tenant', true)
             )
         )
-    """))
+    """)
+    )
 
     # =========================================================================
     # GRANT PERMISSIONS TO app_user (RLS-enforcing application role)
@@ -336,9 +350,7 @@ def upgrade() -> None:
     ]
 
     for table in tables:
-        conn.execute(sa.text(
-            f"GRANT SELECT, INSERT, UPDATE, DELETE ON {table} TO app_user"
-        ))
+        conn.execute(sa.text(f"GRANT SELECT, INSERT, UPDATE, DELETE ON {table} TO app_user"))
 
     # Grant sequence usage for UUID generation (gen_random_uuid is built-in, but just in case)
     conn.execute(sa.text("GRANT USAGE ON SCHEMA public TO app_user"))

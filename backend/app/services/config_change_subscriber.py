@@ -51,13 +51,15 @@ async def handle_config_changed(event: dict) -> None:
     if await _last_backup_within_dedup_window(device_id):
         logger.info(
             "Config change on device %s — skipping backup (within %dm dedup window)",
-            device_id, DEDUP_WINDOW_MINUTES,
+            device_id,
+            DEDUP_WINDOW_MINUTES,
         )
         return
 
     logger.info(
         "Config change detected on device %s (tenant %s): %s -> %s",
-        device_id, tenant_id,
+        device_id,
+        tenant_id,
         event.get("old_timestamp", "?"),
         event.get("new_timestamp", "?"),
     )

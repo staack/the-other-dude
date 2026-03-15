@@ -32,6 +32,7 @@ async def _get_sse_redis() -> aioredis.Redis:
     global _redis
     if _redis is None:
         from app.config import settings
+
         _redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
     return _redis
 
@@ -70,7 +71,9 @@ async def _validate_sse_token(token: str) -> dict:
 async def event_stream(
     request: Request,
     tenant_id: uuid.UUID,
-    token: str = Query(..., description="Short-lived SSE exchange token (from POST /auth/sse-token)"),
+    token: str = Query(
+        ..., description="Short-lived SSE exchange token (from POST /auth/sse-token)"
+    ),
 ) -> EventSourceResponse:
     """Stream real-time events for a tenant via Server-Sent Events.
 
@@ -87,7 +90,9 @@ async def event_stream(
     user_id = user_context.get("user_id", "")
 
     # Authorization: user must belong to the requested tenant or be super_admin
-    if user_role != "super_admin" and (user_tenant_id is None or str(user_tenant_id) != str(tenant_id)):
+    if user_role != "super_admin" and (
+        user_tenant_id is None or str(user_tenant_id) != str(tenant_id)
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized for this tenant",

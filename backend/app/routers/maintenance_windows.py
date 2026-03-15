@@ -299,9 +299,7 @@ async def delete_maintenance_window(
     _require_operator(current_user)
 
     result = await db.execute(
-        text(
-            "DELETE FROM maintenance_windows WHERE id = CAST(:id AS uuid) RETURNING id"
-        ),
+        text("DELETE FROM maintenance_windows WHERE id = CAST(:id AS uuid) RETURNING id"),
         {"id": str(window_id)},
     )
     if not result.fetchone():

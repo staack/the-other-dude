@@ -26,6 +26,7 @@ class AlertRule(Base):
     When a metric breaches the threshold for duration_polls consecutive polls,
     an alert fires.
     """
+
     __tablename__ = "alert_rules"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -53,10 +54,16 @@ class AlertRule(Base):
     metric: Mapped[str] = mapped_column(Text, nullable=False)
     operator: Mapped[str] = mapped_column(Text, nullable=False)
     threshold: Mapped[float] = mapped_column(Numeric, nullable=False)
-    duration_polls: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    duration_polls: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1"
+    )
     severity: Mapped[str] = mapped_column(Text, nullable=False)
-    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
-    is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
+    is_default: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -69,6 +76,7 @@ class AlertRule(Base):
 
 class NotificationChannel(Base):
     """Email, webhook, or Slack notification destination."""
+
     __tablename__ = "notification_channels"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -83,12 +91,16 @@ class NotificationChannel(Base):
         nullable=False,
     )
     name: Mapped[str] = mapped_column(Text, nullable=False)
-    channel_type: Mapped[str] = mapped_column(Text, nullable=False)  # "email", "webhook", or "slack"
+    channel_type: Mapped[str] = mapped_column(
+        Text, nullable=False
+    )  # "email", "webhook", or "slack"
     # SMTP fields (email channels)
     smtp_host: Mapped[str | None] = mapped_column(Text, nullable=True)
     smtp_port: Mapped[int | None] = mapped_column(Integer, nullable=True)
     smtp_user: Mapped[str | None] = mapped_column(Text, nullable=True)
-    smtp_password: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)  # AES-256-GCM encrypted
+    smtp_password: Mapped[bytes | None] = mapped_column(
+        LargeBinary, nullable=True
+    )  # AES-256-GCM encrypted
     smtp_use_tls: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     from_address: Mapped[str | None] = mapped_column(Text, nullable=True)
     to_address: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -110,6 +122,7 @@ class NotificationChannel(Base):
 
 class AlertRuleChannel(Base):
     """Many-to-many association between alert rules and notification channels."""
+
     __tablename__ = "alert_rule_channels"
 
     rule_id: Mapped[uuid.UUID] = mapped_column(
@@ -129,6 +142,7 @@ class AlertEvent(Base):
 
     rule_id is NULL for system-level alerts (e.g., device offline).
     """
+
     __tablename__ = "alert_events"
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -158,7 +172,9 @@ class AlertEvent(Base):
     value: Mapped[float | None] = mapped_column(Numeric, nullable=True)
     threshold: Mapped[float | None] = mapped_column(Numeric, nullable=True)
     message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    is_flapping: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    is_flapping: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     acknowledged_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),

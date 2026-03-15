@@ -9,7 +9,6 @@ DELETE /api/tenants/{id}  — delete tenant (super_admin only)
 """
 
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import func, select, text
@@ -17,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.middleware.rate_limit import limiter
 
-from app.database import get_admin_db, get_db
+from app.database import get_admin_db
 from app.middleware.rbac import require_super_admin, require_tenant_admin_or_above
 from app.middleware.tenant_context import CurrentUser
 from app.models.device import Device
@@ -70,15 +69,18 @@ async def list_tenants(
     else:
         if not current_user.tenant_id:
             return []
-        result = await db.execute(
-            select(Tenant).where(Tenant.id == current_user.tenant_id)
-        )
+        result = await db.execute(select(Tenant).where(Tenant.id == current_user.tenant_id))
         tenants = result.scalars().all()
 
     return [await _get_tenant_response(tenant, db) for tenant in tenants]
 
 
-@router.post("", response_model=TenantResponse, status_code=status.HTTP_201_CREATED, summary="Create a tenant")
+@router.post(
+    "",
+    response_model=TenantResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a tenant",
+)
 @limiter.limit("20/minute")
 async def create_tenant(
     request: Request,
@@ -108,13 +110,21 @@ async def create_tenant(
         ("Device Offline", "device_offline", "eq", 1, 1, "critical"),
     ]
     for name, metric, operator, threshold, duration, sev in default_rules:
-        await db.execute(text("""
+        await db.execute(
+            text("""
             INSERT INTO alert_rules (id, tenant_id, name, metric, operator, threshold, duration_polls, severity, enabled, is_default)
             VALUES (gen_random_uuid(), CAST(:tenant_id AS uuid), :name, :metric, :operator, :threshold, :duration, :severity, TRUE, TRUE)
-        """), {
-            "tenant_id": str(tenant.id), "name": name, "metric": metric,
-            "operator": operator, "threshold": threshold, "duration": duration, "severity": sev,
-        })
+        """),
+            {
+                "tenant_id": str(tenant.id),
+                "name": name,
+                "metric": metric,
+                "operator": operator,
+                "threshold": threshold,
+                "duration": duration,
+                "severity": sev,
+            },
+        )
     await db.commit()
 
     # Seed starter config templates for new tenant
@@ -131,6 +141,7 @@ async def create_tenant(
             await db.commit()
     except Exception as exc:
         import logging
+
         logging.getLogger(__name__).warning(
             "OpenBao key provisioning failed for tenant %s (will be provisioned on next startup): %s",
             tenant.id,
@@ -229,6 +240,7 @@ async def delete_tenant(
 
     # Check if tenant had VPN configured (before cascade deletes it)
     from app.services.vpn_service import get_vpn_config, sync_wireguard_config
+
     had_vpn = await get_vpn_config(db, tenant_id)
 
     await db.delete(tenant)
@@ -288,14 +300,54 @@ add chain=forward action=drop comment="Drop everything else"
 # Identity
 /system identity set name={{ device.hostname }}""",
         "variables": [
-            {"name": "wan_interface", "type": "string", "default": "ether1", "description": "WAN-facing interface"},
-            {"name": "lan_gateway", "type": "ip", "default": "192.168.88.1", "description": "LAN gateway IP"},
-            {"name": "lan_cidr", "type": "integer", "default": "24", "description": "LAN subnet mask bits"},
-            {"name": "lan_network", "type": "ip", "default": "192.168.88.0", "description": "LAN network address"},
-            {"name": "dhcp_start", "type": "ip", "default": "192.168.88.100", "description": "DHCP pool start"},
-            {"name": "dhcp_end", "type": "ip", "default": "192.168.88.254", "description": "DHCP pool end"},
-            {"name": "dns_servers", "type": "string", "default": "8.8.8.8,8.8.4.4", "description": "Upstream DNS servers"},
-            {"name": "ntp_server", "type": "string", "default": "pool.ntp.org", "description": "NTP server"},
+            {
+                "name": "wan_interface",
+                "type": "string",
+                "default": "ether1",
+                "description": "WAN-facing interface",
+            },
+            {
+                "name": "lan_gateway",
+                "type": "ip",
+                "default": "192.168.88.1",
+                "description": "LAN gateway IP",
+            },
+            {
+                "name": "lan_cidr",
+                "type": "integer",
+                "default": "24",
+                "description": "LAN subnet mask bits",
+            },
+            {
+                "name": "lan_network",
+                "type": "ip",
+                "default": "192.168.88.0",
+                "description": "LAN network address",
+            },
+            {
+                "name": "dhcp_start",
+                "type": "ip",
+                "default": "192.168.88.100",
+                "description": "DHCP pool start",
+            },
+            {
+                "name": "dhcp_end",
+                "type": "ip",
+                "default": "192.168.88.254",
+                "description": "DHCP pool end",
+            },
+            {
+                "name": "dns_servers",
+                "type": "string",
+                "default": "8.8.8.8,8.8.4.4",
+                "description": "Upstream DNS servers",
+            },
+            {
+                "name": "ntp_server",
+                "type": "string",
+                "default": "pool.ntp.org",
+                "description": "NTP server",
+            },
         ],
     },
     {
@@ -311,8 +363,18 @@ add chain=forward connection-state=invalid action=drop
 add chain=forward src-address={{ allowed_network }} action=accept
 add chain=forward action=drop""",
         "variables": [
-            {"name": "wan_interface", "type": "string", "default": "ether1", "description": "WAN-facing interface"},
-            {"name": "allowed_network", "type": "subnet", "default": "192.168.88.0/24", "description": "Allowed source network"},
+            {
+                "name": "wan_interface",
+                "type": "string",
+                "default": "ether1",
+                "description": "WAN-facing interface",
+            },
+            {
+                "name": "allowed_network",
+                "type": "subnet",
+                "default": "192.168.88.0/24",
+                "description": "Allowed source network",
+            },
         ],
     },
     {
@@ -322,11 +384,36 @@ add chain=forward action=drop""",
 /ip dhcp-server network add address={{ gateway }}/24 gateway={{ gateway }} dns-server={{ dns_server }}
 /ip dhcp-server add name=dhcp1 interface={{ interface }} address-pool=dhcp-pool disabled=no""",
         "variables": [
-            {"name": "pool_start", "type": "ip", "default": "192.168.88.100", "description": "DHCP pool start address"},
-            {"name": "pool_end", "type": "ip", "default": "192.168.88.254", "description": "DHCP pool end address"},
-            {"name": "gateway", "type": "ip", "default": "192.168.88.1", "description": "Default gateway"},
-            {"name": "dns_server", "type": "ip", "default": "8.8.8.8", "description": "DNS server address"},
-            {"name": "interface", "type": "string", "default": "bridge-lan", "description": "Interface to serve DHCP on"},
+            {
+                "name": "pool_start",
+                "type": "ip",
+                "default": "192.168.88.100",
+                "description": "DHCP pool start address",
+            },
+            {
+                "name": "pool_end",
+                "type": "ip",
+                "default": "192.168.88.254",
+                "description": "DHCP pool end address",
+            },
+            {
+                "name": "gateway",
+                "type": "ip",
+                "default": "192.168.88.1",
+                "description": "Default gateway",
+            },
+            {
+                "name": "dns_server",
+                "type": "ip",
+                "default": "8.8.8.8",
+                "description": "DNS server address",
+            },
+            {
+                "name": "interface",
+                "type": "string",
+                "default": "bridge-lan",
+                "description": "Interface to serve DHCP on",
+            },
         ],
     },
     {
@@ -335,10 +422,30 @@ add chain=forward action=drop""",
         "content": """/interface wireless security-profiles add name=portal-wpa2 mode=dynamic-keys authentication-types=wpa2-psk wpa2-pre-shared-key={{ password }}
 /interface wireless set wlan1 mode=ap-bridge ssid={{ ssid }} security-profile=portal-wpa2 frequency={{ frequency }} channel-width={{ channel_width }} disabled=no""",
         "variables": [
-            {"name": "ssid", "type": "string", "default": "MikroTik-AP", "description": "Wireless network name"},
-            {"name": "password", "type": "string", "default": "", "description": "WPA2 pre-shared key (min 8 characters)"},
-            {"name": "frequency", "type": "integer", "default": "2412", "description": "Wireless frequency in MHz"},
-            {"name": "channel_width", "type": "string", "default": "20/40mhz-XX", "description": "Channel width setting"},
+            {
+                "name": "ssid",
+                "type": "string",
+                "default": "MikroTik-AP",
+                "description": "Wireless network name",
+            },
+            {
+                "name": "password",
+                "type": "string",
+                "default": "",
+                "description": "WPA2 pre-shared key (min 8 characters)",
+            },
+            {
+                "name": "frequency",
+                "type": "integer",
+                "default": "2412",
+                "description": "Wireless frequency in MHz",
+            },
+            {
+                "name": "channel_width",
+                "type": "string",
+                "default": "20/40mhz-XX",
+                "description": "Channel width setting",
+            },
         ],
     },
     {
@@ -351,8 +458,18 @@ add chain=forward action=drop""",
 /ip service set ssh port=22
 /ip service set winbox port=8291""",
         "variables": [
-            {"name": "ntp_server", "type": "ip", "default": "pool.ntp.org", "description": "NTP server address"},
-            {"name": "dns_servers", "type": "string", "default": "8.8.8.8,8.8.4.4", "description": "Comma-separated DNS servers"},
+            {
+                "name": "ntp_server",
+                "type": "ip",
+                "default": "pool.ntp.org",
+                "description": "NTP server address",
+            },
+            {
+                "name": "dns_servers",
+                "type": "string",
+                "default": "8.8.8.8,8.8.4.4",
+                "description": "Comma-separated DNS servers",
+            },
         ],
     },
 ]
@@ -363,13 +480,16 @@ async def _seed_starter_templates(db, tenant_id) -> None:
     import json as _json
 
     for tmpl in _STARTER_TEMPLATES:
-        await db.execute(text("""
+        await db.execute(
+            text("""
             INSERT INTO config_templates (id, tenant_id, name, description, content, variables)
             VALUES (gen_random_uuid(), CAST(:tid AS uuid), :name, :desc, :content, CAST(:vars AS jsonb))
-        """), {
-            "tid": str(tenant_id),
-            "name": tmpl["name"],
-            "desc": tmpl["description"],
-            "content": tmpl["content"],
-            "vars": _json.dumps(tmpl["variables"]),
-        })
+        """),
+            {
+                "tid": str(tenant_id),
+                "name": tmpl["name"],
+                "desc": tmpl["description"],
+                "content": tmpl["content"],
+                "vars": _json.dumps(tmpl["variables"]),
+            },
+        )

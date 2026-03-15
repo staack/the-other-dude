@@ -64,9 +64,7 @@ def parse_diff_changes(diff_text: str) -> list[dict]:
     current_section: str | None = None
 
     # Track per-component: adds, removes, raw_lines
-    components: dict[str, dict] = defaultdict(
-        lambda: {"adds": 0, "removes": 0, "raw_lines": []}
-    )
+    components: dict[str, dict] = defaultdict(lambda: {"adds": 0, "removes": 0, "raw_lines": []})
 
     for line in lines:
         # Skip unified diff headers

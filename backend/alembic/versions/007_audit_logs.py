@@ -29,7 +29,8 @@ def upgrade() -> None:
     # =========================================================================
     # CREATE audit_logs TABLE
     # =========================================================================
-    conn.execute(sa.text("""
+    conn.execute(
+        sa.text("""
         CREATE TABLE IF NOT EXISTS audit_logs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -42,39 +43,40 @@ def upgrade() -> None:
             ip_address VARCHAR(45),
             created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         )
-    """))
+    """)
+    )
 
     # =========================================================================
     # RLS POLICY
     # =========================================================================
-    conn.execute(sa.text(
-        "ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY"
-    ))
-    conn.execute(sa.text("""
+    conn.execute(sa.text("ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY"))
+    conn.execute(
+        sa.text("""
         CREATE POLICY audit_logs_tenant_isolation ON audit_logs
         USING (tenant_id = current_setting('app.current_tenant')::uuid)
-    """))
+    """)
+    )
 
     # Grant SELECT + INSERT to app_user (no UPDATE/DELETE -- audit logs are immutable)
-    conn.execute(sa.text(
-        "GRANT SELECT, INSERT ON audit_logs TO app_user"
-    ))
+    conn.execute(sa.text("GRANT SELECT, INSERT ON audit_logs TO app_user"))
     # Poller user gets full access for cross-tenant audit logging
-    conn.execute(sa.text(
-        "GRANT ALL ON audit_logs TO poller_user"
-    ))
+    conn.execute(sa.text("GRANT ALL ON audit_logs TO poller_user"))
 
     # =========================================================================
     # INDEXES
     # =========================================================================
-    conn.execute(sa.text(
-        "CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_created "
-        "ON audit_logs (tenant_id, created_at DESC)"
-    ))
-    conn.execute(sa.text(
-        "CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_action "
-        "ON audit_logs (tenant_id, action)"
-    ))
+    conn.execute(
+        sa.text(
+            "CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_created "
+            "ON audit_logs (tenant_id, created_at DESC)"
+        )
+    )
+    conn.execute(
+        sa.text(
+            "CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_action "
+            "ON audit_logs (tenant_id, action)"
+        )
+    )
 
 
 def downgrade() -> None:

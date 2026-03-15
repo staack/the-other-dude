@@ -28,7 +28,7 @@ from app.services.auth import hash_password
 pytestmark = pytest.mark.integration
 
 # Use the same test DB URLs as conftest
-from tests.integration.conftest import TEST_APP_USER_DATABASE_URL, TEST_DATABASE_URL
+from tests.integration.conftest import TEST_APP_USER_DATABASE_URL, TEST_DATABASE_URL  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -86,12 +86,20 @@ async def test_tenant_a_cannot_see_tenant_b_devices():
         await session.flush()
 
         da = Device(
-            tenant_id=ta.id, hostname=f"rls-ra-{uid}", ip_address="10.1.1.1",
-            api_port=8728, api_ssl_port=8729, status="online",
+            tenant_id=ta.id,
+            hostname=f"rls-ra-{uid}",
+            ip_address="10.1.1.1",
+            api_port=8728,
+            api_ssl_port=8729,
+            status="online",
         )
         db = Device(
-            tenant_id=tb.id, hostname=f"rls-rb-{uid}", ip_address="10.1.1.2",
-            api_port=8728, api_ssl_port=8729, status="online",
+            tenant_id=tb.id,
+            hostname=f"rls-rb-{uid}",
+            ip_address="10.1.1.2",
+            api_port=8728,
+            api_ssl_port=8729,
+            status="online",
         )
         session.add_all([da, db])
         await session.flush()
@@ -129,12 +137,20 @@ async def test_tenant_a_cannot_see_tenant_b_alerts():
         await session.flush()
 
         ra = AlertRule(
-            tenant_id=ta.id, name=f"CPU Alert A {uid}",
-            metric="cpu_load", operator=">", threshold=90.0, severity="warning",
+            tenant_id=ta.id,
+            name=f"CPU Alert A {uid}",
+            metric="cpu_load",
+            operator=">",
+            threshold=90.0,
+            severity="warning",
         )
         rb = AlertRule(
-            tenant_id=tb.id, name=f"CPU Alert B {uid}",
-            metric="cpu_load", operator=">", threshold=85.0, severity="critical",
+            tenant_id=tb.id,
+            name=f"CPU Alert B {uid}",
+            metric="cpu_load",
+            operator=">",
+            threshold=85.0,
+            severity="critical",
         )
         session.add_all([ra, rb])
         await session.flush()
@@ -256,12 +272,20 @@ async def test_super_admin_sees_all_tenants():
         await session.flush()
 
         da = Device(
-            tenant_id=ta.id, hostname=f"sa-ra-{uid}", ip_address="10.2.1.1",
-            api_port=8728, api_ssl_port=8729, status="online",
+            tenant_id=ta.id,
+            hostname=f"sa-ra-{uid}",
+            ip_address="10.2.1.1",
+            api_port=8728,
+            api_ssl_port=8729,
+            status="online",
         )
         db = Device(
-            tenant_id=tb.id, hostname=f"sa-rb-{uid}", ip_address="10.2.1.2",
-            api_port=8728, api_ssl_port=8729, status="online",
+            tenant_id=tb.id,
+            hostname=f"sa-rb-{uid}",
+            ip_address="10.2.1.2",
+            api_port=8728,
+            api_ssl_port=8729,
+            status="online",
         )
         session.add_all([da, db])
         await session.flush()
@@ -311,31 +335,45 @@ async def test_api_rls_isolation_devices_endpoint(client, admin_engine):
         ua = User(
             email=f"api-ua-{uid}@example.com",
             hashed_password=hash_password("TestPass123!"),
-            name="User A", role="tenant_admin",
-            tenant_id=ta.id, is_active=True,
+            name="User A",
+            role="tenant_admin",
+            tenant_id=ta.id,
+            is_active=True,
         )
         ub = User(
             email=f"api-ub-{uid}@example.com",
             hashed_password=hash_password("TestPass123!"),
-            name="User B", role="tenant_admin",
-            tenant_id=tb.id, is_active=True,
+            name="User B",
+            role="tenant_admin",
+            tenant_id=tb.id,
+            is_active=True,
         )
         session.add_all([ua, ub])
         await session.flush()
 
         da = Device(
-            tenant_id=ta.id, hostname=f"api-ra-{uid}", ip_address="10.3.1.1",
-            api_port=8728, api_ssl_port=8729, status="online",
+            tenant_id=ta.id,
+            hostname=f"api-ra-{uid}",
+            ip_address="10.3.1.1",
+            api_port=8728,
+            api_ssl_port=8729,
+            status="online",
         )
         db = Device(
-            tenant_id=tb.id, hostname=f"api-rb-{uid}", ip_address="10.3.1.2",
-            api_port=8728, api_ssl_port=8729, status="online",
+            tenant_id=tb.id,
+            hostname=f"api-rb-{uid}",
+            ip_address="10.3.1.2",
+            api_port=8728,
+            api_ssl_port=8729,
+            status="online",
         )
         session.add_all([da, db])
         await session.flush()
         return {
-            "ta_id": str(ta.id), "tb_id": str(tb.id),
-            "ua_email": ua.email, "ub_email": ub.email,
+            "ta_id": str(ta.id),
+            "tb_id": str(tb.id),
+            "ua_email": ua.email,
+            "ub_email": ub.email,
         }
 
     ids = await _admin_commit(TEST_DATABASE_URL, setup)
@@ -398,21 +436,29 @@ async def test_api_rls_isolation_cross_tenant_device_access(client, admin_engine
         ua = User(
             email=f"api-xt-ua-{uid}@example.com",
             hashed_password=hash_password("TestPass123!"),
-            name="User A", role="tenant_admin",
-            tenant_id=ta.id, is_active=True,
+            name="User A",
+            role="tenant_admin",
+            tenant_id=ta.id,
+            is_active=True,
         )
         session.add(ua)
         await session.flush()
 
         db = Device(
-            tenant_id=tb.id, hostname=f"api-xt-rb-{uid}", ip_address="10.4.1.1",
-            api_port=8728, api_ssl_port=8729, status="online",
+            tenant_id=tb.id,
+            hostname=f"api-xt-rb-{uid}",
+            ip_address="10.4.1.1",
+            api_port=8728,
+            api_ssl_port=8729,
+            status="online",
         )
         session.add(db)
         await session.flush()
         return {
-            "ta_id": str(ta.id), "tb_id": str(tb.id),
-            "ua_email": ua.email, "db_id": str(db.id),
+            "ta_id": str(ta.id),
+            "tb_id": str(tb.id),
+            "ua_email": ua.email,
+            "db_id": str(db.id),
         }
 
     ids = await _admin_commit(TEST_DATABASE_URL, setup)

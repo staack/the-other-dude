@@ -32,9 +32,7 @@ class TestConfigBackups:
     ):
         """GET config backups for a device with no backups returns 200 + empty list."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
         device = await create_test_device(admin_session, tenant.id)
         await admin_session.commit()
@@ -58,9 +56,7 @@ class TestConfigBackups:
     ):
         """GET schedule returns synthetic default when no schedule configured."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
         device = await create_test_device(admin_session, tenant.id)
         await admin_session.commit()
@@ -118,9 +114,7 @@ class TestConfigBackups:
     ):
         """Config backup router responds (not 404) for expected paths."""
         tenant = await create_test_tenant(admin_session)
-        auth = await auth_headers_factory(
-            admin_session, existing_tenant_id=tenant.id
-        )
+        auth = await auth_headers_factory(admin_session, existing_tenant_id=tenant.id)
         tenant_id = auth["tenant_id"]
         device = await create_test_device(admin_session, tenant.id)
         await admin_session.commit()
@@ -143,7 +137,5 @@ class TestConfigBackups:
         """GET config backups without auth returns 401."""
         tenant_id = str(uuid.uuid4())
         device_id = str(uuid.uuid4())
-        resp = await client.get(
-            f"/api/tenants/{tenant_id}/devices/{device_id}/config/backups"
-        )
+        resp = await client.get(f"/api/tenants/{tenant_id}/devices/{device_id}/config/backups")
         assert resp.status_code == 401

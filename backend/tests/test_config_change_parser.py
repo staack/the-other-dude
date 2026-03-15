@@ -4,8 +4,6 @@ Tests the parse_diff_changes function that extracts structured RouterOS
 component changes from unified diffs.
 """
 
-import pytest
-
 from app.services.config_change_parser import parse_diff_changes
 
 

@@ -47,13 +47,15 @@ async def record_push(
     """
     r = await _get_redis()
     key = f"push:recent:{device_id}"
-    value = json.dumps({
-        "device_id": device_id,
-        "tenant_id": tenant_id,
-        "push_type": push_type,
-        "push_operation_id": push_operation_id,
-        "pre_push_commit_sha": pre_push_commit_sha,
-    })
+    value = json.dumps(
+        {
+            "device_id": device_id,
+            "tenant_id": tenant_id,
+            "push_type": push_type,
+            "push_operation_id": push_operation_id,
+            "pre_push_commit_sha": pre_push_commit_sha,
+        }
+    )
     await r.set(key, value, ex=PUSH_TTL_SECONDS)
     logger.debug(
         "Recorded push for device %s (type=%s, TTL=%ds)",

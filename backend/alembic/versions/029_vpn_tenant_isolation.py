@@ -16,7 +16,12 @@ import base64
 from alembic import op
 import sqlalchemy as sa
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat, PublicFormat
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+    PublicFormat,
+)
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 
@@ -120,5 +125,9 @@ def downgrade() -> None:
     op.alter_column("vpn_config", "subnet", server_default="10.10.0.0/24")
     op.alter_column("vpn_config", "server_address", server_default="10.10.0.1/24")
     conn = op.get_bind()
-    conn.execute(sa.text("DELETE FROM system_settings WHERE key IN ('vpn_server_public_key', 'vpn_server_private_key')"))
+    conn.execute(
+        sa.text(
+            "DELETE FROM system_settings WHERE key IN ('vpn_server_public_key', 'vpn_server_private_key')"
+        )
+    )
     # NOTE: downgrade does not remap peer IPs back. Manual cleanup may be needed.

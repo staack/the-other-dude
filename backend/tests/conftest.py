@@ -6,8 +6,6 @@ Phase 10: Integration test fixtures added in tests/integration/conftest.py.
 Pytest marker registration and shared configuration lives here.
 """
 
-import pytest
-
 
 def pytest_configure(config):
     """Register custom markers."""

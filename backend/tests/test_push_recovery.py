@@ -35,26 +35,33 @@ async def test_recovery_commits_reachable_device_with_scheduler():
     dev_result.scalar_one_or_none.return_value = device
     mock_session.execute = AsyncMock(side_effect=[mock_result, dev_result])
 
-    with patch(
-        "app.services.restore_service._check_reachability",
-        new_callable=AsyncMock,
-        return_value=True,
-    ), patch(
-        "app.services.restore_service._remove_panic_scheduler",
-        new_callable=AsyncMock,
-        return_value=True,
-    ), patch(
-        "app.services.restore_service._update_push_op_status",
-        new_callable=AsyncMock,
-    ) as mock_update, patch(
-        "app.services.restore_service._publish_push_progress",
-        new_callable=AsyncMock,
-    ), patch(
-        "app.services.crypto.decrypt_credentials_hybrid",
-        new_callable=AsyncMock,
-        return_value='{"username": "admin", "password": "test123"}',
-    ), patch(
-        "app.services.restore_service.settings",
+    with (
+        patch(
+            "app.services.restore_service._check_reachability",
+            new_callable=AsyncMock,
+            return_value=True,
+        ),
+        patch(
+            "app.services.restore_service._remove_panic_scheduler",
+            new_callable=AsyncMock,
+            return_value=True,
+        ),
+        patch(
+            "app.services.restore_service._update_push_op_status",
+            new_callable=AsyncMock,
+        ) as mock_update,
+        patch(
+            "app.services.restore_service._publish_push_progress",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "app.services.crypto.decrypt_credentials_hybrid",
+            new_callable=AsyncMock,
+            return_value='{"username": "admin", "password": "test123"}',
+        ),
+        patch(
+            "app.services.restore_service.settings",
+        ),
     ):
         await recover_stale_push_operations(mock_session)
 
@@ -84,22 +91,28 @@ async def test_recovery_marks_unreachable_device_failed():
     dev_result.scalar_one_or_none.return_value = device
     mock_session.execute = AsyncMock(side_effect=[mock_result, dev_result])
 
-    with patch(
-        "app.services.restore_service._check_reachability",
-        new_callable=AsyncMock,
-        return_value=False,
-    ), patch(
-        "app.services.restore_service._update_push_op_status",
-        new_callable=AsyncMock,
-    ) as mock_update, patch(
-        "app.services.restore_service._publish_push_progress",
-        new_callable=AsyncMock,
-    ), patch(
-        "app.services.crypto.decrypt_credentials_hybrid",
-        new_callable=AsyncMock,
-        return_value='{"username": "admin", "password": "test123"}',
-    ), patch(
-        "app.services.restore_service.settings",
+    with (
+        patch(
+            "app.services.restore_service._check_reachability",
+            new_callable=AsyncMock,
+            return_value=False,
+        ),
+        patch(
+            "app.services.restore_service._update_push_op_status",
+            new_callable=AsyncMock,
+        ) as mock_update,
+        patch(
+            "app.services.restore_service._publish_push_progress",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "app.services.crypto.decrypt_credentials_hybrid",
+            new_callable=AsyncMock,
+            return_value='{"username": "admin", "password": "test123"}',
+        ),
+        patch(
+            "app.services.restore_service.settings",
+        ),
     ):
         await recover_stale_push_operations(mock_session)
 

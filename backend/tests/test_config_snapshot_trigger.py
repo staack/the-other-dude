@@ -15,7 +15,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import nats.errors
 from fastapi import HTTPException, status
-from sqlalchemy import select
 
 
 # ---------------------------------------------------------------------------
@@ -118,11 +117,13 @@ def _mock_db(device_exists: bool):
 async def test_trigger_success_returns_201():
     """POST with operator role returns 201 with status and sha256_hash."""
     sha256 = "b" * 64
-    nc = _mock_nats_reply({
-        "status": "success",
-        "sha256_hash": sha256,
-        "message": "Config snapshot collected",
-    })
+    nc = _mock_nats_reply(
+        {
+            "status": "success",
+            "sha256_hash": sha256,
+            "message": "Config snapshot collected",
+        }
+    )
     db = _mock_db(device_exists=True)
 
     result = await _simulate_trigger(nats_conn=nc, db_session=db)
@@ -156,10 +157,12 @@ async def test_trigger_nats_timeout_returns_504():
 @pytest.mark.asyncio
 async def test_trigger_poller_failure_returns_502():
     """Poller failure reply returns 502."""
-    nc = _mock_nats_reply({
-        "status": "failed",
-        "error": "SSH connection refused",
-    })
+    nc = _mock_nats_reply(
+        {
+            "status": "failed",
+            "error": "SSH connection refused",
+        }
+    )
     db = _mock_db(device_exists=True)
 
     with pytest.raises(HTTPException) as exc_info:
@@ -184,10 +187,12 @@ async def test_trigger_device_not_found_returns_404():
 @pytest.mark.asyncio
 async def test_trigger_locked_returns_409():
     """Lock contention returns 409 Conflict."""
-    nc = _mock_nats_reply({
-        "status": "locked",
-        "message": "backup already in progress",
-    })
+    nc = _mock_nats_reply(
+        {
+            "status": "locked",
+            "message": "backup already in progress",
+        }
+    )
     db = _mock_db(device_exists=True)
 
     with pytest.raises(HTTPException) as exc_info:

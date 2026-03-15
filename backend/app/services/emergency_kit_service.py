@@ -48,7 +48,5 @@ async def generate_emergency_kit_template(
     # Run weasyprint in thread to avoid blocking the event loop
     from weasyprint import HTML
 
-    pdf_bytes = await asyncio.to_thread(
-        lambda: HTML(string=html_content).write_pdf()
-    )
+    pdf_bytes = await asyncio.to_thread(lambda: HTML(string=html_content).write_pdf())
     return pdf_bytes

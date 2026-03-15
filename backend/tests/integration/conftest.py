@@ -241,6 +241,7 @@ async def test_app(admin_engine, app_engine):
 
     # Register rate limiter (auth endpoints use @limiter.limit)
     from app.middleware.rate_limit import setup_rate_limiting
+
     setup_rate_limiting(app)
 
     # Create test session factories

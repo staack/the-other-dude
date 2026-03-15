@@ -199,9 +199,7 @@ async def on_device_metrics(msg) -> None:
         device_id = data.get("device_id")
 
         if not metric_type or not device_id:
-            logger.warning(
-                "device.metrics event missing 'type' or 'device_id' — skipping"
-            )
+            logger.warning("device.metrics event missing 'type' or 'device_id' — skipping")
             await msg.ack()
             return
 
@@ -222,6 +220,7 @@ async def on_device_metrics(msg) -> None:
         # Alert evaluation — non-fatal; metric write is the primary operation
         try:
             from app.services import alert_evaluator
+
             await alert_evaluator.evaluate(
                 device_id=device_id,
                 tenant_id=data.get("tenant_id", ""),
@@ -265,9 +264,7 @@ async def _subscribe_with_retry(js: JetStreamContext) -> None:
                 durable="api-metrics-consumer",
                 stream="DEVICE_EVENTS",
             )
-            logger.info(
-                "NATS: subscribed to device.metrics.> (durable: api-metrics-consumer)"
-            )
+            logger.info("NATS: subscribed to device.metrics.> (durable: api-metrics-consumer)")
             return
         except Exception as exc:
             if attempt < max_attempts:

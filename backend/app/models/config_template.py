@@ -5,7 +5,6 @@ from datetime import datetime
 
 from sqlalchemy import (
     DateTime,
-    Float,
     ForeignKey,
     String,
     Text,
@@ -88,9 +87,7 @@ class ConfigTemplateTag(Base):
     )
 
     # Relationships
-    template: Mapped["ConfigTemplate"] = relationship(
-        "ConfigTemplate", back_populates="tags"
-    )
+    template: Mapped["ConfigTemplate"] = relationship("ConfigTemplate", back_populates="tags")
 
     def __repr__(self) -> str:
         return f"<ConfigTemplateTag id={self.id} name={self.name!r} template_id={self.template_id}>"
@@ -133,12 +130,8 @@ class TemplatePushJob(Base):
     )
     pre_push_backup_sha: Mapped[str | None] = mapped_column(Text, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

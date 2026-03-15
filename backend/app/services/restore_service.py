@@ -33,7 +33,6 @@ import asyncssh
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database import set_tenant_context, AdminAsyncSessionLocal
 from app.models.config_backup import ConfigPushOperation
 from app.models.device import Device
 from app.services import backup_service, git_store
@@ -113,12 +112,11 @@ async def restore_config(
         raise ValueError(f"Device {device_id!r} not found")
 
     if not device.encrypted_credentials_transit and not device.encrypted_credentials:
-        raise ValueError(
-            f"Device {device_id!r} has no stored credentials — cannot perform restore"
-        )
+        raise ValueError(f"Device {device_id!r} has no stored credentials — cannot perform restore")
 
     key = settings.get_encryption_key_bytes()
     from app.services.crypto import decrypt_credentials_hybrid
+
     creds_json = await decrypt_credentials_hybrid(
         device.encrypted_credentials_transit,
         device.encrypted_credentials,
@@ -133,7 +131,9 @@ async def restore_config(
     hostname = device.hostname or ip
 
     # Publish "started" progress event
-    await _publish_push_progress(tenant_id, device_id, "started", f"Config restore started for {hostname}")
+    await _publish_push_progress(
+        tenant_id, device_id, "started", f"Config restore started for {hostname}"
+    )
 
     # ------------------------------------------------------------------
     # Step 2: Read the target export.rsc from the backup commit
@@ -157,7 +157,9 @@ async def restore_config(
     # ------------------------------------------------------------------
     # Step 3: Mandatory pre-backup before push
     # ------------------------------------------------------------------
-    await _publish_push_progress(tenant_id, device_id, "backing_up", f"Creating pre-restore backup for {hostname}")
+    await _publish_push_progress(
+        tenant_id, device_id, "backing_up", f"Creating pre-restore backup for {hostname}"
+    )
 
     logger.info(
         "Starting pre-restore backup for device %s (%s) before pushing commit %s",
@@ -198,7 +200,9 @@ async def restore_config(
     # Step 5: SSH to device — install panic-revert, push config
     # ------------------------------------------------------------------
     push_op_id_str = str(push_op_id)
-    await _publish_push_progress(tenant_id, device_id, "pushing", f"Pushing config to {hostname}", push_op_id=push_op_id_str)
+    await _publish_push_progress(
+        tenant_id, device_id, "pushing", f"Pushing config to {hostname}", push_op_id=push_op_id_str
+    )
 
     logger.info(
         "Pushing config to device %s (%s): installing panic-revert scheduler and uploading config",
@@ -290,9 +294,12 @@ async def restore_config(
         # Update push operation to failed
         await _update_push_op_status(push_op_id, "failed", db_session)
         await _publish_push_progress(
-            tenant_id, device_id, "failed",
+            tenant_id,
+            device_id,
+            "failed",
             f"Config push failed for {hostname}: {push_err}",
-            push_op_id=push_op_id_str, error=str(push_err),
+            push_op_id=push_op_id_str,
+            error=str(push_err),
         )
         return {
             "status": "failed",
@@ -312,7 +319,13 @@ async def restore_config(
     # ------------------------------------------------------------------
     # Step 6: Wait 60s for config to settle
     # ------------------------------------------------------------------
-    await _publish_push_progress(tenant_id, device_id, "settling", f"Config pushed to {hostname} — waiting 60s for settle", push_op_id=push_op_id_str)
+    await _publish_push_progress(
+        tenant_id,
+        device_id,
+        "settling",
+        f"Config pushed to {hostname} — waiting 60s for settle",
+        push_op_id=push_op_id_str,
+    )
 
     logger.info(
         "Config pushed to device %s — waiting 60s for config to settle",
@@ -323,7 +336,13 @@ async def restore_config(
     # ------------------------------------------------------------------
     # Step 7: Reachability check
     # ------------------------------------------------------------------
-    await _publish_push_progress(tenant_id, device_id, "verifying", f"Verifying device {hostname} reachability", push_op_id=push_op_id_str)
+    await _publish_push_progress(
+        tenant_id,
+        device_id,
+        "verifying",
+        f"Verifying device {hostname} reachability",
+        push_op_id=push_op_id_str,
+    )
 
     reachable = await _check_reachability(ip, ssh_username, ssh_password)
 
@@ -362,7 +381,13 @@ async def restore_config(
 
         await _update_push_op_status(push_op_id, "committed", db_session)
         await clear_push(device_id)
-        await _publish_push_progress(tenant_id, device_id, "committed", f"Config restored successfully on {hostname}", push_op_id=push_op_id_str)
+        await _publish_push_progress(
+            tenant_id,
+            device_id,
+            "committed",
+            f"Config restored successfully on {hostname}",
+            push_op_id=push_op_id_str,
+        )
 
         return {
             "status": "committed",
@@ -384,7 +409,9 @@ async def restore_config(
 
         await _update_push_op_status(push_op_id, "reverted", db_session)
         await _publish_push_progress(
-            tenant_id, device_id, "reverted",
+            tenant_id,
+            device_id,
+            "reverted",
             f"Device {hostname} unreachable — auto-reverting via panic-revert scheduler",
             push_op_id=push_op_id_str,
         )
@@ -446,7 +473,7 @@ async def _update_push_op_status(
         new_status: New status value ('committed' | 'reverted' | 'failed').
         db_session: Database session (must already have tenant context set).
     """
-    from sqlalchemy import select, update
+    from sqlalchemy import update
 
     await db_session.execute(
         update(ConfigPushOperation)
@@ -526,9 +553,7 @@ async def recover_stale_push_operations(db_session: AsyncSession) -> None:
     for op in stale_ops:
         try:
             # Load device
-            dev_result = await db_session.execute(
-                select(Device).where(Device.id == op.device_id)
-            )
+            dev_result = await db_session.execute(select(Device).where(Device.id == op.device_id))
             device = dev_result.scalar_one_or_none()
             if not device:
                 logger.error("Device %s not found for stale op %s", op.device_id, op.id)
@@ -547,9 +572,7 @@ async def recover_stale_push_operations(db_session: AsyncSession) -> None:
             ssh_password = creds.get("password", "")
 
             # Check reachability
-            reachable = await _check_reachability(
-                device.ip_address, ssh_username, ssh_password
-            )
+            reachable = await _check_reachability(device.ip_address, ssh_username, ssh_password)
 
             if reachable:
                 # Try to remove scheduler (if still there, push was good)

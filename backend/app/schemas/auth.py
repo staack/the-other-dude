@@ -67,11 +67,13 @@ class MessageResponse(BaseModel):
 
 class SRPInitRequest(BaseModel):
     """Step 1 request: client sends email to begin SRP handshake."""
+
     email: EmailStr
 
 
 class SRPInitResponse(BaseModel):
     """Step 1 response: server returns ephemeral B and key derivation salts."""
+
     salt: str  # hex-encoded SRP salt
     server_public: str  # hex-encoded server ephemeral B
     session_id: str  # Redis session key nonce
@@ -81,6 +83,7 @@ class SRPInitResponse(BaseModel):
 
 class SRPVerifyRequest(BaseModel):
     """Step 2 request: client sends proof M1 to complete handshake."""
+
     email: EmailStr
     session_id: str
     client_public: str  # hex-encoded client ephemeral A
@@ -89,6 +92,7 @@ class SRPVerifyRequest(BaseModel):
 
 class SRPVerifyResponse(BaseModel):
     """Step 2 response: server returns tokens and proof M2."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -98,6 +102,7 @@ class SRPVerifyResponse(BaseModel):
 
 class SRPRegisterRequest(BaseModel):
     """Used during registration to store SRP verifier and key set."""
+
     srp_salt: str  # hex-encoded
     srp_verifier: str  # hex-encoded
     encrypted_private_key: str  # base64-encoded
@@ -114,10 +119,12 @@ class SRPRegisterRequest(BaseModel):
 
 class DeleteAccountRequest(BaseModel):
     """Request body for account self-deletion. User must type 'DELETE' to confirm."""
+
     confirmation: str  # Must be "DELETE" to confirm
 
 
 class DeleteAccountResponse(BaseModel):
     """Response after successful account deletion."""
+
     message: str
     deleted: bool

@@ -147,46 +147,36 @@ def upgrade() -> None:
     conn = op.get_bind()
 
     # user_key_sets RLS
-    conn.execute(sa.text(
-        "ALTER TABLE user_key_sets ENABLE ROW LEVEL SECURITY"
-    ))
-    conn.execute(sa.text(
-        "CREATE POLICY user_key_sets_tenant_isolation ON user_key_sets "
-        "USING (tenant_id::text = current_setting('app.current_tenant', true) "
-        "OR current_setting('app.current_tenant', true) = 'super_admin')"
-    ))
-    conn.execute(sa.text(
-        "GRANT SELECT, INSERT, UPDATE ON user_key_sets TO app_user"
-    ))
+    conn.execute(sa.text("ALTER TABLE user_key_sets ENABLE ROW LEVEL SECURITY"))
+    conn.execute(
+        sa.text(
+            "CREATE POLICY user_key_sets_tenant_isolation ON user_key_sets "
+            "USING (tenant_id::text = current_setting('app.current_tenant', true) "
+            "OR current_setting('app.current_tenant', true) = 'super_admin')"
+        )
+    )
+    conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE ON user_key_sets TO app_user"))
 
     # key_access_log RLS (append-only: INSERT+SELECT only, no UPDATE/DELETE)
-    conn.execute(sa.text(
-        "ALTER TABLE key_access_log ENABLE ROW LEVEL SECURITY"
-    ))
-    conn.execute(sa.text(
-        "CREATE POLICY key_access_log_tenant_isolation ON key_access_log "
-        "USING (tenant_id::text = current_setting('app.current_tenant', true) "
-        "OR current_setting('app.current_tenant', true) = 'super_admin')"
-    ))
-    conn.execute(sa.text(
-        "GRANT INSERT, SELECT ON key_access_log TO app_user"
-    ))
+    conn.execute(sa.text("ALTER TABLE key_access_log ENABLE ROW LEVEL SECURITY"))
+    conn.execute(
+        sa.text(
+            "CREATE POLICY key_access_log_tenant_isolation ON key_access_log "
+            "USING (tenant_id::text = current_setting('app.current_tenant', true) "
+            "OR current_setting('app.current_tenant', true) = 'super_admin')"
+        )
+    )
+    conn.execute(sa.text("GRANT INSERT, SELECT ON key_access_log TO app_user"))
     # poller_user needs INSERT to log key access events when decrypting credentials
-    conn.execute(sa.text(
-        "GRANT INSERT, SELECT ON key_access_log TO poller_user"
-    ))
+    conn.execute(sa.text("GRANT INSERT, SELECT ON key_access_log TO poller_user"))
 
 
 def downgrade() -> None:
     conn = op.get_bind()
 
     # Drop RLS policies
-    conn.execute(sa.text(
-        "DROP POLICY IF EXISTS key_access_log_tenant_isolation ON key_access_log"
-    ))
-    conn.execute(sa.text(
-        "DROP POLICY IF EXISTS user_key_sets_tenant_isolation ON user_key_sets"
-    ))
+    conn.execute(sa.text("DROP POLICY IF EXISTS key_access_log_tenant_isolation ON key_access_log"))
+    conn.execute(sa.text("DROP POLICY IF EXISTS user_key_sets_tenant_isolation ON user_key_sets"))
 
     # Revoke grants
     conn.execute(sa.text("REVOKE ALL ON key_access_log FROM app_user"))

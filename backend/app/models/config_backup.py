@@ -3,9 +3,20 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, SmallInteger, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    SmallInteger,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
 
@@ -115,7 +126,9 @@ class ConfigBackupSchedule(Base):
 
     def __repr__(self) -> str:
         scope = f"device={self.device_id}" if self.device_id else f"tenant={self.tenant_id}"
-        return f"<ConfigBackupSchedule {scope} cron={self.cron_expression!r} enabled={self.enabled}>"
+        return (
+            f"<ConfigBackupSchedule {scope} cron={self.cron_expression!r} enabled={self.enabled}>"
+        )
 
 
 class ConfigPushOperation(Base):
@@ -173,8 +186,7 @@ class ConfigPushOperation(Base):
 
     def __repr__(self) -> str:
         return (
-            f"<ConfigPushOperation id={self.id} device_id={self.device_id} "
-            f"status={self.status!r}>"
+            f"<ConfigPushOperation id={self.id} device_id={self.device_id} status={self.status!r}>"
         )
 
 
@@ -272,7 +284,9 @@ class RouterConfigDiff(Base):
     )
     diff_text: Mapped[str] = mapped_column(Text, nullable=False)
     lines_added: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
-    lines_removed: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    lines_removed: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -334,6 +348,5 @@ class RouterConfigChange(Base):
 
     def __repr__(self) -> str:
         return (
-            f"<RouterConfigChange id={self.id} diff_id={self.diff_id} "
-            f"component={self.component!r}>"
+            f"<RouterConfigChange id={self.id} diff_id={self.diff_id} component={self.component!r}>"
         )

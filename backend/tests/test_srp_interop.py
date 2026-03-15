@@ -32,7 +32,7 @@ def test_srp_roundtrip():
     context = SRPContext(EMAIL, password=PASSWORD, prime=PRIME_2048, generator=PRIME_2048_GEN)
     username, verifier, salt = context.get_user_data_triplet()
 
-    print(f"\n--- SRP Interop Reference Values ---")
+    print("\n--- SRP Interop Reference Values ---")
     print(f"email (I): {EMAIL}")
     print(f"salt (s):  {salt}")
     print(f"verifier (v): {verifier[:64]}...  (len={len(verifier)})")
@@ -45,7 +45,9 @@ def test_srp_roundtrip():
     print(f"server_public (B): {server_public[:64]}...  (len={len(server_public)})")
 
     # Step 3: Client init -- generate A (client needs password for proof)
-    client_context = SRPContext(EMAIL, password=PASSWORD, prime=PRIME_2048, generator=PRIME_2048_GEN)
+    client_context = SRPContext(
+        EMAIL, password=PASSWORD, prime=PRIME_2048, generator=PRIME_2048_GEN
+    )
     client_session = SRPClientSession(client_context)
     client_public = client_session.public
 
@@ -78,7 +80,7 @@ def test_srp_roundtrip():
     )
 
     print(f"session_key (K): {client_session.key[:64]}...  (len={len(client_session.key)})")
-    print(f"--- Handshake PASSED ---\n")
+    print("--- Handshake PASSED ---\n")
 
 
 def test_srp_bad_proof_rejected():
@@ -89,7 +91,9 @@ def test_srp_bad_proof_rejected():
     server_context = SRPContext(EMAIL, prime=PRIME_2048, generator=PRIME_2048_GEN)
     server_session = SRPServerSession(server_context, verifier)
 
-    client_context = SRPContext(EMAIL, password=PASSWORD, prime=PRIME_2048, generator=PRIME_2048_GEN)
+    client_context = SRPContext(
+        EMAIL, password=PASSWORD, prime=PRIME_2048, generator=PRIME_2048_GEN
+    )
     client_session = SRPClientSession(client_context)
 
     client_session.process(server_session.public, salt)

@@ -25,40 +25,28 @@ import sqlalchemy as sa
 def upgrade() -> None:
     conn = op.get_bind()
 
-    conn.execute(sa.text(
-        "ALTER TABLE devices ADD COLUMN ssh_port INTEGER DEFAULT 22"
-    ))
-    conn.execute(sa.text(
-        "ALTER TABLE devices ADD COLUMN ssh_host_key_fingerprint TEXT"
-    ))
-    conn.execute(sa.text(
-        "ALTER TABLE devices ADD COLUMN ssh_host_key_first_seen TIMESTAMPTZ"
-    ))
-    conn.execute(sa.text(
-        "ALTER TABLE devices ADD COLUMN ssh_host_key_last_verified TIMESTAMPTZ"
-    ))
+    conn.execute(sa.text("ALTER TABLE devices ADD COLUMN ssh_port INTEGER DEFAULT 22"))
+    conn.execute(sa.text("ALTER TABLE devices ADD COLUMN ssh_host_key_fingerprint TEXT"))
+    conn.execute(sa.text("ALTER TABLE devices ADD COLUMN ssh_host_key_first_seen TIMESTAMPTZ"))
+    conn.execute(sa.text("ALTER TABLE devices ADD COLUMN ssh_host_key_last_verified TIMESTAMPTZ"))
 
     # Grant poller_user UPDATE on SSH columns for TOFU host key persistence
-    conn.execute(sa.text(
-        "GRANT UPDATE (ssh_host_key_fingerprint, ssh_host_key_first_seen, ssh_host_key_last_verified) ON devices TO poller_user"
-    ))
+    conn.execute(
+        sa.text(
+            "GRANT UPDATE (ssh_host_key_fingerprint, ssh_host_key_first_seen, ssh_host_key_last_verified) ON devices TO poller_user"
+        )
+    )
 
 
 def downgrade() -> None:
     conn = op.get_bind()
 
-    conn.execute(sa.text(
-        "REVOKE UPDATE (ssh_host_key_fingerprint, ssh_host_key_first_seen, ssh_host_key_last_verified) ON devices FROM poller_user"
-    ))
-    conn.execute(sa.text(
-        "ALTER TABLE devices DROP COLUMN ssh_host_key_last_verified"
-    ))
-    conn.execute(sa.text(
-        "ALTER TABLE devices DROP COLUMN ssh_host_key_first_seen"
-    ))
-    conn.execute(sa.text(
-        "ALTER TABLE devices DROP COLUMN ssh_host_key_fingerprint"
-    ))
-    conn.execute(sa.text(
-        "ALTER TABLE devices DROP COLUMN ssh_port"
-    ))
+    conn.execute(
+        sa.text(
+            "REVOKE UPDATE (ssh_host_key_fingerprint, ssh_host_key_first_seen, ssh_host_key_last_verified) ON devices FROM poller_user"
+        )
+    )
+    conn.execute(sa.text("ALTER TABLE devices DROP COLUMN ssh_host_key_last_verified"))
+    conn.execute(sa.text("ALTER TABLE devices DROP COLUMN ssh_host_key_first_seen"))
+    conn.execute(sa.text("ALTER TABLE devices DROP COLUMN ssh_host_key_fingerprint"))
+    conn.execute(sa.text("ALTER TABLE devices DROP COLUMN ssh_port"))

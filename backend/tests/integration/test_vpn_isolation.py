@@ -5,22 +5,16 @@ tenant deletion cleanup, and allowed-IPs validation.
 """
 
 import os
-import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
-import pytest_asyncio
-from sqlalchemy import select, text
+from sqlalchemy import select
 
-from app.models.vpn import VpnConfig, VpnPeer
 from app.services.vpn_service import (
     add_peer,
     get_peer_config,
     get_vpn_config,
-    remove_peer,
     setup_vpn,
-    sync_wireguard_config,
-    _get_wg_config_path,
 )
 
 pytestmark = pytest.mark.integration
@@ -213,9 +207,8 @@ class TestTenantDeletion:
 
         # Delete tenant 2
         from app.models.tenant import Tenant
-        result = await admin_session.execute(
-            select(Tenant).where(Tenant.id == t2.id)
-        )
+
+        result = await admin_session.execute(select(Tenant).where(Tenant.id == t2.id))
         tenant_obj = result.scalar_one()
         await admin_session.delete(tenant_obj)
         await admin_session.flush()

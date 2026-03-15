@@ -13,9 +13,7 @@ class TestCheckpointEndpointExists:
         from app.routers.config_backups import router
 
         paths = [r.path for r in router.routes]
-        assert any("checkpoint" in p for p in paths), (
-            f"No checkpoint route found. Routes: {paths}"
-        )
+        assert any("checkpoint" in p for p in paths), f"No checkpoint route found. Routes: {paths}"
 
     def test_checkpoint_route_is_post(self):
         from app.routers.config_backups import router
@@ -53,16 +51,20 @@ class TestCheckpointFunction:
 
         mock_request = MagicMock()
 
-        with patch(
-            "app.routers.config_backups.backup_service.run_backup",
-            new_callable=AsyncMock,
-            return_value=mock_result,
-        ) as mock_backup, patch(
-            "app.routers.config_backups._check_tenant_access",
-            new_callable=AsyncMock,
-        ), patch(
-            "app.routers.config_backups.limiter.enabled",
-            False,
+        with (
+            patch(
+                "app.routers.config_backups.backup_service.run_backup",
+                new_callable=AsyncMock,
+                return_value=mock_result,
+            ) as mock_backup,
+            patch(
+                "app.routers.config_backups._check_tenant_access",
+                new_callable=AsyncMock,
+            ),
+            patch(
+                "app.routers.config_backups.limiter.enabled",
+                False,
+            ),
         ):
             result = await create_checkpoint(
                 request=mock_request,

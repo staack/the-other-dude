@@ -21,7 +21,6 @@ RBAC: viewer = read (GET/preview); operator and above = write (POST/PUT/DELETE/p
 import asyncio
 import logging
 import uuid
-from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -54,6 +53,7 @@ async def _check_tenant_access(
     """Verify the current user is allowed to access the given tenant."""
     if current_user.is_super_admin:
         from app.database import set_tenant_context
+
         await set_tenant_context(db, str(tenant_id))
         return
     if current_user.tenant_id != tenant_id:
@@ -191,7 +191,8 @@ async def create_template(
     if unmatched:
         logger.warning(
             "Template '%s' has undeclared variables: %s (auto-adding as string type)",
-            body.name, unmatched,
+            body.name,
+            unmatched,
         )
 
     # Create template
@@ -553,11 +554,13 @@ async def push_template(
             status="pending",
         )
         db.add(job)
-        jobs_created.append({
-            "job_id": str(job.id),
-            "device_id": str(device.id),
-            "device_hostname": device.hostname,
-        })
+        jobs_created.append(
+            {
+                "job_id": str(job.id),
+                "device_id": str(device.id),
+                "device_hostname": device.hostname,
+            }
+        )
 
     await db.flush()
 
@@ -598,14 +601,16 @@ async def push_status(
 
     jobs = []
     for job, hostname in rows:
-        jobs.append({
-            "device_id": str(job.device_id),
-            "hostname": hostname,
-            "status": job.status,
-            "error_message": job.error_message,
-            "started_at": job.started_at.isoformat() if job.started_at else None,
-            "completed_at": job.completed_at.isoformat() if job.completed_at else None,
-        })
+        jobs.append(
+            {
+                "device_id": str(job.device_id),
+                "hostname": hostname,
+                "status": job.status,
+                "error_message": job.error_message,
+                "started_at": job.started_at.isoformat() if job.started_at else None,
+                "completed_at": job.completed_at.isoformat() if job.completed_at else None,
+            }
+        )
 
     return {
         "rollout_id": str(rollout_id),

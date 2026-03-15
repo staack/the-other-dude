@@ -117,6 +117,7 @@ class SubnetScanRequest(BaseModel):
     def validate_cidr(cls, v: str) -> str:
         """Validate that the value is a valid CIDR notation and RFC 1918 private range."""
         import ipaddress
+
         try:
             network = ipaddress.ip_network(v, strict=False)
         except ValueError as e:
@@ -239,6 +240,7 @@ class DeviceTagCreate(BaseModel):
         if v is None:
             return v
         import re
+
         if not re.match(r"^#[0-9A-Fa-f]{6}$", v):
             raise ValueError("Color must be a valid 6-digit hex color (e.g. #FF5733)")
         return v
@@ -256,6 +258,7 @@ class DeviceTagUpdate(BaseModel):
         if v is None:
             return v
         import re
+
         if not re.match(r"^#[0-9A-Fa-f]{6}$", v):
             raise ValueError("Color must be a valid 6-digit hex color (e.g. #FF5733)")
         return v
