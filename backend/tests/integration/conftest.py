@@ -92,30 +92,27 @@ def setup_database():
 # ---------------------------------------------------------------------------
 
 
-@pytest_asyncio.fixture
-async def admin_engine():
+# Module-level engines — created once, reused across all tests.
+# Avoids per-test engine creation/disposal which triggers asyncpg
+# event loop issues during pytest-asyncio teardown.
+_admin_engine = create_async_engine(
+    TEST_DATABASE_URL, echo=False, pool_pre_ping=True, pool_size=5, max_overflow=5
+)
+_app_engine = create_async_engine(
+    TEST_APP_USER_DATABASE_URL, echo=False, pool_pre_ping=True, pool_size=5, max_overflow=5
+)
+
+
+@pytest.fixture
+def admin_engine():
     """Admin engine (superuser) -- bypasses RLS."""
-    engine = create_async_engine(
-        TEST_DATABASE_URL, echo=False, pool_pre_ping=True, pool_size=5, max_overflow=5
-    )
-    yield engine
-    try:
-        await engine.dispose()
-    except RuntimeError:
-        pass  # Event loop may be closed during final teardown
+    return _admin_engine
 
 
-@pytest_asyncio.fixture
-async def app_engine():
+@pytest.fixture
+def app_engine():
     """App-user engine -- RLS enforced."""
-    engine = create_async_engine(
-        TEST_APP_USER_DATABASE_URL, echo=False, pool_pre_ping=True, pool_size=5, max_overflow=5
-    )
-    yield engine
-    try:
-        await engine.dispose()
-    except RuntimeError:
-        pass  # Event loop may be closed during final teardown
+    return _app_engine
 
 
 # ---------------------------------------------------------------------------
