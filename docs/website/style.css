@@ -1722,13 +1722,18 @@ ul, ol {
     padding: 24px;
   }
 
-  /* Nav links */
+  /* Nav links — hide Architecture and Screenshots on tablet */
   .nav-links {
     gap: 16px;
   }
 
   .nav-link {
     font-size: 13px;
+  }
+
+  .nav-link[href*="architecture"],
+  .nav-link[href*="screenshots"] {
+    display: none;
   }
 
   /* Footer */
@@ -1812,9 +1817,14 @@ ul, ol {
     padding-top: 24px;
   }
 
-  /* Nav hide on very small */
-  .nav-links .nav-link:not(.nav-link--active):not(:first-child):not(:last-child) {
+  /* Nav — on very small screens keep only Docs, Blog, and CTA */
+  .nav-links .nav-link {
     display: none;
+  }
+
+  .nav-links .nav-link[href*="docs"],
+  .nav-links .nav-link[href*="blog"] {
+    display: inline;
   }
 
   .nav-links {
