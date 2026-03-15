@@ -188,11 +188,13 @@ async def admin_session(admin_engine) -> AsyncGenerator[AsyncSession, None]:
         yield session
     finally:
         try:
+            # Rollback any failed transaction before cleanup
+            await session.rollback()
             if existing_tables:
                 await session.execute(text(f"TRUNCATE {tables_csv} CASCADE"))
                 await session.commit()
-        except RuntimeError:
-            pass  # Event loop may be closed during final teardown
+        except (RuntimeError, Exception):
+            pass  # Event loop may be closed or session in bad state
         await session.close()
 
 

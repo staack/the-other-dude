@@ -78,13 +78,14 @@ class TestHealthMetrics:
             await admin_session.execute(
                 text(
                     "INSERT INTO health_metrics "
-                    "(device_id, time, cpu_load, free_memory, total_memory, "
+                    "(device_id, tenant_id, time, cpu_load, free_memory, total_memory, "
                     "free_disk, total_disk, temperature) "
-                    "VALUES (:device_id, :ts, :cpu, :free_mem, :total_mem, "
+                    "VALUES (:device_id, :tenant_id, :ts, :cpu, :free_mem, :total_mem, "
                     ":free_disk, :total_disk, :temp)"
                 ),
                 {
                     "device_id": str(device.id),
+                    "tenant_id": str(tenant.id),
                     "ts": ts,
                     "cpu": 30 + i * 5,
                     "free_mem": 500000000,
