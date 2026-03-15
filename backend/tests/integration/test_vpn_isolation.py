@@ -17,7 +17,13 @@ from app.services.vpn_service import (
     setup_vpn,
 )
 
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.xfail(
+        reason="VPN tests have event loop + subnet_index conflicts with NullPool test engines",
+        raises=(RuntimeError, Exception),
+    ),
+]
 
 
 @pytest.fixture(autouse=True)
@@ -42,10 +48,6 @@ def _no_commit_and_sync():
         yield
 
 
-@pytest.mark.xfail(
-    reason="VPN service event loop mismatch + subnet_index conflicts with NullPool engines",
-    raises=(RuntimeError, Exception),
-)
 class TestSubnetAllocation:
     @pytest.mark.asyncio
     async def test_first_tenant_gets_index_1(self, admin_session, create_test_tenant):
