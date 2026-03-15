@@ -65,7 +65,16 @@ def _ensure_database_setup():
 
     backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     env = os.environ.copy()
+    # Ensure DATABASE_URL points at the test database, not the dev/prod URL
+    # hardcoded in alembic.ini.  alembic/env.py reads this variable and overrides
+    # sqlalchemy.url before opening any connection.
     env["DATABASE_URL"] = TEST_DATABASE_URL
+    # Migration 029 (VPN tenant isolation) encrypts a WireGuard server private key
+    # and requires CREDENTIAL_ENCRYPTION_KEY.  Provide the dev default if the
+    # environment does not already supply it (CI always sets this explicitly).
+    env.setdefault(
+        "CREDENTIAL_ENCRYPTION_KEY", "LLLjnfBZTSycvL2U07HDSxUeTtLxb9cZzryQl0R9E4w="
+    )
 
     # Run Alembic migrations via subprocess (handles DB creation and schema)
     result = subprocess.run(

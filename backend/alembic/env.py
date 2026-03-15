@@ -20,9 +20,12 @@ import app.models.config_backup  # noqa: F401
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override sqlalchemy.url from DATABASE_URL env var if set (for Docker)
-if os.environ.get("DATABASE_URL"):
-    config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
+# Override sqlalchemy.url from environment variable so alembic never uses the
+# hardcoded URL in alembic.ini.  DATABASE_URL takes precedence; TEST_DATABASE_URL
+# is a fallback for test runners that set only that variable.
+_db_url = os.environ.get("DATABASE_URL") or os.environ.get("TEST_DATABASE_URL")
+if _db_url:
+    config.set_main_option("sqlalchemy.url", _db_url)
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:
