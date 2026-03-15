@@ -1079,17 +1079,19 @@ ul, ol {
 
 .footer-links {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px 24px;
 }
 
-.footer-link {
+.footer-links a {
   color: var(--text-muted);
   font-size: 14px;
   transition: color 0.2s ease;
   text-decoration: none;
 }
 
-.footer-link:hover {
+.footer-links a:hover {
   color: var(--text-secondary);
 }
 
@@ -1735,6 +1737,11 @@ ul, ol {
     text-align: center;
     gap: 24px;
   }
+
+  .footer-links {
+    justify-content: center;
+    gap: 12px 20px;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -1816,6 +1823,11 @@ ul, ol {
 
   .nav-cta {
     padding: 6px 14px;
+    font-size: 13px;
+  }
+
+  .footer-links {
+    gap: 10px 16px;
     font-size: 13px;
   }
 }
