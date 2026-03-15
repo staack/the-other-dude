@@ -165,15 +165,26 @@ async def admin_session(admin_engine) -> AsyncGenerator[AsyncSession, None]:
     Cleanup deletes all rows from test tables after the test.
     """
     session = AsyncSession(admin_engine, expire_on_commit=False)
-    # TRUNCATE CASCADE reliably removes all data regardless of FK order
-    tables_csv = ", ".join(_CLEANUP_TABLES)
-    await session.execute(text(f"TRUNCATE {tables_csv} CASCADE"))
+    # TRUNCATE CASCADE reliably removes all data regardless of FK order.
+    # Filter to only tables that exist (some are saas-tiers only).
+    existing = await session.execute(
+        text(
+            "SELECT tablename FROM pg_tables "
+            "WHERE schemaname = 'public' AND tablename = ANY(:names)"
+        ),
+        {"names": _CLEANUP_TABLES},
+    )
+    existing_tables = [row[0] for row in existing.fetchall()]
+    if existing_tables:
+        tables_csv = ", ".join(existing_tables)
+        await session.execute(text(f"TRUNCATE {tables_csv} CASCADE"))
     await session.commit()
     try:
         yield session
     finally:
-        await session.execute(text(f"TRUNCATE {tables_csv} CASCADE"))
-        await session.commit()
+        if existing_tables:
+            await session.execute(text(f"TRUNCATE {tables_csv} CASCADE"))
+            await session.commit()
         await session.close()
 
 
