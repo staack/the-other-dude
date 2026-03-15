@@ -182,9 +182,12 @@ async def admin_session(admin_engine) -> AsyncGenerator[AsyncSession, None]:
     try:
         yield session
     finally:
-        if existing_tables:
-            await session.execute(text(f"TRUNCATE {tables_csv} CASCADE"))
-            await session.commit()
+        try:
+            if existing_tables:
+                await session.execute(text(f"TRUNCATE {tables_csv} CASCADE"))
+                await session.commit()
+        except RuntimeError:
+            pass  # Event loop may be closed during final teardown
         await session.close()
 
 
