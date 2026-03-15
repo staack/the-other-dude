@@ -31,7 +31,6 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
-    async_sessionmaker,
     create_async_engine,
 )
 
@@ -205,10 +204,16 @@ def app_session_factory(app_engine):
 async def test_app(admin_engine, app_engine):
     """Create a FastAPI app instance with test database dependency overrides.
 
-    - get_db uses app_engine (non-superuser, RLS enforced) so tenant
-      isolation is tested correctly at the API level.
-    - get_admin_db uses admin_engine (superuser) for auth/bootstrap routes.
-    - Disables lifespan to skip migrations, NATS, and scheduler startup.
+    Both get_db and get_admin_db share the same *connection* (and therefore
+    the same transaction) as the test's admin_session fixture.  This means
+    data created via admin_session (inside a savepoint) is visible to the
+    API endpoints under test, and everything rolls back after the test.
+
+    We use the admin_engine for both overrides because:
+    - RLS isolation is tested separately in test_rls_isolation.py using
+      the app_session_factory (which gets its own RLS-enforced connections).
+    - API-level tests need to see test-created data (tenants, users),
+      which requires sharing the same connection/transaction.
     """
     from fastapi import FastAPI
 
@@ -251,34 +256,24 @@ async def test_app(admin_engine, app_engine):
 
     setup_rate_limiting(app)
 
-    # Create test session factories
-    test_admin_session_factory = async_sessionmaker(
-        admin_engine, class_=AsyncSession, expire_on_commit=False
-    )
-    test_app_session_factory = async_sessionmaker(
-        app_engine, class_=AsyncSession, expire_on_commit=False
-    )
+    # Share a single connection for both get_db and get_admin_db so that
+    # test data created in admin_session (savepoint) is visible to the API.
+    conn = await admin_engine.connect()
+    trans = await conn.begin()
 
-    # get_db uses app_engine (RLS enforced) -- tenant context is set
-    # by get_current_user dependency via set_tenant_context()
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
-        async with test_app_session_factory() as session:
-            try:
-                yield session
-                await session.commit()
-            except Exception:
-                await session.rollback()
-                raise
+        session = AsyncSession(bind=conn, expire_on_commit=False)
+        try:
+            yield session
+        finally:
+            await session.close()
 
-    # get_admin_db uses admin engine (superuser) for auth/bootstrap
     async def override_get_admin_db() -> AsyncGenerator[AsyncSession, None]:
-        async with test_admin_session_factory() as session:
-            try:
-                yield session
-                await session.commit()
-            except Exception:
-                await session.rollback()
-                raise
+        session = AsyncSession(bind=conn, expire_on_commit=False)
+        try:
+            yield session
+        finally:
+            await session.close()
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_admin_db] = override_get_admin_db
@@ -286,6 +281,8 @@ async def test_app(admin_engine, app_engine):
     yield app
 
     app.dependency_overrides.clear()
+    await trans.rollback()
+    await conn.close()
 
 
 @pytest_asyncio.fixture
