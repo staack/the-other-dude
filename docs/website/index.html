@@ -163,43 +163,64 @@
   </section>
 
   <!-- ═══════════════════════════════════════════ -->
-  <!-- What It Does                                -->
+  <!-- Features                                    -->
   <!-- ═══════════════════════════════════════════ -->
   <section id="what-it-does" class="features-section">
     <div class="container">
       <span class="section-label">WHAT THE OTHER DUDE DOES</span>
-      <h2 class="section-title">Manage MikroTik routers at scale without the chaos of manual tools</h2>
-      <p class="section-desc">With a single interface you can:</p>
+      <h2 class="section-title">Everything you need to manage MikroTik routers at scale</h2>
 
-      <ul class="content-list">
-        <li>Monitor device health and metrics in real time</li>
-        <li>Push configuration changes across many routers</li>
-        <li>Track configuration history and diffs</li>
-        <li>Manage firmware upgrades</li>
-        <li>Discover and visualize network topology</li>
-        <li>Maintain secure backups of router configurations</li>
-        <li>Launch WinBox sessions and SSH terminals directly from the browser</li>
-      </ul>
-      <p class="section-desc section-desc--emphasis">Everything in one place.</p>
-    </div>
-  </section>
+      <div class="features-grid">
 
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- Safe Configuration Changes                  -->
-  <!-- ═══════════════════════════════════════════ -->
-  <section class="features-section features-section--alt">
-    <div class="container">
-      <span class="section-label">SAFE CONFIGURATION CHANGES</span>
-      <h2 class="section-title">Push changes with confidence</h2>
-      <p class="section-desc">Remote configuration changes can be risky.</p>
-      <p class="section-desc">The Other Dude includes a two-phase push system with automatic panic-revert protection to help prevent accidental lockouts and configuration mistakes.</p>
+        <div class="feature-card" id="feature-fleet">
+          <div class="feature-icon">&#x1F4CA;</div>
+          <h3 class="feature-title">Fleet Management</h3>
+          <p class="feature-desc">Dashboard with device health, uptime sparklines, virtual-scrolled fleet table, geographic map, and subnet discovery. Monitor your entire MikroTik fleet from a single view.</p>
+        </div>
 
-      <ul class="content-list">
-        <li>Two-phase configuration push</li>
-        <li>Automatic panic-revert rollback</li>
-        <li>Configuration diff and history</li>
-        <li>Fleet-wide templates and controlled rollouts</li>
-      </ul>
+        <div class="feature-card" id="feature-config">
+          <div class="feature-icon">&#x2699;</div>
+          <h3 class="feature-title">Configuration Management</h3>
+          <p class="feature-desc">Two-phase config push with automatic panic-revert protection. Templates, diff and history, git-backed backups, and one-click restore. Push changes across your fleet with confidence.</p>
+        </div>
+
+        <div class="feature-card" id="feature-monitoring">
+          <div class="feature-icon">&#x1F4C8;</div>
+          <h3 class="feature-title">Real-Time Monitoring</h3>
+          <p class="feature-desc">Live CPU, memory, disk, and interface traffic metrics via Server-Sent Events. Configurable alert rules with email, webhook, and Slack notifications.</p>
+        </div>
+
+        <div class="feature-card" id="feature-security">
+          <div class="feature-icon">&#x1F512;</div>
+          <h3 class="feature-title">Zero-Knowledge Security</h3>
+          <p class="feature-desc">SRP-6a authentication means the server never sees your password. Per-tenant envelope encryption via Transit KMS. Emergency Kit export for account recovery.</p>
+        </div>
+
+        <div class="feature-card" id="feature-winbox">
+          <div class="feature-icon">&#x1F5A5;</div>
+          <h3 class="feature-title">WinBox in the Browser</h3>
+          <p class="feature-desc">Launch WinBox sessions directly from the web interface without installing the desktop app. Browser-based SSH terminal. WireGuard VPN overlay for one-click access to devices behind NAT.</p>
+        </div>
+
+        <div class="feature-card" id="feature-certs">
+          <div class="feature-icon">&#x1F6E1;</div>
+          <h3 class="feature-title">Certificate Authority</h3>
+          <p class="feature-desc">Issue and deploy TLS certificates to RouterOS devices via SFTP. Three-tier TLS fallback for maximum compatibility across firmware versions.</p>
+        </div>
+
+        <div class="feature-card" id="feature-reports">
+          <div class="feature-icon">&#x1F4C4;</div>
+          <h3 class="feature-title">PDF Reports</h3>
+          <p class="feature-desc">Fleet summary, device detail, security audit, and performance reports generated server-side. Export and share operational data without screenshots.</p>
+        </div>
+
+        <div class="feature-card" id="feature-tenants">
+          <div class="feature-icon">&#x1F3E2;</div>
+          <h3 class="feature-title">Multi-Tenant Isolation</h3>
+          <p class="feature-desc">PostgreSQL Row-Level Security enforces full data separation at the database layer. Four roles: super_admin, admin, operator, viewer.</p>
+        </div>
+
+      </div>
     </div>
   </section>
 
