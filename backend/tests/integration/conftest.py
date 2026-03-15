@@ -165,22 +165,14 @@ async def admin_session(admin_engine) -> AsyncGenerator[AsyncSession, None]:
     Cleanup deletes all rows from test tables after the test.
     """
     session = AsyncSession(admin_engine, expire_on_commit=False)
-    # Clean up any leftover data from previous tests/runs BEFORE yielding
-    for table in _CLEANUP_TABLES:
-        try:
-            await session.execute(text(f"DELETE FROM {table}"))
-        except Exception:
-            pass
+    # TRUNCATE CASCADE reliably removes all data regardless of FK order
+    tables_csv = ", ".join(_CLEANUP_TABLES)
+    await session.execute(text(f"TRUNCATE {tables_csv} CASCADE"))
     await session.commit()
     try:
         yield session
     finally:
-        # Clean up all test data in reverse FK order
-        for table in _CLEANUP_TABLES:
-            try:
-                await session.execute(text(f"DELETE FROM {table}"))
-            except Exception:
-                pass  # Table might not exist in some migration states
+        await session.execute(text(f"TRUNCATE {tables_csv} CASCADE"))
         await session.commit()
         await session.close()
 
