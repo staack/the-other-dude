@@ -58,7 +58,9 @@ def upgrade() -> None:
     """)
     )
 
-    conn.execute(sa.text("GRANT CONNECT ON DATABASE tod TO poller_user"))
+    # Get current database name dynamically (avoids hardcoding 'tod')
+    db_name = conn.execute(sa.text("SELECT current_database()")).scalar()
+    conn.execute(sa.text(f'GRANT CONNECT ON DATABASE "{db_name}" TO poller_user'))
     conn.execute(sa.text("GRANT USAGE ON SCHEMA public TO poller_user"))
 
     # SELECT on devices only — poller needs to read encrypted_credentials
@@ -81,7 +83,8 @@ def downgrade() -> None:
         pass
 
     try:
-        conn.execute(sa.text("REVOKE CONNECT ON DATABASE tod FROM poller_user"))
+        db_name = conn.execute(sa.text("SELECT current_database()")).scalar()
+        conn.execute(sa.text(f'REVOKE CONNECT ON DATABASE "{db_name}" FROM poller_user'))
     except Exception:
         pass
 
