@@ -169,23 +169,24 @@
       <!-- QUICK START -->
       <section id="quickstart">
         <h1>Quick Start</h1>
-        <pre><code># Clone and configure
-cp .env.example .env
+        <pre><code># Clone and run the setup wizard
+git clone https://github.com/staack/the-other-dude.git
+cd the-other-dude
+python3 setup.py</code></pre>
 
-# Start infrastructure
-docker compose up -d
-
-# Build app images (one at a time to avoid OOM)
-docker compose build api
-docker compose build poller
-docker compose build frontend
-
-# Start the full stack
-docker compose up -d
-
-# Verify
-curl http://localhost:8001/health
-open http://localhost:3000</code></pre>
+        <p>The interactive setup wizard handles everything:</p>
+        <ul>
+          <li>Pre-flight checks (Docker, ports, RAM)</li>
+          <li>Database password configuration</li>
+          <li>Cryptographic key generation (JWT, credential encryption)</li>
+          <li>Admin account creation</li>
+          <li>SMTP configuration (optional)</li>
+          <li>Domain and reverse proxy setup (Caddy, nginx, Apache, HAProxy, Traefik)</li>
+          <li>OpenBao (KMS) bootstrap with automatic credential capture</li>
+          <li>Docker image builds (sequential to avoid OOM)</li>
+          <li>Stack startup and health checks</li>
+        </ul>
+        <p>No manual <code>.env</code> editing required. The wizard generates <code>.env.prod</code> with production-strength secrets and starts the full stack.</p>
 
         <h2>Environment Profiles</h2>
         <table>

@@ -332,7 +332,7 @@
   <section class="quickstart-section">
     <div class="container">
       <span class="section-label">QUICK START</span>
-      <h2 class="section-title">Run The Other Dude locally in minutes using Docker</h2>
+      <h2 class="section-title">Deploy The Other Dude with two commands</h2>
 
       <div class="code-window">
         <div class="code-window-header">
@@ -341,25 +341,12 @@
           <span class="code-dot code-dot--green"></span>
           <span class="code-window-title">Terminal</span>
         </div>
-        <pre class="code-window-body"><code><span class="code-comment"># Clone the repo</span>
+        <pre class="code-window-body"><code><span class="code-comment"># Clone and run the setup wizard</span>
 <span class="code-cmd">git clone https://github.com/staack/the-other-dude.git</span>
 <span class="code-cmd">cd the-other-dude</span>
-
-<span class="code-comment"># Configure</span>
-<span class="code-cmd">cp .env.example .env</span>
-
-<span class="code-comment"># Start infrastructure</span>
-<span class="code-cmd">docker compose up -d</span>
-
-<span class="code-comment"># Build app images</span>
-<span class="code-cmd">docker compose build api &amp;&amp; docker compose build poller &amp;&amp; docker compose build frontend</span>
-
-<span class="code-comment"># Launch</span>
-<span class="code-cmd">docker compose up -d</span>
-
-<span class="code-comment"># Open TOD</span>
-<span class="code-cmd">open http://localhost:3000</span></code></pre>
+<span class="code-cmd">python3 setup.py</span></code></pre>
       </div>
+      <p class="section-desc" style="margin-top: 24px;">The setup wizard configures your database, generates cryptographic keys, bootstraps OpenBao, sets up your reverse proxy, builds the Docker images, and starts everything. No manual .env editing required.</p>
     </div>
   </section>
 

@@ -63,39 +63,25 @@ Web UI
 ## Quick Start
 
 ```bash
-# Clone and configure
+# Clone and run the setup wizard
 git clone https://github.com/staack/the-other-dude.git && cd the-other-dude
-cp .env.example .env
+python3 setup.py
 ```
 
-**Edit `.env` before starting** -- at minimum, generate unique values for:
+The setup wizard handles everything interactively:
 
-```bash
-# Generate a JWT signing key
-JWT_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(64))")
+- Pre-flight checks (Docker, ports, RAM)
+- Database password configuration
+- Cryptographic key generation (JWT, encryption)
+- Admin account creation
+- SMTP configuration (optional)
+- Domain and reverse proxy setup (Caddy, nginx, Apache, HAProxy, Traefik)
+- OpenBao (KMS) bootstrap
+- Docker image builds
+- Stack startup and health checks
 
-# Generate a Fernet encryption key (used to encrypt device credentials at rest)
-CREDENTIAL_ENCRYPTION_KEY=$(python3 -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())")
-```
-
-> **Warning**
-> The `.env.example` ships with **hard-coded dev defaults** for both keys. These are fine for local development but **must be replaced before exposing the instance to any network**. Anyone with the default `JWT_SECRET_KEY` can forge authentication tokens, and the default `CREDENTIAL_ENCRYPTION_KEY` leaves all stored device credentials readable.
-
-```bash
-# Build images sequentially (avoids OOM on low-RAM machines)
-docker compose --profile full build api
-docker compose --profile full build poller
-docker compose --profile full build frontend
-
-# Start the full stack
-docker compose --profile full up -d
-
-# Open the UI
-open http://localhost:3000
-```
-
-On first launch, the setup wizard walks you through creating a super admin account,
-enrolling your Secret Key, adding your first organization, and onboarding your first device.
+On first launch, the web UI walks you through enrolling your Secret Key, adding your
+first organization, and onboarding your first device.
 
 ---
 
