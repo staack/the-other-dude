@@ -42,3 +42,4 @@ Thumbs.db
 # Local-only planning and design docs
 .planning/
 docs/superpowers/
+docs/comparison-*.md
