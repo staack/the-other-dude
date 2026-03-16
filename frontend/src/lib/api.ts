@@ -532,6 +532,18 @@ export interface WirelessLatest {
   time: string
 }
 
+export interface WirelessIssue {
+  device_id: string
+  hostname: string
+  tenant_name?: string
+  interface: string
+  issue: string
+  signal: number | null
+  ccq: number | null
+  client_count: number
+  frequency: number
+}
+
 export interface FleetDevice {
   id: string
   hostname: string
@@ -734,6 +746,14 @@ export const metricsApi = {
   /** Cross-tenant fleet summary for super_admin users */
   fleetSummaryAll: () =>
     api.get<FleetDevice[]>(`/api/fleet/summary`).then((r) => r.data),
+
+  wirelessIssues: (tenantId: string) =>
+    api
+      .get<WirelessIssue[]>(`/api/tenants/${tenantId}/fleet/wireless-issues`)
+      .then((r) => r.data),
+
+  fleetWirelessIssues: () =>
+    api.get<WirelessIssue[]>(`/api/fleet/wireless-issues`).then((r) => r.data),
 
   sparkline: (tenantId: string, deviceId: string) =>
     api
