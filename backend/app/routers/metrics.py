@@ -480,16 +480,18 @@ async def get_wireless_issues(
         else:
             issue = "Degraded"
 
-        issues.append({
-            "device_id": str(row.device_id),
-            "hostname": row.hostname,
-            "interface": row.interface,
-            "issue": issue,
-            "signal": row.avg_signal,
-            "ccq": row.ccq,
-            "client_count": row.client_count,
-            "frequency": row.frequency,
-        })
+        issues.append(
+            {
+                "device_id": str(row.device_id),
+                "hostname": row.hostname,
+                "interface": row.interface,
+                "issue": issue,
+                "signal": row.avg_signal,
+                "ccq": row.ccq,
+                "client_count": row.client_count,
+                "frequency": row.frequency,
+            }
+        )
 
     return issues
 
@@ -556,16 +558,18 @@ async def get_fleet_wireless_issues(
         else:
             issue = "Degraded"
 
-        issues.append({
-            "device_id": str(row.device_id),
-            "hostname": row.hostname,
-            "tenant_name": row.tenant_name,
-            "interface": row.interface,
-            "issue": issue,
-            "signal": row.avg_signal,
-            "ccq": row.ccq,
-            "client_count": row.client_count,
-            "frequency": row.frequency,
-        })
+        issues.append(
+            {
+                "device_id": str(row.device_id),
+                "hostname": row.hostname,
+                "tenant_name": row.tenant_name,
+                "interface": row.interface,
+                "issue": issue,
+                "signal": row.avg_signal,
+                "ccq": row.ccq,
+                "client_count": row.client_count,
+                "frequency": row.frequency,
+            }
+        )
 
     return issues
