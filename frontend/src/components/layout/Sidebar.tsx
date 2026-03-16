@@ -53,6 +53,39 @@ export function Sidebar() {
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
 
+  // Mobile sidebar focus trap
+  useEffect(() => {
+    if (!mobileSidebarOpen) return
+
+    const sidebar = document.getElementById('mobile-sidebar')
+    if (!sidebar) return
+
+    const focusable = sidebar.querySelectorAll<HTMLElement>('a, button, input')
+    if (focusable.length) focusable[0].focus()
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setMobileSidebarOpen(false)
+        return
+      }
+      if (e.key === 'Tab') {
+        const els = sidebar!.querySelectorAll<HTMLElement>('a, button, input')
+        const first = els[0]
+        const last = els[els.length - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [mobileSidebarOpen, setMobileSidebarOpen])
+
   // Keyboard toggle: [ key collapses/expands sidebar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -336,7 +369,13 @@ export function Sidebar() {
             className="lg:hidden fixed inset-0 z-40 bg-black/50"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <aside className="lg:hidden fixed inset-y-0 left-0 z-50 w-60 flex flex-col bg-sidebar border-r border-border shadow-xl">
+          <aside
+            id="mobile-sidebar"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation"
+            className="lg:hidden fixed inset-y-0 left-0 z-50 w-60 flex flex-col bg-sidebar border-r border-border shadow-xl"
+          >
             {sidebarContent(false)}
           </aside>
         </>
