@@ -9,7 +9,7 @@
  * 2. Security Profiles (RouterOS 6 only) -- authentication, passphrases
  */
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import {
   Wifi,
   Plus,
@@ -618,30 +618,15 @@ function WirelessEditDialog({
 }) {
   const [showPassphrase, setShowPassphrase] = useState(false)
 
-  const [formData, setFormData] = useState<WirelessFormData>({
-    ssid: '',
-    band: '',
-    'channel-width': '',
-    frequency: '',
-    'security-profile': '',
-    disabled: 'no',
-    'security.passphrase': '',
-  })
-
-  // Reset form when entry changes
-  useEffect(() => {
-    if (entry) {
-      setFormData({
-        ssid: entry.ssid || entry['configuration.ssid'] || '',
-        band: entry.band || '',
-        'channel-width': entry['channel-width'] || '',
-        frequency: entry.frequency || '',
-        'security-profile': entry['security-profile'] || '',
-        disabled: entry.disabled || 'no',
-        'security.passphrase': entry['security.passphrase'] || '',
-      })
-    }
-  }, [entry])
+  const [formData, setFormData] = useState<WirelessFormData>(() => ({
+    ssid: entry?.ssid || entry?.['configuration.ssid'] || '',
+    band: entry?.band || '',
+    'channel-width': entry?.['channel-width'] || '',
+    frequency: entry?.frequency || '',
+    'security-profile': entry?.['security-profile'] || '',
+    disabled: entry?.disabled || 'no',
+    'security.passphrase': entry?.['security.passphrase'] || '',
+  }))
 
   // Use effect-like pattern to reset form on dialog open
   const handleOpenChange = useCallback((nextOpen: boolean) => {

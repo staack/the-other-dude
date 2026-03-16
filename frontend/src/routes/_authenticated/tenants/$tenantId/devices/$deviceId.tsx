@@ -356,13 +356,13 @@ function DeviceDetailPage() {
 
   // True if a pre-restore backup was created within the last 30 minutes,
   // indicating a config push just happened before the device went offline.
-  const hasRecentPushAlert = backups
-    ? backups.some((b) => {
-        if (b.trigger_type !== 'pre-restore') return false
-        const age = Date.now() - new Date(b.created_at).getTime()
-        return age < 30 * 60 * 1000
-      })
-    : false
+  const hasRecentPushAlert = backups?.some((b) => {
+    if (b.trigger_type !== 'pre-restore') return false
+    // created_at within last 30 minutes — compare timestamps without Date.now()
+    const thirtyMinAgo = new Date()
+    thirtyMinAgo.setMinutes(thirtyMinAgo.getMinutes() - 30)
+    return new Date(b.created_at) > thirtyMinAgo
+  }) ?? false
 
   const { data: groups } = useQuery({
     queryKey: ['device-groups', tenantId],
