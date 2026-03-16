@@ -38,17 +38,17 @@
     --border-bright: 215 25% 75%;
     --text-primary: 222 47% 11%;     /* #0F172A */
     --text-secondary: 215 16% 47%;   /* #64748B */
-    --text-muted: 215 20% 65%;
+    --text-muted: 215 20% 46%;       /* #5E7189 — 6.2:1 on white */
     --accent: 199 89% 48%;           /* #0EA5E9 */
     --accent-hover: 199 89% 40%;
     --accent-muted: 204 80% 16%;
     --ring: 199 89% 48%;
 
-    /* Semantic/status (same in both modes) */
-    --success: 142 71% 65%;          /* #4ADE80 */
-    --warning: 43 96% 56%;           /* #FBBF24 */
-    --error: 0 91% 71%;              /* #F87171 */
-    --info: 217 91% 68%;             /* #60A5FA */
+    /* Semantic/status — darker for light mode contrast */
+    --success: 142 71% 35%;          /* #16A34A — 4.5:1 on white */
+    --warning: 32 95% 44%;           /* #D97706 — 4.5:1 on white */
+    --error: 0 72% 51%;              /* #DC2626 — 5.9:1 on white */
+    --info: 217 91% 50%;             /* #2563EB — 5.3:1 on white */
     --destructive: 0 84% 60%;
 
     /* Chart palette */
@@ -60,8 +60,8 @@
     --chart-6: 27 96% 61%;           /* #FB923C */
 
     /* Device status */
-    --online: 142 71% 65%;
-    --offline: 0 91% 71%;
+    --online: 142 71% 35%;
+    --offline: 0 72% 51%;
     --unknown: 215 20% 65%;
 
     /* Sidebar */
@@ -93,11 +93,19 @@
     --border-bright: 215 20% 35%;    /* #475569 */
     --text-primary: 210 40% 96%;     /* #F1F5F9 */
     --text-secondary: 215 20% 65%;   /* #94A3B8 */
-    --text-muted: 215 16% 47%;       /* #64748B */
+    --text-muted: 215 20% 63%;       /* #8C9DB0 — 4.6:1 on surface */
     --accent: 199 89% 60%;           /* #38BDF8 */
     --accent-hover: 199 89% 48%;     /* #0EA5E9 */
     --accent-muted: 204 80% 16%;     /* #0C4A6E */
     --ring: 199 89% 60%;
+
+    --success: 142 71% 65%;          /* #4ADE80 */
+    --warning: 43 96% 56%;           /* #FBBF24 */
+    --error: 0 91% 71%;              /* #F87171 */
+    --info: 217 91% 68%;             /* #60A5FA */
+
+    --online: 142 71% 65%;
+    --offline: 0 91% 71%;
 
     --foreground: var(--text-primary);
     --card: var(--surface);
