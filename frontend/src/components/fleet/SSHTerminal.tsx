@@ -77,7 +77,7 @@ export function SSHTerminal({ tenantId, deviceId, deviceName }: SSHTerminalProps
         const isDark = document.documentElement.classList.contains('dark')
         const term = new Terminal({
             cursorBlink: true,
-            fontFamily: 'Geist Mono, monospace',
+            fontFamily: 'IBM Plex Mono, monospace',
             fontSize: 14,
             scrollback: 2000,
             convertEol: true,
