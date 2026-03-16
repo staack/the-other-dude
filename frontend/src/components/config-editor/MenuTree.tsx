@@ -157,7 +157,7 @@ function TreeItem({
         className={cn(
           'flex items-center gap-1.5 w-full px-2 py-1 text-xs rounded transition-colors',
           isActive
-            ? 'bg-elevated text-text-primary'
+            ? 'bg-[hsl(var(--accent-muted))] text-accent'
             : 'text-text-secondary hover:text-text-primary hover:bg-elevated/50',
         )}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
@@ -205,7 +205,7 @@ export function MenuTree({ onPathSelect, currentPath }: MenuTreeProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="px-2 py-2 border-b border-border">
-        <div className="text-[10px] uppercase tracking-wider text-text-muted mb-1">Menu</div>
+        <div className="text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-1">Menu</div>
       </div>
       <div className="flex-1 overflow-y-auto py-1">
         {MENU_TREE.map((node) => (
@@ -218,7 +218,7 @@ export function MenuTree({ onPathSelect, currentPath }: MenuTreeProps) {
         ))}
       </div>
       <div className="px-2 py-2 border-t border-border">
-        <div className="text-[10px] uppercase tracking-wider text-text-muted mb-1">Custom path</div>
+        <div className="text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-1">Custom path</div>
         <Input
           value={customPath}
           onChange={(e) => setCustomPath(e.target.value)}

@@ -107,17 +107,17 @@ export function EntryTable({
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-border bg-surface">
+              <tr className="border-b border-border">
                 {columns.map((col) => (
                   <th
                     key={col}
-                    className="text-left px-3 py-2 text-text-secondary font-medium whitespace-nowrap"
+                    className="text-left px-3 py-2 text-[10px] uppercase tracking-wider font-semibold text-text-muted whitespace-nowrap"
                   >
                     {col}
                   </th>
                 ))}
                 {writable && (
-                  <th className="text-right px-3 py-2 text-text-secondary font-medium w-20">
+                  <th className="text-right px-3 py-2 text-[10px] uppercase tracking-wider font-semibold text-text-muted w-20">
                     Actions
                   </th>
                 )}
