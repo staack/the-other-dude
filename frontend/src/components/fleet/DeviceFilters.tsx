@@ -81,6 +81,7 @@ export function DeviceFilters({ tenantId }: DeviceFiltersProps) {
           ref={inputRef}
           className="pl-8"
           placeholder="Search hostname, IP..."
+          aria-label="Search devices"
           defaultValue={searchText}
           onChange={(e) => handleSearch(e.target.value)}
         />

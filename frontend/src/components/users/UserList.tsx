@@ -77,13 +77,13 @@ export function UserList({ tenantId }: Props) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface">
-              <th className="text-left px-3 py-2 text-xs font-medium text-text-muted">Name</th>
-              <th className="text-left px-3 py-2 text-xs font-medium text-text-muted">Email</th>
-              <th className="text-left px-3 py-2 text-xs font-medium text-text-muted">Role</th>
-              <th className="text-left px-3 py-2 text-xs font-medium text-text-muted">Last Login</th>
-              <th className="text-left px-3 py-2 text-xs font-medium text-text-muted">Status</th>
+              <th scope="col" className="text-left px-3 py-2 text-xs font-medium text-text-muted">Name</th>
+              <th scope="col" className="text-left px-3 py-2 text-xs font-medium text-text-muted">Email</th>
+              <th scope="col" className="text-left px-3 py-2 text-xs font-medium text-text-muted">Role</th>
+              <th scope="col" className="text-left px-3 py-2 text-xs font-medium text-text-muted">Last Login</th>
+              <th scope="col" className="text-left px-3 py-2 text-xs font-medium text-text-muted">Status</th>
               {isTenantAdmin(currentUser) && (
-                <th className="px-3 py-2 text-xs font-medium text-text-muted w-8"></th>
+                <th scope="col" className="px-3 py-2 text-xs font-medium text-text-muted w-8"><span className="sr-only">Actions</span></th>
               )}
             </tr>
           </thead>
@@ -130,8 +130,9 @@ export function UserList({ tenantId }: Props) {
                           onClick={() => handleDeactivate(u.id, u.email)}
                           className="text-text-muted hover:text-error transition-colors"
                           title="Deactivate user"
+                          aria-label={`Deactivate ${u.email}`}
                         >
-                          <UserX className="h-3.5 w-3.5" />
+                          <UserX className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
                       )}
                     </td>

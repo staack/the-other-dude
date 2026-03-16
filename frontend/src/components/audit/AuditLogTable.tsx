@@ -141,6 +141,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
         <select
           value={actionFilter}
           onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
+          aria-label="Filter by action"
           className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
         >
           {ACTION_TYPES.map((a) => (
@@ -157,6 +158,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
             type="date"
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
+            aria-label="Filter from date"
             className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>
@@ -168,6 +170,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
             type="date"
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
+            aria-label="Filter to date"
             className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>
@@ -180,6 +183,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
             placeholder="Search user..."
             value={userSearch}
             onChange={(e) => setUserSearch(e.target.value)}
+            aria-label="Filter by user"
             className="h-8 rounded-md border border-border bg-surface pl-7 pr-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent w-40"
           />
         </div>
@@ -223,23 +227,23 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-elevated/50">
-                <th className="w-8 px-3 py-2" />
-                <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="w-8 px-3 py-2"><span className="sr-only">Expand</span></th>
+                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
                   Timestamp
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
                   User
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
                   Action
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
                   Resource
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
                   Device
                 </th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
                   IP Address
                 </th>
               </tr>
@@ -271,6 +275,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
                 setPerPage(Number(e.target.value))
                 setPage(1)
               }}
+              aria-label="Rows per page"
               className="h-7 rounded border border-border bg-surface px-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
             >
               {PER_PAGE_OPTIONS.map((n) => (
@@ -289,16 +294,18 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
             <button
               onClick={() => setPage(1)}
               disabled={page <= 1}
+              aria-label="First page"
               className="rounded p-1 hover:bg-elevated disabled:opacity-30"
             >
-              <ChevronsLeft className="h-4 w-4" />
+              <ChevronsLeft className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
               onClick={() => setPage(page - 1)}
               disabled={page <= 1}
+              aria-label="Previous page"
               className="rounded p-1 hover:bg-elevated disabled:opacity-30"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </button>
             <span className="px-2">
               Page {page} of {totalPages}
@@ -306,16 +313,18 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
             <button
               onClick={() => setPage(page + 1)}
               disabled={page >= totalPages}
+              aria-label="Next page"
               className="rounded p-1 hover:bg-elevated disabled:opacity-30"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
               onClick={() => setPage(totalPages)}
               disabled={page >= totalPages}
+              aria-label="Last page"
               className="rounded p-1 hover:bg-elevated disabled:opacity-30"
             >
-              <ChevronsRight className="h-4 w-4" />
+              <ChevronsRight className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         </div>
