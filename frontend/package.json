@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@dagrejs/dagre": "^2.0.4",
+    "@fontsource-variable/manrope": "^5.2.8",
+    "@fontsource/ibm-plex-mono": "^5.2.7",
     "@git-diff-view/lowlight": "^0.0.39",
     "@git-diff-view/react": "^0.0.39",
     "@radix-ui/react-avatar": "^1.1.11",
