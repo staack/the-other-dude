@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Wifi, CheckCircle2 } from 'lucide-react'
-import { metricsApi, type WirelessIssue } from '@/lib/api'
+import { metricsApi } from '@/lib/api'
 
 interface WirelessIssuesProps {
   tenantId: string | null  // null = all orgs (super admin)
