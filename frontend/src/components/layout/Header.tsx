@@ -1,3 +1,4 @@
+// DEPRECATED: Replaced by ContextStrip.tsx — keeping for reference during transition
 import { useEffect } from 'react'
 import { useNavigate, Link } from '@tanstack/react-router'
 import { LogOut, ChevronDown, User, Search, Sun, Moon, RefreshCw, Menu, Settings } from 'lucide-react'
