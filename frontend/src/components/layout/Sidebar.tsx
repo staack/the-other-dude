@@ -7,30 +7,17 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Bell,
-  BellRing,
   Download,
   Terminal,
   FileCode,
-  FileText,
-  MapPin,
   LayoutDashboard,
-  Network,
-  Wrench,
   ClipboardList,
-  Calendar,
-  Key,
-  Layers,
-  Shield,
-  ShieldCheck,
-
-  Eye,
-  Info,
+  Wifi,
+  BarChart3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth, isSuperAdmin, isTenantAdmin } from '@/lib/auth'
 import { useUIStore } from '@/lib/store'
-import { AlertBadge } from '@/components/alerts/AlertBadge'
 import { RugLogo } from '@/components/brand/RugLogo'
 
 interface NavItem {
@@ -38,7 +25,6 @@ interface NavItem {
   href: string
   icon: React.FC<{ className?: string }>
   exact?: boolean
-  badge?: React.ReactNode
 }
 
 interface NavSection {
@@ -109,12 +95,12 @@ export function Sidebar() {
       visible: true,
       items: [
         {
-          label: 'Dashboard',
+          label: 'Overview',
           href: '/',
           icon: LayoutDashboard,
           exact: true,
         },
-        // Only show Devices for non-super_admin (super_admin uses Organizations in Admin)
+        // Only show Devices for non-super_admin with a tenant_id
         ...(!isSuperAdmin(user) && user?.tenant_id
           ? [
               {
@@ -125,30 +111,25 @@ export function Sidebar() {
             ]
           : []),
         {
-          label: 'Map',
-          href: '/map',
-          icon: MapPin,
+          label: 'Wireless',
+          href: '/wireless',
+          icon: Wifi,
+        },
+        {
+          label: 'Traffic',
+          href: '/traffic',
+          icon: BarChart3,
         },
       ],
     },
     {
-      label: 'Manage',
+      label: 'Config',
       visible: true,
       items: [
         {
-          label: 'Config Editor',
+          label: 'Editor',
           href: '/config-editor',
           icon: Terminal,
-        },
-        {
-          label: 'Batch Config',
-          href: '/batch-config',
-          icon: Wrench,
-        },
-        {
-          label: 'Bulk Commands',
-          href: '/bulk-commands',
-          icon: Layers,
         },
         {
           label: 'Templates',
@@ -159,63 +140,6 @@ export function Sidebar() {
           label: 'Firmware',
           href: '/firmware',
           icon: Download,
-        },
-        {
-          label: 'Maintenance',
-          href: '/maintenance',
-          icon: Calendar,
-        },
-        {
-          label: 'VPN',
-          href: '/vpn',
-          icon: Shield,
-        },
-        {
-          label: 'Certificates',
-          href: '/certificates',
-          icon: ShieldCheck,
-        },
-
-      ],
-    },
-    {
-      label: 'Monitor',
-      visible: true,
-      items: [
-        {
-          label: 'Topology',
-          href: '/topology',
-          icon: Network,
-        },
-        {
-          label: 'Alerts',
-          href: '/alerts',
-          icon: Bell,
-          badge: <AlertBadge />,
-        },
-        {
-          label: 'Alert Rules',
-          href: '/alert-rules',
-          icon: BellRing,
-        },
-        {
-          label: 'Audit Trail',
-          href: '/audit',
-          icon: ClipboardList,
-        },
-        ...(isTenantAdmin(user)
-          ? [
-              {
-                label: 'Transparency',
-                href: '/transparency',
-                icon: Eye,
-              },
-            ]
-          : []),
-        {
-          label: 'Reports',
-          href: '/reports',
-          icon: FileText,
         },
       ],
     },
@@ -242,19 +166,14 @@ export function Sidebar() {
             ]
           : []),
         {
-          label: 'API Keys',
-          href: '/settings/api-keys',
-          icon: Key,
+          label: 'Audit Log',
+          href: '/audit',
+          icon: ClipboardList,
         },
         {
           label: 'Settings',
           href: '/settings',
           icon: Settings,
-        },
-        {
-          label: 'About',
-          href: '/about',
-          icon: Info,
         },
       ],
     },
@@ -310,8 +229,8 @@ export function Sidebar() {
                   className={cn(
                     'flex items-center gap-2.5 px-3 py-2 mx-1 rounded-md text-sm transition-colors min-h-[44px]',
                     active
-                      ? 'bg-accent-muted text-accent'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-elevated/50',
+                      ? 'bg-[hsl(var(--accent-muted))] text-accent rounded-md'
+                      : 'text-text-muted hover:text-text-primary hover:bg-elevated/50 rounded-md',
                     showCollapsed && 'justify-center px-0',
                   )}
                   title={showCollapsed ? item.label : undefined}
@@ -320,10 +239,7 @@ export function Sidebar() {
                 >
                   <Icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                   {!showCollapsed && (
-                    <>
-                      <span className="truncate">{item.label}</span>
-                      {item.badge && <span className="ml-auto">{item.badge}</span>}
-                    </>
+                    <span className="truncate">{item.label}</span>
                   )}
                 </Link>
               )
@@ -331,6 +247,13 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* Version identifier */}
+      {!showCollapsed && (
+        <div className="px-3 py-1 text-center">
+          <span className="font-mono text-[9px] text-text-muted">TOD v9.5</span>
+        </div>
+      )}
 
       {/* Collapse toggle (hidden on mobile) */}
       <button
@@ -354,9 +277,10 @@ export function Sidebar() {
       {/* Desktop sidebar */}
       <aside
         data-testid="sidebar"
+        data-sidebar
         className={cn(
           'hidden lg:flex flex-col border-r border-border bg-sidebar transition-all duration-200',
-          sidebarCollapsed ? 'w-12' : 'w-60',
+          sidebarCollapsed ? 'w-14' : 'w-[180px]',
         )}
       >
         {sidebarContent(sidebarCollapsed)}
@@ -374,7 +298,7 @@ export function Sidebar() {
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="lg:hidden fixed inset-y-0 left-0 z-50 w-60 flex flex-col bg-sidebar border-r border-border shadow-xl"
+            className="lg:hidden fixed inset-y-0 left-0 z-50 w-[180px] flex flex-col bg-sidebar border-r border-border shadow-xl"
           >
             {sidebarContent(false)}
           </aside>
