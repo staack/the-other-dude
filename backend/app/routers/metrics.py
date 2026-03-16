@@ -413,3 +413,159 @@ async def fleet_summary_all(
     result = await db.execute(text(_FLEET_SUMMARY_SQL))
     rows = result.mappings().all()
     return [dict(row) for row in rows]
+
+
+# ---------------------------------------------------------------------------
+# Wireless issues (dashboard)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/tenants/{tenant_id}/fleet/wireless-issues")
+async def get_wireless_issues(
+    tenant_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get wireless APs with degraded performance for a tenant."""
+    await _check_tenant_access(current_user, tenant_id, db)
+
+    result = await db.execute(
+        text("""
+            WITH latest_wireless AS (
+                SELECT DISTINCT ON (device_id, interface)
+                    device_id, interface, client_count, avg_signal, ccq, frequency, time
+                FROM wireless_metrics
+                WHERE tenant_id = :tenant_id
+                  AND time > NOW() - INTERVAL '1 hour'
+                ORDER BY device_id, interface, time DESC
+            )
+            SELECT
+                lw.device_id,
+                d.hostname,
+                lw.interface,
+                lw.avg_signal,
+                lw.ccq,
+                lw.client_count,
+                lw.frequency
+            FROM latest_wireless lw
+            JOIN devices d ON d.id = lw.device_id
+            WHERE lw.avg_signal < -70
+               OR lw.ccq < 60
+               OR (lw.client_count = 0 AND EXISTS (
+                   SELECT 1 FROM wireless_metrics wm
+                   WHERE wm.device_id = lw.device_id
+                     AND wm.interface = lw.interface
+                     AND wm.client_count > 0
+                     AND wm.time > NOW() - INTERVAL '24 hours'
+                     AND wm.tenant_id = :tenant_id
+               ))
+            ORDER BY
+                CASE WHEN d.status = 'offline' THEN 0 ELSE 1 END,
+                lw.avg_signal ASC,
+                lw.ccq ASC
+            LIMIT 10
+        """),
+        {"tenant_id": str(tenant_id)},
+    )
+
+    rows = result.fetchall()
+    issues = []
+    for row in rows:
+        if row.avg_signal is not None and row.avg_signal < -70:
+            issue = f"Signal: {row.avg_signal} dBm"
+        elif row.ccq is not None and row.ccq < 60:
+            issue = f"CCQ: {row.ccq}%"
+        elif row.client_count == 0:
+            issue = "No clients (was active)"
+        else:
+            issue = "Degraded"
+
+        issues.append({
+            "device_id": str(row.device_id),
+            "hostname": row.hostname,
+            "interface": row.interface,
+            "issue": issue,
+            "signal": row.avg_signal,
+            "ccq": row.ccq,
+            "client_count": row.client_count,
+            "frequency": row.frequency,
+        })
+
+    return issues
+
+
+@router.get("/fleet/wireless-issues")
+async def get_fleet_wireless_issues(
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get wireless APs with issues across all tenants (super_admin only)."""
+    if current_user.role != "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Super admin required",
+        )
+
+    result = await db.execute(
+        text("""
+            WITH latest_wireless AS (
+                SELECT DISTINCT ON (device_id, interface)
+                    device_id, tenant_id, interface, client_count, avg_signal, ccq, frequency, time
+                FROM wireless_metrics
+                WHERE time > NOW() - INTERVAL '1 hour'
+                ORDER BY device_id, interface, time DESC
+            )
+            SELECT
+                lw.device_id,
+                d.hostname,
+                t.name as tenant_name,
+                lw.interface,
+                lw.avg_signal,
+                lw.ccq,
+                lw.client_count,
+                lw.frequency
+            FROM latest_wireless lw
+            JOIN devices d ON d.id = lw.device_id
+            JOIN tenants t ON t.id = lw.tenant_id
+            WHERE lw.avg_signal < -70
+               OR lw.ccq < 60
+               OR (lw.client_count = 0 AND EXISTS (
+                   SELECT 1 FROM wireless_metrics wm
+                   WHERE wm.device_id = lw.device_id
+                     AND wm.interface = lw.interface
+                     AND wm.client_count > 0
+                     AND wm.time > NOW() - INTERVAL '24 hours'
+               ))
+            ORDER BY
+                CASE WHEN d.status = 'offline' THEN 0 ELSE 1 END,
+                lw.avg_signal ASC,
+                lw.ccq ASC
+            LIMIT 10
+        """),
+    )
+
+    rows = result.fetchall()
+    issues = []
+    for row in rows:
+        if row.avg_signal is not None and row.avg_signal < -70:
+            issue = f"Signal: {row.avg_signal} dBm"
+        elif row.ccq is not None and row.ccq < 60:
+            issue = f"CCQ: {row.ccq}%"
+        elif row.client_count == 0:
+            issue = "No clients (was active)"
+        else:
+            issue = "Degraded"
+
+        issues.append({
+            "device_id": str(row.device_id),
+            "hostname": row.hostname,
+            "tenant_name": row.tenant_name,
+            "interface": row.interface,
+            "issue": issue,
+            "signal": row.avg_signal,
+            "ccq": row.ccq,
+            "client_count": row.client_count,
+            "frequency": row.frequency,
+        })
+
+    return issues
