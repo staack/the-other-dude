@@ -146,6 +146,15 @@ func PollDevice(
 			observability.NATSPublishTotal.WithLabelValues("status", "success").Inc()
 		}
 
+		// Write device status to Redis so the backup scheduler can check
+		// if a device is online before attempting a backup.
+		if redisClientForFirmware != nil {
+			statusKey := fmt.Sprintf("device:%s:status", dev.ID)
+			if err := redisClientForFirmware.Set(ctx, statusKey, "offline", 10*time.Minute).Err(); err != nil {
+				slog.Warn("Redis SET failed", "key", statusKey, "error", err)
+			}
+		}
+
 		// Check for recent config push — trigger rollback or alert if device
 		// went offline shortly after a push (Redis key set by push_tracker).
 		if redisClientForFirmware != nil {
@@ -201,7 +210,10 @@ func PollDevice(
 	cmdCancel()
 	if err != nil {
 		slog.Warn("failed to detect version", "device_id", dev.ID, "error", err)
-		// Still publish an online event even if version detection fails.
+		// Fall back to DB-cached version so we don't publish an empty version string.
+		if dev.RouterOSVersion != nil {
+			info.Version = *dev.RouterOSVersion
+		}
 	}
 
 	onlineEvent := bus.DeviceStatusEvent{
@@ -262,7 +274,9 @@ func PollDevice(
 				}
 			}
 			// Update Redis with current value (24h TTL)
-			redisClientForFirmware.Set(ctx, redisKey, info.LastConfigChange, 24*time.Hour)
+			if err := redisClientForFirmware.Set(ctx, redisKey, info.LastConfigChange, 24*time.Hour).Err(); err != nil {
+				slog.Warn("Redis SET failed", "key", redisKey, "error", err)
+			}
 		}
 	}
 
@@ -272,6 +286,15 @@ func PollDevice(
 		"status", "online",
 		"version", info.Version,
 	)
+
+	// Write device status to Redis so the backup scheduler can check
+	// if a device is online before attempting a backup.
+	if redisClientForFirmware != nil {
+		statusKey := fmt.Sprintf("device:%s:status", dev.ID)
+		if err := redisClientForFirmware.Set(ctx, statusKey, "online", 10*time.Minute).Err(); err != nil {
+			slog.Warn("Redis SET failed", "key", statusKey, "error", err)
+		}
+	}
 
 	// =========================================================================
 	// METRICS COLLECTION
@@ -368,9 +391,13 @@ func PollDevice(
 				// Set cooldown on failure too, but shorter (6h) so we retry sooner than success (24h).
 				// Prevents hammering devices that can't reach MikroTik update servers every poll cycle.
 				fwFailKey := fmt.Sprintf("firmware:check-failed:%s", dev.ID)
-				redisClientForFirmware.Set(ctx, fwFailKey, "1", 6*time.Hour)
+				if err := redisClientForFirmware.Set(ctx, fwFailKey, "1", 6*time.Hour).Err(); err != nil {
+					slog.Warn("Redis SET failed", "key", fwFailKey, "error", err)
+				}
 				// Also set the main checked key to prevent the success path from re-checking.
-				redisClientForFirmware.Set(ctx, fwCacheKey, "1", 6*time.Hour)
+				if err := redisClientForFirmware.Set(ctx, fwCacheKey, "1", 6*time.Hour).Err(); err != nil {
+					slog.Warn("Redis SET failed", "key", fwCacheKey, "error", err)
+				}
 			} else {
 				fwEvent := bus.DeviceFirmwareEvent{
 					DeviceID:         dev.ID,
@@ -390,9 +417,13 @@ func PollDevice(
 					// If the check succeeded but status is "check-failed",
 					// use shorter cooldown since the device couldn't reach update servers.
 					if fwInfo.Status == "check-failed" {
-						redisClientForFirmware.Set(ctx, fwCacheKey, "1", 6*time.Hour)
+						if err := redisClientForFirmware.Set(ctx, fwCacheKey, "1", 6*time.Hour).Err(); err != nil {
+							slog.Warn("Redis SET failed", "key", fwCacheKey, "error", err)
+						}
 					} else {
-						redisClientForFirmware.Set(ctx, fwCacheKey, "1", 24*time.Hour)
+						if err := redisClientForFirmware.Set(ctx, fwCacheKey, "1", 24*time.Hour).Err(); err != nil {
+							slog.Warn("Redis SET failed", "key", fwCacheKey, "error", err)
+						}
 					}
 					slog.Info("firmware check published",
 						"device_id", dev.ID,
