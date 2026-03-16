@@ -216,6 +216,8 @@ python3 setup.py</code></pre>
           <li>Network access to RouterOS devices on ports 8728 (API) and 8729 (API-SSL)</li>
         </ul>
 
+        <p><strong>Note:</strong> If you used the setup wizard (<code>python3 setup.py</code>), these steps were completed automatically.</p>
+
         <h3>1. Clone and Configure</h3>
         <pre><code>git clone &lt;repository-url&gt; tod
 cd tod
@@ -253,10 +255,10 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml build frontend</
 docker compose ps
 
 # Check API health (liveness)
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 
 # Check readiness (PostgreSQL, Redis, NATS connected)
-curl http://localhost:8000/health/ready
+curl http://localhost:8001/health/ready
 
 # Access the portal
 open http://localhost</code></pre>
@@ -320,7 +322,7 @@ open http://localhost</code></pre>
             <tr><td>Redis</td><td>128 MB</td></tr>
             <tr><td>NATS</td><td>128 MB</td></tr>
             <tr><td>API</td><td>512 MB</td></tr>
-            <tr><td>Poller</td><td>256 MB</td></tr>
+            <tr><td>Poller</td><td>512 MB</td></tr>
             <tr><td>Frontend</td><td>64 MB</td></tr>
           </tbody>
         </table>
@@ -468,7 +470,7 @@ open http://localhost</code></pre>
 
         <h3>Go Poller</h3>
         <ul>
-          <li><strong>Stack:</strong> Go 1.23, go-routeros/v3, pgx/v5, nats.go</li>
+          <li><strong>Stack:</strong> Go 1.25, go-routeros/v3, pgx/v5, nats.go</li>
           <li><strong>Polling model:</strong> Synchronous per-device polling on a configurable interval (default 60s)</li>
           <li><strong>Device communication:</strong> RouterOS binary API over TLS (port 8729), InsecureSkipVerify for self-signed certs</li>
           <li><strong>TLS fallback:</strong> Three-tier strategy &mdash; CA-verified &rarr; InsecureSkipVerify &rarr; plain API</li>
@@ -476,10 +478,10 @@ open http://localhost</code></pre>
           <li><strong>Circuit breaker:</strong> Backs off from unreachable devices to avoid wasting poll cycles</li>
           <li><strong>Credential decryption:</strong> OpenBao Transit with LRU cache (1024 entries, 5min TTL) to minimize KMS calls</li>
           <li><strong>Output:</strong> Publishes poll results to NATS JetStream; the API&rsquo;s NATS subscribers process and persist them</li>
-          <li><strong>Remote access:</strong> Tunnel manager allocates TCP ports (49000&ndash;49004) for WinBox sessions; SSH relay server bridges WebSocket connections to RouterOS SSH via PTY</li>
+          <li><strong>Remote access:</strong> Tunnel manager allocates TCP ports (49000&ndash;49100) for WinBox sessions; SSH relay server bridges WebSocket connections to RouterOS SSH via PTY</li>
           <li><strong>NATS responder:</strong> Listens on <code>tunnel.open.*</code> / <code>tunnel.close.*</code> for API-initiated WinBox tunnel requests</li>
           <li><strong>Database access:</strong> Uses <code>poller_user</code> role which bypasses RLS (needs cross-tenant device access)</li>
-          <li><strong>Memory limit:</strong> 256 MB</li>
+          <li><strong>Memory limit:</strong> 512 MB</li>
         </ul>
 
         <h3>Infrastructure Services</h3>
@@ -543,7 +545,7 @@ open http://localhost</code></pre>
           <tbody>
             <tr><td>PostgreSQL</td><td>512 MB</td></tr>
             <tr><td>API</td><td>512 MB</td></tr>
-            <tr><td>Go Poller</td><td>256 MB</td></tr>
+            <tr><td>Go Poller</td><td>512 MB</td></tr>
             <tr><td>OpenBao</td><td>256 MB</td></tr>
             <tr><td>Redis</td><td>128 MB</td></tr>
             <tr><td>NATS</td><td>128 MB</td></tr>
@@ -566,8 +568,8 @@ open http://localhost</code></pre>
             <tr><td>NATS Monitor</td><td>8222</td><td>8222</td><td>HTTP</td></tr>
             <tr><td>OpenBao</td><td>8200</td><td>8200</td><td>HTTP</td></tr>
             <tr><td>WireGuard</td><td>51820</td><td>51820</td><td>UDP</td></tr>
-            <tr><td>WinBox Tunnels</td><td>49000&ndash;49004</td><td>49000&ndash;49004</td><td>TCP</td></tr>
-            <tr><td>SSH Relay (WebSocket)</td><td>2222</td><td>2222</td><td>TCP</td></tr>
+            <tr><td>WinBox Tunnels</td><td>49000&ndash;49100</td><td>49000&ndash;49100</td><td>TCP</td></tr>
+            <tr><td>SSH Relay (WebSocket)</td><td>8080</td><td>8080</td><td>TCP</td></tr>
           </tbody>
         </table>
       </section>
@@ -884,7 +886,7 @@ open http://localhost</code></pre>
         <p>Click the <strong>WinBox</strong> button on any device to open a temporary TCP tunnel:</p>
         <ol>
           <li>The API sends a NATS request to the poller on <code>tunnel.open.{device_id}</code>.</li>
-          <li>The poller allocates a port from the pool (49000&ndash;49004) and opens a bidirectional TCP proxy to the device&rsquo;s WinBox port (8291).</li>
+          <li>The poller allocates a port from the pool (49000&ndash;49100) and opens a bidirectional TCP proxy to the device&rsquo;s WinBox port (8291).</li>
           <li>The API returns a <code>winbox://</code> URI that launches your local WinBox application.</li>
           <li>The tunnel closes automatically after 5 minutes of idle time, or when explicitly closed.</li>
         </ol>
@@ -922,7 +924,7 @@ open http://localhost</code></pre>
           </thead>
           <tbody>
             <tr><td>Idle timeout</td><td>5 minutes</td><td>15 minutes</td></tr>
-            <tr><td>Port range</td><td>49000&ndash;49004</td><td>N/A (WebSocket)</td></tr>
+            <tr><td>Port range</td><td>49000&ndash;49100</td><td>N/A (WebSocket)</td></tr>
             <tr><td>Auth method</td><td>NATS request-reply</td><td>Single-use Redis token (60s TTL)</td></tr>
             <tr><td>Audit logged</td><td>Yes (open/close)</td><td>Yes (open/close with duration)</td></tr>
             <tr><td>RBAC</td><td>Operator+</td><td>Operator+</td></tr>
@@ -935,7 +937,7 @@ open http://localhost</code></pre>
           <li>SSH session tokens are single-use, expire in 60 seconds, and are validated + deleted atomically in Redis.</li>
           <li>All session open/close events are written to the immutable audit trail.</li>
           <li>SSH session end events are published to NATS JetStream for durable processing.</li>
-          <li>Rate limited: 5 tunnel/session requests per minute per IP.</li>
+          <li>Rate limited: 10 tunnel/session requests per minute per IP.</li>
         </ul>
       </section>
 
@@ -1495,7 +1497,7 @@ open http://localhost</code></pre>
             <tr><td>Redis</td><td>128 MB</td></tr>
             <tr><td>NATS</td><td>128 MB</td></tr>
             <tr><td>API</td><td>512 MB</td></tr>
-            <tr><td>Poller</td><td>256 MB</td></tr>
+            <tr><td>Poller</td><td>512 MB</td></tr>
             <tr><td>Frontend</td><td>64 MB</td></tr>
           </tbody>
         </table>
