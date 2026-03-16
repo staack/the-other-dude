@@ -108,6 +108,8 @@ async def create_tenant(
         ("High Memory Usage", "memory_used_pct", "gt", 90, 5, "warning"),
         ("High Disk Usage", "disk_used_pct", "gt", 85, 3, "warning"),
         ("Device Offline", "device_offline", "eq", 1, 1, "critical"),
+        ("Wireless Signal Degraded", "signal_strength", "lt", -75, 3, "warning"),
+        ("Wireless CCQ Low", "ccq", "lt", 50, 3, "warning"),
     ]
     for name, metric, operator, threshold, duration, sev in default_rules:
         await db.execute(
