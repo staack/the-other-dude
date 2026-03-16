@@ -85,13 +85,15 @@
 </head>
 <body>
 
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
   <!-- ═══════════════════════════════════════════ -->
   <!-- Navigation                                  -->
   <!-- ═══════════════════════════════════════════ -->
-  <nav class="site-nav site-nav--dark">
+  <nav class="site-nav site-nav--dark" aria-label="Main navigation">
     <div class="nav-inner container">
       <a href="index.html" class="nav-logo">
-        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
           <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
           <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
           <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
@@ -130,7 +132,7 @@
     </div>
   </div>
 
-  <main>
+  <main id="main-content">
   <!-- ═══════════════════════════════════════════ -->
   <!-- Hero                                        -->
   <!-- ═══════════════════════════════════════════ -->
@@ -410,7 +412,7 @@
         </span>
         <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
       </div>
-      <nav class="footer-links">
+      <nav class="footer-links" aria-label="Footer navigation">
         <a href="docs.html">Docs</a>
         <a href="blog/">Blog</a>
         <a href="#what-it-does">Features</a>
@@ -424,7 +426,8 @@
   </footer>
 
   <!-- Lightbox -->
-  <div class="lightbox" id="lightbox">
+  <div class="lightbox" id="lightbox" role="dialog" aria-label="Image preview">
+    <button class="lightbox-close" aria-label="Close image preview">&times;</button>
     <img src="" alt="The Other Dude dashboard managing multiple MikroTik routers">
     <div class="lightbox-caption"></div>
   </div>
@@ -436,23 +439,42 @@
     var lb = document.getElementById('lightbox');
     var lbImg = lb.querySelector('img');
     var lbCap = lb.querySelector('.lightbox-caption');
+    var lbClose = lb.querySelector('.lightbox-close');
+
+    function openLightbox(img) {
+      lbImg.src = img.src;
+      lbImg.alt = img.alt;
+      var cap = img.closest('.screenshot-card').querySelector('figcaption');
+      lbCap.textContent = cap ? cap.textContent : '';
+      lb.classList.add('active');
+      lbClose.focus();
+    }
+
+    function closeLightbox() {
+      lb.classList.remove('active');
+    }
 
     document.querySelectorAll('.screenshot-card img').forEach(function(img) {
-      img.addEventListener('click', function() {
-        lbImg.src = img.src;
-        lbImg.alt = img.alt;
-        var cap = img.closest('.screenshot-card').querySelector('figcaption');
-        lbCap.textContent = cap ? cap.textContent : '';
-        lb.classList.add('active');
+      img.setAttribute('tabindex', '0');
+      img.setAttribute('role', 'button');
+      img.addEventListener('click', function() { openLightbox(img); });
+      img.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openLightbox(img);
+        }
       });
     });
 
-    lb.addEventListener('click', function() {
-      lb.classList.remove('active');
+    lbClose.addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeLightbox();
     });
 
+    lb.addEventListener('click', closeLightbox);
+
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') lb.classList.remove('active');
+      if (e.key === 'Escape') closeLightbox();
     });
   })();
   </script>

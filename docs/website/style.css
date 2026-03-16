@@ -17,7 +17,7 @@
   --bg-elevated: #182438;
   --text-primary: #F1F5F9;
   --text-secondary: #94A3B8;
-  --text-muted: #64748B;
+  --text-muted: #8494A7;
   --accent: #2A9D8F;
   --accent-hover: #3DB8A9;
   --accent-glow: rgba(42, 157, 143, 0.12);
@@ -30,7 +30,7 @@
   --docs-surface: #FFFFFF;
   --docs-text: #1E293B;
   --docs-text-secondary: #475569;
-  --docs-text-muted: #94A3B8;
+  --docs-text-muted: #6B7B8D;
   --docs-border: #E2E8F0;
   --docs-accent: #1F7A6F;
   --docs-sidebar-bg: #F8FAFC;
@@ -899,6 +899,30 @@ ul, ol {
   transform: scale(1);
 }
 
+.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.lightbox-close:hover,
+.lightbox-close:focus-visible {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 .lightbox-caption {
   position: absolute;
   bottom: 20px;
@@ -1169,7 +1193,7 @@ ul, ol {
   letter-spacing: 0.08em;
   margin-bottom: 8px;
   padding: 0 12px;
-  opacity: 0.5;
+  opacity: 0.7;
 }
 
 .sidebar-link {
@@ -1214,7 +1238,6 @@ ul, ol {
   font-size: 14px;
   color: var(--docs-text);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  outline: none;
 }
 
 .docs-search input::placeholder {
@@ -1223,7 +1246,9 @@ ul, ol {
 
 .docs-search input:focus {
   border-color: var(--docs-accent);
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+  box-shadow: 0 0 0 3px rgba(31, 122, 111, 0.15);
+  outline: 2px solid var(--docs-accent);
+  outline-offset: -2px;
 }
 
 /* Docs content area */
@@ -1239,7 +1264,7 @@ ul, ol {
 .docs-content h1 {
   font-family: "Outfit", sans-serif;
   font-weight: 700;
-  font-size: 2rem;
+  font-size: 2.25rem;
   color: var(--docs-text);
   margin-bottom: 8px;
   letter-spacing: -0.02em;
@@ -1254,14 +1279,14 @@ ul, ol {
 
 .docs-content h2 {
   font-family: "Outfit", sans-serif;
-  font-weight: 600;
-  font-size: 1.5rem;
+  font-weight: 700;
+  font-size: 2rem;
   color: var(--docs-text);
   margin-top: 56px;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   padding-top: 32px;
   border-top: 1px solid var(--docs-border);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .docs-content h2:first-of-type {
@@ -1273,9 +1298,19 @@ ul, ol {
 .docs-content h3 {
   font-family: "Outfit", sans-serif;
   font-weight: 600;
-  font-size: 1.15rem;
+  font-size: 1.5rem;
   color: var(--docs-text);
   margin-top: 40px;
+  margin-bottom: 16px;
+  letter-spacing: -0.01em;
+}
+
+.docs-content h4 {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--docs-text);
+  margin-top: 32px;
   margin-bottom: 12px;
 }
 
@@ -1653,6 +1688,24 @@ ul, ol {
   border-width: 0;
 }
 
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #0A1628;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
 /* --------------------------------------------------------------------------
    18. Responsive — Tablet (max-width: 768px)
    -------------------------------------------------------------------------- */
@@ -1808,13 +1861,17 @@ ul, ol {
 
   /* Docs content */
   .docs-content h1 {
-    font-size: 1.65rem;
+    font-size: 1.8rem;
   }
 
   .docs-content h2 {
-    font-size: 1.3rem;
+    font-size: 1.65rem;
     margin-top: 40px;
     padding-top: 24px;
+  }
+
+  .docs-content h3 {
+    font-size: 1.3rem;
   }
 
   /* Nav — on very small screens keep only Docs, Blog, and CTA */

@@ -8,7 +8,7 @@
   <meta name="keywords" content="MikroTik documentation, RouterOS fleet management guide, MSP network management setup, MikroTik API, RouterOS configuration management">
   <meta name="robots" content="index, follow">
   <meta name="google-site-verification" content="d2QVuWrLJlzOQPnA-SAJuvajEHGYbusvJ4eDdZbWSBU">
-  <meta name="theme-color" content="#0F172A">
+  <meta name="theme-color" content="#FAFBFC">
   <link rel="canonical" href="https://theotherdude.net/docs.html">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
 
@@ -35,6 +35,8 @@
 </head>
 <body class="docs-page">
 
+  <a href="#docs-content" class="skip-link">Skip to main content</a>
+
   <!-- ===== TESTING BANNER ===== -->
   <div class="testing-banner testing-banner--light">
     <div class="container">
@@ -43,10 +45,10 @@
   </div>
 
   <!-- ===== NAV ===== -->
-  <nav class="site-nav site-nav--light">
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
     <div class="nav-inner container">
       <a href="index.html" class="nav-logo">
-        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
           <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
           <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
           <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
@@ -81,23 +83,24 @@
   <div class="docs-layout">
 
     <!-- Sidebar -->
-    <aside class="docs-sidebar" id="docs-sidebar">
+    <aside class="docs-sidebar" id="docs-sidebar" aria-label="Documentation navigation">
       <div class="docs-search">
+        <label for="docs-search-input" class="sr-only">Search documentation</label>
         <input type="text" placeholder="Search docs..." id="docs-search-input" />
       </div>
       <nav class="sidebar-nav">
 
-        <h4 class="sidebar-heading">Getting Started</h4>
+        <p class="sidebar-section-title">Getting Started</p>
         <a href="#overview" class="sidebar-link" data-section="overview">Overview</a>
         <a href="#quickstart" class="sidebar-link" data-section="quickstart">Quick Start</a>
         <a href="#deployment" class="sidebar-link" data-section="deployment">Deployment</a>
 
-        <h4 class="sidebar-heading">Architecture</h4>
+        <p class="sidebar-section-title">Architecture</p>
         <a href="#system-overview" class="sidebar-link" data-section="system-overview">System Overview</a>
         <a href="#data-flow" class="sidebar-link" data-section="data-flow">Data Flow</a>
         <a href="#multi-tenancy" class="sidebar-link" data-section="multi-tenancy">Multi-Tenancy</a>
 
-        <h4 class="sidebar-heading">User Guide</h4>
+        <p class="sidebar-section-title">User Guide</p>
         <a href="#first-login" class="sidebar-link" data-section="first-login">First Login</a>
         <a href="#navigation" class="sidebar-link" data-section="navigation">Navigation</a>
         <a href="#device-management" class="sidebar-link" data-section="device-management">Device Management</a>
@@ -106,18 +109,18 @@
         <a href="#monitoring" class="sidebar-link" data-section="monitoring">Monitoring &amp; Alerts</a>
         <a href="#reports" class="sidebar-link" data-section="reports">Reports</a>
 
-        <h4 class="sidebar-heading">Security</h4>
+        <p class="sidebar-section-title">Security</p>
         <a href="#security-model" class="sidebar-link" data-section="security-model">Security Model</a>
         <a href="#authentication" class="sidebar-link" data-section="authentication">Authentication</a>
         <a href="#encryption" class="sidebar-link" data-section="encryption">Encryption</a>
         <a href="#rbac" class="sidebar-link" data-section="rbac">RBAC &amp; Tenants</a>
 
-        <h4 class="sidebar-heading">API Reference</h4>
+        <p class="sidebar-section-title">API Reference</p>
         <a href="#api-endpoints" class="sidebar-link" data-section="api-endpoints">Endpoints</a>
         <a href="#api-auth" class="sidebar-link" data-section="api-auth">Authentication</a>
         <a href="#api-errors" class="sidebar-link" data-section="api-errors">Error Handling</a>
 
-        <h4 class="sidebar-heading">Configuration</h4>
+        <p class="sidebar-section-title">Configuration</p>
         <a href="#env-vars" class="sidebar-link" data-section="env-vars">Environment Variables</a>
         <a href="#docker-compose" class="sidebar-link" data-section="docker-compose">Docker Compose</a>
 
@@ -137,7 +140,7 @@
         <p>Fleet management for MikroTik RouterOS devices. Built for MSPs who manage hundreds of routers across multiple tenants. Think &ldquo;UniFi Controller, but for MikroTik.&rdquo;</p>
         <p>TOD is a self-hosted, multi-tenant platform that gives you centralized visibility, configuration management, real-time monitoring, and zero-knowledge security across your entire MikroTik fleet.</p>
 
-        <h2>Features</h2>
+        <h3>Features</h3>
         <ul>
           <li><strong>Fleet</strong> &mdash; Dashboard with at-a-glance fleet health, virtual-scrolled device table, geographic map, and subnet scanner for device discovery.</li>
           <li><strong>Configuration</strong> &mdash; Config Editor with two-phase safe apply, batch configuration across devices, bulk CLI commands, reusable templates, Simple Config (Linksys/Ubiquiti-style UI), and git-backed config backup with diff viewer.</li>
@@ -148,7 +151,7 @@
           <li><strong>UX</strong> &mdash; Command palette (<kbd>Cmd+K</kbd>), Vim-style keyboard shortcuts, dark/light mode, Framer Motion page transitions, and shimmer skeleton loaders.</li>
         </ul>
 
-        <h2>Tech Stack</h2>
+        <h3>Tech Stack</h3>
         <table>
           <thead>
             <tr><th>Layer</th><th>Technology</th></tr>
@@ -168,7 +171,7 @@
 
       <!-- QUICK START -->
       <section id="quickstart">
-        <h1>Quick Start</h1>
+        <h2>Quick Start</h2>
         <pre><code># Clone and run the setup wizard
 git clone https://github.com/staack/the-other-dude.git
 cd the-other-dude
@@ -188,7 +191,7 @@ python3 setup.py</code></pre>
         </ul>
         <p>No manual <code>.env</code> editing required. The wizard generates <code>.env.prod</code> with production-strength secrets and starts the full stack.</p>
 
-        <h2>Environment Profiles</h2>
+        <h3>Environment Profiles</h3>
         <table>
           <thead>
             <tr><th>Environment</th><th>Frontend</th><th>API</th><th>Notes</th></tr>
@@ -203,9 +206,9 @@ python3 setup.py</code></pre>
 
       <!-- DEPLOYMENT -->
       <section id="deployment">
-        <h1>Deployment</h1>
+        <h2>Deployment</h2>
 
-        <h2>Prerequisites</h2>
+        <h3>Prerequisites</h3>
         <ul>
           <li>Docker Engine 24+ with Docker Compose v2</li>
           <li>At least 4 GB RAM (2 GB absolute minimum &mdash; builds are memory-intensive)</li>
@@ -213,14 +216,14 @@ python3 setup.py</code></pre>
           <li>Network access to RouterOS devices on ports 8728 (API) and 8729 (API-SSL)</li>
         </ul>
 
-        <h2>1. Clone and Configure</h2>
+        <h3>1. Clone and Configure</h3>
         <pre><code>git clone &lt;repository-url&gt; tod
 cd tod
 
 # Copy environment template
 cp .env.example .env.prod</code></pre>
 
-        <h2>2. Generate Secrets</h2>
+        <h3>2. Generate Secrets</h3>
         <pre><code># Generate JWT secret
 python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 
@@ -236,16 +239,16 @@ POSTGRES_PASSWORD=&lt;strong-password&gt;
 FIRST_ADMIN_EMAIL=admin@example.com
 FIRST_ADMIN_PASSWORD=&lt;strong-password&gt;</code></pre>
 
-        <h2>3. Build Images</h2>
+        <h3>3. Build Images</h3>
         <p>Build images <strong>one at a time</strong> to avoid out-of-memory crashes on constrained hosts:</p>
         <pre><code>docker compose -f docker-compose.yml -f docker-compose.prod.yml build api
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build poller
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build frontend</code></pre>
 
-        <h2>4. Start the Stack</h2>
+        <h3>4. Start the Stack</h3>
         <pre><code>docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d</code></pre>
 
-        <h2>5. Verify</h2>
+        <h3>5. Verify</h3>
         <pre><code># Check all services are running
 docker compose ps
 
@@ -259,7 +262,7 @@ curl http://localhost:8000/health/ready
 open http://localhost</code></pre>
         <p>Log in with the <code>FIRST_ADMIN_EMAIL</code> and <code>FIRST_ADMIN_PASSWORD</code> credentials set in step 2.</p>
 
-        <h2>Required Environment Variables</h2>
+        <h3>Required Environment Variables</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Description</th><th>Example</th></tr>
@@ -274,7 +277,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Optional Environment Variables</h2>
+        <h3>Optional Environment Variables</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -296,7 +299,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Storage Configuration</h2>
+        <h3>Storage Configuration</h3>
         <p>Docker volumes mount to the host filesystem. Default locations:</p>
         <ul>
           <li><strong>PostgreSQL data:</strong> <code>./docker-data/postgres</code></li>
@@ -306,7 +309,7 @@ open http://localhost</code></pre>
         </ul>
         <p>To change storage locations, edit the volume mounts in <code>docker-compose.yml</code>.</p>
 
-        <h2>Resource Limits</h2>
+        <h3>Resource Limits</h3>
         <p>Container memory limits are enforced in <code>docker-compose.prod.yml</code> to prevent OOM crashes:</p>
         <table>
           <thead>
@@ -323,7 +326,7 @@ open http://localhost</code></pre>
         </table>
         <p>Adjust under <code>deploy.resources.limits.memory</code> in <code>docker-compose.prod.yml</code>.</p>
 
-        <h2>Monitoring (Optional)</h2>
+        <h3>Monitoring (Optional)</h3>
         <p>Enable Prometheus and Grafana monitoring with the observability compose overlay:</p>
         <pre><code>docker compose \
   -f docker-compose.yml \
@@ -351,7 +354,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Troubleshooting</h2>
+        <h3>Troubleshooting</h3>
         <table>
           <thead>
             <tr><th>Issue</th><th>Solution</th></tr>
@@ -375,10 +378,10 @@ open http://localhost</code></pre>
 
       <!-- SYSTEM OVERVIEW -->
       <section id="system-overview">
-        <h1>System Overview</h1>
+        <h2>System Overview</h2>
         <p>TOD is a containerized MSP fleet management platform for MikroTik RouterOS devices. It uses a three-service architecture: a React frontend, a Python FastAPI backend, and a Go poller. All services communicate through PostgreSQL, Redis, and NATS JetStream. Multi-tenancy is enforced at the database level via PostgreSQL Row-Level Security (RLS).</p>
 
-        <h2>Architecture Diagram</h2>
+        <h3>Architecture Diagram</h3>
         <pre><code>+--------------+     +------------------+     +---------------+
 |   Frontend   |----&gt;|   Backend API    |&lt;---&gt;|   Go Poller   |
 |  React/nginx |     |    FastAPI       |     |  go-routeros  |
@@ -397,7 +400,7 @@ open http://localhost</code></pre>
                                           | Transit KMS  |
                                           +--------------+</code></pre>
 
-        <h2>Services</h2>
+        <h3>Services</h3>
 
         <h3>Frontend (React / nginx)</h3>
         <ul>
@@ -479,7 +482,7 @@ open http://localhost</code></pre>
           <li><strong>Memory limit:</strong> 256 MB</li>
         </ul>
 
-        <h2>Infrastructure Services</h2>
+        <h3>Infrastructure Services</h3>
 
         <h3>PostgreSQL 17 + TimescaleDB</h3>
         <ul>
@@ -532,7 +535,7 @@ open http://localhost</code></pre>
           <li><strong>Memory limit:</strong> 128 MB</li>
         </ul>
 
-        <h2>Container Memory Limits</h2>
+        <h3>Container Memory Limits</h3>
         <table>
           <thead>
             <tr><th>Service</th><th>Limit</th></tr>
@@ -549,7 +552,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Network Ports</h2>
+        <h3>Network Ports</h3>
         <table>
           <thead>
             <tr><th>Service</th><th>Internal Port</th><th>External Port</th><th>Protocol</th></tr>
@@ -571,9 +574,9 @@ open http://localhost</code></pre>
 
       <!-- DATA FLOW -->
       <section id="data-flow">
-        <h1>Data Flow</h1>
+        <h2>Data Flow</h2>
 
-        <h2>Device Polling Cycle</h2>
+        <h3>Device Polling Cycle</h3>
         <pre><code>Go Poller        Redis      OpenBao    RouterOS     NATS        API        PostgreSQL
    |               |           |           |           |           |            |
    +--query list--&gt;|           |           |           |           |            |
@@ -599,7 +602,7 @@ open http://localhost</code></pre>
           <li>Releases Redis lock</li>
         </ol>
 
-        <h2>Config Push (Two-Phase with Panic Revert)</h2>
+        <h3>Config Push (Two-Phase with Panic Revert)</h3>
         <pre><code>Frontend        API           RouterOS
    |              |               |
    +--push config-&gt;|              |
@@ -623,7 +626,7 @@ open http://localhost</code></pre>
         </ol>
         <p>This pattern prevents lockouts from misconfigured firewall rules or IP changes.</p>
 
-        <h2>SRP-6a Authentication Flow</h2>
+        <h3>SRP-6a Authentication Flow</h3>
         <pre><code>Browser                     API                   PostgreSQL
    |                          |                       |
    +--register----------------&gt;|                      |
@@ -647,10 +650,10 @@ open http://localhost</code></pre>
 
       <!-- MULTI-TENANCY -->
       <section id="multi-tenancy">
-        <h1>Multi-Tenancy</h1>
+        <h2>Multi-Tenancy</h2>
         <p>TOD enforces tenant isolation at the database level using PostgreSQL Row-Level Security (RLS), making cross-tenant data access structurally impossible.</p>
 
-        <h2>How It Works</h2>
+        <h3>How It Works</h3>
         <ul>
           <li>Every data table includes a <code>tenant_id</code> column.</li>
           <li>PostgreSQL RLS policies filter rows by <code>current_setting('app.tenant_id')</code>.</li>
@@ -660,7 +663,7 @@ open http://localhost</code></pre>
           <li>Tenant isolation is enforced at the database level, not the application level &mdash; even a compromised API cannot leak cross-tenant data through <code>app_user</code> connections.</li>
         </ul>
 
-        <h2>Database Roles</h2>
+        <h3>Database Roles</h3>
         <table>
           <thead>
             <tr><th>Role</th><th>RLS</th><th>Purpose</th></tr>
@@ -672,7 +675,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Security Layers</h2>
+        <h3>Security Layers</h3>
         <table>
           <thead>
             <tr><th>Layer</th><th>Mechanism</th><th>Purpose</th></tr>
@@ -697,7 +700,7 @@ open http://localhost</code></pre>
 
       <!-- FIRST LOGIN -->
       <section id="first-login">
-        <h1>First Login</h1>
+        <h2>First Login</h2>
         <ol>
           <li>Navigate to the portal URL provided by your administrator.</li>
           <li>Log in with the admin credentials created during initial deployment.</li>
@@ -706,7 +709,7 @@ open http://localhost</code></pre>
           <li>Complete the <strong>Setup Wizard</strong> to create your first organization and add your first device.</li>
         </ol>
 
-        <h2>Setup Wizard</h2>
+        <h3>Setup Wizard</h3>
         <p>The Setup Wizard launches automatically for first-time super_admin users. It walks through three steps:</p>
         <ul>
           <li><strong>Step 1 &mdash; Create Organization:</strong> Enter a name for your tenant (organization). This is the top-level container for all your devices, users, and configuration.</li>
@@ -718,10 +721,10 @@ open http://localhost</code></pre>
 
       <!-- NAVIGATION -->
       <section id="navigation">
-        <h1>Navigation</h1>
+        <h2>Navigation</h2>
         <p>TOD uses a collapsible sidebar with four sections. Press <kbd>[</kbd> to toggle the sidebar between expanded (240px) and collapsed (48px) views. On mobile, the sidebar opens as an overlay.</p>
 
-        <h2>Fleet</h2>
+        <h3>Fleet</h3>
         <table>
           <thead>
             <tr><th>Item</th><th>Description</th></tr>
@@ -733,7 +736,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Manage</h2>
+        <h3>Manage</h3>
         <table>
           <thead>
             <tr><th>Item</th><th>Description</th></tr>
@@ -750,7 +753,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Monitor</h2>
+        <h3>Monitor</h3>
         <table>
           <thead>
             <tr><th>Item</th><th>Description</th></tr>
@@ -765,7 +768,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Admin</h2>
+        <h3>Admin</h3>
         <table>
           <thead>
             <tr><th>Item</th><th>Description</th></tr>
@@ -779,7 +782,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Keyboard Shortcuts</h2>
+        <h3>Keyboard Shortcuts</h3>
         <table>
           <thead>
             <tr><th>Shortcut</th><th>Action</th></tr>
@@ -799,9 +802,9 @@ open http://localhost</code></pre>
 
       <!-- DEVICE MANAGEMENT -->
       <section id="device-management">
-        <h1>Device Management</h1>
+        <h2>Device Management</h2>
 
-        <h2>Adding Devices</h2>
+        <h3>Adding Devices</h3>
         <p>There are three ways to add devices to your fleet:</p>
         <ol>
           <li><strong>Setup Wizard</strong> &mdash; automatically offered on first login.</li>
@@ -815,7 +818,7 @@ open http://localhost</code></pre>
           <li><strong>Credentials</strong> &mdash; username and password for the device. Credentials are encrypted at rest with AES-256-GCM.</li>
         </ul>
 
-        <h2>Device Detail Tabs</h2>
+        <h3>Device Detail Tabs</h3>
         <table>
           <thead>
             <tr><th>Tab</th><th>Description</th></tr>
@@ -832,7 +835,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Remote Access Buttons</h2>
+        <h3>Remote Access Buttons</h3>
         <p>The device detail page includes <strong>WinBox</strong> and <strong>SSH</strong> buttons for one-click remote access:</p>
         <ul>
           <li><strong>WinBox</strong> &mdash; Opens a WinBox tunnel via NATS request-reply. The poller allocates a local TCP port and proxies traffic to the device&rsquo;s WinBox port. A <code>winbox://</code> URI is returned to launch the WinBox application.</li>
@@ -840,7 +843,7 @@ open http://localhost</code></pre>
         </ul>
         <p>Both session types have configurable idle timeouts (WinBox: 5 min, SSH: 15 min) and are fully audit-logged.</p>
 
-        <h2>Simple Config</h2>
+        <h3>Simple Config</h3>
         <p>Simple Config provides a consumer-router-style interface modeled after Linksys and Ubiquiti UIs. It is designed for operators who prefer guided configuration over raw RouterOS paths.</p>
         <p>Seven category tabs:</p>
         <ol>
@@ -857,14 +860,14 @@ open http://localhost</code></pre>
 
       <!-- CONFIG EDITOR -->
       <section id="config-editor">
-        <h1>Config Editor</h1>
+        <h2>Config Editor</h2>
         <p>The Config Editor provides direct access to RouterOS configuration paths (e.g., <code>/ip/address</code>, <code>/ip/firewall/filter</code>, <code>/interface/bridge</code>).</p>
         <ul>
           <li>Select a device from the header dropdown.</li>
           <li>Navigate the configuration tree to browse, add, edit, or delete entries.</li>
         </ul>
 
-        <h2>Apply Modes</h2>
+        <h3>Apply Modes</h3>
         <ul>
           <li><strong>Standard Apply</strong> &mdash; changes are applied immediately.</li>
           <li><strong>Safe Apply</strong> &mdash; two-phase commit with automatic panic-revert. Changes are applied, and you have a confirmation window to accept them. If the confirmation times out (device becomes unreachable), changes automatically revert to prevent lockouts.</li>
@@ -874,10 +877,10 @@ open http://localhost</code></pre>
 
       <!-- REMOTE ACCESS -->
       <section id="remote-access">
-        <h1>Remote Access</h1>
+        <h2>Remote Access</h2>
         <p>TOD provides browser-based remote access to RouterOS devices without exposing management ports to the internet. Two access methods are available from the device detail page.</p>
 
-        <h2>WinBox Tunnels</h2>
+        <h3>WinBox Tunnels</h3>
         <p>Click the <strong>WinBox</strong> button on any device to open a temporary TCP tunnel:</p>
         <ol>
           <li>The API sends a NATS request to the poller on <code>tunnel.open.{device_id}</code>.</li>
@@ -886,7 +889,7 @@ open http://localhost</code></pre>
           <li>The tunnel closes automatically after 5 minutes of idle time, or when explicitly closed.</li>
         </ol>
 
-        <h2>SSH Terminal</h2>
+        <h3>SSH Terminal</h3>
         <p>Click the <strong>SSH</strong> button to open an in-browser terminal:</p>
         <ol>
           <li>The API generates a single-use session token stored in Redis (60-second TTL).</li>
@@ -896,7 +899,7 @@ open http://localhost</code></pre>
           <li>Sessions close after 15 minutes of idle time.</li>
         </ol>
 
-        <h2>Architecture</h2>
+        <h3>Architecture</h3>
         <pre><code>Browser         API            NATS          Poller         RouterOS
   |              |               |              |               |
   +--WinBox btn-&gt;|              |              |               |
@@ -912,7 +915,7 @@ open http://localhost</code></pre>
   |              |               |              +--SSH session-&gt;|
   |&lt;-------- bidirectional PTY bridge --------&gt;|&lt;------------&gt;|</code></pre>
 
-        <h2>Session Management</h2>
+        <h3>Session Management</h3>
         <table>
           <thead>
             <tr><th>Feature</th><th>WinBox Tunnel</th><th>SSH Terminal</th></tr>
@@ -926,7 +929,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Security</h2>
+        <h3>Security</h3>
         <ul>
           <li>WinBox tunnels are only accessible from the poller&rsquo;s host (bound to <code>0.0.0.0</code> within the container network).</li>
           <li>SSH session tokens are single-use, expire in 60 seconds, and are validated + deleted atomically in Redis.</li>
@@ -938,9 +941,9 @@ open http://localhost</code></pre>
 
       <!-- MONITORING -->
       <section id="monitoring">
-        <h1>Monitoring &amp; Alerts</h1>
+        <h2>Monitoring &amp; Alerts</h2>
 
-        <h2>Alert Rules</h2>
+        <h3>Alert Rules</h3>
         <p>Create threshold-based rules that fire when device metrics cross defined boundaries:</p>
         <ul>
           <li>Select the metric to monitor (CPU, memory, disk, interface traffic, wireless signal, wireless CCQ, uptime, etc.).</li>
@@ -949,7 +952,7 @@ open http://localhost</code></pre>
           <li>Assign one or more notification channels.</li>
         </ul>
 
-        <h2>Notification Channels</h2>
+        <h3>Notification Channels</h3>
         <table>
           <thead>
             <tr><th>Channel</th><th>Description</th></tr>
@@ -961,7 +964,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Maintenance Windows</h2>
+        <h3>Maintenance Windows</h3>
         <ul>
           <li>Define start and end times.</li>
           <li>Apply to specific devices or fleet-wide.</li>
@@ -972,7 +975,7 @@ open http://localhost</code></pre>
 
       <!-- REPORTS -->
       <section id="reports">
-        <h1>Reports</h1>
+        <h2>Reports</h2>
         <p>Generate PDF reports from the Reports page. Four report types are available:</p>
         <table>
           <thead>
@@ -994,10 +997,10 @@ open http://localhost</code></pre>
 
       <!-- SECURITY MODEL -->
       <section id="security-model">
-        <h1>Security Model</h1>
+        <h2>Security Model</h2>
         <p>TOD implements a 1Password-inspired zero-knowledge security architecture. The server never stores or sees user passwords. All data is stored on infrastructure you own and control &mdash; no external telemetry, analytics, or third-party data transmission.</p>
 
-        <h2>Data Protection</h2>
+        <h3>Data Protection</h3>
         <ul>
           <li><strong>Config backups:</strong> Encrypted at rest via OpenBao Transit envelope encryption before database storage.</li>
           <li><strong>Audit logs:</strong> Encrypted at rest via Transit encryption &mdash; audit log content is protected even from database administrators.</li>
@@ -1012,7 +1015,7 @@ open http://localhost</code></pre>
           </li>
         </ul>
 
-        <h2>Security Headers</h2>
+        <h3>Security Headers</h3>
         <table>
           <thead>
             <tr><th>Header</th><th>Value</th><th>Purpose</th></tr>
@@ -1026,7 +1029,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Audit Trail</h2>
+        <h3>Audit Trail</h3>
         <ul>
           <li><strong>Immutable audit log:</strong> All significant actions are recorded &mdash; logins, configuration changes, device operations, admin actions.</li>
           <li><strong>Fire-and-forget logging:</strong> The <code>log_action()</code> function records audit events asynchronously without blocking the main request.</li>
@@ -1036,7 +1039,7 @@ open http://localhost</code></pre>
           <li><strong>Account deletion:</strong> When a user deletes their account, audit log entries are anonymized (PII removed) but the action records are retained for security compliance.</li>
         </ul>
 
-        <h2>Data Retention</h2>
+        <h3>Data Retention</h3>
         <table>
           <thead>
             <tr><th>Data Type</th><th>Retention</th><th>Notes</th></tr>
@@ -1054,7 +1057,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>GDPR Compliance</h2>
+        <h3>GDPR Compliance</h3>
         <ul>
           <li><strong>Right of Access (Art. 15):</strong> Users can view their account information on the Settings page.</li>
           <li><strong>Right to Data Portability (Art. 20):</strong> Users can export all personal data in JSON format from Settings.</li>
@@ -1066,9 +1069,9 @@ open http://localhost</code></pre>
 
       <!-- AUTHENTICATION -->
       <section id="authentication">
-        <h1>Authentication</h1>
+        <h2>Authentication</h2>
 
-        <h2>SRP-6a Zero-Knowledge Proof</h2>
+        <h3>SRP-6a Zero-Knowledge Proof</h3>
         <p>TOD uses the Secure Remote Password (SRP-6a) protocol for authentication, ensuring the server never receives, transmits, or stores user passwords.</p>
         <ul>
           <li><strong>SRP-6a protocol:</strong> Password is verified via a zero-knowledge proof &mdash; only a cryptographic verifier derived from the password is stored on the server, never the password itself.</li>
@@ -1093,7 +1096,7 @@ open http://localhost</code></pre>
   |  {M2, access_token, refresh_token}  |
   |&lt;------------------------------------|</code></pre>
 
-        <h2>Two-Secret Key Derivation (2SKD)</h2>
+        <h3>Two-Secret Key Derivation (2SKD)</h3>
         <p>Combines the user password with a 128-bit Secret Key using a multi-step derivation process, ensuring that compromise of either factor alone is insufficient:</p>
         <ul>
           <li><strong>PBKDF2</strong> with 650,000 iterations stretches the password.</li>
@@ -1101,7 +1104,7 @@ open http://localhost</code></pre>
           <li><strong>XOR</strong> combination of both factors produces the verifier input.</li>
         </ul>
 
-        <h2>Secret Key &amp; Emergency Kit</h2>
+        <h3>Secret Key &amp; Emergency Kit</h3>
         <ul>
           <li><strong>Secret Key format:</strong> <code>A3-XXXXXX</code> (128-bit), stored exclusively in the browser&rsquo;s IndexedDB. The server never sees or stores the Secret Key.</li>
           <li><strong>Emergency Kit:</strong> Downloadable PDF containing the Secret Key for account recovery. Generated client-side.</li>
@@ -1110,9 +1113,9 @@ open http://localhost</code></pre>
 
       <!-- ENCRYPTION -->
       <section id="encryption">
-        <h1>Encryption</h1>
+        <h2>Encryption</h2>
 
-        <h2>Credential Encryption</h2>
+        <h3>Credential Encryption</h3>
         <p>Device credentials (RouterOS usernames and passwords) are encrypted at rest using envelope encryption:</p>
         <ul>
           <li><strong>Encryption algorithm:</strong> AES-256-GCM (via Fernet symmetric encryption).</li>
@@ -1121,10 +1124,10 @@ open http://localhost</code></pre>
           <li><strong>Envelope encryption:</strong> Data is encrypted with a data encryption key (DEK), which is itself encrypted by the tenant&rsquo;s Transit key.</li>
         </ul>
 
-        <h2>Go Poller LRU Cache</h2>
+        <h3>Go Poller LRU Cache</h3>
         <p>The Go poller decrypts credentials at runtime via the Transit API, with an LRU cache (1,024 entries, 5-minute TTL) to reduce KMS round-trips. Cache hits avoid OpenBao API calls entirely.</p>
 
-        <h2>Additional Encryption</h2>
+        <h3>Additional Encryption</h3>
         <ul>
           <li><strong>CA private keys:</strong> Encrypted with AES-256-GCM before database storage. PEM key material is never logged.</li>
           <li><strong>Config backups:</strong> Encrypted at rest via OpenBao Transit before database storage.</li>
@@ -1134,9 +1137,9 @@ open http://localhost</code></pre>
 
       <!-- RBAC -->
       <section id="rbac">
-        <h1>RBAC &amp; Tenants</h1>
+        <h2>RBAC &amp; Tenants</h2>
 
-        <h2>Role-Based Access Control</h2>
+        <h3>Role-Based Access Control</h3>
         <table>
           <thead>
             <tr><th>Role</th><th>Scope</th><th>Capabilities</th></tr>
@@ -1154,10 +1157,10 @@ open http://localhost</code></pre>
           <li>API key tokens use the <code>mktp_</code> prefix and are stored as SHA-256 hashes (the plaintext token is shown once at creation and never stored).</li>
         </ul>
 
-        <h2>Tenant Isolation via RLS</h2>
+        <h3>Tenant Isolation via RLS</h3>
         <p>Multi-tenancy is enforced at the database level via PostgreSQL Row-Level Security (RLS). The <code>app_user</code> database role automatically filters all queries by the authenticated user&rsquo;s <code>tenant_id</code>. Super admins operate outside tenant scope.</p>
 
-        <h2>Internal CA &amp; TLS Fallback</h2>
+        <h3>Internal CA &amp; TLS Fallback</h3>
         <p>TOD includes a per-tenant Internal Certificate Authority for managing TLS certificates on RouterOS devices:</p>
         <ul>
           <li><strong>Per-tenant CA:</strong> Each tenant can generate its own self-signed Certificate Authority.</li>
@@ -1179,9 +1182,9 @@ open http://localhost</code></pre>
 
       <!-- API ENDPOINTS -->
       <section id="api-endpoints">
-        <h1>API Endpoints</h1>
+        <h2>API Endpoints</h2>
 
-        <h2>Overview</h2>
+        <h3>Overview</h3>
         <p>TOD exposes a REST API built with FastAPI. Interactive documentation is available at:</p>
         <ul>
           <li><strong>Swagger UI:</strong> <code>http://&lt;host&gt;:&lt;port&gt;/docs</code> (dev environment only)</li>
@@ -1189,7 +1192,7 @@ open http://localhost</code></pre>
         </ul>
         <p>Both Swagger and ReDoc are disabled in staging/production environments.</p>
 
-        <h2>Endpoint Groups</h2>
+        <h3>Endpoint Groups</h3>
         <p>All API routes are mounted under the <code>/api</code> prefix.</p>
         <table>
           <thead>
@@ -1225,7 +1228,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Health Checks</h2>
+        <h3>Health Checks</h3>
         <table>
           <thead>
             <tr><th>Endpoint</th><th>Type</th><th>Description</th></tr>
@@ -1240,9 +1243,9 @@ open http://localhost</code></pre>
 
       <!-- API AUTH -->
       <section id="api-auth">
-        <h1>API Authentication</h1>
+        <h2>API Authentication</h2>
 
-        <h2>SRP-6a Login</h2>
+        <h3>SRP-6a Login</h3>
         <ul>
           <li><code>POST /api/auth/login</code> &mdash; SRP-6a authentication (returns JWT access + refresh tokens)</li>
           <li><code>POST /api/auth/refresh</code> &mdash; Refresh an expired access token</li>
@@ -1255,7 +1258,7 @@ open http://localhost</code></pre>
         </ul>
         <p>Access tokens expire after 15 minutes. Refresh tokens are valid for 7 days.</p>
 
-        <h2>API Key Authentication</h2>
+        <h3>API Key Authentication</h3>
         <ul>
           <li>Create API keys in <strong>Admin &gt; API Keys</strong></li>
           <li>Use header: <code>X-API-Key: mktp_&lt;key&gt;</code></li>
@@ -1263,14 +1266,14 @@ open http://localhost</code></pre>
           <li>Prefix: <code>mktp_</code>, stored as SHA-256 hash</li>
         </ul>
 
-        <h2>Rate Limiting</h2>
+        <h3>Rate Limiting</h3>
         <ul>
           <li>Auth endpoints: 5 requests/minute per IP</li>
           <li>General endpoints: no global rate limit (per-route limits may apply)</li>
         </ul>
         <p>Rate limit violations return HTTP 429 with a JSON error body.</p>
 
-        <h2>RBAC Roles</h2>
+        <h3>RBAC Roles</h3>
         <table>
           <thead>
             <tr><th>Role</th><th>Scope</th><th>Description</th></tr>
@@ -1286,15 +1289,15 @@ open http://localhost</code></pre>
 
       <!-- API ERRORS -->
       <section id="api-errors">
-        <h1>Error Handling</h1>
+        <h2>Error Handling</h2>
 
-        <h2>Error Format</h2>
+        <h3>Error Format</h3>
         <p>All error responses use a standard JSON format:</p>
         <pre><code>{
   "detail": "Human-readable error message"
 }</code></pre>
 
-        <h2>Status Codes</h2>
+        <h3>Status Codes</h3>
         <table>
           <thead>
             <tr><th>Code</th><th>Meaning</th></tr>
@@ -1319,10 +1322,10 @@ open http://localhost</code></pre>
 
       <!-- ENV VARS -->
       <section id="env-vars">
-        <h1>Environment Variables</h1>
+        <h2>Environment Variables</h2>
         <p>TOD uses Pydantic Settings for configuration. All values can be set via environment variables or a <code>.env</code> file in the backend working directory.</p>
 
-        <h2>Application</h2>
+        <h3>Application</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1337,7 +1340,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Authentication &amp; JWT</h2>
+        <h3>Authentication &amp; JWT</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1351,7 +1354,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Database</h2>
+        <h3>Database</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1367,7 +1370,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Security</h2>
+        <h3>Security</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1377,7 +1380,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>OpenBao / Vault (KMS)</h2>
+        <h3>OpenBao / Vault (KMS)</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1388,7 +1391,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>NATS</h2>
+        <h3>NATS</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1398,7 +1401,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Redis</h2>
+        <h3>Redis</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1408,7 +1411,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>SMTP (Notifications)</h2>
+        <h3>SMTP (Notifications)</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1423,7 +1426,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Firmware</h2>
+        <h3>Firmware</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1434,7 +1437,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Storage Paths</h2>
+        <h3>Storage Paths</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1445,7 +1448,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Bootstrap</h2>
+        <h3>Bootstrap</h3>
         <table>
           <thead>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
@@ -1456,7 +1459,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Production Safety</h2>
+        <h3>Production Safety</h3>
         <p>TOD refuses to start in <code>staging</code> or <code>production</code> environments if any of these variables still have their insecure dev defaults:</p>
         <ul>
           <li><code>JWT_SECRET_KEY</code></li>
@@ -1468,9 +1471,9 @@ open http://localhost</code></pre>
 
       <!-- DOCKER COMPOSE -->
       <section id="docker-compose">
-        <h1>Docker Compose</h1>
+        <h2>Docker Compose</h2>
 
-        <h2>Profiles</h2>
+        <h3>Profiles</h3>
         <table>
           <thead>
             <tr><th>Profile</th><th>Command</th><th>Services</th></tr>
@@ -1481,7 +1484,7 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h2>Container Memory Limits</h2>
+        <h3>Container Memory Limits</h3>
         <p>All containers have enforced memory limits to prevent OOM on the host:</p>
         <table>
           <thead>
@@ -1503,7 +1506,7 @@ open http://localhost</code></pre>
   </div>
 
   <!-- Back to Top -->
-  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()">&uarr;</button>
+  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" aria-label="Back to top">&uarr;</button>
 
   <footer class="site-footer">
     <div class="footer-inner container">
@@ -1525,12 +1528,12 @@ open http://localhost</code></pre>
         </span>
         <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
       </div>
-      <nav class="footer-links">
+      <nav class="footer-links" aria-label="Footer navigation">
         <a href="index.html">Home</a>
         <a href="blog/">Blog</a>
         <a href="#quickstart">Quick Start</a>
-        <a href="#security">Security</a>
-        <a href="#api">API Reference</a>
+        <a href="#security-model">Security</a>
+        <a href="#api-endpoints">API Reference</a>
         <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
         <a href="mailto:license@theotherdude.net">Licensing</a>
         <a href="mailto:support@theotherdude.net">Support</a>
