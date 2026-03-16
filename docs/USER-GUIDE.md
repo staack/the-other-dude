@@ -1,6 +1,6 @@
 # TOD - The Other Dude: User Guide
 
-MSP fleet management platform for MikroTik RouterOS devices.
+Managed Service Provider (MSP) fleet management platform for MikroTik RouterOS devices.
 
 ---
 
@@ -10,7 +10,7 @@ MSP fleet management platform for MikroTik RouterOS devices.
 
 1. Navigate to the portal URL provided by your administrator.
 2. Log in with the admin credentials created during initial deployment.
-3. Complete **SRP security enrollment** -- the portal uses zero-knowledge authentication (SRP-6a), so a unique Secret Key is generated for your account.
+3. Complete **security enrollment** — the portal uses zero-knowledge authentication, meaning your password never leaves your browser, so a unique Secret Key is generated for your account.
 4. **Save your Emergency Kit PDF immediately.** This PDF contains your Secret Key, which you will need to log in from any new browser or device. Without it, you cannot recover access.
 5. Complete the **Setup Wizard** to create your first organization and add your first device.
 
@@ -19,7 +19,7 @@ MSP fleet management platform for MikroTik RouterOS devices.
 The Setup Wizard launches automatically for first-time super_admin users. It walks through three steps:
 
 - **Step 1 -- Create Organization**: Enter a name for your tenant (organization). This is the top-level container for all your devices, users, and configuration.
-- **Step 2 -- Add Device**: Enter the IP address, API port (default 8729 for TLS), and RouterOS credentials for your first device. The portal will attempt to connect and verify the device.
+- **Step 2 -- Add Device**: Enter the IP address, API port (default 8729 for TLS — this is the RouterOS API-SSL service, which must be enabled on the device under IP > Services), and RouterOS credentials for your first device. The portal will attempt to connect and verify the device.
 - **Step 3 -- Verify & Complete**: The portal polls the device to confirm connectivity. Once verified, you are taken to the dashboard.
 
 You can always add more organizations and devices later from the sidebar.
@@ -54,7 +54,7 @@ TOD uses a collapsible sidebar with four sections. Press `[` to toggle the sideb
 
 | Item | Description |
 |------|-------------|
-| **Topology** | Interactive network map showing device connections and shared subnets, rendered with ReactFlow and Dagre layout. |
+| **Topology** | Interactive network map showing device connections and shared subnets, with automatic layout for readability. |
 | **Alerts** | Live alert feed with filtering by severity (info, warning, critical) and acknowledgment actions. |
 | **Alert Rules** | Define threshold-based alert rules on device metrics with configurable severity and notification channels. |
 | **Audit Trail** | Immutable, append-only log of all operations -- configuration changes, logins, user management, and admin actions. |
@@ -66,7 +66,7 @@ TOD uses a collapsible sidebar with four sections. Press `[` to toggle the sideb
 | Item | Description |
 |------|-------------|
 | **Users** | User management with role-based access control (RBAC). Assign roles: super_admin, admin, operator, viewer. |
-| **Organizations** | Create and manage tenants for multi-tenant MSP operation. Each tenant has isolated data via PostgreSQL row-level security. |
+| **Organizations** | Create and manage tenants for multi-tenant MSP operation. Each tenant's data is fully isolated — users in one organization cannot see another's devices or data. |
 | **API Keys** | Generate and manage programmatic access tokens (prefixed `mktp_`) with operator-level permissions. |
 | **Settings** | System configuration, theme toggle (dark/light), and profile settings. |
 | **About** | Platform version, feature summary, and project information. |
@@ -97,12 +97,12 @@ There are several ways to add devices to your fleet:
 
 1. **Setup Wizard** -- automatically offered on first login.
 2. **Fleet Table** -- click the "Add Device" button from the Devices page.
-3. **Subnet Scanner** -- enter a CIDR range (e.g., `192.168.1.0/24`) to auto-discover MikroTik devices on the network.
+3. **Subnet Scanner** -- enter a network range (e.g., `192.168.1.0/24` covers all addresses from .0 to .255) to auto-discover MikroTik devices on the network.
 
 When adding a device, provide:
 
 - **IP Address** -- the management IP of the RouterOS device.
-- **API Port** -- default is 8729 (TLS). The portal connects via the RouterOS binary API protocol.
+- **API Port** -- default is 8729 (TLS). Ensure the API-SSL service is enabled on your router (RouterOS: IP > Services > api-ssl).
 - **Credentials** -- username and password for the device. Credentials are encrypted at rest with AES-256-GCM.
 
 ### Device Detail Page
@@ -118,7 +118,7 @@ Click any device in the fleet table to open its detail page. Tabs include:
 | **DHCP** | Active DHCP leases, server configuration, and address pools. |
 | **Backups** | Configuration backup timeline with side-by-side diff viewer to compare changes over time. |
 | **Clients** | Connected clients and wireless registrations. |
-| **Wireless** | Wireless metrics charts -- client count, signal strength (dBm), and CCQ per interface over time. |
+| **Wireless** | Wireless metrics charts -- client count, signal strength (dBm), and CCQ (Client Connection Quality) per interface over time. |
 
 ### Config Editor
 
@@ -146,7 +146,7 @@ Seven category tabs:
 6. **DNS** -- DNS server and static DNS entries.
 7. **System** -- Device identity, timezone, NTP, admin password.
 
-Toggle between **Simple** (guided) and **Standard** (full config editor) modes at any time. Per-device settings are stored in browser localStorage.
+Toggle between **Simple** (guided) and **Standard** (full config editor) modes at any time. Your mode preference is saved in the browser — switching browsers resets it to Simple mode.
 
 ---
 
@@ -156,7 +156,7 @@ Toggle between **Simple** (guided) and **Standard** (full config editor) modes a
 
 Create threshold-based rules that fire when device metrics cross defined boundaries:
 
-- Select the metric to monitor (CPU, memory, disk, interface traffic, wireless signal, wireless CCQ, uptime, etc.).
+- Select the metric to monitor (CPU, memory, disk, interface traffic, wireless signal, wireless link quality, uptime, etc.).
 - Set the threshold value and comparison operator.
 - Choose severity: **info**, **warning**, or **critical**.
 - Assign one or more notification channels.
@@ -171,7 +171,7 @@ Alerts can be delivered through multiple channels:
 | **Webhook** | HTTP POST to any URL with a JSON payload containing alert details. |
 | **Slack** | Slack incoming webhook with Block Kit formatting for rich alert messages. |
 
-Default wireless alert rules (Signal Degraded at -75 dBm, CCQ Low at 50%) are automatically created when a new tenant is added.
+Default wireless alert rules (Signal Degraded at -75 dBm (a level where connection quality noticeably degrades), CCQ Low at 50% (indicating a poor or congested wireless link)) are automatically created when a new tenant is added.
 
 ### Maintenance Windows
 
@@ -208,7 +208,7 @@ TOD uses a 1Password-style hybrid zero-knowledge model:
 - **SRP-6a authentication** -- your password never leaves the browser. The server verifies a cryptographic proof without knowing the password.
 - **Secret Key** -- a 128-bit key in `A3-XXXXXX` format, generated during enrollment. Combined with your password for two-secret key derivation (2SKD).
 - **Emergency Kit** -- a downloadable PDF containing your Secret Key. Store it securely offline; you need it to log in from new browsers.
-- **Envelope encryption** -- configuration backups and audit logs are encrypted at rest using per-tenant keys managed by the KMS (OpenBao Transit).
+- **Envelope encryption** -- configuration backups and audit logs are encrypted at rest, with each organization getting its own encryption key managed by the built-in key management service.
 
 ### Roles and Permissions
 
@@ -221,7 +221,7 @@ TOD uses a 1Password-style hybrid zero-knowledge model:
 
 ### Credential Storage
 
-Device credentials (RouterOS username/password) are encrypted at rest with AES-256-GCM (Fernet) and only decrypted in memory by the poller when connecting to devices.
+Device credentials (RouterOS username/password) are encrypted at rest and only decrypted in memory when the poller connects to the device.
 
 ---
 
@@ -242,7 +242,7 @@ TOD supports dark and light modes:
 - The **Audit Trail** is immutable -- every configuration change, login, and admin action is recorded and cannot be deleted.
 - **Safe Apply** is your safety net for remote devices. If a firewall change locks you out, the automatic revert restores access.
 - **API Keys** (prefixed `mktp_`) provide programmatic access at operator-level permissions for automation and scripting.
-- The **Topology** view uses automatic Dagre layout. Toggle shared subnet edges to reduce visual clutter on complex networks.
+- The **Topology** view automatically arranges devices for readability. Toggle shared subnet edges to reduce visual clutter on complex networks.
 
 ---
 
