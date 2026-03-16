@@ -43,7 +43,8 @@ All API routes are mounted under the `/api` prefix.
 | Devices | `/api/devices/*` | Device CRUD, scanning, status |
 | Device Groups | `/api/device-groups/*` | Logical device grouping |
 | Device Tags | `/api/device-tags/*` | Tag-based device labeling |
-| Metrics | `/api/metrics/*` | TimescaleDB device metrics (CPU, memory, traffic) |
+| Metrics | `/api/metrics/*` | TimescaleDB device metrics (CPU, memory, traffic, wireless) |
+| Wireless Issues | `/api/fleet/wireless-issues`, `/api/tenants/{id}/fleet/wireless-issues` | APs with degraded signal, CCQ, or dropped clients |
 | Config Backups | `/api/config-backups/*` | Automated RouterOS config backup history |
 | Config Editor | `/api/config-editor/*` | Live RouterOS config browsing and editing |
 | Firmware | `/api/firmware/*` | RouterOS firmware version management and upgrades |

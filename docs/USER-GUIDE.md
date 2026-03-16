@@ -34,7 +34,7 @@ TOD uses a collapsible sidebar with four sections. Press `[` to toggle the sideb
 
 | Item | Description |
 |------|-------------|
-| **Dashboard** | Overview of your fleet with device status cards, active alerts, and metrics sparklines. The landing page after login. |
+| **Dashboard** | Overview of your fleet with device status cards, active alerts, metrics sparklines, and "APs Needing Attention" wireless health card. The landing page after login. |
 | **Devices** | Fleet table with search, sort, and filter. Click any device row to open its detail page. |
 | **Map** | Geographic map view of device locations. |
 
@@ -118,6 +118,7 @@ Click any device in the fleet table to open its detail page. Tabs include:
 | **DHCP** | Active DHCP leases, server configuration, and address pools. |
 | **Backups** | Configuration backup timeline with side-by-side diff viewer to compare changes over time. |
 | **Clients** | Connected clients and wireless registrations. |
+| **Wireless** | Wireless metrics charts -- client count, signal strength (dBm), and CCQ per interface over time. |
 
 ### Config Editor
 
@@ -155,7 +156,7 @@ Toggle between **Simple** (guided) and **Standard** (full config editor) modes a
 
 Create threshold-based rules that fire when device metrics cross defined boundaries:
 
-- Select the metric to monitor (CPU, memory, disk, interface traffic, uptime, etc.).
+- Select the metric to monitor (CPU, memory, disk, interface traffic, wireless signal, wireless CCQ, uptime, etc.).
 - Set the threshold value and comparison operator.
 - Choose severity: **info**, **warning**, or **critical**.
 - Assign one or more notification channels.
@@ -169,6 +170,8 @@ Alerts can be delivered through multiple channels:
 | **Email** | SMTP-based email notifications. Configure server, port, and recipients. |
 | **Webhook** | HTTP POST to any URL with a JSON payload containing alert details. |
 | **Slack** | Slack incoming webhook with Block Kit formatting for rich alert messages. |
+
+Default wireless alert rules (Signal Degraded at -75 dBm, CCQ Low at 50%) are automatically created when a new tenant is added.
 
 ### Maintenance Windows
 

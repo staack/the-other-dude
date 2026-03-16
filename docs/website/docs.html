@@ -141,7 +141,7 @@
         <ul>
           <li><strong>Fleet</strong> &mdash; Dashboard with at-a-glance fleet health, virtual-scrolled device table, geographic map, and subnet scanner for device discovery.</li>
           <li><strong>Configuration</strong> &mdash; Config Editor with two-phase safe apply, batch configuration across devices, bulk CLI commands, reusable templates, Simple Config (Linksys/Ubiquiti-style UI), and git-backed config backup with diff viewer.</li>
-          <li><strong>Monitoring</strong> &mdash; Interactive network topology (ReactFlow + Dagre), real-time metrics via SSE/NATS, configurable alert rules, notification channels (email, webhook, Slack), audit trail, KMS transparency dashboard, and PDF reports.</li>
+          <li><strong>Monitoring</strong> &mdash; Interactive network topology (ReactFlow + Dagre), real-time metrics via SSE/NATS (including wireless signal, CCQ, and client count), configurable alert rules, notification channels (email, webhook, Slack), audit trail, KMS transparency dashboard, and PDF reports.</li>
           <li><strong>Security</strong> &mdash; 1Password-style zero-knowledge architecture with SRP-6a auth, 2SKD key derivation, Secret Key with Emergency Kit, OpenBao KMS for per-tenant envelope encryption, Internal CA with SFTP cert deployment, WireGuard VPN, and AES-256-GCM credential encryption.</li>
           <li><strong>Remote Access</strong> &mdash; One-click WinBox tunnel launch via NATS request-reply, browser-based SSH terminal (xterm.js over WebSocket), per-device session management with idle timeouts, and full audit logging of remote sessions.</li>
           <li><strong>Administration</strong> &mdash; Full multi-tenancy with PostgreSQL RLS, user management with RBAC, API keys (<code>mktp_</code> prefix), firmware management, maintenance windows, and setup wizard.</li>
@@ -727,7 +727,7 @@ open http://localhost</code></pre>
             <tr><th>Item</th><th>Description</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Dashboard</strong></td><td>Overview of your fleet with device status cards, active alerts, and metrics sparklines. The landing page after login.</td></tr>
+            <tr><td><strong>Dashboard</strong></td><td>Overview of your fleet with device status cards, active alerts, metrics sparklines, and &ldquo;APs Needing Attention&rdquo; wireless health card. The landing page after login.</td></tr>
             <tr><td><strong>Devices</strong></td><td>Fleet table with search, sort, and filter. Click any device row to open its detail page.</td></tr>
             <tr><td><strong>Map</strong></td><td>Geographic map view of device locations.</td></tr>
           </tbody>
@@ -828,6 +828,7 @@ open http://localhost</code></pre>
             <tr><td><strong>DHCP</strong></td><td>Active DHCP leases, server configuration, and address pools.</td></tr>
             <tr><td><strong>Backups</strong></td><td>Configuration backup timeline with side-by-side diff viewer to compare changes over time.</td></tr>
             <tr><td><strong>Clients</strong></td><td>Connected clients and wireless registrations.</td></tr>
+            <tr><td><strong>Wireless</strong></td><td>Wireless metrics charts &mdash; client count, signal strength (dBm), and CCQ per interface over time.</td></tr>
           </tbody>
         </table>
 
@@ -942,7 +943,7 @@ open http://localhost</code></pre>
         <h2>Alert Rules</h2>
         <p>Create threshold-based rules that fire when device metrics cross defined boundaries:</p>
         <ul>
-          <li>Select the metric to monitor (CPU, memory, disk, interface traffic, uptime, etc.).</li>
+          <li>Select the metric to monitor (CPU, memory, disk, interface traffic, wireless signal, wireless CCQ, uptime, etc.).</li>
           <li>Set the threshold value and comparison operator.</li>
           <li>Choose severity: <strong>info</strong>, <strong>warning</strong>, or <strong>critical</strong>.</li>
           <li>Assign one or more notification channels.</li>
@@ -1201,7 +1202,8 @@ open http://localhost</code></pre>
             <tr><td>Devices</td><td><code>/api/devices/*</code></td><td>Device CRUD, scanning, status</td></tr>
             <tr><td>Device Groups</td><td><code>/api/device-groups/*</code></td><td>Logical device grouping</td></tr>
             <tr><td>Device Tags</td><td><code>/api/device-tags/*</code></td><td>Tag-based device labeling</td></tr>
-            <tr><td>Metrics</td><td><code>/api/metrics/*</code></td><td>TimescaleDB device metrics (CPU, memory, traffic)</td></tr>
+            <tr><td>Metrics</td><td><code>/api/metrics/*</code></td><td>TimescaleDB device metrics (CPU, memory, traffic, wireless)</td></tr>
+            <tr><td>Wireless Issues</td><td><code>/api/fleet/wireless-issues</code></td><td>APs with degraded signal, CCQ, or dropped clients</td></tr>
             <tr><td>Config Backups</td><td><code>/api/config-backups/*</code></td><td>Automated RouterOS config backup history</td></tr>
             <tr><td>Config Editor</td><td><code>/api/config-editor/*</code></td><td>Live RouterOS config browsing and editing</td></tr>
             <tr><td>Firmware</td><td><code>/api/firmware/*</code></td><td>RouterOS firmware version management and upgrades</td></tr>

@@ -10,7 +10,7 @@ The Other Dude is a self-hosted, multi-tenant platform that gives you centralize
 
 ### Fleet
 
-- **Dashboard** -- At-a-glance fleet health with device counts, uptime sparklines, and status breakdowns per organization.
+- **Dashboard** -- At-a-glance fleet health with device counts, uptime sparklines, status breakdowns per organization, and an "APs Needing Attention" card highlighting wireless issues.
 - **Device Management** -- Detailed device pages with system info, interfaces, routes, firewall rules, DHCP leases, and real-time resource metrics.
 - **Fleet Table** -- Virtual-scrolled table (TanStack Virtual) that handles hundreds of devices without breaking a sweat.
 - **Device Map** -- Geographic view of device locations.
@@ -28,8 +28,8 @@ The Other Dude is a self-hosted, multi-tenant platform that gives you centralize
 ### Monitoring
 
 - **Network Topology** -- Interactive topology map (ReactFlow + Dagre layout) showing device interconnections and shared subnets.
-- **Real-Time Metrics** -- Live CPU, memory, disk, and interface traffic via Server-Sent Events (SSE) backed by NATS JetStream.
-- **Alert Rules** -- Configurable threshold-based alerts for any metric (CPU > 90%, interface down, uptime reset, etc.).
+- **Real-Time Metrics** -- Live CPU, memory, disk, interface traffic, and wireless stats (client count, signal strength, CCQ) via Server-Sent Events (SSE) backed by NATS JetStream.
+- **Alert Rules** -- Configurable threshold-based alerts for any metric (CPU > 90%, signal < -75 dBm, CCQ < 60%, interface down, uptime reset, etc.). Default wireless alert rules are seeded automatically for new tenants.
 - **Notification Channels** -- Route alerts to email, webhooks, or Slack.
 - **Audit Trail** -- Immutable log of every action taken in the portal, with user attribution and exportable records.
 - **Transparency Dashboard** -- KMS access event monitoring for tenant admins (who accessed what encryption keys, when).
