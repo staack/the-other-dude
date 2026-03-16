@@ -44,100 +44,6 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="../style.css">
-  <style>
-    .doc-article {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 80px 24px 120px;
-    }
-    .doc-article-meta {
-      color: var(--text-muted);
-      font-size: 14px;
-      margin-bottom: 8px;
-    }
-    .doc-article h1 {
-      font-family: "Outfit", sans-serif;
-      font-weight: 700;
-      font-size: 2.5rem;
-      line-height: 1.2;
-      color: var(--text-primary);
-      margin-bottom: 32px;
-    }
-    .doc-article h2 {
-      font-family: "Outfit", sans-serif;
-      font-weight: 600;
-      font-size: 1.4rem;
-      color: var(--text-primary);
-      margin-top: 48px;
-      margin-bottom: 16px;
-    }
-    .doc-article p {
-      color: var(--text-secondary);
-      font-size: 1.05rem;
-      line-height: 1.75;
-      margin-bottom: 20px;
-    }
-    .doc-article p strong {
-      color: var(--text-primary);
-    }
-    .doc-article ul {
-      color: var(--text-secondary);
-      font-size: 1.05rem;
-      line-height: 1.75;
-      margin-bottom: 20px;
-      padding-left: 24px;
-    }
-    .doc-article ul li {
-      margin-bottom: 8px;
-    }
-    .doc-article ul li strong {
-      color: var(--text-primary);
-    }
-    .doc-article a {
-      color: var(--accent);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-    .doc-article a:hover {
-      color: var(--text-primary);
-    }
-    .doc-article .back-link {
-      display: inline-block;
-      margin-bottom: 32px;
-      font-size: 14px;
-      text-decoration: none;
-      color: var(--text-muted);
-    }
-    .doc-article .back-link:hover {
-      color: var(--accent);
-    }
-    .doc-article code {
-      font-family: "Fira Code", monospace;
-      font-size: 0.9em;
-      background: rgba(42, 157, 143, 0.08);
-      border: 1px solid rgba(42, 157, 143, 0.15);
-      border-radius: 4px;
-      padding: 2px 6px;
-      color: var(--text-primary);
-    }
-    .related-guides {
-      margin-top: 48px;
-      padding: 24px;
-      background: rgba(42, 157, 143, 0.05);
-      border: 1px solid rgba(42, 157, 143, 0.15);
-      border-radius: 8px;
-    }
-    .related-guides h2 {
-      margin-top: 0;
-    }
-    .related-guides ul {
-      margin-bottom: 0;
-    }
-    @media (max-width: 480px) {
-      .doc-article h1 { font-size: 1.8rem; }
-      .doc-article { padding: 60px 20px 80px; }
-    }
-  </style>
 </head>
 <body class="docs-page">
 
@@ -174,7 +80,7 @@
   </nav>
 
   <main>
-    <article class="doc-article">
+    <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
       <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
       <div class="doc-article-meta">MikroTik Configuration Management</div>
       <h1>How to Automate MikroTik Router Backups</h1>

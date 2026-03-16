@@ -53,94 +53,6 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="../style.css">
-  <style>
-    .seo-doc {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 80px 24px 120px;
-    }
-    .seo-doc-meta {
-      color: var(--text-muted);
-      font-size: 14px;
-      margin-bottom: 8px;
-    }
-    .seo-doc h1 {
-      font-family: "Outfit", sans-serif;
-      font-weight: 700;
-      font-size: 2.4rem;
-      line-height: 1.2;
-      color: var(--text-primary);
-      margin-bottom: 32px;
-    }
-    .seo-doc h2 {
-      font-family: "Outfit", sans-serif;
-      font-weight: 600;
-      font-size: 1.35rem;
-      color: var(--text-primary);
-      margin-top: 52px;
-      margin-bottom: 16px;
-    }
-    .seo-doc p {
-      color: var(--text-secondary);
-      font-size: 1.05rem;
-      line-height: 1.75;
-      margin-bottom: 20px;
-    }
-    .seo-doc p strong {
-      color: var(--text-primary);
-    }
-    .seo-doc ul, .seo-doc ol {
-      color: var(--text-secondary);
-      font-size: 1.05rem;
-      line-height: 1.75;
-      margin-bottom: 20px;
-      padding-left: 24px;
-    }
-    .seo-doc li {
-      margin-bottom: 8px;
-    }
-    .seo-doc li strong {
-      color: var(--text-primary);
-    }
-    .seo-doc a {
-      color: var(--accent);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-    .seo-doc a:hover {
-      color: var(--text-primary);
-    }
-    .seo-doc .back-link {
-      display: inline-block;
-      margin-bottom: 32px;
-      font-size: 14px;
-      text-decoration: none;
-      color: var(--text-muted);
-    }
-    .seo-doc .back-link:hover {
-      color: var(--accent);
-    }
-    .related-links {
-      margin-top: 52px;
-      padding-top: 32px;
-      border-top: 1px solid var(--border);
-    }
-    .related-links h2 {
-      margin-top: 0;
-    }
-    .related-links ul {
-      list-style: none;
-      padding-left: 0;
-    }
-    .related-links li::before {
-      content: "→ ";
-      color: var(--accent);
-    }
-    @media (max-width: 480px) {
-      .seo-doc h1 { font-size: 1.8rem; }
-      .seo-doc { padding: 60px 20px 80px; }
-    }
-  </style>
 </head>
 <body class="docs-page">
 
@@ -176,7 +88,7 @@
   </nav>
 
   <main>
-    <article class="seo-doc">
+    <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
       <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
 
       <h1>Centralized Management for MikroTik Router Fleets</h1>
