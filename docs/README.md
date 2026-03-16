@@ -144,24 +144,13 @@ The Other Dude is a self-hosted, multi-tenant platform that gives you centralize
 See the full [Quick Start Guide](../QUICKSTART.md) for detailed instructions.
 
 ```bash
-# Clone and configure
-cp .env.example .env
-
-# Start infrastructure
-docker compose up -d
-
-# Build app images (one at a time to avoid OOM)
-docker compose build api
-docker compose build poller
-docker compose build frontend
-
-# Start the full stack
-docker compose up -d
-
-# Verify
-curl http://localhost:8001/health
-open http://localhost:3000
+# Clone and run the setup wizard
+git clone https://github.com/staack/the-other-dude.git
+cd the-other-dude
+python3 setup.py
 ```
+
+The setup wizard configures your database, generates cryptographic keys, bootstraps OpenBao, sets up your reverse proxy, builds the Docker images, and starts everything. No manual `.env` editing required.
 
 Three environment profiles are available:
 
