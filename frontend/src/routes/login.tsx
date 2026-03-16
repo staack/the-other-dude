@@ -148,7 +148,6 @@ function LoginPage() {
                 <Link
                   to="/forgot-password"
                   className="text-xs text-text-muted hover:text-accent"
-                  tabIndex={-1}
                 >
                   Forgot password?
                 </Link>
@@ -209,7 +208,7 @@ function LoginPage() {
             )}
 
             {error && (
-              <div className="rounded-md bg-error/10 border border-error/30 px-3 py-2" data-testid="login-error">
+              <div className="rounded-md bg-error/10 border border-error/30 px-3 py-2" data-testid="login-error" role="alert">
                 <p className="text-xs text-error">{error}</p>
               </div>
             )}
