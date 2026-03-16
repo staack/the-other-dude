@@ -46,6 +46,11 @@ export function SignalBar({ signal, label }: SignalBarProps) {
           <div
             className={cn('h-full rounded-full transition-all', barColor)}
             style={{ width: `${pct}%` }}
+            role="meter"
+            aria-label={label || 'Signal strength'}
+            aria-valuenow={signal ?? 0}
+            aria-valuemin={-100}
+            aria-valuemax={0}
           />
         </div>
         {/* dBm value */}

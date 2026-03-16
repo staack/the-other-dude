@@ -110,7 +110,7 @@ export function PasswordStrengthMeter({
       </div>
 
       {/* Score label */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" aria-live="polite" aria-atomic="true">
         <span className={cn('text-xs font-medium', config.color)}>
           {config.label}
         </span>
