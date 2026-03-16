@@ -37,39 +37,37 @@
 
 @layer base {
   :root {
-    /* Light mode (secondary) */
-    --background: 210 40% 98%;       /* #F8FAFC */
-    --surface: 0 0% 100%;            /* #FFFFFF */
-    --elevated: 210 40% 96%;         /* #F1F5F9 */
-    --border: 214 32% 91%;           /* #E2E8F0 */
-    --border-bright: 215 25% 75%;
-    --text-primary: 222 47% 11%;     /* #0F172A */
-    --text-secondary: 215 16% 47%;   /* #64748B */
-    --text-muted: 215 20% 46%;       /* #5E7189 — 6.2:1 on white */
-    --accent: 199 89% 48%;           /* #0EA5E9 */
-    --accent-hover: 199 89% 40%;
-    --accent-muted: 204 80% 16%;
-    --ring: 199 89% 48%;
+    /* ── Deep Space Light Mode ── */
+    --background: 240 20% 99%;
+    --surface: 0 0% 100%;
+    --elevated: 240 33% 96%;
+    --border: 0 0% 0% / 0.08;
+    --border-bright: 240 14% 88%;
 
-    /* Semantic/status — darker for light mode contrast */
-    --success: 142 71% 35%;          /* #16A34A — 4.5:1 on white */
-    --warning: 32 95% 44%;           /* #D97706 — 4.5:1 on white */
-    --error: 0 72% 51%;              /* #DC2626 — 5.9:1 on white */
-    --info: 217 91% 50%;             /* #2563EB — 5.3:1 on white */
-    --destructive: 0 84% 60%;
+    --text-primary: 240 7% 7%;
+    --text-secondary: 249 14% 37%;
+    --text-muted: 249 11% 57%;
 
-    /* Chart palette */
-    --chart-1: 199 89% 60%;          /* #38BDF8 */
-    --chart-2: 142 71% 65%;          /* #4ADE80 */
-    --chart-3: 43 96% 56%;           /* #FBBF24 */
-    --chart-4: 0 91% 71%;            /* #F87171 */
-    --chart-5: 263 70% 76%;          /* #A78BFA */
-    --chart-6: 27 96% 61%;           /* #FB923C */
+    --accent: 239 76% 62%;
+    --accent-hover: 244 75% 58%;
+    --accent-muted: 239 76% 62% / 0.1;
+    --ring: 239 76% 62%;
 
-    /* Device status */
+    --success: 142 71% 35%;
+    --warning: 32 95% 44%;
+    --error: 0 72% 51%;
+    --info: 217 91% 50%;
+
     --online: 142 71% 35%;
     --offline: 0 72% 51%;
-    --unknown: 215 20% 65%;
+    --unknown: 249 11% 57%;
+
+    --chart-1: 239 76% 62%;
+    --chart-2: 142 71% 35%;
+    --chart-3: 32 95% 44%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 280 68% 50%;
+    --chart-6: 217 91% 50%;
 
     /* Sidebar */
     --sidebar: 210 40% 98%;
@@ -87,32 +85,44 @@
     --muted: var(--elevated);
     --muted-foreground: var(--text-secondary);
     --input: var(--border);
+    --destructive: var(--error);
 
     /* Border radius */
-    --radius: 0.375rem;
+    --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222 47% 11%;       /* #0F172A */
-    --surface: 217 33% 17%;          /* #1E293B */
-    --elevated: 215 25% 27%;         /* #334155 */
-    --border: 215 25% 27%;           /* #334155 */
-    --border-bright: 215 20% 35%;    /* #475569 */
-    --text-primary: 210 40% 96%;     /* #F1F5F9 */
-    --text-secondary: 215 20% 65%;   /* #94A3B8 */
-    --text-muted: 215 20% 63%;       /* #8C9DB0 — 4.6:1 on surface */
-    --accent: 199 89% 60%;           /* #38BDF8 */
-    --accent-hover: 199 89% 48%;     /* #0EA5E9 */
-    --accent-muted: 204 80% 16%;     /* #0C4A6E */
-    --ring: 199 89% 60%;
+    /* ── Deep Space Dark Mode ── */
+    --background: 240 7% 7%;
+    --surface: 240 22% 10%;
+    --elevated: 240 28% 14%;
+    --border: 0 0% 100% / 0.06;
+    --border-bright: 240 24% 19%;
 
-    --success: 142 71% 65%;          /* #4ADE80 */
-    --warning: 43 96% 56%;           /* #FBBF24 */
-    --error: 0 91% 71%;              /* #F87171 */
-    --info: 217 91% 68%;             /* #60A5FA */
+    --text-primary: 240 14% 91%;
+    --text-secondary: 249 9% 59%;
+    --text-muted: 249 13% 44%;
 
-    --online: 142 71% 65%;
-    --offline: 0 91% 71%;
+    --accent: 235 91% 74%;
+    --accent-hover: 239 84% 67%;
+    --accent-muted: 239 84% 67% / 0.15;
+    --ring: 235 91% 74%;
+
+    --success: 142 69% 58%;
+    --warning: 38 92% 50%;
+    --error: 0 84% 60%;
+    --info: 217 91% 60%;
+
+    --online: 142 69% 58%;
+    --offline: 0 84% 60%;
+    --unknown: 249 9% 59%;
+
+    --chart-1: 235 91% 74%;
+    --chart-2: 142 69% 58%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 280 68% 68%;
+    --chart-6: 217 91% 60%;
 
     --foreground: var(--text-primary);
     --card: var(--surface);
