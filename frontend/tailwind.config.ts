@@ -65,8 +65,8 @@ const config: Config = {
         'chart-6': 'hsl(var(--chart-6))',
       },
       fontFamily: {
-        sans: ['Geist', 'Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['Geist Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        sans: ['Manrope', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       animation: {
         shimmer: 'shimmer 1.5s ease-in-out infinite',

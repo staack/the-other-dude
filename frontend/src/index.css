@@ -1,16 +1,23 @@
-/* Geist font loading - variable fonts for optimal performance */
 @font-face {
-  font-family: 'Geist';
-  src: url('./assets/fonts/Geist-Variable.woff2') format('woff2');
+  font-family: 'Manrope';
+  src: url('./assets/fonts/Manrope-Variable.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Geist Mono';
-  src: url('./assets/fonts/GeistMono-Variable.woff2') format('woff2');
-  font-weight: 100 900;
+  font-family: 'IBM Plex Mono';
+  src: url('./assets/fonts/IBMPlexMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('./assets/fonts/IBMPlexMono-Medium.woff2') format('woff2');
+  font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
@@ -144,7 +151,7 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--text-primary));
-    font-family: 'Geist', 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
     font-size: 0.875rem;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -152,7 +159,7 @@
   }
 
   code, kbd, pre, samp, .font-mono {
-    font-family: 'Geist Mono', ui-monospace, 'SFMono-Regular', monospace;
+    font-family: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
   }
 
   #root {
