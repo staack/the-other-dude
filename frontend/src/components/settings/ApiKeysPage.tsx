@@ -170,13 +170,13 @@ export function ApiKeysPage({ tenantId }: ApiKeysPageProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-elevated/30">
-                <th className="text-left px-4 py-2.5 font-medium text-text-secondary">Name</th>
-                <th className="text-left px-4 py-2.5 font-medium text-text-secondary">Key</th>
-                <th className="text-left px-4 py-2.5 font-medium text-text-secondary">Scopes</th>
-                <th className="text-left px-4 py-2.5 font-medium text-text-secondary">Last Used</th>
-                <th className="text-left px-4 py-2.5 font-medium text-text-secondary">Expires</th>
-                <th className="text-left px-4 py-2.5 font-medium text-text-secondary">Status</th>
-                <th className="text-right px-4 py-2.5 font-medium text-text-secondary">Actions</th>
+                <th className="text-left px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Name</th>
+                <th className="text-left px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Key</th>
+                <th className="text-left px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Scopes</th>
+                <th className="text-left px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Last Used</th>
+                <th className="text-left px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Expires</th>
+                <th className="text-left px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Status</th>
+                <th className="text-right px-4 py-2.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Actions</th>
               </tr>
             </thead>
             <tbody>

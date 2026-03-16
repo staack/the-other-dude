@@ -228,22 +228,22 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
             <thead>
               <tr className="border-b border-border bg-elevated/50">
                 <th scope="col" className="w-8 px-3 py-2"><span className="sr-only">Expand</span></th>
-                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-[10px] uppercase tracking-wider font-semibold text-text-muted">
                   Timestamp
                 </th>
-                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-[10px] uppercase tracking-wider font-semibold text-text-muted">
                   User
                 </th>
-                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-[10px] uppercase tracking-wider font-semibold text-text-muted">
                   Action
                 </th>
-                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-[10px] uppercase tracking-wider font-semibold text-text-muted">
                   Resource
                 </th>
-                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-[10px] uppercase tracking-wider font-semibold text-text-muted">
                   Device
                 </th>
-                <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-text-muted">
+                <th scope="col" className="px-3 py-2 text-left text-[10px] uppercase tracking-wider font-semibold text-text-muted">
                   IP Address
                 </th>
               </tr>

@@ -248,10 +248,10 @@ export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorPro
               <table className="w-full text-xs">
                 <thead>
                   <tr className="bg-surface border-b border-border">
-                    <th className="text-left px-3 py-1.5 text-text-secondary font-medium">Name</th>
-                    <th className="text-left px-3 py-1.5 text-text-secondary font-medium w-28">Type</th>
-                    <th className="text-left px-3 py-1.5 text-text-secondary font-medium">Default</th>
-                    <th className="text-left px-3 py-1.5 text-text-secondary font-medium">Description</th>
+                    <th className="text-left px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Name</th>
+                    <th className="text-left px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted w-28">Type</th>
+                    <th className="text-left px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Default</th>
+                    <th className="text-left px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Description</th>
                     <th className="w-8" />
                   </tr>
                 </thead>

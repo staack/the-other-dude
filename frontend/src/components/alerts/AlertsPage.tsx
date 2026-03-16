@@ -308,7 +308,7 @@ export function AlertsPage() {
           ) : (
             <div className="rounded-lg border border-border bg-surface overflow-hidden">
               {/* Table header */}
-              <div className="flex items-center gap-3 px-4 py-2 border-b border-border text-xs text-text-muted font-medium">
+              <div className="flex items-center gap-3 px-4 py-2 border-b border-border text-[10px] uppercase tracking-wider text-text-muted font-semibold">
                 <span className="w-5" />
                 <span className="w-16">Severity</span>
                 <span className="w-16">Status</span>

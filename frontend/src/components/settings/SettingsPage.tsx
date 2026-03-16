@@ -393,7 +393,7 @@ function SMTPSettingsSection() {
         <select
           value={provider}
           onChange={(e) => handleProviderChange(e.target.value)}
-          className="w-full rounded-md bg-slate-700 border border-slate-600 text-white px-3 py-2 text-sm mt-1"
+          className="w-full rounded-md bg-elevated border border-border text-text-primary px-3 py-2 text-sm mt-1"
         >
           {SMTP_PRESETS.map((p) => (
             <option key={p.id} value={p.id}>{p.label}</option>
@@ -455,7 +455,7 @@ function SMTPSettingsSection() {
       </div>
 
       {testResult && (
-        <p className={`text-sm ${testResult.success ? 'text-green-400' : 'text-red-400'}`}>
+        <p className={`text-sm ${testResult.success ? 'text-success' : 'text-error'}`}>
           {testResult.message}
         </p>
       )}
