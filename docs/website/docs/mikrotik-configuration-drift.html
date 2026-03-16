@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MikroTik Configuration Drift Detection</title>
+  <meta name="description" content="How to detect and prevent configuration drift in MikroTik RouterOS fleets. Automated auditing, backup comparison, and centralized management.">
+  <meta name="keywords" content="mikrotik configuration drift, routeros configuration audit, mikrotik config management, router configuration comparison">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/mikrotik-configuration-drift.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="MikroTik Configuration Drift Detection">
+  <meta property="og:description" content="How to detect and prevent configuration drift in MikroTik RouterOS fleets.">
+  <meta property="og:url" content="https://theotherdude.net/docs/mikrotik-configuration-drift.html">
+  <meta property="og:site_name" content="The Other Dude">
+
+  <link rel="stylesheet" href="../style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="docs-page">
+  <a href="#article-content" class="skip-link">Skip to main content</a>
+
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="article-content">
+    <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
+
+      <h1>How to Detect Configuration Drift in MikroTik Routers</h1>
+
+      <p>Configuration drift is one of the quieter failure modes in network management. Routers that were identical at deployment gradually diverge — through manual fixes, firmware upgrades, emergency changes, and accumulated tweaks. This article explains why drift happens specifically with RouterOS, why it is difficult to detect, and what an effective solution looks like in practice.</p>
+
+      <h2>The Problem</h2>
+
+      <p>Configuration drift describes the gap between the intended state of a device and its actual running configuration. For a single router this is manageable. Across a fleet of dozens or hundreds of MikroTik devices, it becomes a real operational hazard.</p>
+
+      <p>The pattern is familiar: an engineer connects via WinBox to resolve an outage, adds a static route or adjusts a firewall rule, and moves on. The fix never makes it into documentation or a change ticket. Later, a firmware upgrade silently adds new default values. Someone else modifies the same firewall rule "temporarily" during a maintenance window and forgets to revert it.</p>
+
+      <p>After six months, the device is running something no one fully understands. If the hardware fails, reproducing that config from scratch is guesswork.</p>
+
+      <h2>Why RouterOS Makes This Hard</h2>
+
+      <p>RouterOS does not include a native mechanism for tracking configuration changes or comparing configs across devices. This is not a complaint — it is just a fact of how the platform is designed, and it matters when you are trying to build operational processes around it.</p>
+
+      <p>A few specific pain points:</p>
+
+      <ul>
+        <li><strong>No built-in config versioning.</strong> RouterOS does not maintain a history of what changed, when, or who changed it. The running config is the only version.</li>
+        <li><strong>Export output is not deterministic across firmware versions.</strong> The <code>/export</code> command can produce different ordering, include new default keys, or drop previously explicit values when you upgrade RouterOS. Naively diffing exports from devices on different firmware versions produces noise.</li>
+        <li><strong>WinBox changes leave no audit trail.</strong> Actions taken through the GUI are not logged in a way that survives reboots or is easily queryable.</li>
+        <li><strong>No desired-state model.</strong> RouterOS does not have a concept of "this is what the config should be." The running config is authoritative by definition. There is nothing to check against.</li>
+        <li><strong>Fleet comparison requires external tooling.</strong> There is no native way to look across twenty devices and ask which ones have diverged from each other.</li>
+      </ul>
+
+      <h2>Common Workarounds</h2>
+
+      <p>Engineers who have hit this problem have developed several approaches, each with real limitations.</p>
+
+      <p><strong>Scheduled <code>/export</code> to FTP or SFTP.</strong> This is the most common approach and it does produce periodic snapshots. The problem is what happens next: text dumps pile up in a directory, and comparing them requires either manual inspection or custom scripting. When a device exports 800 lines of config, spotting a single changed firewall rule by eye is unreliable.</p>
+
+      <p><strong>The Dude.</strong> MikroTik's own monitoring tool tracks device health and topology well. It does not track configuration changes. It will tell you a router is up; it will not tell you its firewall rules changed overnight.</p>
+
+      <p><strong>Custom diff scripts.</strong> Some teams build shell scripts that pull exports, normalize whitespace, strip firmware-version noise, and run <code>diff</code>. This can work, but these scripts are fragile. They break on RouterOS upgrades, fail silently when a device is unreachable, and tend to accumulate exceptions and special cases until the person who wrote them is the only one who understands them.</p>
+
+      <p><strong>Spreadsheets.</strong> For small deployments, a spreadsheet tracking what each site should have configured is better than nothing. It does not scale, and it is only as accurate as the last time someone updated it.</p>
+
+      <h2>What a Proper Solution Requires</h2>
+
+      <p>Solving configuration drift effectively requires a few things working together.</p>
+
+      <p>First, <strong>automated, periodic snapshots</strong> from every device. Manual processes do not hold up — the snapshot needs to happen whether or not an engineer remembers to trigger it. The interval should be configurable; some environments need hourly snapshots, others daily.</p>
+
+      <p>Second, <strong>version history with diff visibility.</strong> Storing snapshots is only useful if you can compare them. You need to be able to see exactly what changed between two points in time — not just that something changed, but which lines were added, removed, or modified. A side-by-side diff view makes this fast to review.</p>
+
+      <p>Third, <strong>alerts when configs change unexpectedly.</strong> Drift you don't know about is the dangerous kind. An alert when a device's config changes between polling cycles lets you investigate before that change causes a problem, rather than after.</p>
+
+      <p>Fourth, <strong>an audit trail tied to user actions.</strong> When a config change comes from a push made through your management platform, you want to know which user initiated it, when, and what it contained. This is separate from detecting drift caused by out-of-band changes — you need both.</p>
+
+      <h2>How The Other Dude Handles Configuration Drift</h2>
+
+      <p>The Other Dude polls RouterOS devices on a configurable interval using the RouterOS binary API (port 8729, TLS). On each poll cycle it retrieves the full running configuration and stores it in PostgreSQL alongside a complete version history. Every stored snapshot is compared to the previous one; if anything changed, the difference is recorded.</p>
+
+      <p>The web UI includes a side-by-side diff viewer. You can select any two snapshots for a device — or compare two different devices — and see exactly which lines differ. This makes it straightforward to answer questions like "what changed on this router between Tuesday and Thursday" or "why does this branch site have different firewall rules than the others."</p>
+
+      <p>Config changes pushed through the platform are recorded in an audit trail with full user attribution. If someone pushes a new firewall ruleset or modifies an interface address, that action is logged with the user, timestamp, and the exact config diff applied. Out-of-band changes made directly via WinBox or SSH will show up in the next polling cycle as an unexpected diff.</p>
+
+      <p>For safe config pushes, The Other Dude uses a two-phase approach: changes are applied to the device, and the platform waits for a confirmation that the device is still reachable. If the device goes silent after the change — which can happen if a firewall or routing change cuts off the management path — the platform automatically reverts to the previous config. This significantly reduces the risk of locking yourself out of a remote device.</p>
+
+      <p>For fleet-scale work, the platform supports config templates with variable substitution. You can define a template for a class of site (branch office, retail location, distribution hub) and push it across a batch of devices with per-device values filled in. This makes it easier to maintain consistency across similar sites and to identify which devices have diverged from that common baseline. To be clear: the current implementation detects config changes between snapshots. Full desired-state compliance checking — where the system continuously validates each device against a canonical template and flags deviations — is not yet implemented, but the snapshot and diff infrastructure is designed to support it.</p>
+
+      <h2>Related Guides</h2>
+
+      <ul>
+        <li><a href="mikrotik-router-backup-automation.html">Automate MikroTik router backups</a></li>
+        <li><a href="manage-multiple-mikrotik-routers.html">Manage multiple MikroTik routers</a></li>
+        <li><a href="mikrotik-router-monitoring.html">Monitor MikroTik routers at scale</a></li>
+        <li><a href="mikrotik-centralized-management.html">MikroTik centralized management</a></li>
+      </ul>
+
+      <p><a href="https://github.com/staack/the-other-dude">View on GitHub</a></p>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="../index.html">Home</a>
+        <a href="../blog/">Blog</a>
+        <a href="../docs.html#quickstart">Quick Start</a>
+        <a href="../docs.html#security-model">Security</a>
+        <a href="../docs.html#api-endpoints">API Reference</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+        <a href="mailto:support@theotherdude.net">Support</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d5f1e31cb9744c998a8f7d1303c6efef"}'></script>
+</body>
+</html>

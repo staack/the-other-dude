@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage Multiple MikroTik Routers</title>
+  <meta name="description" content="How to manage hundreds of MikroTik routers from a single dashboard. Fleet-level visibility, batch configuration, and centralized monitoring.">
+  <meta name="keywords" content="manage multiple mikrotik routers, mikrotik router fleet management, mikrotik centralized management, routeros fleet, msp mikrotik">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/manage-multiple-mikrotik-routers.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Manage Multiple MikroTik Routers from One Dashboard">
+  <meta property="og:description" content="How to manage hundreds of MikroTik routers from a single dashboard. Fleet-level visibility, batch configuration, and centralized monitoring.">
+  <meta property="og:url" content="https://theotherdude.net/docs/manage-multiple-mikrotik-routers.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Manage Multiple MikroTik Routers from One Dashboard">
+  <meta name="twitter:description" content="How to manage hundreds of MikroTik routers from a single dashboard. Fleet-level visibility, batch configuration, and centralized monitoring.">
+  <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "How to Manage Multiple MikroTik Routers from One Dashboard",
+    "description": "How to manage hundreds of MikroTik routers from a single dashboard. Fleet-level visibility, batch configuration, and centralized monitoring.",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/docs/manage-multiple-mikrotik-routers.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    .doc-article {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+    .doc-article .back-link {
+      display: inline-block;
+      margin-bottom: 40px;
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--text-muted);
+    }
+    .doc-article .back-link:hover {
+      color: var(--accent);
+    }
+    .doc-article h1 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 700;
+      font-size: 2.4rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 36px;
+    }
+    .doc-article h2 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 600;
+      font-size: 1.35rem;
+      color: var(--text-primary);
+      margin-top: 52px;
+      margin-bottom: 16px;
+    }
+    .doc-article p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .doc-article p strong {
+      color: var(--text-primary);
+    }
+    .doc-article ul {
+      margin: 0 0 20px 0;
+      padding-left: 24px;
+    }
+    .doc-article li {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 8px;
+    }
+    .doc-article li strong {
+      color: var(--text-primary);
+    }
+    .doc-article a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .doc-article a:hover {
+      color: var(--text-primary);
+    }
+    .doc-article .related-links {
+      margin-top: 56px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+    .doc-article .related-links h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+    .doc-article .related-links ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .doc-article .related-links li {
+      margin-bottom: 10px;
+    }
+    @media (max-width: 480px) {
+      .doc-article h1 { font-size: 1.8rem; }
+      .doc-article { padding: 60px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="#doc-content" class="skip-link">Skip to main content</a>
+
+  <!-- ===== TESTING BANNER ===== -->
+  <div class="testing-banner testing-banner--light">
+    <div class="container">
+      <strong>Early Access</strong> &mdash; This software is in active development and testing. It is not yet ready for production use.
+    </div>
+  </div>
+
+  <!-- ===== NAV ===== -->
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html" class="nav-link">Home</a>
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link nav-link--active">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== CONTENT ===== -->
+  <main id="doc-content">
+    <article class="doc-article">
+      <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
+
+      <h1>How to Manage Multiple MikroTik Routers from One Dashboard</h1>
+
+      <h2>The Problem</h2>
+
+      <p>At five routers, WinBox tabs are manageable. You open a session per device, keep credentials in your head or a password manager, and move on. At fifty routers spread across multiple client sites, the tab approach breaks down: you're writing bash scripts to loop SSH connections, hoping your expect scripts handle timeouts gracefully, and maintaining a firmware spreadsheet that's perpetually out of date.</p>
+
+      <p>At two hundred routers or more, you're dealing with a different class of problem entirely. Pushing a firewall rule change means coordinating across dozens of simultaneous connections. A firmware upgrade cycle requires tracking which devices are on which RouterOS version, which hardware models support the target version, and which sites have maintenance windows. Onboarding a new client means manually provisioning credentials and confirming connectivity for every device they hand you. A single misconfiguration that bypasses your SSH loop silently fails and leaves one router out of compliance.</p>
+
+      <p>The operational cost compounds: credential sprawl, inconsistent configs across hardware generations, no audit trail for who changed what, and no alerting when a device goes offline at 3 AM except your phone at 3:05 AM.</p>
+
+      <h2>Why MikroTik Lacks Fleet Management</h2>
+
+      <p>MikroTik's tooling was designed for single-device administration. That's not a criticism — WinBox is genuinely good at what it does. But the design assumptions don't scale to fleet operations:</p>
+
+      <ul>
+        <li><strong>WinBox is one device at a time.</strong> There's no concept of a device group, no bulk operation interface, no shared state between sessions.</li>
+        <li><strong>The Dude monitors but doesn't manage.</strong> It gives you network maps and SNMP polling, but it won't push a config change or track firmware versions across the fleet.</li>
+        <li><strong>No native cross-device API.</strong> The RouterOS API (port 8728/8729) is per-device. There's no management plane that aggregates across devices — you have to build that yourself.</li>
+        <li><strong>Each device is an island.</strong> There's no shared config state, no template system, no way to say "these 40 routers should all have this firewall ruleset."</li>
+        <li><strong>SSH scripting hits a ceiling.</strong> Scripts work until you need error handling, state tracking across partial failures, retry logic, and audit logging. At that point you're building infrastructure, not writing scripts.</li>
+      </ul>
+
+      <p>The result is that most MikroTik fleet operators end up with a collection of tribal knowledge, SSH scripts of varying quality, and a Nagios instance that tells them about outages after the fact.</p>
+
+      <h2>What MSPs and Network Teams Need</h2>
+
+      <p>A workable mikrotik router fleet management solution needs to address several distinct operational concerns:</p>
+
+      <ul>
+        <li><strong>Single-pane-of-glass visibility.</strong> Device count, online/offline status, uptime, CPU load, and memory usage across all routers without opening individual sessions.</li>
+        <li><strong>Batch configuration operations.</strong> Push a firewall rule or interface change to 50 devices simultaneously, with per-device success/failure reporting and rollback capability.</li>
+        <li><strong>Consistent firmware management.</strong> Know which devices are running which RouterOS version, which are behind, and which hardware supports the target version before you start an upgrade cycle.</li>
+        <li><strong>Credential management without spreadsheets.</strong> Store device credentials encrypted at rest, rotate them centrally, and audit access without maintaining parallel systems.</li>
+        <li><strong>Multi-tenant isolation.</strong> MSPs managing multiple client networks need hard boundaries between client data — not just UI filtering, but enforced at the data layer.</li>
+        <li><strong>Role-based access control.</strong> Junior staff doing monitoring shouldn't have the same permissions as senior engineers pushing config changes. Read-only, operator, and admin roles need to be enforced, not just honored.</li>
+      </ul>
+
+      <h2>How The Other Dude Manages MikroTik Fleets</h2>
+
+      <p>The Other Dude was built specifically for this operational context. Here's what the platform provides:</p>
+
+      <p><strong>Fleet dashboard.</strong> A single view shows device count, online/offline ratio, uptime sparklines, and per-device CPU and memory across your entire fleet. The device table is virtual-scrolled and handles hundreds of routers without performance degradation.</p>
+
+      <p><strong>Batch configuration.</strong> Apply a config template to multiple devices simultaneously. Each device gets its own result — success, failure, or partial — and the operation is logged with a timestamp and the identity of who ran it. Config templates support variable substitution, so you can define a standard firewall ruleset once and apply it across sites with different IP ranges without editing the template for each device.</p>
+
+      <p><strong>Bulk command execution.</strong> Run arbitrary RouterOS CLI commands across a device group. Useful for one-off queries (what's the uptime on all devices at site X?) or scripted changes that don't fit a template pattern.</p>
+
+      <p><strong>Firmware tracking.</strong> The fleet view shows RouterOS version per device. You can filter to find devices below a target version and plan upgrade operations accordingly, accounting for hardware model compatibility.</p>
+
+      <p><strong>Subnet scanner.</strong> Discover MikroTik devices on a given network segment. New devices show up in the scan results and can be added to the fleet directly.</p>
+
+      <p><strong>Geographic map view.</strong> Devices can be assigned coordinates and viewed on a map, useful for ISPs and MSPs with geographically distributed deployments.</p>
+
+      <p><strong>Multi-tenant support.</strong> Tenant data isolation is enforced at the PostgreSQL layer using Row-Level Security policies, not just filtered in the application. One tenant's devices, configs, and credentials are not accessible to another tenant regardless of application bugs.</p>
+
+      <p><strong>RBAC.</strong> Four roles: super_admin, admin, operator, and viewer. Permissions are checked server-side on every request. Viewer accounts can monitor but cannot execute commands or push configs.</p>
+
+      <p><strong>Credential encryption.</strong> All device credentials are encrypted at rest using AES-256-GCM. Keys are managed separately from the database.</p>
+
+      <h2>Architecture Overview</h2>
+
+      <p>For teams evaluating self-hosted options, the stack is straightforward:</p>
+
+      <ul>
+        <li><strong>React frontend</strong> — web interface, virtual-scrolled device tables, real-time status updates via WebSocket.</li>
+        <li><strong>FastAPI backend</strong> — REST API, authentication, RBAC enforcement, task orchestration.</li>
+        <li><strong>PostgreSQL + TimescaleDB</strong> — device inventory, time-series metrics, config history, multi-tenant RLS.</li>
+        <li><strong>Go poller</strong> — connects to devices using the RouterOS binary API over TLS (port 8729), collects metrics, executes commands, handles reconnection and error recovery per device.</li>
+        <li><strong>NATS JetStream</strong> — real-time event bus between poller and backend; device status changes and metric updates flow through here.</li>
+        <li><strong>Docker Compose</strong> — all components run as containers; a single compose file brings up the full stack.</li>
+      </ul>
+
+      <p>There's no SaaS dependency, no phone-home requirement, and no cloud account needed. Everything runs on hardware you control.</p>
+
+      <div class="related-links">
+        <h2>Related Guides</h2>
+        <ul>
+          <li><a href="mikrotik-configuration-drift.html">Detect configuration drift across your MikroTik fleet</a></li>
+          <li><a href="mikrotik-router-backup-automation.html">Automate RouterOS configuration backups</a></li>
+          <li><a href="mikrotik-router-monitoring.html">Monitor MikroTik routers at scale</a></li>
+          <li><a href="mikrotik-centralized-management.html">Centralized MikroTik management overview</a></li>
+          <li><a href="https://github.com/staack/the-other-dude" rel="noopener">The Other Dude on GitHub</a></li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../blog/">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d5f1e31cb9744c998a8f7d1303c6efef"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

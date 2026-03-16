@@ -1,12 +1,24 @@
 # The Other Dude
 
-**Fleet management for MikroTik RouterOS devices.** Built for MSPs who manage hundreds of routers across multiple tenants. Think "UniFi Controller, but for MikroTik."
+**Fleet management platform for MikroTik RouterOS.**
+
+Monitor routers, detect configuration drift, manage backups, and safely push configuration changes across hundreds of devices. Built for MSPs and network engineers managing MikroTik fleets.
 
 The Other Dude is a self-hosted, multi-tenant platform that gives you centralized visibility, configuration management, real-time monitoring, and zero-knowledge security across your entire MikroTik fleet -- from a single pane of glass.
 
 ---
 
 ## Features
+
+### Highlights
+
+- **Router Fleet Monitoring** -- Real-time CPU, memory, disk, traffic, and wireless metrics across every device. Configurable alerts with email, Slack, and webhook notifications.
+- **Configuration Drift Detection** -- Automated config snapshots with full version history and side-by-side diffs. Know when configs change and what changed.
+- **Safe Configuration Pushes** -- Two-phase config push with automatic panic-revert. Push confidently to remote devices without risking lockouts.
+- **Backup Management** -- Automated configuration backups on a schedule. One-click restore to any previous version.
+- **Network Topology Visibility** -- Interactive topology map showing device interconnections and shared subnets.
+
+---
 
 ### Fleet
 

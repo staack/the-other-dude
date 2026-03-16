@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MikroTik Router Backup Automation</title>
+  <meta name="description" content="Automate MikroTik router configuration backups. Compare backup versions, restore configs, and track changes across your RouterOS fleet.">
+  <meta name="keywords" content="mikrotik backup automation, mikrotik configuration management, RouterOS backup, MikroTik config export, RouterOS fleet backup">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/mikrotik-router-backup-automation.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="MikroTik Router Backup Automation — The Other Dude">
+  <meta property="og:description" content="Automate MikroTik router configuration backups. Compare backup versions, restore configs, and track changes across your RouterOS fleet.">
+  <meta property="og:url" content="https://theotherdude.net/docs/mikrotik-router-backup-automation.html">
+  <meta property="og:site_name" content="The Other Dude">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "How to Automate MikroTik Router Backups",
+    "description": "Automate MikroTik router configuration backups. Compare backup versions, restore configs, and track changes across your RouterOS fleet.",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/docs/mikrotik-router-backup-automation.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .doc-article {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+    .doc-article-meta {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .doc-article h1 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 700;
+      font-size: 2.5rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 32px;
+    }
+    .doc-article h2 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--text-primary);
+      margin-top: 48px;
+      margin-bottom: 16px;
+    }
+    .doc-article p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .doc-article p strong {
+      color: var(--text-primary);
+    }
+    .doc-article ul {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+      padding-left: 24px;
+    }
+    .doc-article ul li {
+      margin-bottom: 8px;
+    }
+    .doc-article ul li strong {
+      color: var(--text-primary);
+    }
+    .doc-article a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .doc-article a:hover {
+      color: var(--text-primary);
+    }
+    .doc-article .back-link {
+      display: inline-block;
+      margin-bottom: 32px;
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--text-muted);
+    }
+    .doc-article .back-link:hover {
+      color: var(--accent);
+    }
+    .doc-article code {
+      font-family: "Fira Code", monospace;
+      font-size: 0.9em;
+      background: rgba(42, 157, 143, 0.08);
+      border: 1px solid rgba(42, 157, 143, 0.15);
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: var(--text-primary);
+    }
+    .related-guides {
+      margin-top: 48px;
+      padding: 24px;
+      background: rgba(42, 157, 143, 0.05);
+      border: 1px solid rgba(42, 157, 143, 0.15);
+      border-radius: 8px;
+    }
+    .related-guides h2 {
+      margin-top: 0;
+    }
+    .related-guides ul {
+      margin-bottom: 0;
+    }
+    @media (max-width: 480px) {
+      .doc-article h1 { font-size: 1.8rem; }
+      .doc-article { padding: 60px 20px 80px; }
+    }
+  </style>
+</head>
+<body class="docs-page">
+
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html" class="nav-link">Home</a>
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="doc-article">
+      <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
+      <div class="doc-article-meta">MikroTik Configuration Management</div>
+      <h1>How to Automate MikroTik Router Backups</h1>
+
+      <h2>The Problem</h2>
+
+      <p>Most MikroTik routers get configured once and then left alone. Over months and years, someone adds firewall rules, tweaks NAT entries, adjusts OSPF timers. Nobody writes any of it down. The config that's running in production is the only record of what was done.</p>
+
+      <p>Then something breaks. A firmware upgrade goes sideways and the router reboots into a partially migrated config. A new hire cleans up "unused" firewall rules and takes down a VPN tunnel. The compact flash in a RB2011 starts throwing read errors. In every one of these cases, the question is the same: what was the config before this happened?</p>
+
+      <p>The answer is usually bad. An export someone ran eight months ago sitting in a random directory. An FTP server that stopped receiving backups when the disk filled up six months ago and no one noticed until now. A Scheduler script that was working fine until someone changed the FTP password. MikroTik backup automation is one of those things that either works reliably or doesn't work at all — there's rarely a middle state where it's "mostly working."</p>
+
+      <p>At scale this gets worse fast. If you manage fifty routers, you might be on top of it. If you manage five hundred, manual backup processes will fail silently across a meaningful percentage of your fleet at any given time.</p>
+
+      <h2>RouterOS Backup Methods</h2>
+
+      <p>RouterOS has two built-in mechanisms for saving configuration, and both have real tradeoffs.</p>
+
+      <p><strong><code>/system backup save</code></strong> produces a binary <code>.backup</code> file. It captures the full configuration including passwords and certificates. You can restore it with one command and come back to exactly the state the device was in. The catch: it's device-specific and version-dependent. Restoring a backup from RouterOS 6 to a device running RouterOS 7 will fail or produce unexpected results. You can't open the file in a text editor to see what's in it. You can't diff two backups to find what changed.</p>
+
+      <p><strong><code>/export</code></strong> produces a human-readable text file containing the RouterOS commands needed to recreate the configuration. It's possible to partially import an export on a different device, and you can read it with any text editor. The tradeoffs: it doesn't include passwords or private keys, it omits settings that are at their default values, and the ordering of entries can vary between RouterOS versions. Two exports of the same config taken on different firmware versions may look different even if nothing changed.</p>
+
+      <p>Neither method runs automatically. To get scheduled backups, the traditional approach is a Scheduler + FTP or SFTP script on each device. This works, but it requires per-device configuration, a working FTP server, error handling for failed transfers, and some way to detect when backups stop arriving. In a fleet of hundreds of devices, that's a lot of moving parts.</p>
+
+      <h2>What Goes Wrong Without Automated Backups</h2>
+
+      <p>The consequences of not having reliable backup automation tend to be invisible until they aren't:</p>
+
+      <ul>
+        <li><strong>Device failure with no recent backup.</strong> Hardware fails, config is lost, and reconstruction from memory takes hours — assuming anyone still knows how it was set up.</li>
+        <li><strong>Firmware upgrade with no rollback path.</strong> RouterOS major version upgrades occasionally break things. Without a pre-upgrade config export, rolling back means starting over.</li>
+        <li><strong>Config change breaks connectivity.</strong> Without a recent baseline to diff against, finding what changed requires checking every section of the config manually.</li>
+        <li><strong>Compliance and audit requirements.</strong> Regulated environments often require demonstrable config history. "We think the config has been like this for a while" doesn't hold up.</li>
+        <li><strong>Staff turnover and tribal knowledge.</strong> The engineer who built the BGP setup left six months ago. The config is running, but no one understands it, and there's no version history to trace how it got to its current state.</li>
+      </ul>
+
+      <h2>What a Backup System Should Do</h2>
+
+      <p>A reliable mikrotik backup automation solution needs to address the failure modes of the manual approach:</p>
+
+      <ul>
+        <li><strong>Automatic scheduling.</strong> Backups should run without any per-device scripting. The schedule should be configurable centrally, not distributed across hundreds of individual device schedulers.</li>
+        <li><strong>Text-based storage.</strong> Configs need to be stored in a format that supports comparison. Binary backups are useful for full restores but useless for understanding what changed.</li>
+        <li><strong>Version history with diffs.</strong> Every backup should be a point in time you can return to, and you should be able to compare any two versions side by side.</li>
+        <li><strong>Failure visibility.</strong> If a backup fails, or if a config changes unexpectedly outside of a maintenance window, someone should be alerted. Silent failure is the main problem with DIY backup scripts.</li>
+        <li><strong>Restore capability.</strong> Viewing old configs is useful. Pushing a previous config back to a device is the actual recovery action — and that should be automatable too.</li>
+        <li><strong>Fleet scale.</strong> The system should work the same way whether you have ten devices or a thousand. No per-device setup required.</li>
+      </ul>
+
+      <h2>How The Other Dude Automates Backups</h2>
+
+      <p>The Other Dude handles mikrotik configuration management through a Go-based poller that connects to each device using the RouterOS binary API over TLS (port 8729). There are no per-device backup scripts, no FTP server to maintain, and no Scheduler entries to configure on each router.</p>
+
+      <p>The backup process works as follows:</p>
+
+      <ul>
+        <li><strong>Scheduled collection.</strong> The backup scheduler service runs within the backend and captures a full <code>/export</code> from each device on a configurable interval. The same device credentials used for monitoring and management are used for backup collection — no additional credential setup required.</li>
+        <li><strong>Version-controlled storage.</strong> Config exports are stored in PostgreSQL with complete version history. Every backup is a timestamped snapshot. Nothing is overwritten.</li>
+        <li><strong>Change detection.</strong> The poller can detect configuration changes via NATS events in addition to scheduled polling, so a change pushed through WinBox or the CLI shows up in the history within minutes rather than waiting for the next scheduled run.</li>
+        <li><strong>Diff viewer.</strong> The web UI shows a timeline of config changes per device. Select any two versions and get a side-by-side diff — additions in green, removals in red, unchanged lines in grey. This works the same way whether you're comparing yesterday to today or last year to last month.</li>
+        <li><strong>One-click restore.</strong> Select a previous backup from the history and push it back to the device using the config editor's two-phase apply mechanism. The two-phase process applies the config and waits for confirmation before committing, which means a restore that breaks connectivity will roll back automatically.</li>
+        <li><strong>Batch operations.</strong> You can pull the current config from multiple devices and compare them to identify inconsistencies — useful when you want to verify that a template change was applied uniformly across a group of devices.</li>
+      </ul>
+
+      <p>Because the backup system is built on top of the same API connection the poller uses for everything else, there's no separate backup infrastructure to maintain. A device that's reachable for monitoring is reachable for backups.</p>
+
+      <h2>Related Guides</h2>
+
+      <div class="related-guides">
+        <h2>More on MikroTik Configuration Management</h2>
+        <ul>
+          <li><a href="mikrotik-configuration-drift.html">How to detect configuration drift in MikroTik routers</a> — identify when devices have diverged from a known-good baseline</li>
+          <li><a href="manage-multiple-mikrotik-routers.html">How to manage multiple MikroTik routers</a> — fleet management strategies for MSPs and network teams</li>
+          <li><a href="mikrotik-router-monitoring.html">How to monitor MikroTik routers at scale</a> — metrics collection, alerting, and health dashboards</li>
+          <li><a href="mikrotik-centralized-management.html">MikroTik centralized management</a> — multi-site visibility, bulk operations, and unified access</li>
+          <li><a href="https://github.com/staack/the-other-dude" rel="noopener">The Other Dude on GitHub</a> — source code, issue tracker, and release notes</li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../index.html">Home</a>
+        <a href="../docs.html">Docs</a>
+        <a href="../blog/">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d5f1e31cb9744c998a8f7d1303c6efef"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

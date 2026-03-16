@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MikroTik Router Monitoring at Scale</title>
+  <meta name="description" content="Monitor MikroTik routers with real-time metrics, alerts, and fleet-wide visibility. CPU, memory, traffic, wireless, and device health monitoring.">
+  <meta name="keywords" content="mikrotik router monitoring, mikrotik monitoring software, RouterOS metrics, MikroTik fleet health, MikroTik SNMP alternative">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/mikrotik-router-monitoring.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="MikroTik Router Monitoring at Scale — The Other Dude">
+  <meta property="og:description" content="Monitor MikroTik routers with real-time metrics, alerts, and fleet-wide visibility. CPU, memory, traffic, wireless, and device health monitoring.">
+  <meta property="og:url" content="https://theotherdude.net/docs/mikrotik-router-monitoring.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MikroTik Router Monitoring at Scale — The Other Dude">
+  <meta name="twitter:description" content="Monitor MikroTik routers with real-time metrics, alerts, and fleet-wide visibility. CPU, memory, traffic, wireless, and device health monitoring.">
+  <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "How to Monitor MikroTik Routers at Scale",
+    "description": "Monitor MikroTik routers with real-time metrics, alerts, and fleet-wide visibility. CPU, memory, traffic, wireless, and device health monitoring.",
+    "datePublished": "2026-03-15",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/docs/mikrotik-router-monitoring.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .doc-page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+    .doc-page-meta {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .doc-page h1 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 700;
+      font-size: 2.5rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 32px;
+    }
+    .doc-page h2 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--text-primary);
+      margin-top: 56px;
+      margin-bottom: 16px;
+    }
+    .doc-page p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .doc-page p strong {
+      color: var(--text-primary);
+    }
+    .doc-page a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .doc-page a:hover {
+      color: var(--text-primary);
+    }
+    .doc-page .back-link {
+      display: inline-block;
+      margin-bottom: 32px;
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--text-muted);
+    }
+    .doc-page .back-link:hover {
+      color: var(--accent);
+    }
+    .doc-page ul {
+      margin: 0 0 20px 0;
+      padding-left: 24px;
+    }
+    .doc-page ul li {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 8px;
+    }
+    .doc-page ul li strong {
+      color: var(--text-primary);
+    }
+    .doc-page code {
+      font-family: "Fira Code", monospace;
+      font-size: 0.9em;
+      background: rgba(42, 157, 143, 0.08);
+      color: var(--text-primary);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .doc-related {
+      margin-top: 64px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+    .doc-related h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+    .doc-related ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .doc-related ul li {
+      margin-bottom: 10px;
+    }
+    .doc-related ul li a {
+      font-size: 1rem;
+    }
+    @media (max-width: 480px) {
+      .doc-page h1 { font-size: 1.8rem; }
+      .doc-page { padding: 60px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html" class="nav-link">Home</a>
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="doc-page">
+      <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
+      <div class="doc-page-meta">MikroTik Monitoring &mdash; The Other Dude</div>
+
+      <h1>How to Monitor MikroTik Routers at Scale</h1>
+
+      <p>If you manage more than a handful of MikroTik routers, "monitoring" stops meaning "is this device pingable" and starts meaning something harder. You need to know which of your 200 routers is spiking CPU before a user files a ticket. You need to find the access point with degraded wireless signal before the site calls in. You need bandwidth utilization trends to make capacity decisions, not just point-in-time readings. And you need to know the moment a device goes offline at 2am — not when someone shows up for work.</p>
+
+      <p>That's what real <strong>mikrotik router monitoring</strong> looks like in production.</p>
+
+      <h2>The Problem with MikroTik Monitoring at Scale</h2>
+
+      <p>Individual devices are easy. RouterOS has good per-device tooling. The problem is the fleet. When you're managing dozens or hundreds of routers across multiple sites, you have no single place to answer questions like:</p>
+
+      <ul>
+        <li>Which devices are above 80% CPU right now?</li>
+        <li>What's the 30-day bandwidth trend on this site's uplink?</li>
+        <li>How many clients does each AP have, and which ones have poor signal?</li>
+        <li>Which devices went offline in the last 24 hours, and for how long?</li>
+      </ul>
+
+      <p>These are fleet-level questions. They require a centralized data store, consistent polling, and a UI that surfaces the signal instead of burying you in noise.</p>
+
+      <h2>Native RouterOS Monitoring Options</h2>
+
+      <p>RouterOS gives you several monitoring tools. Each has real limitations when applied at fleet scale.</p>
+
+      <ul>
+        <li><strong>SNMP</strong> — Broadly supported and integrates with most NMS platforms. But it's polling-based with no built-in aggregation, requires navigating complex OID trees, and adds MIB management overhead to every device you onboard. At 200 devices, SNMP configuration becomes its own maintenance burden.</li>
+        <li><strong>The Dude</strong> — MikroTik's own free monitoring tool. Useful for basic device discovery and health checks on smaller networks. Struggles past a few hundred devices and isn't designed to aggregate fleet-wide metrics or support multi-tenant environments.</li>
+        <li><strong>Torch / Traffic Monitor</strong> — Excellent for real-time per-device traffic analysis. Not designed for fleet-wide aggregation or historical trending. You can't ask "show me all devices above 70% interface utilization."</li>
+        <li><strong>Log forwarding (syslog)</strong> — Valuable for event-based alerting and troubleshooting. Logs are events, not metrics. You can't graph CPU trends from syslog entries.</li>
+        <li><strong>External NMS (PRTG, Zabbix, LibreNMS)</strong> — These are powerful, general-purpose platforms. But they're generic. MikroTik-specific metrics like wireless CCQ, client counts, or RouterOS resource tables require custom sensor templates, SNMP MIB imports, or community scripts. Setup time is measured in days, not hours.</li>
+      </ul>
+
+      <h2>What MikroTik Monitoring Software Should Include</h2>
+
+      <p>A purpose-built <strong>mikrotik monitoring software</strong> solution should handle the full picture — not just availability pings.</p>
+
+      <ul>
+        <li><strong>Device health metrics</strong> — CPU load, memory usage, disk usage, and board temperature per device, polled consistently and stored for trending.</li>
+        <li><strong>Interface traffic rates</strong> — Calculated in bits per second from cumulative counter deltas, not raw counters. You want throughput, not a number that means nothing without the previous reading.</li>
+        <li><strong>Wireless metrics</strong> — Client count, signal strength in dBm, and CCQ per wireless interface. These are the first indicators of AP degradation.</li>
+        <li><strong>Online/offline status with alerting</strong> — Detection of device unreachability with configurable thresholds and notification delivery.</li>
+        <li><strong>Fleet-wide dashboards</strong> — Aggregate health views showing the entire fleet at once, with the ability to drill into individual devices.</li>
+        <li><strong>Historical data for trend analysis</strong> — Metrics stored in a time-series database so you can answer "what was this router doing at 3am last Tuesday?"</li>
+        <li><strong>Configurable alert rules</strong> — Threshold-plus-duration logic (e.g., CPU &gt; 90% for 5 consecutive polls triggers a warning) to avoid noise from transient spikes.</li>
+        <li><strong>Notification channels</strong> — Email, Slack, webhook. Alerts that only show up in a dashboard are alerts that get missed.</li>
+      </ul>
+
+      <h2>How The Other Dude Monitors MikroTik Routers</h2>
+
+      <p>The Other Dude was built specifically for MikroTik fleet management. The monitoring stack is not bolted on — it's the core of what the platform does.</p>
+
+      <p><strong>Collection via the RouterOS binary API.</strong> The Go-based poller connects to each device over the RouterOS binary API on TLS port 8729. This is not SNMP. There are no OIDs, no MIB files, no polling configuration per metric type. The API returns structured data directly from RouterOS resources, which is faster, more reliable, and requires no per-device SNMP configuration.</p>
+
+      <p><strong>Three metric families.</strong> Each poll cycle collects health metrics (CPU, memory, disk, temperature), interface metrics (per-interface traffic rates calculated from cumulative counter deltas), and wireless metrics (client count, signal strength in dBm, CCQ per wireless interface). All three are stored in TimescaleDB hypertables with automatic time-based bucketing for efficient range queries.</p>
+
+      <p><strong>Real-time browser updates.</strong> Metrics flow from the poller into NATS JetStream, then out to connected browsers via Server-Sent Events. The dashboard reflects current device state without polling the database on every page load.</p>
+
+      <p><strong>Fleet health dashboard.</strong> The main view shows aggregate fleet health — how many devices are online, which have active alerts, uptime sparklines per device, and bandwidth charts for the busiest links. The "APs Needing Attention" card surfaces wireless access points with degraded signal or low CCQ so you can find problems before users do.</p>
+
+      <p><strong>Per-device detail.</strong> Each device has its own page with health graphs over configurable time windows, per-interface traffic charts, and wireless metrics broken down by interface. You can see exactly what a device was doing at any point in its history.</p>
+
+      <p><strong>Alert rules with duration thresholds.</strong> Alert rules combine a metric, a threshold, and a <code>duration_polls</code> count. A rule for "CPU &gt; 90%" with <code>duration_polls = 5</code> only fires after five consecutive polling intervals above the threshold. This eliminates noise from transient spikes. New tenants receive a default set of alert rules covering CPU, memory, disk, offline detection, wireless signal, and CCQ — sensible baselines that you can tune without starting from zero.</p>
+
+      <p><strong>Notification channels.</strong> Alerts are delivered via email, webhook, or Slack. Maintenance windows let you suppress alerts during planned work without disabling the rules themselves.</p>
+
+      <p><strong>Network topology map.</strong> An interactive topology view shows device interconnections across your fleet, giving you a structural context for interpreting monitoring data.</p>
+
+      <h2>Related Guides</h2>
+
+      <div class="doc-related">
+        <ul>
+          <li><a href="mikrotik-configuration-drift.html">Detect configuration drift across your MikroTik fleet</a></li>
+          <li><a href="mikrotik-router-backup-automation.html">Automate router backups for every device</a></li>
+          <li><a href="manage-multiple-mikrotik-routers.html">Manage multiple MikroTik routers from one interface</a></li>
+          <li><a href="mikrotik-centralized-management.html">MikroTik centralized management: architecture and setup</a></li>
+          <li><a href="https://github.com/staack/the-other-dude" rel="noopener">The Other Dude on GitHub</a></li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../blog/">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d5f1e31cb9744c998a8f7d1303c6efef"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
