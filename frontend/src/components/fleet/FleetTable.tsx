@@ -246,7 +246,7 @@ export function FleetTable({
   const tableHead = (
     <thead>
       <tr className="border-b border-border bg-surface">
-        <th scope="col" className="px-2 py-2 text-xs font-medium text-text-muted w-6"></th>
+        <th scope="col" className="px-2 py-2 text-xs font-medium text-text-muted w-6"><span className="sr-only">Status</span></th>
         <SortHeader column="hostname" label="Hostname" {...sortProps} className="text-left" />
         <SortHeader column="ip_address" label="IP" {...sortProps} className="text-left" />
         <SortHeader column="model" label="Model" {...sortProps} className="text-left" />
@@ -328,7 +328,8 @@ export function FleetTable({
                               selectedIndex === virtualRow.index && 'bg-elevated/50',
                             )}
                             onClick={() => handleDeviceClick(device)}
-                            aria-selected={selectedIndex === virtualRow.index}
+                            tabIndex={0}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDeviceClick(device) } }}
                             style={{
                               position: 'absolute',
                               top: 0,
@@ -388,7 +389,8 @@ export function FleetTable({
                         selectedIndex === idx && 'bg-elevated/50',
                       )}
                       onClick={() => handleDeviceClick(device)}
-                      aria-selected={selectedIndex === idx}
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDeviceClick(device) } }}
                     >
                       {renderDeviceRow(device)}
                     </tr>
