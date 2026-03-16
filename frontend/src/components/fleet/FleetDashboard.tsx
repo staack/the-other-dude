@@ -17,6 +17,7 @@ import { EventsTimeline } from '@/components/dashboard/EventsTimeline'
 import { BandwidthChart, type BandwidthDevice } from '@/components/dashboard/BandwidthChart'
 import { AlertSummary } from '@/components/dashboard/AlertSummary'
 import { QuickActions } from '@/components/dashboard/QuickActions'
+import { WirelessIssues } from '@/components/dashboard/WirelessIssues'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -288,6 +289,11 @@ export function FleetDashboard() {
                 activeAlerts={totalAlerts}
                 criticalAlerts={criticalCount}
               />
+            </div>
+
+            {/* Wireless Issues */}
+            <div>
+              <WirelessIssues tenantId={tenantId || null} />
             </div>
           </div>
         </>
