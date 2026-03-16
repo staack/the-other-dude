@@ -195,7 +195,7 @@ export function ChangePasswordForm() {
       )}
 
       {error && (
-        <div className="rounded-md bg-error/10 border border-error/30 px-3 py-2">
+        <div className="rounded-md bg-error/10 border border-error/30 px-3 py-2" role="alert">
           <p className="text-xs text-error">{error}</p>
         </div>
       )}

@@ -120,7 +120,7 @@ export function CreateUserForm({ tenantId, open, onClose }: Props) {
               </SelectContent>
             </Select>
           </div>
-          {error && <p className="text-xs text-error">{error}</p>}
+          {error && <p className="text-xs text-error" role="alert">{error}</p>}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={handleClose} size="sm">
               Cancel
