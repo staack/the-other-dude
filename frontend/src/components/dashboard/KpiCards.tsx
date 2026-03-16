@@ -46,20 +46,20 @@ function KpiCard({
   return (
     <Card
       className={cn(
-        'bg-surface border-border transition-colors',
+        'bg-gradient-to-br from-[#f8f8ff] to-elevated dark:from-elevated dark:to-[#16162a] border-border transition-colors',
         highlight && 'border-warning/30',
       )}
     >
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-text-muted uppercase tracking-wider">
+            <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
               {label}
             </span>
             <div className="flex items-baseline gap-1">
               <span
                 className={cn(
-                  'text-2xl font-bold tabular-nums font-mono',
+                  'text-2xl font-medium tabular-nums font-mono',
                   colorClass,
                 )}
               >
