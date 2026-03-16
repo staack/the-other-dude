@@ -129,7 +129,7 @@ export function SettingsPage() {
             /api/docs (OpenAPI)
           </a>
         } />
-        <InfoRow label="Version" value="v8.0" />
+        <InfoRow label="Version" value="v9.6" />
       </div>
 
       {/* Quick links */}
