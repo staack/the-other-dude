@@ -23,6 +23,7 @@ import { SystemSimplePanel } from './categories/SystemSimplePanel'
 
 // Standard config panel imports
 import { HealthTab } from '@/components/monitoring/HealthTab'
+import { WirelessTab } from '@/components/monitoring/WirelessTab'
 import { InterfacesTab } from '@/components/monitoring/InterfacesTab'
 import { ConfigTab } from '@/components/config/ConfigTab'
 import { InterfacesPanel } from '@/components/config/InterfacesPanel'
@@ -102,6 +103,9 @@ export function SimpleConfigView({
           )}
           {activeTab === 'traffic' && (
             <InterfacesTab tenantId={tenantId} deviceId={deviceId} active />
+          )}
+          {activeTab === 'wireless' && (
+            <WirelessTab tenantId={tenantId} deviceId={deviceId} active />
           )}
           {activeTab === 'interfaces' && (
             <InterfacesPanel tenantId={tenantId} deviceId={deviceId} active />

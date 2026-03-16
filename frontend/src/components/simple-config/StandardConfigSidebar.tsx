@@ -35,6 +35,7 @@ const STANDARD_GROUPS: SidebarGroup[] = [
       { id: 'overview', label: 'Overview' },
       { id: 'health', label: 'Health' },
       { id: 'traffic', label: 'Traffic' },
+      { id: 'wireless', label: 'Wireless' },
     ],
   },
   {
@@ -73,7 +74,7 @@ const STANDARD_GROUPS: SidebarGroup[] = [
   {
     label: 'WiFi',
     icon: Wifi,
-    items: [{ id: 'wifi', label: 'WiFi' }],
+    items: [{ id: 'wifi', label: 'WiFi Config' }],
   },
   {
     label: 'Queues',
