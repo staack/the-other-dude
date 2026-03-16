@@ -139,11 +139,11 @@
     --sidebar: 222 47% 11%;
   }
 
-  /* Reduced motion support -- DS-10 */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
-      animation: none !important;
-      transition: none !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
   }
@@ -181,4 +181,25 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: hsl(var(--elevated)); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: hsl(var(--border-bright)); }
+
+  /* ── Deep Space transitions ── */
+  button, a, input, select, textarea,
+  [role="button"], [role="tab"], [role="menuitem"] {
+    transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+  }
+
+  [data-sidebar] {
+    transition: width 200ms ease;
+  }
+
+  [data-radix-dialog-overlay] {
+    transition: opacity 150ms ease;
+  }
+  [data-radix-dialog-content] {
+    transition: opacity 150ms ease, transform 150ms ease;
+  }
+
+  .font-mono, [class*="font-mono"] {
+    font-variant-numeric: tabular-nums;
+  }
 }
