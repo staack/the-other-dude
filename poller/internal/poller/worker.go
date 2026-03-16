@@ -390,10 +390,6 @@ func PollDevice(
 				slog.Warn("firmware check failed", "device_id", dev.ID, "error", fwErr)
 				// Set cooldown on failure too, but shorter (6h) so we retry sooner than success (24h).
 				// Prevents hammering devices that can't reach MikroTik update servers every poll cycle.
-				fwFailKey := fmt.Sprintf("firmware:check-failed:%s", dev.ID)
-				if err := redisClientForFirmware.Set(ctx, fwFailKey, "1", 6*time.Hour).Err(); err != nil {
-					slog.Warn("Redis SET failed", "key", fwFailKey, "error", err)
-				}
 				// Also set the main checked key to prevent the success path from re-checking.
 				if err := redisClientForFirmware.Set(ctx, fwCacheKey, "1", 6*time.Hour).Err(); err != nil {
 					slog.Warn("Redis SET failed", "key", fwCacheKey, "error", err)

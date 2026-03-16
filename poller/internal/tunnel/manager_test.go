@@ -12,7 +12,7 @@ func TestManager_OpenTunnel(t *testing.T) {
 	routerAddr, cleanup := mockRouter(t)
 	defer cleanup()
 
-	mgr := NewManager(49000, 49010, 5*time.Minute, nil, nil)
+	mgr := NewManager(49000, 49010, 5*time.Minute)
 	defer mgr.Shutdown()
 
 	resp, err := mgr.OpenTunnel("dev-1", "ten-1", "usr-1", routerAddr)
@@ -26,7 +26,7 @@ func TestManager_CloseTunnel(t *testing.T) {
 	routerAddr, cleanup := mockRouter(t)
 	defer cleanup()
 
-	mgr := NewManager(49000, 49010, 5*time.Minute, nil, nil)
+	mgr := NewManager(49000, 49010, 5*time.Minute)
 	defer mgr.Shutdown()
 
 	resp, _ := mgr.OpenTunnel("dev-1", "ten-1", "usr-1", routerAddr)
@@ -43,7 +43,7 @@ func TestManager_PortExhaustion(t *testing.T) {
 	routerAddr, cleanup := mockRouter(t)
 	defer cleanup()
 
-	mgr := NewManager(49000, 49001, 5*time.Minute, nil, nil) // 2 ports
+	mgr := NewManager(49000, 49001, 5*time.Minute) // 2 ports
 	defer mgr.Shutdown()
 
 	_, err := mgr.OpenTunnel("dev-1", "ten-1", "usr-1", routerAddr)
@@ -58,7 +58,7 @@ func TestManager_IdleCleanup(t *testing.T) {
 	routerAddr, cleanup := mockRouter(t)
 	defer cleanup()
 
-	mgr := NewManager(49000, 49010, 100*time.Millisecond, nil, nil) // very short idle
+	mgr := NewManager(49000, 49010, 100*time.Millisecond) // very short idle
 	defer mgr.Shutdown()
 
 	resp, _ := mgr.OpenTunnel("dev-1", "ten-1", "usr-1", routerAddr)
@@ -73,7 +73,7 @@ func TestManager_StatusList(t *testing.T) {
 	routerAddr, cleanup := mockRouter(t)
 	defer cleanup()
 
-	mgr := NewManager(49000, 49010, 5*time.Minute, nil, nil)
+	mgr := NewManager(49000, 49010, 5*time.Minute)
 	defer mgr.Shutdown()
 
 	mgr.OpenTunnel("dev-1", "ten-1", "usr-1", routerAddr)

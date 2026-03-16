@@ -38,13 +38,3 @@ export function toast(options: ToastOptions) {
   }
 }
 
-// Backward-compatible no-op exports for AppLayout migration
-// These were used by the old Radix Toast implementation
-export const ToastProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>
-export const ToastViewport = () => null
-export const Toast = () => null
-export const ToastTitle = () => null
-export const ToastDescription = () => null
-export const ToastClose = () => null
-// eslint-disable-next-line react-refresh/only-export-components
-export const useToasts = () => ({ toasts: [] as never[], dismiss: () => {} })

@@ -196,8 +196,6 @@ func main() {
 		cfg.TunnelPortMin,
 		cfg.TunnelPortMax,
 		time.Duration(cfg.TunnelIdleTimeout)*time.Second,
-		deviceStore,
-		credentialCache,
 	)
 	defer tunnelMgr.Shutdown()
 	slog.Info("tunnel manager initialized",

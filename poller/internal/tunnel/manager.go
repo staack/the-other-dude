@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/staack/the-other-dude/poller/internal/store"
-	"github.com/staack/the-other-dude/poller/internal/vault"
 )
 
 // OpenTunnelResponse is returned by Manager.OpenTunnel.
@@ -32,26 +30,22 @@ type TunnelStatus struct {
 // Manager orchestrates the lifecycle of WinBox tunnels: open, close, idle
 // cleanup, and status queries.
 type Manager struct {
-	mu          sync.Mutex
-	tunnels     map[string]*Tunnel
-	portPool    *PortPool
-	idleTime    time.Duration
-	deviceStore *store.DeviceStore
-	credCache   *vault.CredentialCache
-	cancel      context.CancelFunc
+	mu       sync.Mutex
+	tunnels  map[string]*Tunnel
+	portPool *PortPool
+	idleTime time.Duration
+	cancel   context.CancelFunc
 }
 
 // NewManager creates a Manager with ports in [portMin, portMax] and an idle
-// timeout of idleTime. deviceStore and credCache may be nil for tests.
-func NewManager(portMin, portMax int, idleTime time.Duration, ds *store.DeviceStore, cc *vault.CredentialCache) *Manager {
+// timeout of idleTime.
+func NewManager(portMin, portMax int, idleTime time.Duration) *Manager {
 	ctx, cancel := context.WithCancel(context.Background())
 	m := &Manager{
-		tunnels:     make(map[string]*Tunnel),
-		portPool:    NewPortPool(portMin, portMax),
-		idleTime:    idleTime,
-		deviceStore: ds,
-		credCache:   cc,
-		cancel:      cancel,
+		tunnels:  make(map[string]*Tunnel),
+		portPool: NewPortPool(portMin, portMax),
+		idleTime: idleTime,
+		cancel:   cancel,
 	}
 	go m.idleLoop(ctx)
 	return m
