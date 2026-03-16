@@ -419,8 +419,8 @@ add chain=forward action=drop""",
         ],
     },
     {
-        "name": "Wireless AP Config",
-        "description": "Configure wireless access point with WPA2 security",
+        "name": "Wireless AP Config (legacy)",
+        "description": "Configure wireless AP with WPA2 — RouterOS 6 or 7 with legacy wireless package",
         "content": """/interface wireless security-profiles add name=portal-wpa2 mode=dynamic-keys authentication-types=wpa2-psk wpa2-pre-shared-key={{ password }}
 /interface wireless set wlan1 mode=ap-bridge ssid={{ ssid }} security-profile=portal-wpa2 frequency={{ frequency }} channel-width={{ channel_width }} disabled=no""",
         "variables": [
@@ -447,6 +447,25 @@ add chain=forward action=drop""",
                 "type": "string",
                 "default": "20/40mhz-XX",
                 "description": "Channel width setting",
+            },
+        ],
+    },
+    {
+        "name": "WiFi AP Config (wave2)",
+        "description": "Configure WiFi AP with WPA2 — RouterOS 7 with wifi-qcom-ac or wifi-qcom package",
+        "content": """/interface wifi set wifi1 configuration.ssid={{ ssid }} security.passphrase={{ password }} disabled=no""",
+        "variables": [
+            {
+                "name": "ssid",
+                "type": "string",
+                "default": "MikroTik-AP",
+                "description": "Wireless network name",
+            },
+            {
+                "name": "password",
+                "type": "string",
+                "default": "",
+                "description": "WPA2/WPA3 passphrase (min 8 characters)",
             },
         ],
     },
