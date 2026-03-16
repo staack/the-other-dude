@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"sync/atomic"
 	"time"
 
@@ -40,7 +41,10 @@ func bridge(ctx context.Context, cancel context.CancelFunc, ws *websocket.Conn,
 				}
 				continue
 			}
-			stdin.Write(data)
+			if _, err := stdin.Write(data); err != nil {
+				slog.Debug("SSH stdin write failed", "error", err)
+				return
+			}
 		}
 	}()
 
@@ -54,7 +58,10 @@ func bridge(ctx context.Context, cancel context.CancelFunc, ws *websocket.Conn,
 				return
 			}
 			atomic.StoreInt64(lastActive, time.Now().UnixNano())
-			ws.Write(ctx, websocket.MessageBinary, buf[:n])
+			if err := ws.Write(ctx, websocket.MessageBinary, buf[:n]); err != nil {
+				slog.Debug("SSH→WebSocket write failed", "error", err)
+				return
+			}
 		}
 	}()
 
@@ -67,7 +74,10 @@ func bridge(ctx context.Context, cancel context.CancelFunc, ws *websocket.Conn,
 			if err != nil {
 				return
 			}
-			ws.Write(ctx, websocket.MessageBinary, buf[:n])
+			if err := ws.Write(ctx, websocket.MessageBinary, buf[:n]); err != nil {
+				slog.Debug("SSH→WebSocket write failed", "error", err)
+				return
+			}
 		}
 	}()
 
