@@ -216,7 +216,7 @@ export function CommandPalette() {
       overlayClassName="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
       contentClassName="fixed left-1/2 top-[20%] -translate-x-1/2 z-50 w-full max-w-lg"
     >
-      <div className="rounded-xl border border-border bg-surface shadow-2xl overflow-hidden">
+      <div className="rounded-lg border border-border bg-surface overflow-hidden">
         <div className="flex items-center gap-2 px-4 border-b border-border">
           <Search className="h-4 w-4 text-text-muted flex-shrink-0" />
           <Command.Input
