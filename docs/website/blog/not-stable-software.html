@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>This Is Not Stable Software — The Other Dude Blog</title>
+  <meta name="description" content="The Other Dude is under active development. Things break, APIs change, and that's the point. Here's why, and when stability starts mattering.">
+  <meta name="keywords" content="MikroTik, fleet management, software development, stability, The Other Dude">
+  <meta name="author" content="The Other Dude">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#0F172A">
+  <link rel="canonical" href="https://theotherdude.net/blog/not-stable-software.html">
+  <link rel="icon" href="../data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="This Is Not Stable Software — The Other Dude">
+  <meta property="og:description" content="The Other Dude is under active development. Things break, APIs change, and that's the point. Here's why, and when stability starts mattering.">
+  <meta property="og:url" content="https://theotherdude.net/blog/not-stable-software.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="article:published_time" content="2026-03-16">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "This Is Not Stable Software",
+    "description": "The Other Dude is under active development. Things break, APIs change, and that's the point. Here's why, and when stability starts mattering.",
+    "datePublished": "2026-03-16",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/blog/not-stable-software.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .blog-post {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+    .blog-post-meta {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .blog-post h1 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 700;
+      font-size: 2.5rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 40px;
+    }
+    .blog-post h2 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--text-primary);
+      margin-top: 48px;
+      margin-bottom: 16px;
+    }
+    .blog-post p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .blog-post p strong {
+      color: var(--text-primary);
+    }
+    .blog-post a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .blog-post a:hover {
+      color: var(--text-primary);
+    }
+    .blog-post .back-link {
+      display: inline-block;
+      margin-bottom: 32px;
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--text-muted);
+    }
+    .blog-post .back-link:hover {
+      color: var(--accent);
+    }
+    @media (max-width: 480px) {
+      .blog-post h1 { font-size: 1.8rem; }
+      .blog-post { padding: 60px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav site-nav--dark">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="index.html" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="blog-post">
+      <a href="index.html" class="back-link">&larr; Back to Blog</a>
+      <div class="blog-post-meta">March 16, 2026</div>
+      <h1>This Is Not Stable Software</h1>
+
+      <h2>The Honest Version</h2>
+
+      <p>The Other Dude is under very active development. Things break. Features move around. APIs change without warning. The docs are sometimes wrong about things that changed yesterday.</p>
+
+      <p>That's not an apology. That's just what building software in the open looks like.</p>
+
+      <h2>Why It's Like This On Purpose</h2>
+
+      <p>When you lock down software too early, bad decisions become load-bearing walls. Anyone who's operated infrastructure tools long enough has watched that happen — some terrible design choice from 2014 that nobody can remove because three other things depend on it.</p>
+
+      <p>So for now the goal is simple: move fast, test ideas, throw away the ones that turn out to be wrong. Some parts of the system might change several times before they settle into the shape they're supposed to have. That's normal at this stage. That's the point.</p>
+
+      <h2>What This Actually Is</h2>
+
+      <p>For anyone who wandered in from a search engine: The Other Dude is a platform for managing fleets of MikroTik RouterOS devices.</p>
+
+      <p>Not one router. Dozens or hundreds of them, managed as a system.</p>
+
+      <p>Configuration history. Drift detection. Safe configuration pushes. Fleet-wide visibility. The kinds of problems that don't get solved by opening more SSH sessions.</p>
+
+      <h2>Version 11 Is Where It Changes</h2>
+
+      <p>Version 11 will be the first release I consider a real release. Not because the number is magical, but because by that point the architecture should be stable enough to start caring about things like predictable upgrades, backward compatibility, documentation that stays accurate for more than a week, and not breaking users every other update.</p>
+
+      <p>Right now those things are secondary. The architecture still needs room to evolve. Locking it down now would be doing you a disservice later.</p>
+
+      <h2>Who Should Use This Today</h2>
+
+      <p>People who like watching systems get built in public. People who are curious about the design. People who enjoy experimenting with unfinished software and don't panic when something changes.</p>
+
+      <p>If that sounds like you, welcome. You're the target audience right now.</p>
+
+      <h2>Who Should Probably Wait</h2>
+
+      <p>Anyone who needs something stable today. Anyone who expects upgrades to never break anything. Anyone who wants polished software with guarantees attached.</p>
+
+      <p>That version is coming. Just not yet.</p>
+
+      <h2>The Bottom Line</h2>
+
+      <p>The project is still being shaped. Shaping systems properly takes a little chaos before things settle down. If you're the kind of engineer who enjoys watching that process happen, stick around.</p>
+
+      <p>Version 11 will eventually show up. When it does, that's when the boring work of stability begins.</p>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="index.html">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d5f1e31cb9744c998a8f7d1303c6efef"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
