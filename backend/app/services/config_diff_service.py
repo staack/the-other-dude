@@ -176,7 +176,7 @@ async def generate_and_store_diff(
                 },
             )
         except Exception:
-            pass
+            logger.warning("Config diff generation failed", exc_info=True)
 
         # 11. Parse structured changes (best-effort)
         try:

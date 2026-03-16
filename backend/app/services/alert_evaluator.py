@@ -696,6 +696,13 @@ async def evaluate_offline(device_id: str, tenant_id: str) -> None:
 
 async def evaluate_online(device_id: str, tenant_id: str) -> None:
     """Resolve offline alert when device comes back online."""
+    if await _is_device_in_maintenance(tenant_id, device_id):
+        logger.debug(
+            "Online event suppressed by maintenance window for device %s",
+            device_id,
+        )
+        return
+
     rule = await _get_offline_rule(tenant_id)
     rule_id = rule["id"] if rule else None
 

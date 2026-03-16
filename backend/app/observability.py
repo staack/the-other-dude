@@ -130,8 +130,8 @@ async def _check_nats(nats_url: str) -> dict:
         )
         try:
             await nc.drain()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Readiness check dependency failed: %s", exc)
         latency_ms = round((time.monotonic() - start) * 1000)
         return {"status": "up", "latency_ms": latency_ms, "error": None}
     except Exception as exc:
