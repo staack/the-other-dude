@@ -81,8 +81,8 @@ const config: Config = {
       borderRadius: {
         sm: '0.25rem',
         DEFAULT: 'var(--radius)',
-        md: 'var(--radius)',
-        lg: '0.5rem',
+        md: '0.375rem',
+        lg: 'var(--radius)',
         xl: '0.75rem',
       },
     },
