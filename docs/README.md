@@ -2,9 +2,9 @@
 
 **Fleet management platform for MikroTik RouterOS.**
 
-Monitor routers, detect configuration drift, manage backups, and safely push configuration changes across hundreds of devices. Built for MSPs and network engineers managing MikroTik fleets.
+Monitor routers, detect configuration drift, manage backups, and safely push configuration changes across hundreds of devices. Built for MSPs (Managed Service Providers) and network engineers managing MikroTik fleets.
 
-The Other Dude is a self-hosted, multi-tenant platform that gives you centralized visibility, configuration management, real-time monitoring, and zero-knowledge security across your entire MikroTik fleet -- from a single pane of glass.
+The Other Dude is a self-hosted, multi-tenant platform (one installation serves multiple organizations, each with fully isolated data) that gives you centralized visibility, configuration management, real-time monitoring, and zero-knowledge security across your entire MikroTik fleet -- from a single pane of glass.
 
 ---
 
@@ -24,7 +24,7 @@ The Other Dude is a self-hosted, multi-tenant platform that gives you centralize
 
 - **Dashboard** -- At-a-glance fleet health with device counts, uptime sparklines, status breakdowns per organization, and an "APs Needing Attention" card highlighting wireless issues.
 - **Device Management** -- Detailed device pages with system info, interfaces, routes, firewall rules, DHCP leases, and real-time resource metrics.
-- **Fleet Table** -- Virtual-scrolled table (TanStack Virtual) that handles hundreds of devices without breaking a sweat.
+- **Fleet Table** -- Virtual-scrolled table that handles hundreds of devices without breaking a sweat.
 - **Device Map** -- Geographic view of device locations.
 - **Subnet Scanner** -- Discover new RouterOS devices on your network and onboard them in clicks.
 
@@ -39,29 +39,29 @@ The Other Dude is a self-hosted, multi-tenant platform that gives you centralize
 
 ### Monitoring
 
-- **Network Topology** -- Interactive topology map (ReactFlow + Dagre layout) showing device interconnections and shared subnets.
-- **Real-Time Metrics** -- Live CPU, memory, disk, interface traffic, and wireless stats (client count, signal strength, CCQ) via Server-Sent Events (SSE) backed by NATS JetStream.
+- **Network Topology** -- Interactive topology map showing device interconnections and shared subnets.
+- **Real-Time Metrics** -- Live CPU, memory, disk, interface traffic, and wireless stats (client count, signal strength, CCQ (Client Connection Quality)) streamed in real time.
 - **Alert Rules** -- Configurable threshold-based alerts for any metric (CPU > 90%, signal < -75 dBm, CCQ < 60%, interface down, uptime reset, etc.). Default wireless alert rules are seeded automatically for new tenants.
 - **Notification Channels** -- Route alerts to email, webhooks, or Slack.
 - **Audit Trail** -- Immutable log of every action taken in the portal, with user attribution and exportable records.
-- **Transparency Dashboard** -- KMS access event monitoring for tenant admins (who accessed what encryption keys, when).
+- **Transparency Dashboard** -- KMS (Key Management Service) access event monitoring for tenant admins (who accessed what encryption keys, when).
 - **Reports** -- Generate PDF reports (fleet summary, device detail, security audit, performance) with Jinja2 + WeasyPrint.
 
 ### Security
 
-- **Zero-Knowledge Architecture** -- 1Password-style hybrid design. SRP-6a authentication means the server never sees your password. Two-Secret Key Derivation (2SKD) with PBKDF2 (650K iterations) + HKDF + XOR.
-- **Secret Key** -- 128-bit `A3-XXXXXX` format key stored in IndexedDB with Emergency Kit PDF export.
-- **OpenBao KMS** -- Per-tenant envelope encryption via Transit secret engine. Go poller uses LRU cache (1024 keys / 5-min TTL) for performance.
-- **Internal Certificate Authority** -- Issue and deploy TLS certificates to RouterOS devices via SFTP. Three-tier TLS fallback: CA-verified, InsecureSkipVerify, plain API.
+- **Zero-Knowledge Architecture** -- 1Password-style hybrid design. SRP-6a authentication — your password never leaves your browser. Two-secret key derivation ensures neither a stolen password nor a compromised database alone can expose your account.
+- **Secret Key** -- A unique Secret Key (format `A3-XXXXXX`) generated at enrollment. Export it as an Emergency Kit PDF — you need it to log in from new devices.
+- **OpenBao KMS** -- Per-tenant envelope encryption via Transit secret engine.
+- **Internal Certificate Authority** -- Issue and deploy TLS certificates to RouterOS devices via SFTP. Automatic TLS fallback for devices that haven't yet been issued a certificate.
 - **WireGuard VPN** -- Manage WireGuard tunnels for secure device access across NAT boundaries.
 - **Credential Encryption** -- AES-256-GCM (Fernet) encryption of all stored device credentials at rest.
-- **RBAC** -- Four roles: `super_admin`, `admin`, `operator`, `viewer`. PostgreSQL Row-Level Security enforces tenant isolation at the database layer.
+- **RBAC** (Role-Based Access Control) -- Four roles: `super_admin`, `admin`, `operator`, `viewer`. Database-level tenant isolation ensures one organization's data cannot bleed into another's.
 
 ### Administration
 
 - **Multi-Tenancy** -- Full organization isolation with PostgreSQL RLS. Super admins manage all tenants; tenant admins see only their own devices and users.
 - **User Management** -- Per-tenant user administration with role assignment.
-- **API Keys** -- Generate `mktp_`-prefixed API keys with SHA-256 hash storage and operator-level RBAC for automation and integrations.
+- **API Keys** -- Generate API keys (prefixed `mktp_`) for automation and integrations. Keys are shown only once at creation.
 - **Firmware Management** -- Track RouterOS versions across your fleet, plan upgrades, and push firmware updates.
 - **Maintenance Windows** -- Schedule maintenance periods with automatic alert suppression.
 - **Setup Wizard** -- Guided 3-step onboarding for first-time deployment.
@@ -114,10 +114,10 @@ The Other Dude is a self-hosted, multi-tenant platform that gives you centralize
 - **Frontend** serves the React SPA via nginx and proxies `/api/` to the backend.
 - **API** handles all business logic, authentication, and database access with RLS-enforced tenant isolation.
 - **Poller** is a Go microservice that polls RouterOS devices on a configurable interval using the RouterOS binary API, publishing results to NATS and persisting to PostgreSQL.
-- **PostgreSQL + TimescaleDB** stores all relational data with hypertables for time-series metrics.
+- **PostgreSQL + TimescaleDB** stores all relational data with hypertables for time-series metrics (efficient timestamped data storage).
 - **Redis** provides distributed locks (one poller per device) and rate limiting.
-- **NATS JetStream** delivers real-time events from the poller to the API (and onward to the frontend via SSE).
-- **OpenBao** provides Transit secret engine for per-tenant envelope encryption (zero-knowledge key management).
+- **NATS JetStream** delivers real-time events from the poller to the API and browser.
+- **OpenBao** provides Transit secret engine for per-tenant envelope encryption (each organization's data encrypted under its own key).
 
 ---
 
@@ -133,7 +133,7 @@ The Other Dude is a self-hosted, multi-tenant platform that gives you centralize
 | Message Bus | NATS with JetStream |
 | KMS | OpenBao 2.1 (Transit secret engine) |
 | VPN | WireGuard |
-| Auth | SRP-6a (zero-knowledge), JWT (15m access / 7d refresh) |
+| Auth | SRP-6a (zero-knowledge password auth), JWT session tokens |
 | Reports | Jinja2 + WeasyPrint (PDF generation) |
 | Containerization | Docker Compose (dev, staging, production profiles) |
 
@@ -150,7 +150,7 @@ cd the-other-dude
 python3 setup.py
 ```
 
-The setup wizard configures your database, generates cryptographic keys, bootstraps OpenBao, sets up your reverse proxy, builds the Docker images, and starts everything. No manual `.env` editing required.
+The setup wizard configures your database, generates encryption keys, initializes the secret management service (OpenBao), sets up your reverse proxy, builds the Docker images, and starts everything. No manual `.env` editing required.
 
 Three environment profiles are available:
 
