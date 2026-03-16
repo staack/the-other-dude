@@ -355,13 +355,16 @@ function AuditLogRow({ item, isExpanded, onToggle }: AuditLogRowProps) {
           isExpanded && 'bg-elevated/20',
         )}
         onClick={onToggle}
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
+        aria-expanded={isExpanded}
       >
         <td className="px-3 py-2 text-center">
           {hasDetails ? (
             isExpanded ? (
-              <ChevronDown className="h-3.5 w-3.5 text-text-muted" />
+              <ChevronDown className="h-3.5 w-3.5 text-text-muted" aria-hidden="true" />
             ) : (
-              <ChevronRight className="h-3.5 w-3.5 text-text-muted" />
+              <ChevronRight className="h-3.5 w-3.5 text-text-muted" aria-hidden="true" />
             )
           ) : (
             <span className="inline-block h-3.5 w-3.5" />
