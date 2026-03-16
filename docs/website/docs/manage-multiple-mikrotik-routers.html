@@ -165,7 +165,7 @@
       <p>For teams evaluating self-hosted options, the stack is straightforward:</p>
 
       <ul>
-        <li><strong>React frontend</strong> — web interface, virtual-scrolled device tables, real-time status updates via WebSocket.</li>
+        <li><strong>React frontend</strong> — web interface, virtual-scrolled device tables, real-time status updates via Server-Sent Events (SSE).</li>
         <li><strong>FastAPI backend</strong> — REST API, authentication, RBAC enforcement, task orchestration.</li>
         <li><strong>PostgreSQL + TimescaleDB</strong> — device inventory, time-series metrics, config history, multi-tenant RLS.</li>
         <li><strong>Go poller</strong> — connects to devices using the RouterOS binary API over TLS (port 8729), collects metrics, executes commands, handles reconnection and error recovery per device.</li>

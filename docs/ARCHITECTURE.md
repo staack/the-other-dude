@@ -87,7 +87,7 @@ The backend exposes 25 route groups under the `/api` prefix:
 
 ### Go Poller
 
-- **Stack**: Go 1.24, go-routeros/v3, pgx/v5, nats.go
+- **Stack**: Go 1.25, go-routeros/v3, pgx/v5, nats.go
 - **Polling model**: Synchronous per-device polling on a configurable interval (default 60s)
 - **Device communication**: RouterOS binary API over TLS (port 8729), InsecureSkipVerify for self-signed certs
 - **TLS fallback**: Three-tier strategy -- CA-verified -> InsecureSkipVerify -> plain API
@@ -106,7 +106,7 @@ The backend exposes 25 route groups under the `/api` prefix:
 ### PostgreSQL 17 + TimescaleDB
 
 - **Image**: `timescale/timescaledb:2.17.2-pg17`
-- **Row-Level Security (RLS)**: Enforces tenant isolation at the database level. All data tables have a `tenant_id` column; RLS policies filter by `current_setting('app.tenant_id')`
+- **Row-Level Security (RLS)**: Enforces tenant isolation at the database level. All data tables have a `tenant_id` column; RLS policies filter by `current_setting('app.current_tenant')`
 - **Database roles**:
   - `postgres` (superuser) -- admin engine, auth/bootstrap, migrations
   - `app_user` (non-superuser) -- RLS-enforced, used by API for data routes
@@ -140,11 +140,11 @@ The backend exposes 25 route groups under the `/api` prefix:
 ### OpenBao (HashiCorp Vault fork)
 
 - **Image**: `openbao/openbao:2.1`
-- **Mode**: Dev server (auto-unsealed, in-memory storage)
+- **Mode**: Persistent server with file storage backend (`/openbao/data`), mounted to the `openbao_data` Docker volume. Data survives container restarts.
 - **Transit secrets engine**: Provides envelope encryption for device credentials at rest
 - **Per-tenant keys**: Each tenant gets a dedicated Transit encryption key
 - **Init script**: `infrastructure/openbao/init.sh` enables Transit engine and creates initial keys
-- **Dev token**: `dev-openbao-token` (must be replaced in production)
+- **Token**: Set `OPENBAO_TOKEN` in `.env.prod`. The application rejects known-insecure defaults in production.
 - **Memory limit**: 256MB
 
 ### WireGuard
@@ -239,8 +239,8 @@ Browser                     API                   PostgreSQL
 ## Multi-Tenancy Model
 
 - Every data table includes a `tenant_id` column
-- PostgreSQL RLS policies filter rows by `current_setting('app.tenant_id')`
-- The API sets tenant context (`SET app.tenant_id = ...`) on each database session
+- PostgreSQL RLS policies filter rows by `current_setting('app.current_tenant')`
+- The API sets tenant context (`SET app.current_tenant = ...`) on each database session
 - `super_admin` role has NULL `tenant_id` and can access all tenants
 - `poller_user` bypasses RLS intentionally (needs cross-tenant device access for polling)
 - Tenant isolation is enforced at the database level, not the application level -- even a compromised API cannot leak cross-tenant data through `app_user` connections
@@ -315,7 +315,7 @@ docker-compose.override.yml Application services for dev (api, poller, frontend)
 docker compose up -d
 
 # Full stack including application services (api, poller, frontend)
-docker compose up -d          # override.yml is auto-loaded in dev
+docker compose --profile full up -d
 
 # Build images sequentially to avoid OOM on low-RAM machines
 docker compose build api

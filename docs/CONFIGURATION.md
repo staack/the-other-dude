@@ -1,6 +1,6 @@
 # Configuration Reference
 
-TOD uses Pydantic Settings for configuration. All values can be set via environment variables or a `.env` file in the backend working directory.
+TOD uses Pydantic Settings for configuration. All values can be set via environment variables or an env file. In Docker Compose deployments, environment variables are loaded from `.env.prod` in the project root via `--env-file`. For local development without Docker, the backend also reads `backend/.env`.
 
 ## Environment Variables
 
@@ -50,6 +50,8 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | `OPENBAO_ADDR` | `http://localhost:8200` | OpenBao Transit server address for per-tenant envelope encryption |
 | `OPENBAO_TOKEN` | *(insecure dev default)* | OpenBao authentication token. **Must be changed in production.** |
 
+OpenBao is the key management service used to encrypt device credentials on a per-tenant basis. In Docker deployments, it runs as a container alongside the other services.
+
 ### NATS
 
 | Variable | Default | Description |
@@ -70,7 +72,7 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | `SMTP_PORT` | `587` | SMTP server port |
 | `SMTP_USER` | *(none)* | SMTP authentication username |
 | `SMTP_PASSWORD` | *(none)* | SMTP authentication password |
-| `SMTP_USE_TLS` | `false` | Enable STARTTLS for SMTP connections |
+| `SMTP_USE_TLS` | `false` | Enable STARTTLS for SMTP connections. If using port 587 (STARTTLS), set `SMTP_USE_TLS=true`. |
 | `SMTP_FROM_ADDRESS` | `noreply@the-other-dude.local` | Sender address for outbound emails |
 
 ### Firmware
@@ -105,7 +107,7 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `FIRST_ADMIN_EMAIL` | *(none)* | Email for the initial super_admin user. Only used if no users exist in the database. |
-| `FIRST_ADMIN_PASSWORD` | *(none)* | Password for the initial super_admin user. The user is created with `must_upgrade_auth=True`, triggering SRP registration on first login. |
+| `FIRST_ADMIN_PASSWORD` | *(none)* | Password for the initial super_admin user. On first login, you will be guided through a one-time security enrollment to set up zero-knowledge credentials. |
 
 ## Production Safety
 

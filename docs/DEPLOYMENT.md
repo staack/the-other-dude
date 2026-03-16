@@ -25,7 +25,7 @@ TOD (The Other Dude) is a containerized fleet management platform for RouterOS d
 ### 1. Clone and Configure
 
 ```bash
-git clone <repository-url> tod
+git clone https://github.com/staack/the-other-dude.git tod
 cd tod
 
 # Copy environment template
@@ -84,7 +84,7 @@ curl http://localhost:8000/health
 curl http://localhost:8000/health/ready
 
 # Access the portal
-open http://localhost
+# Open http://localhost in a web browser
 ```
 
 Log in with the `FIRST_ADMIN_EMAIL` and `FIRST_ADMIN_PASSWORD` credentials set in step 2.
@@ -186,7 +186,7 @@ docker compose \
 ```
 
 - **Prometheus**: `http://localhost:9090`
-- **Grafana**: `http://localhost:3001` (default: admin/admin)
+- **Grafana**: `http://localhost:3001` (default: admin/admin — change the default password immediately on any networked host)
 
 ### Exported Metrics
 
@@ -213,6 +213,9 @@ The API and poller export Prometheus metrics:
 ### Updating
 
 ```bash
+# Back up the database before upgrading
+docker compose exec postgres pg_dump -U postgres mikrotik > backup-$(date +%Y%m%d).sql
+
 git pull
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build api
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build poller

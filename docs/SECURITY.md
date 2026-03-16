@@ -41,7 +41,7 @@ Client                                Server
 
 Device credentials (RouterOS usernames and passwords) are encrypted at rest using envelope encryption:
 
-- **Encryption algorithm:** AES-256-GCM (via Fernet symmetric encryption).
+- **Encryption algorithm:** Fernet symmetric encryption (AES-128-CBC + HMAC-SHA256).
 - **Key management:** OpenBao Transit secrets engine provides the master encryption keys.
 - **Per-tenant isolation:** Each tenant has its own encryption key in OpenBao Transit.
 - **Envelope encryption:** Data is encrypted with a data encryption key (DEK), which is itself encrypted by the tenant's Transit key.
@@ -87,7 +87,7 @@ TOD includes a per-tenant Internal Certificate Authority for managing TLS certif
 
 ## Remote Access Security
 
-TOD v9.5 adds on-demand WinBox tunnels and browser-based SSH terminals for devices behind NAT.
+TOD includes on-demand WinBox tunnels and browser-based SSH terminals for devices behind NAT.
 
 - **Single-use session tokens:** SSH sessions are initiated with a short-lived token stored in Redis (`GETDEL`, 120-second TTL). The token is consumed on first use and cannot be replayed.
 - **RBAC enforcement:** Opening a tunnel or starting an SSH session requires the `operator` role or higher. `viewer` accounts have no access to remote access features.
@@ -97,10 +97,10 @@ TOD v9.5 adds on-demand WinBox tunnels and browser-based SSH terminals for devic
 
 ## Network Security
 
-- **RouterOS communication:** All device communication uses the RouterOS binary API over TLS (port 8729). InsecureSkipVerify is enabled by default because RouterOS devices typically use self-signed certificates.
+- **RouterOS communication:** All device communication uses the RouterOS binary API over TLS (port 8729). InsecureSkipVerify is enabled by default because RouterOS devices typically use self-signed certificates. To eliminate this risk, use the Internal Certificate Authority feature to issue verified TLS certificates to your devices.
 - **CORS enforcement:** Strict CORS policy in production, configured via `CORS_ORIGINS` environment variable.
 - **Rate limiting:** Authentication endpoints are rate-limited to 5 requests per minute per IP to prevent brute-force attacks.
-- **Cookie security:** httpOnly cookies prevent JavaScript access to session tokens. The `Secure` flag is auto-detected based on whether CORS origins use HTTPS.
+- **Cookie security:** httpOnly cookies prevent JavaScript access to session tokens. The `Secure` flag is auto-detected based on whether CORS origins use HTTPS. If you switch from HTTP to HTTPS, existing sessions will be invalidated — users will need to log in again.
 
 ## Data Protection
 
