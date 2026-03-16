@@ -32,14 +32,14 @@ interface FleetTableProps {
 type SortDir = 'asc' | 'desc'
 
 function StatusDot({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    online: 'bg-online',
-    offline: 'bg-offline',
+  const styles: Record<string, string> = {
+    online: 'bg-online shadow-[0_0_6px_hsl(var(--online)/0.3)]',
+    offline: 'bg-offline shadow-[0_0_6px_hsl(var(--offline)/0.3)]',
     unknown: 'bg-unknown',
   }
   return (
     <span
-      className={cn('inline-block w-2 h-2 rounded-full flex-shrink-0', colors[status] ?? colors.unknown)}
+      className={cn('inline-block w-[5px] h-[5px] rounded-full flex-shrink-0', styles[status] ?? styles.unknown)}
       title={status}
     />
   )
@@ -61,7 +61,7 @@ function SortHeader({ column, label, currentSort, currentDir, onSort, className 
     : 'none'
 
   return (
-    <th scope="col" className={cn('px-2 py-2 text-xs font-medium text-text-muted', className)} aria-sort={ariaSortValue}>
+    <th scope="col" className={cn('px-2 py-2 text-[10px] uppercase tracking-wider font-semibold text-text-muted', className)} aria-sort={ariaSortValue}>
       <button
         className="flex items-center gap-1 hover:text-text-primary transition-colors group"
         onClick={() => onSort(column)}
@@ -213,11 +213,11 @@ export function FleetTable({
         <td className="px-2 py-1.5 text-center">
           <StatusDot status={device.status} />
         </td>
-        <td className="px-2 py-1.5 font-medium">{device.hostname}</td>
+        <td className="px-2 py-1.5 font-medium text-text-primary">{device.hostname}</td>
         <td className="px-2 py-1.5 font-mono text-xs text-text-secondary">
           {device.ip_address}
         </td>
-        <td className="px-2 py-1.5 text-text-secondary">{device.model ?? '—'}</td>
+        <td className="px-2 py-1.5 text-text-muted">{device.model ?? '—'}</td>
         <td className="px-2 py-1.5 text-text-secondary">
           {device.routeros_version ?? '—'}
         </td>
@@ -245,8 +245,8 @@ export function FleetTable({
 
   const tableHead = (
     <thead>
-      <tr className="border-b border-border bg-surface">
-        <th scope="col" className="px-2 py-2 text-xs font-medium text-text-muted w-6"><span className="sr-only">Status</span></th>
+      <tr className="border-b border-border">
+        <th scope="col" className="px-2 py-2 text-[10px] uppercase tracking-wider font-semibold text-text-muted w-6"><span className="sr-only">Status</span></th>
         <SortHeader column="hostname" label="Hostname" {...sortProps} className="text-left" />
         <SortHeader column="ip_address" label="IP" {...sortProps} className="text-left" />
         <SortHeader column="model" label="Model" {...sortProps} className="text-left" />
@@ -254,7 +254,7 @@ export function FleetTable({
         <SortHeader column="firmware_version" label="Firmware" {...sortProps} className="text-left" />
         <SortHeader column="uptime_seconds" label="Uptime" {...sortProps} className="text-right" />
         <SortHeader column="last_seen" label="Last Seen" {...sortProps} className="text-left" />
-        <th scope="col" className="px-2 py-2 text-xs font-medium text-text-muted text-left">Tags</th>
+        <th scope="col" className="px-2 py-2 text-[10px] uppercase tracking-wider font-semibold text-text-muted text-left">Tags</th>
       </tr>
     </thead>
   )
