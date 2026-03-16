@@ -93,23 +93,11 @@ async def _send_email(channel: dict, alert_event: dict, device_hostname: str) ->
         f"Threshold: {threshold}\n"
     )
 
-    # Decrypt SMTP password (Transit first, then legacy Fernet)
+    # Decrypt SMTP password (Fernet)
     smtp_password = None
-    transit_cipher = channel.get("smtp_password_transit")
     legacy_cipher = channel.get("smtp_password")
-    tenant_id = channel.get("tenant_id")
 
-    if transit_cipher and tenant_id:
-        try:
-            from app.services.kms_service import decrypt_transit
-
-            smtp_password = await decrypt_transit(transit_cipher, tenant_id)
-        except Exception:
-            logger.warning(
-                "Transit decryption failed for channel %s, trying legacy", channel.get("id")
-            )
-
-    if not smtp_password and legacy_cipher:
+    if legacy_cipher:
         try:
             from app.config import settings as app_settings
             from cryptography.fernet import Fernet
