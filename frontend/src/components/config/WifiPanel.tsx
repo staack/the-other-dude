@@ -9,7 +9,7 @@
  * 2. Security Profiles (RouterOS 6 only) -- authentication, passphrases
  */
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   Wifi,
   Plus,
@@ -629,9 +629,7 @@ function WirelessEditDialog({
   })
 
   // Reset form when entry changes
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _entryId = entry?.['.id'] || ''
-  useState(() => {
+  useEffect(() => {
     if (entry) {
       setFormData({
         ssid: entry.ssid || entry['configuration.ssid'] || '',
@@ -643,7 +641,7 @@ function WirelessEditDialog({
         'security.passphrase': entry['security.passphrase'] || '',
       })
     }
-  })
+  }, [entry])
 
   // Use effect-like pattern to reset form on dialog open
   const handleOpenChange = useCallback((nextOpen: boolean) => {

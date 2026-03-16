@@ -18,7 +18,7 @@ import {
   ShieldOff,
   Shield,
 } from 'lucide-react'
-import { devicesApi, deviceGroupsApi, deviceTagsApi, tenantsApi, type DeviceResponse, type DeviceUpdate } from '@/lib/api'
+import { devicesApi, deviceGroupsApi, deviceTagsApi, tenantsApi, configApi, type DeviceResponse, type DeviceUpdate } from '@/lib/api'
 import { alertsApi } from '@/lib/alertsApi'
 import { useAuth, canWrite, canDelete } from '@/lib/auth'
 import { toast } from '@/components/ui/toast'
@@ -59,6 +59,7 @@ import { SimpleConfigView } from '@/components/simple-config/SimpleConfigView'
 import { WinBoxButton } from '@/components/fleet/WinBoxButton'
 import { RemoteWinBoxButton } from '@/components/fleet/RemoteWinBoxButton'
 import { SSHTerminal } from '@/components/fleet/SSHTerminal'
+import { RollbackAlert } from '@/components/config/RollbackAlert'
 
 export const Route = createFileRoute(
   '/_authenticated/tenants/$tenantId/devices/$deviceId',
@@ -348,6 +349,21 @@ function DeviceDetailPage() {
     queryFn: () => tenantsApi.get(tenantId),
   })
 
+  const { data: backups } = useQuery({
+    queryKey: ['config-backups', tenantId, deviceId],
+    queryFn: () => configApi.listBackups(tenantId, deviceId),
+  })
+
+  // True if a pre-restore backup was created within the last 30 minutes,
+  // indicating a config push just happened before the device went offline.
+  const hasRecentPushAlert = backups
+    ? backups.some((b) => {
+        if (b.trigger_type !== 'pre-restore') return false
+        const age = Date.now() - new Date(b.created_at).getTime()
+        return age < 30 * 60 * 1000
+      })
+    : false
+
   const { data: groups } = useQuery({
     queryKey: ['device-groups', tenantId],
     queryFn: () => deviceGroupsApi.list(tenantId),
@@ -481,6 +497,14 @@ function DeviceDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Emergency rollback banner */}
+      <RollbackAlert
+        tenantId={tenantId}
+        deviceId={deviceId}
+        deviceStatus={device.status}
+        hasRecentPushAlert={hasRecentPushAlert}
+      />
 
       {/* Config View (Simple or Standard) */}
       <SimpleConfigView

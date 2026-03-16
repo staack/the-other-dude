@@ -170,7 +170,6 @@ export function PoolPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
         entries={typedEntries}
         panel={panel}
         poolUsedBy={poolUsedBy}
-        existingPools={typedEntries.map((e) => e.name).filter(Boolean)}
       />
 
       {/* Change Preview Modal */}
@@ -197,13 +196,10 @@ function PoolTable({
   entries,
   panel,
   poolUsedBy,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  existingPools: _existingPools,
 }: {
   entries: PoolEntry[]
   panel: PanelHook
   poolUsedBy: Record<string, string[]>
-  existingPools: string[]
 }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<PoolEntry | null>(null)
