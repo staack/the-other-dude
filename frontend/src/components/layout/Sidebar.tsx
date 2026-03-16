@@ -282,8 +282,10 @@ export function Sidebar() {
                     showCollapsed && 'justify-center px-0',
                   )}
                   title={showCollapsed ? item.label : undefined}
+                  aria-label={showCollapsed ? item.label : undefined}
+                  aria-current={active ? 'page' : undefined}
                 >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <Icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
                   {!showCollapsed && (
                     <>
                       <span className="truncate">{item.label}</span>
