@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "tod.fullname" . }}-git-store
+  labels:
+    {{- include "tod.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.storage.gitStore.storageClass }}
+  storageClassName: {{ .Values.storage.gitStore.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.storage.gitStore.size }}

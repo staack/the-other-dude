@@ -1,0 +1,17 @@
+{{- if .Values.wireguard.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "tod.fullname" . }}-wireguard-config
+  labels:
+    {{- include "tod.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.wireguard.storageClass }}
+  storageClassName: {{ .Values.wireguard.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.wireguard.storage }}
+{{- end }}
