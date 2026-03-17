@@ -39,6 +39,9 @@ Thumbs.db
 # Playwright MCP logs
 .playwright-mcp/
 
+# Helm local overrides (contain dev credentials)
+infrastructure/helm/values-local.yaml
+
 # Local-only planning and design docs
 .planning/
 docs/superpowers/
