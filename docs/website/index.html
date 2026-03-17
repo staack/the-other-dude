@@ -422,6 +422,7 @@
         <a href="mailto:license@theotherdude.net">Licensing</a>
         <a href="mailto:support@theotherdude.net">Support</a>
       </nav>
+      <p style="margin-top:12px;font-size:0.75em;color:#888;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
     </div>
   </footer>
 
@@ -433,7 +434,6 @@
   </div>
 
   <script src="script.js"></script>
-  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "d5f1e31cb9744c998a8f7d1303c6efef"}'></script><!-- End Cloudflare Web Analytics -->
   <script>
   (function() {
     var lb = document.getElementById('lightbox');
@@ -478,5 +478,14 @@
     });
   })();
   </script>
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
 </body>
 </html>

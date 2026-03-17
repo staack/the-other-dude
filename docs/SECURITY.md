@@ -2,7 +2,9 @@
 
 ## Overview
 
-TOD (The Other Dude) implements a 1Password-inspired zero-knowledge security architecture. The server never stores or sees user passwords. All data is stored on infrastructure you own and control — no external telemetry, analytics, or third-party data transmission.
+TOD (The Other Dude) implements a 1Password-inspired zero-knowledge security architecture. The server never stores or sees user passwords. All data is stored on infrastructure you own and control — the application sends no telemetry or data to external services unless you explicitly opt in.
+
+> **Website vs. Application:** The theotherdude.net marketing website uses a lightweight, self-hosted analytics pixel to measure page views. It uses no cookies, stores no IP addresses, and sends no data to third parties. The TOD application itself does not collect or transmit any data unless the operator explicitly enables opt-in telemetry.
 
 ## Authentication: SRP-6a Zero-Knowledge Proof
 
@@ -108,7 +110,7 @@ TOD includes on-demand WinBox tunnels and browser-based SSH terminals for device
 - **Audit logs:** Encrypted at rest via Transit encryption — audit log content is protected even from database administrators.
 - **Subresource Integrity (SRI):** SHA-384 hashes on JavaScript bundles prevent tampering with frontend code.
 - **Content Security Policy (CSP):** Strict CSP headers prevent XSS, code injection, and unauthorized resource loading.
-- **No external dependencies:** Fully self-hosted with no external analytics, telemetry, CDNs, or third-party services. The only outbound connections are:
+- **No external dependencies:** Fully self-hosted with no external CDNs or third-party services. The application does not phone home or transmit telemetry unless the operator explicitly opts in. The only outbound connections are:
   - RouterOS firmware update checks (no device data sent)
   - SMTP for email notifications (if configured)
   - Webhooks for alerts (if configured)
