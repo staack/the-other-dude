@@ -1,13 +1,17 @@
 apiVersion: v2
 name: tod
-description: The Other Dude — MikroTik Fleet Management
+description: The Other Dude — MikroTik fleet management platform
 type: application
-version: 9.0.1
+version: 1.0.0
 appVersion: "9.0.1"
+kubeVersion: ">=1.28.0-0"
 keywords:
   - mikrotik
-  - network-management
+  - network
   - fleet-management
+  - monitoring
 home: https://theotherdude.net
+sources:
+  - https://github.com/staack/the-other-dude
 maintainers:
-  - name: The Other Dude Team
+  - name: Jason Staack

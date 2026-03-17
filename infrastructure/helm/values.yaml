@@ -1,16 +1,20 @@
-# Default values for the-other-dude.
-# These values should work with `helm install` out of the box for development.
-# Production deployments MUST override secrets.jwtSecretKey, secrets.credentialEncryptionKey,
-# and secrets.firstAdminPassword.
+# Default values for TOD (The Other Dude).
+# Production deployments MUST override all empty secrets.* values.
+# See: https://theotherdude.net/docs/deployment/kubernetes
+
+# -- Global overrides
+nameOverride: ""
+fullnameOverride: ""
 
 # -----------------------------------------------------------------------
-# API service
+# API service (FastAPI + Gunicorn)
+# Serves the REST API, runs Alembic migrations on startup via init container.
 # -----------------------------------------------------------------------
 api:
   replicaCount: 1
 
   image:
-    repository: the-other-dude/api
+    repository: tod/api
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -26,35 +30,52 @@ api:
       cpu: 500m
       memory: 512Mi
 
-  # Liveness and readiness probe configuration
   probes:
     liveness:
-      path: /api/health
+      path: /health
       initialDelaySeconds: 15
       periodSeconds: 10
       failureThreshold: 3
     readiness:
-      path: /api/health
+      path: /health/ready
       initialDelaySeconds: 10
       periodSeconds: 5
       failureThreshold: 3
 
   env:
-    # Token expiry (minutes for access, days for refresh)
-    jwtAccessTokenExpireMinutes: 15
-    jwtRefreshTokenExpireDays: 7
-    # CORS — set to your frontend origin in production
-    corsOrigins: "http://localhost:3000,http://localhost:5173"
+    # Runtime environment — set to "dev" for local testing (bypasses insecure-default checks)
+    environment: "production"
+    logLevel: "info"
     debug: "false"
+    # Number of Gunicorn worker processes
+    gunicornWorkers: "2"
+    # Comma-separated allowed CORS origins
+    corsOrigins: "http://localhost:3000"
+    # Public base URL for the app (used in emails, links). Leave empty for auto-detect.
+    appBaseUrl: ""
+    # JWT configuration
+    jwtAlgorithm: "HS256"
+    jwtAccessTokenExpireMinutes: "15"
+    jwtRefreshTokenExpireDays: "7"
+    # Database connection pool (leave empty for Python defaults)
+    dbPoolSize: ""
+    dbMaxOverflow: ""
+    dbAdminPoolSize: ""
+    dbAdminMaxOverflow: ""
+    # How often to check for new MikroTik firmware (hours)
+    firmwareCheckIntervalHours: ""
+    # Password reset token lifetime (minutes)
+    passwordResetTokenExpireMinutes: ""
 
 # -----------------------------------------------------------------------
-# Frontend service
+# Frontend service (React SPA served by nginx)
+# API URL is baked in at build time — no runtime env needed.
 # -----------------------------------------------------------------------
 frontend:
   replicaCount: 1
 
   image:
-    repository: the-other-dude/frontend
+    repository: tod/frontend
     tag: latest
     pullPolicy: IfNotPresent
 
@@ -71,20 +92,72 @@ frontend:
       memory: 128Mi
 
 # -----------------------------------------------------------------------
+# Poller service (Go binary)
+# Polls MikroTik devices, manages SSH tunnels, reports to NATS.
+# -----------------------------------------------------------------------
+poller:
+  replicaCount: 1
+
+  image:
+    repository: tod/poller
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  env:
+    # How often to poll each device (seconds)
+    pollIntervalSeconds: "60"
+    # SSH connection timeout to devices (seconds)
+    connectionTimeoutSeconds: "10"
+    # SSH command execution timeout (seconds)
+    commandTimeoutSeconds: "30"
+    # How often to refresh the device list from DB (seconds)
+    deviceRefreshSeconds: "60"
+    logLevel: "info"
+    # WinBox tunnel port range
+    tunnelPortMin: "49000"
+    tunnelPortMax: "49100"
+    # Idle timeout before closing a tunnel (seconds)
+    tunnelIdleTimeout: "300"
+    # SSH relay listener port
+    sshRelayPort: "8080"
+    # SSH session idle timeout (seconds)
+    sshIdleTimeout: "900"
+    # Max concurrent SSH sessions (global)
+    sshMaxSessions: "200"
+    # Max concurrent SSH sessions per user
+    sshMaxPerUser: "10"
+    # Max concurrent SSH sessions per device
+    sshMaxPerDevice: "20"
+    # Circuit breaker settings (leave empty for Go defaults)
+    circuitBreakerMaxFailures: ""
+    circuitBreakerBaseBackoffSeconds: ""
+    circuitBreakerMaxBackoffSeconds: ""
+
+# -----------------------------------------------------------------------
 # PostgreSQL (TimescaleDB)
+# Set enabled=false and provide externalUrl to use an existing database.
 # -----------------------------------------------------------------------
 postgres:
-  # Set to false to use an external PostgreSQL instance (provide externalUrl below)
   enabled: true
 
   image:
     repository: timescale/timescaledb
-    tag: latest-pg17
+    # Pinned for reproducibility — TimescaleDB 2.17.2 on PostgreSQL 17
+    tag: "2.17.2-pg17"
     pullPolicy: IfNotPresent
 
-  # Storage for the PVC
+  # PVC size for database files
   storage: 10Gi
-  storageClass: ""  # leave empty to use cluster default StorageClass
+  # Leave empty to use cluster default StorageClass
+  storageClass: ""
 
   service:
     port: 5432
@@ -92,23 +165,23 @@ postgres:
   auth:
     database: tod
     username: postgres
-    # password is sourced from secrets.dbPassword
+    # app_user: RLS-enforced role for tenant-scoped API queries
     appUsername: app_user
-    # appPassword is sourced from secrets.dbAppPassword
 
   resources:
     requests:
       cpu: 250m
       memory: 512Mi
     limits:
-      cpu: 1000m
+      cpu: "1"
       memory: 2Gi
 
   # External PostgreSQL URL (used when postgres.enabled=false)
   # externalUrl: "postgresql+asyncpg://user:pass@host:5432/tod"
 
 # -----------------------------------------------------------------------
-# Redis
+# Redis (ephemeral cache — no PVC)
+# Set enabled=false and provide externalUrl to use an existing instance.
 # -----------------------------------------------------------------------
 redis:
   enabled: true
@@ -127,10 +200,11 @@ redis:
       memory: 64Mi
     limits:
       cpu: 200m
-      memory: 256Mi
+      memory: 128Mi
 
 # -----------------------------------------------------------------------
-# NATS JetStream
+# NATS JetStream (message bus)
+# Set enabled=false and provide externalUrl to use an existing instance.
 # -----------------------------------------------------------------------
 nats:
   enabled: true
@@ -140,8 +214,9 @@ nats:
     tag: 2-alpine
     pullPolicy: IfNotPresent
 
+  # PVC size for JetStream storage
   storage: 5Gi
-  storageClass: ""  # leave empty to use cluster default StorageClass
+  storageClass: ""
 
   service:
     port: 4222
@@ -155,19 +230,64 @@ nats:
       memory: 512Mi
 
 # -----------------------------------------------------------------------
-# Go Poller
+# OpenBao (secrets engine)
+# Stores device credentials encrypted at rest. Must be manually initialized
+# and unsealed after first deploy and after every pod restart.
+# Set enabled=false and provide externalAddr to use an existing instance.
 # -----------------------------------------------------------------------
-poller:
-  replicaCount: 2
+openbao:
+  enabled: true
 
   image:
-    repository: the-other-dude/poller
+    repository: openbao/openbao
+    # Pinned — OpenBao 2.1
+    tag: "2.1"
+    pullPolicy: IfNotPresent
+
+  # PVC size for vault storage
+  storage: 1Gi
+  storageClass: ""
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# -----------------------------------------------------------------------
+# WireGuard VPN
+# Provides VPN tunnels for reaching devices behind NAT.
+# Set enabled=false if not using VPN features.
+# -----------------------------------------------------------------------
+wireguard:
+  enabled: true
+
+  image:
+    repository: lscr.io/linuxserver/wireguard
     tag: latest
     pullPolicy: IfNotPresent
 
+  # PVC size for WireGuard peer configs (shared with API)
+  storage: 1Gi
+  storageClass: ""
+
+  service:
+    # LoadBalancer exposes UDP directly; use NodePort if no cloud LB available
+    type: LoadBalancer
+    port: 51820
+
   env:
-    pollIntervalSeconds: 60
-    logLevel: info
+    # Public hostname or IP for WireGuard endpoint (required for VPN)
+    serverUrl: ""
+    serverPort: "51820"
+    # VPN device subnet
+    internalSubnet: "10.10.0.0/16"
+    # LinuxServer.io container UID/GID
+    puid: "1000"
+    pgid: "1000"
+    tz: "UTC"
 
   resources:
     requests:
@@ -175,45 +295,104 @@ poller:
       memory: 64Mi
     limits:
       cpu: 200m
-      memory: 256Mi
+      memory: 128Mi
+
+# -----------------------------------------------------------------------
+# Storage (standalone PVCs shared across services)
+# -----------------------------------------------------------------------
+storage:
+  gitStore:
+    # Config backup git repositories
+    size: 5Gi
+    storageClass: ""
+  firmwareCache:
+    # Cached MikroTik firmware downloads
+    size: 2Gi
+    storageClass: ""
 
 # -----------------------------------------------------------------------
 # Ingress
+# Routes HTTP traffic to frontend and API services.
+# WireGuard is exposed separately via its own LoadBalancer/NodePort service.
 # -----------------------------------------------------------------------
 ingress:
   enabled: true
   className: nginx
-  # annotations:
-  #   cert-manager.io/cluster-issuer: letsencrypt-prod
-
-  # host: tod.example.com  — set this in your deployment
+  # Required for production — set to your domain
   host: ""
-
   tls:
     enabled: false
-    # secretName: the-other-dude-tls
+    secretName: ""
+  # Additional annotations (e.g. cert-manager.io/cluster-issuer: letsencrypt-prod)
+  annotations: {}
+
+# -----------------------------------------------------------------------
+# SMTP (outbound email for password resets, alerts)
+# -----------------------------------------------------------------------
+smtp:
+  host: ""
+  port: "587"
+  useTls: "true"
+  fromAddress: "noreply@example.com"
 
 # -----------------------------------------------------------------------
 # Secrets
-# IMPORTANT: All secrets below MUST be overridden in production.
+# ALL empty values MUST be overridden in production.
+# Generate keys with:
+#   JWT:        openssl rand -hex 32
+#   Encryption: python -c "import secrets,base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"
+#   Passwords:  openssl rand -base64 24
 # -----------------------------------------------------------------------
 secrets:
-  # JWT signing key — generate with: openssl rand -hex 32
+  # JWT signing key
   jwtSecretKey: ""
-
   # AES-256-GCM credential encryption key (base64-encoded 32 bytes)
-  # Generate with: python -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(32)).decode())"
   credentialEncryptionKey: ""
-
-  # First admin account (created on first startup)
+  # OpenBao root token (set after manual initialization)
+  openbaoToken: ""
+  # OpenBao unseal key (set after manual initialization)
+  baoUnsealKey: ""
+  # First admin account (created on initial startup)
   firstAdminEmail: "admin@the-other-dude.local"
   firstAdminPassword: ""
-
   # PostgreSQL superuser password
-  dbPassword: "postgres"
+  dbPassword: ""
+  # app_user password (RLS-enforced)
+  dbAppPassword: ""
+  # poller_user password (bypasses RLS)
+  dbPollerPassword: ""
+  # SMTP credentials
+  smtpUser: ""
+  smtpPassword: ""
 
-  # app_user password (non-superuser, RLS-enforced)
-  dbAppPassword: "app_password"
+# -----------------------------------------------------------------------
+# Telemetry (anonymous usage metrics)
+# Disabled by default. When enabled, sends anonymous stats to the collector.
+# -----------------------------------------------------------------------
+telemetry:
+  enabled: false
+  collectorUrl: "https://telemetry.theotherdude.net"
 
-  # poller_user password (bypasses RLS — SELECT on devices only)
-  dbPollerPassword: "poller_password"
+# -----------------------------------------------------------------------
+# Backup settings
+# -----------------------------------------------------------------------
+backup:
+  # How often to run config backups (seconds). Default: 6 hours.
+  configBackupInterval: "21600"
+  # Max concurrent backup jobs
+  configBackupMaxConcurrent: "10"
+  # Per-device backup command timeout (leave empty for default)
+  configBackupCommandTimeout: ""
+  # Days to retain config backup history
+  configRetentionDays: "90"
+
+# -----------------------------------------------------------------------
+# Storage paths (mounted inside containers)
+# These must match the PVC mount points in deployment templates.
+# -----------------------------------------------------------------------
+storagePaths:
+  gitStorePath: "/data/git-store"
+  firmwareCacheDir: "/data/firmware-cache"
+  wireguardConfigPath: "/data/wireguard"
+  # Hostname used by API route-setup init container to resolve WireGuard pod IP
+  wireguardGateway: "wireguard"
