@@ -1,0 +1,55 @@
+=======================================================
+  TOD — The Other Dude
+  MikroTik Fleet Management Platform
+=======================================================
+
+{{- if .Values.openbao.enabled }}
+
+IMPORTANT: OpenBao requires manual initialization.
+
+  1. Wait for the OpenBao pod to start:
+     kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/component=openbao
+
+  2. Initialize OpenBao (first time only):
+     kubectl exec -it -n {{ .Release.Namespace }} {{ include "tod.fullname" . }}-openbao-0 -- bao operator init -key-shares=1 -key-threshold=1
+
+     Save the unseal key and root token from the output!
+
+  3. Unseal OpenBao:
+     kubectl exec -it -n {{ .Release.Namespace }} {{ include "tod.fullname" . }}-openbao-0 -- bao operator unseal <UNSEAL_KEY>
+
+  4. Update your release with the token:
+     helm upgrade {{ .Release.Name }} <chart-path> \
+       --set secrets.openbaoToken=<ROOT_TOKEN> \
+       --set secrets.baoUnsealKey=<UNSEAL_KEY>
+
+  NOTE: OpenBao must be manually unsealed after every pod restart.
+{{- end }}
+
+{{- if .Values.ingress.enabled }}
+{{- if .Values.ingress.host }}
+
+Access TOD at: http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}
+{{- else }}
+
+WARNING: No ingress host configured. Set ingress.host in your values.
+{{- end }}
+{{- else }}
+
+Access TOD via port-forward:
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "tod.fullname" . }}-frontend 3000:80
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "tod.fullname" . }}-api 8000:8000
+
+  Then open http://localhost:3000
+{{- end }}
+
+Admin credentials:
+  Email:    {{ .Values.secrets.firstAdminEmail }}
+  Password: (value of secrets.firstAdminPassword)
+
+Verify health:
+  kubectl get pods -n {{ .Release.Namespace }}
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "tod.fullname" . }}-api 8000:8000
+  curl http://localhost:8000/health
+
+Documentation: https://theotherdude.net/docs
