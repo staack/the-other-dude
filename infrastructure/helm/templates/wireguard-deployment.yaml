@@ -1,0 +1,73 @@
+{{- if .Values.wireguard.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tod.fullname" . }}-wireguard
+  labels:
+    {{- include "tod.componentLabels" (dict "context" . "component" "wireguard") | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "tod.componentSelectorLabels" (dict "context" . "component" "wireguard") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "tod.componentSelectorLabels" (dict "context" . "component" "wireguard") | nindent 8 }}
+    spec:
+      securityContext:
+        sysctls:
+          - name: net.ipv4.ip_forward
+            value: "1"
+          - name: net.ipv4.conf.all.src_valid_mark
+            value: "1"
+      containers:
+        - name: wireguard
+          image: "{{ .Values.wireguard.image.repository }}:{{ .Values.wireguard.image.tag }}"
+          imagePullPolicy: {{ .Values.wireguard.image.pullPolicy }}
+          env:
+            - name: PUID
+              value: {{ .Values.wireguard.env.puid | quote }}
+            - name: PGID
+              value: {{ .Values.wireguard.env.pgid | quote }}
+            - name: TZ
+              value: {{ .Values.wireguard.env.tz | quote }}
+            - name: SERVERURL
+              value: {{ .Values.wireguard.env.serverUrl | quote }}
+            - name: SERVERPORT
+              value: {{ .Values.wireguard.env.serverPort | quote }}
+            - name: INTERNAL_SUBNET
+              value: {{ .Values.wireguard.env.internalSubnet | quote }}
+          ports:
+            - name: wireguard
+              containerPort: 51820
+              protocol: UDP
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+            privileged: true
+          startupProbe:
+            exec:
+              command:
+                - wg
+                - show
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 6
+          volumeMounts:
+            - name: wireguard-config
+              mountPath: /config
+            - name: tun-device
+              mountPath: /dev/net/tun
+          resources:
+            {{- toYaml .Values.wireguard.resources | nindent 12 }}
+      volumes:
+        - name: wireguard-config
+          persistentVolumeClaim:
+            claimName: {{ include "tod.fullname" . }}-wireguard-config
+        - name: tun-device
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice
+{{- end }}

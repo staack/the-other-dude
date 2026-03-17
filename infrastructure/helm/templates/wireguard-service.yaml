@@ -1,0 +1,17 @@
+{{- if .Values.wireguard.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tod.fullname" . }}-wireguard
+  labels:
+    {{- include "tod.componentLabels" (dict "context" . "component" "wireguard") | nindent 4 }}
+spec:
+  type: {{ .Values.wireguard.service.type | default "LoadBalancer" }}
+  ports:
+    - name: wireguard
+      port: {{ .Values.wireguard.service.port }}
+      targetPort: wireguard
+      protocol: UDP
+  selector:
+    {{- include "tod.componentSelectorLabels" (dict "context" . "component" "wireguard") | nindent 4 }}
+{{- end }}
