@@ -11,8 +11,10 @@ Usage:
 import base64
 import datetime
 import getpass
+import json
 import os
 import pathlib
+import platform
 import re
 import secrets
 import shutil
@@ -21,6 +23,8 @@ import socket
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -93,6 +97,148 @@ def fail(text: str) -> None:
 
 def info(text: str) -> None:
     print(f"  {dim('·')} {text}")
+
+
+# ── Setup Telemetry ─────────────────────────────────────────────────────────
+
+_TELEMETRY_COLLECTOR = "https://telemetry.theotherdude.net"
+_TELEMETRY_TOKEN = "75e320cbd48e20e3234ab4e734f86e124a903a7278e643cf6d383708a8a7fe4b"
+
+
+def _collect_environment() -> dict:
+    """Gather allowlisted environment info. No IPs, hostnames, or secrets."""
+    env = {
+        "os": platform.system(),
+        "os_version": platform.release(),
+        "arch": platform.machine(),
+        "python": platform.python_version(),
+    }
+    # Docker version
+    try:
+        r = subprocess.run(
+            ["docker", "version", "--format", "{{.Server.Version}}"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if r.returncode == 0:
+            env["docker"] = r.stdout.strip()
+    except Exception:
+        pass
+    # Compose version
+    try:
+        r = subprocess.run(
+            ["docker", "compose", "version", "--short"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if r.returncode == 0:
+            env["compose"] = r.stdout.strip()
+    except Exception:
+        pass
+    # RAM (rounded to nearest GB)
+    try:
+        if sys.platform == "darwin":
+            r = subprocess.run(
+                ["sysctl", "-n", "hw.memsize"],
+                capture_output=True, text=True, timeout=5,
+            )
+            if r.returncode == 0:
+                env["ram_gb"] = round(int(r.stdout.strip()) / (1024 ** 3))
+        else:
+            with open("/proc/meminfo") as f:
+                for line in f:
+                    if line.startswith("MemTotal:"):
+                        env["ram_gb"] = round(int(line.split()[1]) * 1024 / (1024 ** 3))
+                        break
+    except Exception:
+        pass
+    return env
+
+
+def _get_app_version() -> tuple[str, str]:
+    """Return (version, build_id) from git if available."""
+    version = "unknown"
+    build_id = "unknown"
+    try:
+        r = subprocess.run(
+            ["git", "describe", "--tags", "--always"],
+            capture_output=True, text=True, timeout=5, cwd=PROJECT_ROOT,
+        )
+        if r.returncode == 0:
+            version = r.stdout.strip()
+    except Exception:
+        pass
+    try:
+        r = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5, cwd=PROJECT_ROOT,
+        )
+        if r.returncode == 0:
+            build_id = r.stdout.strip()
+    except Exception:
+        pass
+    return version, build_id
+
+
+class SetupTelemetry:
+    """Lightweight fire-and-forget telemetry for setup diagnostics.
+
+    When enabled, sends one event per setup step to the TOD telemetry collector.
+    All events use a shared anonymous token — no registration, no PII.
+    """
+
+    def __init__(self) -> None:
+        self.enabled = False
+        self._environment: dict = {}
+        self._app_version = "unknown"
+        self._build_id = "unknown"
+
+    def enable(self) -> None:
+        self.enabled = True
+        self._environment = _collect_environment()
+        self._app_version, self._build_id = _get_app_version()
+
+    def step(self, step_name: str, result: str, duration_ms: int | None = None,
+             error_message: str | None = None, error_code: str | None = None,
+             metrics: dict | None = None) -> None:
+        """Emit a single setup step event. No-op if disabled."""
+        if not self.enabled:
+            return
+
+        event: dict = {
+            "event_type": "setup",
+            "severity": "error" if result == "failure" else "info",
+            "phase": "setup",
+            "operation": step_name,
+            "result": result,
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "app_version": self._app_version,
+            "build_id": self._build_id,
+            "environment": self._environment,
+        }
+        if duration_ms is not None:
+            event["duration_ms"] = duration_ms
+        if error_message:
+            event["error"] = {"message": error_message[:500], "code": error_code or ""}
+        if metrics:
+            event["metrics"] = metrics
+
+        self._send([event])
+
+    def _send(self, events: list[dict]) -> None:
+        """POST events to the collector. Fire-and-forget."""
+        try:
+            body = json.dumps({"events": events}).encode()
+            req = urllib.request.Request(
+                f"{_TELEMETRY_COLLECTOR}/api/v1/ingest",
+                data=body,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {_TELEMETRY_TOKEN}",
+                },
+                method="POST",
+            )
+            urllib.request.urlopen(req, timeout=10)
+        except Exception:
+            pass  # Fire-and-forget — never affect setup
 
 
 # ── Input helpers ────────────────────────────────────────────────────────────
@@ -720,6 +866,27 @@ def wizard_reverse_proxy(config: dict) -> None:
         info("Traefik watches for file changes — no reload needed.")
 
 
+def wizard_telemetry(config: dict, telem: SetupTelemetry) -> None:
+    section("Anonymous Diagnostics")
+    info("TOD can send anonymous setup and runtime diagnostics to help")
+    info("identify common failures. No personal data, IPs, hostnames,")
+    info("or configuration values are ever sent.")
+    print()
+    info("What is collected: step pass/fail, duration, OS/arch/Python")
+    info("version, Docker version, RAM (rounded), and error types.")
+    info("You can disable this anytime by setting TELEMETRY_ENABLED=false")
+    info("in .env.prod.")
+    print()
+
+    if ask_yes_no("Send anonymous diagnostics?", default=False):
+        config["telemetry_enabled"] = True
+        telem.enable()
+        ok("Diagnostics enabled — thank you!")
+    else:
+        config["telemetry_enabled"] = False
+        info("No diagnostics will be sent.")
+
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 
 def show_summary(config: dict) -> bool:
@@ -763,6 +930,13 @@ def show_summary(config: dict) -> bool:
         print(f"    Config               = {config['proxy_path']}")
     else:
         print(f"    {dim('(not configured)')}")
+    print()
+
+    print(f"  {bold('Diagnostics')}")
+    if config.get("telemetry_enabled"):
+        print(f"    TELEMETRY_ENABLED    = {green('true')}")
+    else:
+        print(f"    TELEMETRY_ENABLED    = {dim('false')}")
     print()
 
     print(f"  {bold('OpenBao')}")
@@ -868,6 +1042,11 @@ SSH_IDLE_TIMEOUT=900
 # --- Config Backup ---
 CONFIG_BACKUP_INTERVAL=21600
 CONFIG_BACKUP_MAX_CONCURRENT=10
+
+# --- Telemetry ---
+# Opt-in anonymous diagnostics. Set to false to disable.
+TELEMETRY_ENABLED={'true' if config.get('telemetry_enabled') else 'false'}
+TELEMETRY_COLLECTOR_URL={_TELEMETRY_COLLECTOR}
 """
 
     ENV_PROD.write_text(content)
@@ -1216,12 +1395,34 @@ def health_check(config: dict) -> None:
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
+def _timed(telem: SetupTelemetry, step_name: str, func, *args, **kwargs):
+    """Run func, emit a telemetry event with timing. Returns func's result."""
+    t0 = time.monotonic()
+    try:
+        result = func(*args, **kwargs)
+        duration_ms = int((time.monotonic() - t0) * 1000)
+        telem.step(step_name, "success", duration_ms=duration_ms)
+        return result
+    except Exception as e:
+        duration_ms = int((time.monotonic() - t0) * 1000)
+        telem.step(
+            step_name, "failure", duration_ms=duration_ms,
+            error_message=str(e), error_code=type(e).__name__,
+        )
+        raise
+
+
 def main() -> int:
     # Graceful Ctrl+C
     env_written = False
+    telem = SetupTelemetry()
+    setup_start = time.monotonic()
 
     def handle_sigint(sig, frame):
         nonlocal env_written
+        telem.step("setup_total", "failure",
+                    duration_ms=int((time.monotonic() - setup_start) * 1000),
+                    error_message="User cancelled (SIGINT)")
         print()
         if not env_written:
             info("Aborted before writing .env.prod — no files changed.")
@@ -1236,47 +1437,99 @@ def main() -> int:
 
     # Phase 1: Pre-flight
     if not preflight():
+        telem.step("preflight", "failure")
         return 1
+    telem.step("preflight", "success")
+
+    # Telemetry opt-in (right after preflight, before wizard)
+    config: dict = {}
+    wizard_telemetry(config, telem)
 
     # Phase 2: Wizard
-    config: dict = {}
-    wizard_database(config)
-    wizard_security(config)
-    wizard_admin(config)
-    wizard_email(config)
-    wizard_domain(config)
-    wizard_reverse_proxy(config)
+    try:
+        wizard_database(config)
+        wizard_security(config)
+        wizard_admin(config)
+        wizard_email(config)
+        wizard_domain(config)
+        wizard_reverse_proxy(config)
+        telem.step("wizard", "success")
+    except Exception as e:
+        telem.step("wizard", "failure",
+                   error_message=str(e), error_code=type(e).__name__)
+        raise
 
     # Summary
     if not show_summary(config):
         info("Setup cancelled.")
+        telem.step("setup_total", "failure",
+                   duration_ms=int((time.monotonic() - setup_start) * 1000),
+                   error_message="User cancelled at summary")
         return 1
 
     # Phase 3: Write files and prepare directories
     section("Writing Configuration")
-    write_env_prod(config)
-    write_init_sql_prod(config)
-    env_written = True
-    prepare_data_dirs()
+    try:
+        write_env_prod(config)
+        write_init_sql_prod(config)
+        env_written = True
+        prepare_data_dirs()
+        telem.step("write_config", "success")
+    except Exception as e:
+        telem.step("write_config", "failure",
+                   error_message=str(e), error_code=type(e).__name__)
+        raise
 
     # Phase 4: OpenBao
+    t0 = time.monotonic()
     bao_ok = bootstrap_openbao(config)
-    if not bao_ok:
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    if bao_ok:
+        telem.step("openbao_bootstrap", "success", duration_ms=duration_ms)
+    else:
+        telem.step("openbao_bootstrap", "failure", duration_ms=duration_ms,
+                   error_message="OpenBao did not become healthy or credentials not found")
         if not ask_yes_no("Continue without OpenBao credentials? (stack will need manual fix)", default=False):
             warn("Fix OpenBao credentials in .env.prod and re-run setup.py.")
+            telem.step("setup_total", "failure",
+                       duration_ms=int((time.monotonic() - setup_start) * 1000),
+                       error_message="Aborted after OpenBao failure")
             return 1
 
     # Phase 5: Build
+    t0 = time.monotonic()
     if not build_images():
+        duration_ms = int((time.monotonic() - t0) * 1000)
+        telem.step("build_images", "failure", duration_ms=duration_ms)
         warn("Fix the build error and re-run setup.py to continue.")
+        telem.step("setup_total", "failure",
+                   duration_ms=int((time.monotonic() - setup_start) * 1000),
+                   error_message="Docker build failed")
         return 1
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    telem.step("build_images", "success", duration_ms=duration_ms)
 
     # Phase 6: Start
+    t0 = time.monotonic()
     if not start_stack():
+        duration_ms = int((time.monotonic() - t0) * 1000)
+        telem.step("start_stack", "failure", duration_ms=duration_ms)
+        telem.step("setup_total", "failure",
+                   duration_ms=int((time.monotonic() - setup_start) * 1000),
+                   error_message="Stack failed to start")
         return 1
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    telem.step("start_stack", "success", duration_ms=duration_ms)
 
     # Phase 7: Health
+    t0 = time.monotonic()
     health_check(config)
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    telem.step("health_check", "success", duration_ms=duration_ms)
+
+    # Done
+    total_ms = int((time.monotonic() - setup_start) * 1000)
+    telem.step("setup_total", "success", duration_ms=total_ms)
 
     return 0
 
