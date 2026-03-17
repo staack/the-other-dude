@@ -56,18 +56,18 @@ const SCORE_CONFIG: Record<
   },
   2: {
     label: 'Fair',
-    color: 'text-yellow-500',
-    barColor: 'bg-yellow-500',
+    color: 'text-warning',
+    barColor: 'bg-warning',
   },
   3: {
     label: 'Strong',
-    color: 'text-green-500',
-    barColor: 'bg-green-500',
+    color: 'text-success',
+    barColor: 'bg-success',
   },
   4: {
     label: 'Very Strong',
-    color: 'text-green-400',
-    barColor: 'bg-green-400',
+    color: 'text-success',
+    barColor: 'bg-success',
   },
 }
 

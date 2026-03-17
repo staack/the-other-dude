@@ -13,25 +13,25 @@ export const Route = createFileRoute('/_authenticated/traffic')({
 
 function cpuColor(cpu: number | null): string {
   if (cpu === null) return 'text-text-muted'
-  if (cpu < 50) return 'text-emerald-400'
-  if (cpu < 80) return 'text-yellow-400'
-  return 'text-red-400'
+  if (cpu < 50) return 'text-success'
+  if (cpu < 80) return 'text-warning'
+  return 'text-error'
 }
 
 function memColor(mem: number | null): string {
   if (mem === null) return 'text-text-muted'
-  if (mem < 60) return 'text-emerald-400'
-  if (mem < 85) return 'text-yellow-400'
-  return 'text-red-400'
+  if (mem < 60) return 'text-success'
+  if (mem < 85) return 'text-warning'
+  return 'text-error'
 }
 
 function statusDot(status: string) {
   const color =
     status === 'online'
-      ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]'
+      ? 'bg-success'
       : status === 'degraded'
-        ? 'bg-yellow-400 shadow-[0_0_6px_rgba(250,204,21,0.6)]'
-        : 'bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.6)]'
+        ? 'bg-warning'
+        : 'bg-error'
   return <span className={cn('inline-block h-2 w-2 rounded-full', color)} />
 }
 

@@ -215,13 +215,13 @@ export function SettingsPage() {
         {/* Delete Account */}
         <div className="flex items-center justify-between py-2 border-t border-border/50">
           <div>
-            <span className="text-sm text-destructive">Delete Account</span>
+            <span className="text-sm text-error">Delete Account</span>
             <p className="text-xs text-text-muted">Permanently delete your account and all personal data</p>
           </div>
           <Button
             variant="outline"
             size="sm"
-            className="text-destructive border-destructive/30 hover:bg-destructive/10"
+            className="text-error border-error/30 hover:bg-error/10"
             onClick={() => setShowDeleteDialog(true)}
           >
             <Trash2 className="h-3.5 w-3.5 mr-1.5" />
@@ -237,7 +237,7 @@ export function SettingsPage() {
       }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
+            <DialogTitle className="flex items-center gap-2 text-error">
               <AlertTriangle className="h-5 w-5" />
               Delete Account
             </DialogTitle>
@@ -247,8 +247,8 @@ export function SettingsPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="rounded-md bg-destructive/10 border border-destructive/20 p-3">
-              <p className="text-sm text-destructive font-medium">This will permanently:</p>
+            <div className="rounded-md bg-error/10 border border-error/20 p-3">
+              <p className="text-sm text-error font-medium">This will permanently:</p>
               <ul className="text-sm text-text-secondary mt-1 space-y-1 list-disc pl-4">
                 <li>Delete your user account</li>
                 <li>Remove all your API keys</li>

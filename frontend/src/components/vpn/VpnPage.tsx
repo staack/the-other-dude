@@ -201,7 +201,7 @@ export function VpnPage() {
       <div className="p-6 space-y-6">
         <h1 className="text-2xl font-bold text-text-primary">VPN</h1>
         <div className="max-w-lg mx-auto mt-12">
-          <div className="rounded-xl border border-border bg-surface p-8 text-center space-y-6">
+          <div className="rounded-lg border border-border bg-surface p-8 text-center space-y-6">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center">
               <Shield className="h-8 w-8 text-accent" />
             </div>
@@ -244,8 +244,8 @@ export function VpnPage() {
             className={cn(
               'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium',
               config.is_enabled
-                ? 'bg-green-500/10 text-green-500'
-                : 'bg-yellow-500/10 text-yellow-500',
+                ? 'bg-success/10 text-success'
+                : 'bg-warning/10 text-warning',
             )}
           >
             {config.is_enabled ? (
@@ -271,7 +271,7 @@ export function VpnPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="text-red-400 border-red-800 hover:bg-red-900/30"
+                className="text-error border-error/30 hover:bg-error/10"
                 onClick={() => {
                   if (confirm('Delete VPN configuration? All peers will be removed.')) {
                     deleteMutation.mutate()
@@ -310,7 +310,7 @@ export function VpnPage() {
       {peersLoading ? (
         <TableSkeleton rows={3} />
       ) : peers.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-accent/30 bg-accent/5 p-8 text-center space-y-3">
+        <div className="rounded-lg border border-dashed border-accent/30 bg-accent/5 p-8 text-center space-y-3">
           <ShieldCheck className="h-10 w-10 text-accent mx-auto" />
           <h3 className="text-base font-semibold text-text-primary">VPN is ready</h3>
           <p className="text-sm text-text-secondary max-w-md mx-auto">
@@ -346,7 +346,7 @@ export function VpnPage() {
                   </td>
                   <td className="px-4 py-3">
                     {peer.last_handshake ? (
-                      <span className="inline-flex items-center gap-1 text-green-500 text-xs">
+                      <span className="inline-flex items-center gap-1 text-success text-xs">
                         <Wifi className="h-3 w-3" /> Connected
                       </span>
                     ) : (
@@ -373,7 +373,7 @@ export function VpnPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => removePeerMutation.mutate(peer.id)}
-                          className="text-red-400 hover:text-red-300"
+                          className="text-error hover:text-error/80"
                           title="Remove from VPN"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -400,7 +400,7 @@ export function VpnPage() {
             </p>
             {availableDevices.length === 0 ? (
               <div className="rounded-lg border border-border bg-elevated/50 p-4 text-center">
-                <CheckCircle className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                <CheckCircle className="h-6 w-6 text-success mx-auto mb-2" />
                 <p className="text-sm font-medium text-text-primary">All devices are on VPN</p>
                 <p className="text-xs text-text-muted mt-1">
                   Every device in your fleet is already connected. Add more devices to your fleet first.
@@ -454,7 +454,7 @@ export function VpnPage() {
                   className="absolute top-2 right-2"
                   onClick={() => copyToClipboard(peerConfig.routeros_commands.join('\n'))}
                 >
-                  {copied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  {copied ? <CheckCircle className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
               <div className="grid grid-cols-2 gap-3 text-sm">

@@ -232,7 +232,7 @@ export function ReportsPage({ tenantId }: ReportsPageProps) {
           disabled={generateMutation.isPending || !tenantId}
           className={cn(
             'inline-flex items-center gap-2 px-6 py-2.5 rounded-md text-sm font-medium transition-colors',
-            'bg-primary text-primary-foreground hover:bg-primary/90',
+            'bg-accent text-white hover:bg-accent/90',
             'disabled:opacity-50 disabled:cursor-not-allowed',
           )}
         >

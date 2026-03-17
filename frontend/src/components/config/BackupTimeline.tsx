@@ -25,7 +25,7 @@ function triggerBadgeClass(type: ConfigBackupEntry['trigger_type']) {
     case 'config-change':
       return 'border-orange-500/50 bg-orange-500/10 text-orange-500'
     default:
-      return 'border-muted bg-muted/10 text-muted-foreground'
+      return 'border-muted bg-muted/10 text-text-muted'
   }
 }
 

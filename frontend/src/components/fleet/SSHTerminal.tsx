@@ -162,7 +162,7 @@ export function SSHTerminal({ tenantId, deviceId, deviceName }: SSHTerminalProps
         return (
             <button
                 onClick={handleOpen}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-accent text-white hover:bg-accent/90"
             >
                 <TerminalIcon className="h-4 w-4" />
                 SSH Terminal
@@ -172,14 +172,14 @@ export function SSHTerminal({ tenantId, deviceId, deviceName }: SSHTerminalProps
 
     return (
         <div className={`rounded-md border overflow-hidden ${expanded ? 'fixed inset-4 z-50 bg-background' : ''}`}>
-            <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b">
+            <div className="flex items-center justify-between px-3 py-2 bg-elevated/50 border-b">
                 <span className="text-sm font-medium">SSH: {deviceName}</span>
                 <div className="flex gap-1">
                     <button onClick={() => setExpanded(!expanded)} className="p-1 hover:bg-accent rounded">
                         {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                     </button>
                     {state === 'disconnected' ? (
-                        <button onClick={handleReconnect} className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground">
+                        <button onClick={handleReconnect} className="px-2 py-1 text-xs rounded bg-accent text-white">
                             Reconnect
                         </button>
                     ) : (
@@ -191,7 +191,7 @@ export function SSHTerminal({ tenantId, deviceId, deviceName }: SSHTerminalProps
             </div>
             <div ref={termRef} className="h-80" tabIndex={0} style={expanded ? { height: 'calc(100% - 40px)' } : {}} />
             {state === 'connected' && (
-                <div className="px-3 py-1 text-xs text-muted-foreground border-t">
+                <div className="px-3 py-1 text-xs text-text-muted border-t">
                     SSH session active — idle timeout: 15 min
                 </div>
             )}

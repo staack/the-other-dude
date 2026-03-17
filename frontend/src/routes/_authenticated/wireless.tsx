@@ -13,9 +13,9 @@ export const Route = createFileRoute('/_authenticated/wireless')({
 
 function signalColor(signal: number | null): string {
   if (signal === null) return 'text-text-muted'
-  if (signal > -60) return 'text-emerald-400'
-  if (signal > -70) return 'text-yellow-400'
-  return 'text-red-400'
+  if (signal > -60) return 'text-success'
+  if (signal > -70) return 'text-warning'
+  return 'text-error'
 }
 
 function WirelessPage() {
@@ -105,7 +105,7 @@ function WirelessPage() {
       ) : issues.length === 0 ? (
         <Card className="border-border bg-surface">
           <CardContent className="flex flex-col items-center justify-center gap-3 p-12">
-            <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+            <CheckCircle2 className="h-10 w-10 text-success" />
             <p className="text-sm font-medium text-text-secondary">
               All Clear — no wireless issues detected
             </p>
@@ -153,7 +153,7 @@ function WirelessPage() {
                   >
                     <td className="px-4 py-3 text-sm text-text-secondary">
                       <div className="flex items-center gap-2">
-                        <span className="inline-block h-2 w-2 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.6)]" />
+                        <span className="inline-block h-2 w-2 rounded-full bg-error" />
                         {issue.hostname}
                       </div>
                     </td>

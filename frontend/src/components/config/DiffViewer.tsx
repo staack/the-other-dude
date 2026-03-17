@@ -28,7 +28,7 @@ export function DiffViewer({ tenantId, deviceId, snapshotId, onClose }: DiffView
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
-          <h3 className="text-sm font-medium text-muted-foreground">Config Diff</h3>
+          <h3 className="text-sm font-medium text-text-muted">Config Diff</h3>
           {diff && (
             <span className="text-xs font-mono">
               <span className="text-success">+{diff.lines_added}</span>

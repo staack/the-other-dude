@@ -294,7 +294,7 @@ export function MaintenanceForm({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Reason for maintenance, ticket number, etc."
               rows={2}
-              className="w-full rounded-md border border-border bg-elevated/50 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+              className="w-full rounded-md border border-border bg-elevated/50 px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:outline-none resize-none"
             />
           </div>
 

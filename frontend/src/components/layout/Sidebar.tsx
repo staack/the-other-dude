@@ -298,7 +298,7 @@ export function Sidebar() {
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="lg:hidden fixed inset-y-0 left-0 z-50 w-[180px] flex flex-col bg-sidebar border-r border-border shadow-xl"
+            className="lg:hidden fixed inset-y-0 left-0 z-50 w-[180px] flex flex-col bg-sidebar border-r border-border"
           >
             {sidebarContent(false)}
           </aside>

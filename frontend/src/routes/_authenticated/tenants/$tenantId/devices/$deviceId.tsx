@@ -672,7 +672,7 @@ function DeviceDetailPage() {
 
             {/* Interface Utilization */}
             <div className="rounded-lg border border-border bg-surface p-4">
-              <h3 className="text-sm font-medium text-muted-foreground mb-3">Interface Utilization</h3>
+              <h3 className="text-sm font-medium text-text-muted mb-3">Interface Utilization</h3>
               <InterfaceGauges tenantId={tenantId} deviceId={deviceId} active={activeTab === 'overview'} />
             </div>
 

@@ -168,7 +168,7 @@ export function BulkDeployDialog({
 
               {availableDevices.length === 0 ? (
                 <div className="rounded-lg border border-border bg-elevated/50 p-4 text-center">
-                  <CheckCircle className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                  <CheckCircle className="h-6 w-6 text-success mx-auto mb-2" />
                   <p className="text-sm font-medium text-text-primary">
                     All devices have certificates
                   </p>
@@ -222,7 +222,7 @@ export function BulkDeployDialog({
                           className={cn(
                             'text-[10px] uppercase px-1.5 py-0.5 rounded',
                             d.status === 'online'
-                              ? 'bg-green-500/10 text-green-500'
+                              ? 'bg-success/10 text-success'
                               : 'bg-text-muted/10 text-text-muted',
                           )}
                         >
@@ -263,9 +263,9 @@ export function BulkDeployDialog({
             <div className="space-y-4">
               {/* Summary */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-4 text-center">
-                  <CheckCircle className="h-6 w-6 text-green-500 mx-auto mb-1" />
-                  <p className="text-2xl font-bold text-green-500">
+                <div className="rounded-lg border border-success/30 bg-success/5 p-4 text-center">
+                  <CheckCircle className="h-6 w-6 text-success mx-auto mb-1" />
+                  <p className="text-2xl font-bold text-success">
                     {result.success}
                   </p>
                   <p className="text-xs text-text-muted">Succeeded</p>

@@ -36,8 +36,8 @@ const CONNECTION_LABELS: Record<ConnectionState, string> = {
 // Generate a deterministic color from a string
 function tenantColor(name: string): string {
   const colors = [
-    'bg-blue-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500',
-    'bg-rose-500', 'bg-cyan-500', 'bg-pink-500', 'bg-teal-500',
+    'bg-info', 'bg-success', 'bg-accent', 'bg-warning',
+    'bg-error', 'bg-info', 'bg-accent', 'bg-success',
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) {

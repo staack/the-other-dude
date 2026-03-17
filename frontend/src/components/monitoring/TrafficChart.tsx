@@ -36,7 +36,7 @@ function formatBucket(bucket: string, useDate: boolean): string {
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value?: number; dataKey?: string; name?: string; color?: string }>; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded border border-border bg-surface px-2 py-1.5 text-xs text-text-primary shadow-lg">
+    <div className="rounded border border-border bg-surface px-2 py-1.5 text-xs text-text-primary">
       <div className="mb-1 text-text-muted">{label}</div>
       {payload.map((entry) => (
         <div key={entry.dataKey} className="flex items-center gap-2">

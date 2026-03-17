@@ -41,11 +41,11 @@ export function RollbackAlert({
   }
 
   return (
-    <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 flex items-center justify-between">
+    <div className="rounded-lg border border-error/30 bg-error/5 px-4 py-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
+        <AlertTriangle className="h-5 w-5 text-error shrink-0" />
         <div>
-          <p className="text-sm font-medium text-destructive">
+          <p className="text-sm font-medium text-error">
             Device went offline after config change
           </p>
           <p className="text-xs text-text-secondary mt-0.5">

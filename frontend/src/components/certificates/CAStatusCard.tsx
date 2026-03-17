@@ -76,7 +76,7 @@ export function CAStatusCard({ ca, canWrite: writable, tenantId }: CAStatusCardP
   if (!ca) {
     return (
       <div className="max-w-lg mx-auto">
-        <div className="rounded-xl border border-border bg-surface p-8 text-center space-y-6">
+        <div className="rounded-lg border border-border bg-surface p-8 text-center space-y-6">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center">
             <Shield className="h-8 w-8 text-accent" />
           </div>
@@ -118,8 +118,8 @@ export function CAStatusCard({ ca, canWrite: writable, tenantId }: CAStatusCardP
   return (
     <div
       className={cn(
-        'rounded-xl border bg-surface p-6 space-y-4',
-        isExpired ? 'border-error/40' : 'border-green-500/30',
+        'rounded-lg border bg-surface p-6 space-y-4',
+        isExpired ? 'border-error/40' : 'border-success/30',
       )}
     >
       <div className="flex items-center justify-between">
@@ -127,13 +127,13 @@ export function CAStatusCard({ ca, canWrite: writable, tenantId }: CAStatusCardP
           <div
             className={cn(
               'w-10 h-10 rounded-xl flex items-center justify-center',
-              isExpired ? 'bg-error/10' : 'bg-green-500/10',
+              isExpired ? 'bg-error/10' : 'bg-success/10',
             )}
           >
             <ShieldCheck
               className={cn(
                 'h-5 w-5',
-                isExpired ? 'text-error' : 'text-green-500',
+                isExpired ? 'text-error' : 'text-success',
               )}
             />
           </div>
@@ -146,7 +146,7 @@ export function CAStatusCard({ ca, canWrite: writable, tenantId }: CAStatusCardP
                 'inline-flex items-center gap-1 text-[10px] font-medium uppercase px-1.5 py-0.5 rounded border mt-0.5',
                 isExpired
                   ? 'bg-error/20 text-error border-error/40'
-                  : 'bg-green-500/20 text-green-500 border-green-500/40',
+                  : 'bg-success/20 text-success border-success/40',
               )}
             >
               {isExpired ? 'Expired' : 'Active'}
@@ -175,7 +175,7 @@ export function CAStatusCard({ ca, canWrite: writable, tenantId }: CAStatusCardP
               title="Copy fingerprint"
             >
               {copied ? (
-                <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                <CheckCircle className="h-3.5 w-3.5 text-success" />
               ) : (
                 <Copy className="h-3.5 w-3.5" />
               )}

@@ -148,7 +148,7 @@ export function DeployCertDialog({
 
               {availableDevices.length === 0 ? (
                 <div className="rounded-lg border border-border bg-elevated/50 p-4 text-center">
-                  <CheckCircle className="h-6 w-6 text-green-500 mx-auto mb-2" />
+                  <CheckCircle className="h-6 w-6 text-success mx-auto mb-2" />
                   <p className="text-sm font-medium text-text-primary">
                     All devices have certificates
                   </p>
@@ -231,7 +231,7 @@ export function DeployCertDialog({
 
           {step === 'done' && (
             <div className="py-8 text-center space-y-3">
-              <CheckCircle className="h-8 w-8 text-green-500 mx-auto" />
+              <CheckCircle className="h-8 w-8 text-success mx-auto" />
               <p className="text-sm font-medium text-text-primary">
                 Certificate deployed successfully
               </p>

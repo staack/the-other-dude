@@ -20,10 +20,10 @@ interface RestorePreviewProps {
 }
 
 const riskBadgeColors = {
-  none: 'bg-muted text-text-secondary',
+  none: 'bg-elevated text-text-secondary',
   low: 'bg-success/10 text-success border-success/30',
   medium: 'bg-warning/10 text-warning border-warning/30',
-  high: 'bg-destructive/10 text-destructive border-destructive/30',
+  high: 'bg-error/10 text-error border-error/30',
 } as const
 
 export function RestorePreview({
@@ -53,9 +53,9 @@ export function RestorePreview({
   if (isLoading) {
     return (
       <div className="space-y-4 p-4">
-        <div className="h-12 rounded-lg bg-muted animate-pulse" />
-        <div className="h-32 rounded-lg bg-muted animate-pulse" />
-        <div className="h-16 rounded-lg bg-muted animate-pulse" />
+        <div className="h-12 rounded-lg bg-elevated animate-pulse" />
+        <div className="h-32 rounded-lg bg-elevated animate-pulse" />
+        <div className="h-16 rounded-lg bg-elevated animate-pulse" />
       </div>
     )
   }
@@ -63,10 +63,10 @@ export function RestorePreview({
   if (error || !preview) {
     return (
       <div className="p-4 space-y-4">
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 flex items-start gap-3">
-          <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+        <div className="rounded-lg border border-error/30 bg-error/5 p-4 flex items-start gap-3">
+          <XCircle className="h-5 w-5 text-error shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-destructive">Preview failed</p>
+            <p className="text-sm font-medium text-error">Preview failed</p>
             <p className="text-xs text-text-secondary mt-1">
               Could not analyze the config. You may still proceed manually.
             </p>
@@ -88,13 +88,13 @@ export function RestorePreview({
     <div className="space-y-4 p-4">
       {/* Validation errors */}
       {!validation.valid && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 space-y-1">
-          <p className="text-sm font-medium text-destructive flex items-center gap-2">
+        <div className="rounded-lg border border-error/30 bg-error/5 p-3 space-y-1">
+          <p className="text-sm font-medium text-error flex items-center gap-2">
             <XCircle className="h-4 w-4" />
             Validation errors found
           </p>
           {validation.errors.map((err, i) => (
-            <p key={i} className="text-xs text-destructive/80 ml-6">{err}</p>
+            <p key={i} className="text-xs text-error/80 ml-6">{err}</p>
           ))}
         </div>
       )}
@@ -103,13 +103,13 @@ export function RestorePreview({
       <div className="rounded-lg border border-border bg-surface-raised p-3 flex items-center justify-between">
         <div className="flex items-center gap-4 text-sm">
           <span className="text-success font-mono">+{diff.added}</span>
-          <span className="text-destructive font-mono">-{diff.removed}</span>
+          <span className="text-error font-mono">-{diff.removed}</span>
           <span className="text-text-secondary">
             across {changedCategories.length} categor{changedCategories.length === 1 ? 'y' : 'ies'}
           </span>
         </div>
         {hasHighRisk ? (
-          <span className="text-xs font-medium text-destructive flex items-center gap-1">
+          <span className="text-xs font-medium text-error flex items-center gap-1">
             <Shield className="h-3 w-3" /> High risk
           </span>
         ) : (
@@ -138,7 +138,7 @@ export function RestorePreview({
               </div>
               <div className="flex items-center gap-3">
                 {cat.adds > 0 && <span className="text-xs text-success">+{cat.adds}</span>}
-                {cat.removes > 0 && <span className="text-xs text-destructive">-{cat.removes}</span>}
+                {cat.removes > 0 && <span className="text-xs text-error">-{cat.removes}</span>}
                 <span className={cn(
                   'text-xs px-1.5 py-0.5 rounded border',
                   riskBadgeColors[cat.risk],

@@ -99,8 +99,8 @@ function DeviceNode({ data }: NodeProps<DeviceNodeData>) {
   return (
     <div
       className={cn(
-        'rounded-lg border bg-surface shadow-md px-3 py-2 min-w-[180px]',
-        'transition-shadow hover:shadow-lg',
+        'rounded-lg border bg-surface px-3 py-2 min-w-[180px]',
+        'transition-colors',
         isOnline ? 'border-border' : 'border-error/30',
       )}
     >
@@ -152,7 +152,7 @@ interface TooltipData {
 function NodeTooltip({ data }: { data: TooltipData; onClose?: () => void }) {
   return (
     <div
-      className="absolute z-50 rounded-lg border border-border bg-elevated shadow-lg px-3 py-2 text-xs pointer-events-none"
+      className="absolute z-50 rounded-lg border border-border bg-elevated px-3 py-2 text-xs pointer-events-none"
       style={{ left: data.x + 10, top: data.y - 10 }}
     >
       <div className="font-medium text-text-primary">{data.hostname}</div>
@@ -339,7 +339,7 @@ export function TopologyMap({ tenantId }: TopologyMapProps) {
       >
         <Background color="hsl(var(--muted))" gap={20} size={1} />
         <Controls
-          className="!bg-surface !border-border !shadow-md [&>button]:!bg-surface [&>button]:!border-border [&>button]:!text-text-secondary [&>button:hover]:!bg-elevated"
+          className="!bg-surface !border-border [&>button]:!bg-surface [&>button]:!border-border [&>button]:!text-text-secondary [&>button:hover]:!bg-elevated"
         />
         <MiniMap
           nodeColor={(node) => {

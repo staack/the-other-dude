@@ -54,11 +54,11 @@ const STATUS_CONFIG: Record<
   },
   deployed: {
     label: 'Deployed',
-    className: 'bg-green-500/20 text-green-500 border-green-500/40',
+    className: 'bg-success/20 text-success border-success/40',
   },
   expiring: {
     label: 'Expiring Soon',
-    className: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/40',
+    className: 'bg-warning/20 text-warning border-warning/40',
   },
   expired: {
     label: 'Expired',
@@ -236,7 +236,7 @@ export function DeviceCertTable({
 
       {/* Empty state */}
       {filteredCerts.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-accent/30 bg-accent/5 p-8 text-center space-y-3">
+        <div className="rounded-lg border border-dashed border-accent/30 bg-accent/5 p-8 text-center space-y-3">
           <ShieldCheck className="h-10 w-10 text-accent mx-auto" />
           <h3 className="text-base font-semibold text-text-primary">
             No device certificates yet

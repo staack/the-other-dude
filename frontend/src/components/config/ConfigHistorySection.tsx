@@ -67,8 +67,8 @@ export function ConfigHistorySection({ tenantId, deviceId, deviceName }: ConfigH
   return (
     <div className="rounded-lg border border-border bg-surface p-4">
       <div className="flex items-center gap-2 mb-3">
-        <History className="h-4 w-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium text-muted-foreground">Configuration History</h3>
+        <History className="h-4 w-4 text-text-muted" />
+        <h3 className="text-sm font-medium text-text-muted">Configuration History</h3>
       </div>
 
       {selectedSnapshotId && (

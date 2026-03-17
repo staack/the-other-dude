@@ -78,7 +78,7 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
                         openMutation.mutate()
                     }}
                     disabled={openMutation.isPending}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-accent text-white hover:bg-accent/90 disabled:opacity-50"
                 >
                     {openMutation.isPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -87,7 +87,7 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
                     )}
                     {openMutation.isPending ? 'Connecting...' : 'Open WinBox'}
                 </button>
-                {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+                {error && <p className="mt-2 text-sm text-error">{error}</p>}
             </div>
         )
     }
@@ -96,7 +96,7 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
         return (
             <div className="rounded-md border p-4 space-y-3">
                 <p className="font-medium text-sm">WinBox tunnel ready</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-text-muted">
                     Connect to: <code className="font-mono">{tunnelInfo.host}:{tunnelInfo.port}</code>
                 </p>
                 <div className="flex gap-2">
@@ -119,7 +119,7 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
                         Close Tunnel
                     </button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-text-muted">
                     Tunnel closes after 5 min of inactivity
                 </p>
             </div>

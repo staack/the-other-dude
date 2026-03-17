@@ -166,7 +166,7 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
           <button
             onClick={handleOpen}
             disabled={createMutation.isPending}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-accent text-white hover:bg-accent/90 disabled:opacity-50"
           >
             {createMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -186,11 +186,11 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
         </div>
         {state === 'failed' && error && (
           <div className="mt-2 flex items-center gap-2">
-            <p className="text-sm text-destructive">{error}</p>
+            <p className="text-sm text-error">{error}</p>
           </div>
         )}
         {state === 'terminated' && (
-          <p className="mt-2 text-sm text-muted-foreground">Session ended</p>
+          <p className="mt-2 text-sm text-text-muted">Session ended</p>
         )}
       </div>
     )
@@ -206,7 +206,7 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
             {state === 'requesting' ? 'Requesting session...' : 'Provisioning WinBox container...'}
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">This may take a few seconds</p>
+        <p className="text-xs text-text-muted">This may take a few seconds</p>
       </div>
     )
   }
@@ -234,12 +234,12 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
         }
       >
         {/* Header bar */}
-        <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/50">
+        <div className="flex items-center justify-between px-3 py-2 border-b bg-elevated/50">
           <div className="flex items-center gap-2">
-            <Globe className="h-4 w-4 text-primary" />
+            <Globe className="h-4 w-4 text-accent" />
             <span className="text-sm font-medium">Remote WinBox</span>
             {countdown && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-text-muted">
                 Expires in {countdown}
               </span>
             )}
@@ -281,7 +281,7 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
   // Active but no iframe URL (missing xpra_ws_port) — show reset option
   return (
     <div className="rounded-md border p-4 space-y-2">
-      <p className="text-sm text-destructive">Session active but display unavailable</p>
+      <p className="text-sm text-error">Session active but display unavailable</p>
       <button
         onClick={handleReset}
         className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-input bg-background hover:bg-accent text-sm"
