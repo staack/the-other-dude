@@ -56,6 +56,11 @@ spec:
                 configMapKeyRef:
                   name: {{ include "tod.fullname" . }}
                   key: SYNC_DATABASE_URL
+            - name: CREDENTIAL_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "tod.fullname" . }}-secrets
+                  key: CREDENTIAL_ENCRYPTION_KEY
           securityContext:
             runAsUser: 1001
             runAsNonRoot: true
