@@ -1,0 +1,107 @@
+{{- if .Values.nats.enabled }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "tod.fullname" . }}-nats
+  labels:
+    {{- include "tod.componentLabels" (dict "context" . "component" "nats") | nindent 4 }}
+spec:
+  serviceName: {{ include "tod.fullname" . }}-nats-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "tod.componentSelectorLabels" (dict "context" . "component" "nats") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "tod.componentSelectorLabels" (dict "context" . "component" "nats") | nindent 8 }}
+    spec:
+      containers:
+        - name: nats
+          image: "{{ .Values.nats.image.repository }}:{{ .Values.nats.image.tag }}"
+          imagePullPolicy: {{ .Values.nats.image.pullPolicy }}
+          command:
+            - nats-server
+            - --jetstream
+            - --store_dir
+            - /data
+            - -m
+            - "8222"
+          ports:
+            - name: client
+              containerPort: 4222
+              protocol: TCP
+            - name: monitoring
+              containerPort: 8222
+              protocol: TCP
+          volumeMounts:
+            - name: nats-data
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.nats.resources | nindent 12 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: nats-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- if .Values.nats.storageClass }}
+        storageClassName: {{ .Values.nats.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.nats.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tod.fullname" . }}-nats-headless
+  labels:
+    {{- include "tod.componentLabels" (dict "context" . "component" "nats") | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - name: client
+      port: 4222
+      targetPort: client
+      protocol: TCP
+    - name: monitoring
+      port: 8222
+      targetPort: monitoring
+      protocol: TCP
+  selector:
+    {{- include "tod.componentSelectorLabels" (dict "context" . "component" "nats") | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tod.fullname" . }}-nats
+  labels:
+    {{- include "tod.componentLabels" (dict "context" . "component" "nats") | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: client
+      port: 4222
+      targetPort: client
+      protocol: TCP
+    - name: monitoring
+      port: 8222
+      targetPort: monitoring
+      protocol: TCP
+  selector:
+    {{- include "tod.componentSelectorLabels" (dict "context" . "component" "nats") | nindent 4 }}
+{{- end }}
