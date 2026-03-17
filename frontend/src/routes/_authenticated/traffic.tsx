@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { BarChart3, Inbox } from 'lucide-react'
-import { metricsApi, type FleetDevice } from '@/lib/api'
+import { metricsApi } from '@/lib/api'
 import { useAuth, isSuperAdmin } from '@/lib/auth'
 import { useUIStore } from '@/lib/store'
 import { Card, CardContent } from '@/components/ui/card'
