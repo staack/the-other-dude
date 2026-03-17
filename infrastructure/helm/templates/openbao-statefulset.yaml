@@ -1,0 +1,115 @@
+{{- if .Values.openbao.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tod.fullname" . }}-openbao-config
+  labels:
+    {{- include "tod.componentLabels" (dict "context" . "component" "openbao") | nindent 4 }}
+data:
+  config.hcl: |
+    storage "file" {
+      path = "/openbao/data"
+    }
+    listener "tcp" {
+      address     = "0.0.0.0:8200"
+      tls_disable = true
+    }
+    api_addr = "http://127.0.0.1:8200"
+    ui       = false
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "tod.fullname" . }}-openbao
+  labels:
+    {{- include "tod.componentLabels" (dict "context" . "component" "openbao") | nindent 4 }}
+spec:
+  serviceName: {{ include "tod.fullname" . }}-openbao
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "tod.componentSelectorLabels" (dict "context" . "component" "openbao") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "tod.componentSelectorLabels" (dict "context" . "component" "openbao") | nindent 8 }}
+    spec:
+      containers:
+        - name: openbao
+          image: "{{ .Values.openbao.image.repository }}:{{ .Values.openbao.image.tag }}"
+          imagePullPolicy: {{ .Values.openbao.image.pullPolicy }}
+          command:
+            - bao
+            - server
+            - -config=/etc/openbao/config.hcl
+          ports:
+            - name: api
+              containerPort: 8200
+              protocol: TCP
+          env:
+            - name: BAO_ADDR
+              value: "http://127.0.0.1:8200"
+          volumeMounts:
+            - name: openbao-data
+              mountPath: /openbao/data
+            - name: config
+              mountPath: /etc/openbao/config.hcl
+              subPath: config.hcl
+          resources:
+            {{- toYaml .Values.openbao.resources | nindent 12 }}
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+          startupProbe:
+            tcpSocket:
+              port: 8200
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            tcpSocket:
+              port: 8200
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - bao
+                - status
+            periodSeconds: 10
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "tod.fullname" . }}-openbao-config
+  volumeClaimTemplates:
+    - metadata:
+        name: openbao-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        {{- if .Values.openbao.storageClass }}
+        storageClassName: {{ .Values.openbao.storageClass | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.openbao.storage }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tod.fullname" . }}-openbao
+  labels:
+    {{- include "tod.componentLabels" (dict "context" . "component" "openbao") | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: api
+      port: 8200
+      targetPort: api
+      protocol: TCP
+  selector:
+    {{- include "tod.componentSelectorLabels" (dict "context" . "component" "openbao") | nindent 4 }}
+{{- end }}
