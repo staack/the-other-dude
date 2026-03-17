@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tod.fullname" . }}
+  labels:
+    {{- include "tod.labels" . | nindent 4 }}
+data:
+  # -- Database URLs (built from helpers)
+  DATABASE_URL: {{ include "tod.databaseUrl" . | quote }}
+  SYNC_DATABASE_URL: {{ include "tod.syncDatabaseUrl" . | quote }}
+  APP_USER_DATABASE_URL: {{ include "tod.appUserDatabaseUrl" . | quote }}
+
+  # -- Infrastructure URLs
+  REDIS_URL: {{ include "tod.redisUrl" . | quote }}
+  NATS_URL: {{ include "tod.natsUrl" . | quote }}
+  OPENBAO_ADDR: {{ include "tod.openbaoAddr" . | quote }}
+
+  # -- Application settings
+  ENVIRONMENT: {{ .Values.api.env.environment | quote }}
+  LOG_LEVEL: {{ .Values.api.env.logLevel | quote }}
+  DEBUG: {{ .Values.api.env.debug | quote }}
+  APP_NAME: "the-other-dude"
+  APP_VERSION: {{ .Chart.AppVersion | quote }}
+  GUNICORN_WORKERS: {{ .Values.api.env.gunicornWorkers | quote }}
+
+  # -- Auth
+  JWT_ALGORITHM: {{ .Values.api.env.jwtAlgorithm | quote }}
+  JWT_ACCESS_TOKEN_EXPIRE_MINUTES: {{ .Values.api.env.jwtAccessTokenExpireMinutes | quote }}
+  JWT_REFRESH_TOKEN_EXPIRE_DAYS: {{ .Values.api.env.jwtRefreshTokenExpireDays | quote }}
+
+  # -- Web
+  CORS_ORIGINS: {{ .Values.api.env.corsOrigins | quote }}
+  APP_BASE_URL: {{ .Values.api.env.appBaseUrl | quote }}
+
+  # -- SMTP (non-sensitive)
+  SMTP_HOST: {{ .Values.smtp.host | quote }}
+  SMTP_PORT: {{ .Values.smtp.port | quote }}
+  SMTP_USE_TLS: {{ .Values.smtp.useTls | quote }}
+  SMTP_FROM_ADDRESS: {{ .Values.smtp.fromAddress | quote }}
+
+  # -- Poller settings
+  POLL_INTERVAL_SECONDS: {{ .Values.poller.env.pollIntervalSeconds | quote }}
+  CONNECTION_TIMEOUT_SECONDS: {{ .Values.poller.env.connectionTimeoutSeconds | quote }}
+  COMMAND_TIMEOUT_SECONDS: {{ .Values.poller.env.commandTimeoutSeconds | quote }}
+  DEVICE_REFRESH_SECONDS: {{ .Values.poller.env.deviceRefreshSeconds | quote }}
+
+  # -- Tunnel / SSH relay
+  TUNNEL_PORT_MIN: {{ .Values.poller.env.tunnelPortMin | quote }}
+  TUNNEL_PORT_MAX: {{ .Values.poller.env.tunnelPortMax | quote }}
+  TUNNEL_IDLE_TIMEOUT: {{ .Values.poller.env.tunnelIdleTimeout | quote }}
+  SSH_RELAY_PORT: {{ .Values.poller.env.sshRelayPort | quote }}
+  SSH_IDLE_TIMEOUT: {{ .Values.poller.env.sshIdleTimeout | quote }}
+  SSH_MAX_SESSIONS: {{ .Values.poller.env.sshMaxSessions | quote }}
+  SSH_MAX_PER_USER: {{ .Values.poller.env.sshMaxPerUser | quote }}
+  SSH_MAX_PER_DEVICE: {{ .Values.poller.env.sshMaxPerDevice | quote }}
+
+  # -- Storage paths
+  GIT_STORE_PATH: {{ .Values.storagePaths.gitStorePath | quote }}
+  FIRMWARE_CACHE_DIR: {{ .Values.storagePaths.firmwareCacheDir | quote }}
+  CONFIG_RETENTION_DAYS: {{ .Values.backup.configRetentionDays | quote }}
+  WIREGUARD_CONFIG_PATH: {{ .Values.storagePaths.wireguardConfigPath | quote }}
+  WIREGUARD_GATEWAY: {{ .Values.storagePaths.wireguardGateway | quote }}
+
+  # -- Backup
+  CONFIG_BACKUP_INTERVAL: {{ .Values.backup.configBackupInterval | quote }}
+  CONFIG_BACKUP_MAX_CONCURRENT: {{ .Values.backup.configBackupMaxConcurrent | quote }}
+
+  # -- Telemetry
+  TELEMETRY_ENABLED: {{ .Values.telemetry.enabled | quote }}
+  TELEMETRY_COLLECTOR_URL: {{ .Values.telemetry.collectorUrl | quote }}
+
+  # -- Optional values (only included when set)
+  {{- if .Values.api.env.dbPoolSize }}
+  DB_POOL_SIZE: {{ .Values.api.env.dbPoolSize | quote }}
+  {{- end }}
+  {{- if .Values.api.env.dbMaxOverflow }}
+  DB_MAX_OVERFLOW: {{ .Values.api.env.dbMaxOverflow | quote }}
+  {{- end }}
+  {{- if .Values.api.env.dbAdminPoolSize }}
+  DB_ADMIN_POOL_SIZE: {{ .Values.api.env.dbAdminPoolSize | quote }}
+  {{- end }}
+  {{- if .Values.api.env.dbAdminMaxOverflow }}
+  DB_ADMIN_MAX_OVERFLOW: {{ .Values.api.env.dbAdminMaxOverflow | quote }}
+  {{- end }}
+  {{- if .Values.api.env.firmwareCheckIntervalHours }}
+  FIRMWARE_CHECK_INTERVAL_HOURS: {{ .Values.api.env.firmwareCheckIntervalHours | quote }}
+  {{- end }}
+  {{- if .Values.api.env.passwordResetTokenExpireMinutes }}
+  PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: {{ .Values.api.env.passwordResetTokenExpireMinutes | quote }}
+  {{- end }}
+  {{- if .Values.backup.configBackupCommandTimeout }}
+  CONFIG_BACKUP_COMMAND_TIMEOUT: {{ .Values.backup.configBackupCommandTimeout | quote }}
+  {{- end }}
+  {{- if .Values.poller.env.circuitBreakerMaxFailures }}
+  CIRCUIT_BREAKER_MAX_FAILURES: {{ .Values.poller.env.circuitBreakerMaxFailures | quote }}
+  {{- end }}
+  {{- if .Values.poller.env.circuitBreakerBaseBackoffSeconds }}
+  CIRCUIT_BREAKER_BASE_BACKOFF_SECONDS: {{ .Values.poller.env.circuitBreakerBaseBackoffSeconds | quote }}
+  {{- end }}
+  {{- if .Values.poller.env.circuitBreakerMaxBackoffSeconds }}
+  CIRCUIT_BREAKER_MAX_BACKOFF_SECONDS: {{ .Values.poller.env.circuitBreakerMaxBackoffSeconds | quote }}
+  {{- end }}
