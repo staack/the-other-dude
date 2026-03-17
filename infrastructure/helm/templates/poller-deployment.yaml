@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tod.fullname" . }}-poller
+  labels:
+    {{- include "tod.componentLabels" (dict "context" . "component" "poller") | nindent 4 }}
+spec:
+  replicas: {{ .Values.poller.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tod.componentSelectorLabels" (dict "context" . "component" "poller") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "tod.componentSelectorLabels" (dict "context" . "component" "poller") | nindent 8 }}
+    spec:
+      containers:
+        - name: poller
+          image: "{{ .Values.poller.image.repository }}:{{ .Values.poller.image.tag }}"
+          imagePullPolicy: {{ .Values.poller.image.pullPolicy }}
+          ports:
+            - name: healthz
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "tod.fullname" . }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "tod.fullname" . }}-secrets
+                  key: POLLER_DATABASE_URL
+            - name: OPENBAO_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "tod.fullname" . }}-secrets
+                  key: OPENBAO_TOKEN
+            - name: CREDENTIAL_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "tod.fullname" . }}-secrets
+                  key: CREDENTIAL_ENCRYPTION_KEY
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.poller.resources | nindent 12 }}
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
