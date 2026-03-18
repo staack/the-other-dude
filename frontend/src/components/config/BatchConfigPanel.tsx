@@ -40,6 +40,7 @@ import {
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
+import { DeviceLink } from '@/components/ui/device-link'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -241,7 +242,9 @@ function DeviceSelector({
                       aria-label={`Select ${device.hostname}`}
                     />
                   </td>
-                  <td className="px-3 py-2 font-medium">{device.hostname}</td>
+                  <td className="px-3 py-2 font-medium">
+                    <DeviceLink tenantId={tenantId} deviceId={device.id}>{device.hostname}</DeviceLink>
+                  </td>
                   <td className="px-3 py-2 font-mono text-text-secondary">{device.ip_address}</td>
                   <td className="px-3 py-2">
                     <span
@@ -580,6 +583,7 @@ function buildBatchChange(
 // ---------------------------------------------------------------------------
 
 function ExecutionPanel({
+  tenantId,
   change,
   devices,
   execStates,
@@ -587,6 +591,7 @@ function ExecutionPanel({
   isComplete,
   onExecute,
 }: {
+  tenantId: string
   change: BatchChange
   devices: DeviceResponse[]
   execStates: DeviceExecState[]
@@ -649,7 +654,9 @@ function ExecutionPanel({
           <tbody>
             {execStates.map((state) => (
               <tr key={state.deviceId} className="border-b border-border/50 last:border-0">
-                <td className="px-3 py-2 font-medium">{state.hostname}</td>
+                <td className="px-3 py-2 font-medium">
+                  <DeviceLink tenantId={tenantId} deviceId={state.deviceId}>{state.hostname}</DeviceLink>
+                </td>
                 <td className="px-3 py-2 font-mono text-text-secondary">{state.ipAddress}</td>
                 <td className="px-3 py-2">
                   <StatusIcon status={state.status} />
@@ -848,6 +855,7 @@ export function BatchConfigPanel({ tenantId }: BatchConfigPanelProps) {
 
       {step === 3 && batchChange && (
         <ExecutionPanel
+          tenantId={tenantId}
           change={batchChange}
           devices={selectedDevices}
           execStates={execStates}
