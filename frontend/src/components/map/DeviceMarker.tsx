@@ -2,6 +2,7 @@ import { Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import { Link } from '@tanstack/react-router'
 import type { FleetDevice } from '@/lib/api'
+import { DeviceLink } from '@/components/ui/device-link'
 import { formatUptime } from '@/lib/utils'
 
 interface DeviceMarkerProps {
@@ -57,7 +58,9 @@ export function DeviceMarker({ device, tenantId }: DeviceMarkerProps) {
     <Marker position={[device.latitude, device.longitude]} icon={icon}>
       <Popup>
         <div className="min-w-[200px] text-sm font-sans">
-          <div className="font-semibold text-base mb-1">{device.hostname}</div>
+          <DeviceLink tenantId={resolvedTenantId} deviceId={device.id} className="font-semibold text-base">
+            {device.hostname}
+          </DeviceLink>
           <div className="text-text-secondary space-y-0.5">
             <div>IP: {device.ip_address}</div>
             {device.model && <div>Model: {device.model}</div>}
@@ -72,13 +75,6 @@ export function DeviceMarker({ device, tenantId }: DeviceMarkerProps) {
             </div>
           </div>
           <div className="flex gap-3 mt-2 pt-2 border-t border-border">
-            <Link
-              to="/tenants/$tenantId/devices/$deviceId"
-              params={{ tenantId: resolvedTenantId, deviceId: device.id }}
-              className="text-info hover:text-accent text-xs font-medium"
-            >
-              View Details &rarr;
-            </Link>
             <Link
               to="/config-editor"
               className="text-info hover:text-accent text-xs font-medium"
