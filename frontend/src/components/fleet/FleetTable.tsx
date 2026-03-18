@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { formatUptime, formatDateTime } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import { DeviceLink } from '@/components/ui/device-link'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 
@@ -82,17 +83,16 @@ function SortHeader({ column, label, currentSort, currentDir, onSort, className 
   )
 }
 
-function DeviceCard({ device, onClick }: { device: DeviceResponse; onClick: () => void }) {
+function DeviceCard({ device, tenantId }: { device: DeviceResponse; tenantId: string }) {
   return (
-    <button
-      onClick={onClick}
+    <div
       className="w-full text-left rounded-lg border border-border bg-surface p-3 hover:bg-elevated/50 transition-colors min-h-[44px]"
       data-testid={`device-card-${device.hostname}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <StatusDot status={device.status} />
-          <span className="font-medium text-sm text-text-primary truncate">{device.hostname}</span>
+          <DeviceLink tenantId={tenantId} deviceId={device.id} className="font-medium text-sm text-text-primary truncate">{device.hostname}</DeviceLink>
         </div>
         <span className="text-xs text-text-muted shrink-0">{formatUptime(device.uptime_seconds)}</span>
       </div>
@@ -108,7 +108,7 @@ function DeviceCard({ device, onClick }: { device: DeviceResponse; onClick: () =
           ))}
         </div>
       )}
-    </button>
+    </div>
   )
 }
 
@@ -213,7 +213,7 @@ export function FleetTable({
         <td className="px-2 py-1.5 text-center">
           <StatusDot status={device.status} />
         </td>
-        <td className="px-2 py-1.5 font-medium text-text-primary">{device.hostname}</td>
+        <td className="px-2 py-1.5 font-medium text-text-primary"><DeviceLink tenantId={tenantId} deviceId={device.id}>{device.hostname}</DeviceLink></td>
         <td className="px-2 py-1.5 font-mono text-xs text-text-secondary">
           {device.ip_address}
         </td>
@@ -287,7 +287,7 @@ export function FleetTable({
             <DeviceCard
               key={device.id}
               device={device}
-              onClick={() => handleDeviceClick(device)}
+              tenantId={tenantId}
             />
           ))
         )}
@@ -324,12 +324,9 @@ export function FleetTable({
                             data-index={virtualRow.index}
                             ref={virtualizer.measureElement}
                             className={cn(
-                              'border-b border-border/50 hover:bg-elevated/50 cursor-pointer transition-colors',
+                              'border-b border-border/50 hover:bg-elevated/50 transition-colors',
                               selectedIndex === virtualRow.index && 'bg-elevated/50',
                             )}
-                            onClick={() => handleDeviceClick(device)}
-                            tabIndex={0}
-                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDeviceClick(device) } }}
                             style={{
                               position: 'absolute',
                               top: 0,
@@ -385,12 +382,9 @@ export function FleetTable({
                       key={device.id}
                       data-testid={`device-row-${device.hostname}`}
                       className={cn(
-                        'border-b border-border/50 hover:bg-elevated/50 cursor-pointer transition-colors',
+                        'border-b border-border/50 hover:bg-elevated/50 transition-colors',
                         selectedIndex === idx && 'bg-elevated/50',
                       )}
-                      onClick={() => handleDeviceClick(device)}
-                      tabIndex={0}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDeviceClick(device) } }}
                     >
                       {renderDeviceRow(device)}
                     </tr>
