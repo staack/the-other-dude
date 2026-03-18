@@ -102,6 +102,13 @@ OpenBao is the key management service used to encrypt device credentials on a pe
 | `SSH_MAX_PER_USER` | `10` | Maximum SSH sessions per user |
 | `SSH_MAX_PER_DEVICE` | `20` | Maximum SSH sessions per device |
 
+### Telemetry
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TELEMETRY_ENABLED` | `false` | Enable anonymous diagnostics. Set during `setup.py` or manually in `.env.prod`. |
+| `TELEMETRY_COLLECTOR_URL` | `https://telemetry.theotherdude.net` | Telemetry collector endpoint. Only used when `TELEMETRY_ENABLED=true`. |
+
 ### Bootstrap
 
 | Variable | Default | Description |

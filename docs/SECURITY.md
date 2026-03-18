@@ -114,6 +114,11 @@ TOD includes on-demand WinBox tunnels and browser-based SSH terminals for device
   - RouterOS firmware update checks (no device data sent)
   - SMTP for email notifications (if configured)
   - Webhooks for alerts (if configured)
+  - Anonymous telemetry (if opted in -- see below)
+
+### Telemetry
+
+Telemetry is strictly opt-in. During `setup.py`, you are asked whether to enable anonymous diagnostics; it can also be toggled at any time by setting `TELEMETRY_ENABLED=false` in `.env.prod`. When enabled, TOD reports only operational metadata: setup step pass/fail status, step duration, OS, architecture, Python version, Docker version, and RAM (rounded). No IP addresses, hostnames, passwords, configuration contents, device data, or personally identifiable information (PII) is ever collected. The collector endpoint is configurable via `TELEMETRY_COLLECTOR_URL`.
 
 ## Security Headers
 

@@ -127,7 +127,7 @@ The Other Dude is a self-hosted, multi-tenant platform (one installation serves 
 |-------|-----------|
 | Frontend | React 19, TanStack Router + Query, Tailwind CSS 3.4, Vite, Framer Motion |
 | Backend | Python 3.12, FastAPI 0.115, SQLAlchemy 2.0 async, asyncpg, Pydantic v2 |
-| Poller | Go 1.24, go-routeros/v3, pgx/v5, nats.go |
+| Poller | Go 1.25, go-routeros/v3, pgx/v5, nats.go |
 | Database | PostgreSQL 17 + TimescaleDB 2.17, Row-Level Security |
 | Cache | Redis 7 |
 | Message Bus | NATS with JetStream |

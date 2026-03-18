@@ -173,6 +173,86 @@ The backend serves interactive API documentation at:
 
 All endpoints include descriptions, request/response schemas, and authentication requirements.
 
+## Kubernetes (Helm)
+
+TOD includes a Helm chart for Kubernetes deployment at `infrastructure/helm/`.
+
+### Prerequisites
+
+- Kubernetes 1.28+
+- Helm 3
+- A StorageClass that supports ReadWriteOnce PersistentVolumeClaims
+
+### Install
+
+1. Create a values override file with your configuration:
+   ```bash
+   cp infrastructure/helm/values.yaml my-values.yaml
+   # Edit my-values.yaml — at minimum set:
+   #   secrets.jwtSecretKey, secrets.credentialEncryptionKey,
+   #   secrets.dbPassword, secrets.dbAppPassword, secrets.dbPollerPassword,
+   #   secrets.firstAdminPassword, ingress.host
+   ```
+
+2. Install the chart:
+   ```bash
+   helm install tod infrastructure/helm -f my-values.yaml -n tod --create-namespace
+   ```
+
+3. Initialize OpenBao (first time only):
+   ```bash
+   # Wait for the pod to start
+   kubectl get pods -n tod -l app.kubernetes.io/component=openbao
+
+   # Initialize
+   kubectl exec -it -n tod tod-openbao-0 -- bao operator init -key-shares=1 -key-threshold=1
+
+   # Save the unseal key and root token, then unseal
+   kubectl exec -it -n tod tod-openbao-0 -- bao operator unseal <UNSEAL_KEY>
+
+   # Update release with the token
+   helm upgrade tod infrastructure/helm -f my-values.yaml \
+     --set secrets.openbaoToken=<ROOT_TOKEN> \
+     --set secrets.baoUnsealKey=<UNSEAL_KEY> \
+     -n tod
+   ```
+
+4. Verify:
+   ```bash
+   kubectl get pods -n tod
+   kubectl port-forward -n tod svc/tod-api 8000:8000
+   curl http://localhost:8000/health
+   ```
+
+### Services
+
+The Helm chart deploys:
+
+| Service | Type | Purpose |
+|---------|------|---------|
+| PostgreSQL (TimescaleDB) | StatefulSet | Primary database |
+| Redis | Deployment | Cache |
+| NATS JetStream | StatefulSet | Message queue |
+| OpenBao | StatefulSet | Secrets management |
+| API | Deployment | FastAPI backend |
+| Frontend | Deployment | React SPA (nginx) |
+| Poller | Deployment | Go device poller |
+| WireGuard | Deployment | VPN gateway |
+
+### Configuration
+
+All configuration is in `values.yaml`. See `infrastructure/helm/values.yaml` for the full reference with comments. Key sections:
+
+- `secrets.*` -- All secrets (must be overridden in production)
+- `api.env.*` -- API environment settings
+- `poller.env.*` -- Poller settings
+- `ingress.*` -- Ingress routing and TLS
+- `wireguard.*` -- VPN configuration (can be disabled with `wireguard.enabled: false`)
+
+### Note on OpenBao
+
+OpenBao must be manually unsealed after every pod restart. Auto-unseal is a planned future enhancement.
+
 ## Monitoring (Optional)
 
 Enable Prometheus and Grafana monitoring with the observability compose overlay:

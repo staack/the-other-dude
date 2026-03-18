@@ -76,6 +76,7 @@ The setup wizard handles everything interactively:
 - Admin account creation
 - SMTP configuration (optional)
 - Domain and reverse proxy setup (Caddy, nginx, Apache, HAProxy, Traefik)
+- Optional anonymous telemetry (opt-in, disabled by default)
 - OpenBao (KMS) bootstrap
 - Docker image builds
 - Stack startup and health checks
