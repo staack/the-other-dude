@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { DeviceLink } from '@/components/ui/device-link'
 import {
   Bell,
   BellOff,
@@ -106,13 +106,9 @@ function AlertRow({
           {isSilenced && <BellOff className="h-3 w-3 text-text-muted" />}
         </div>
         <div className="flex items-center gap-3 text-xs text-text-muted mt-0.5">
-          <Link
-            to="/tenants/$tenantId/devices/$deviceId"
-            params={{ tenantId, deviceId: alert.device_id }}
-            className="hover:text-text-primary"
-          >
+          <DeviceLink tenantId={tenantId} deviceId={alert.device_id}>
             {alert.device_hostname ?? alert.device_id.slice(0, 8)}
-          </Link>
+          </DeviceLink>
           {alert.rule_name && <span>{alert.rule_name}</span>}
           {alert.threshold != null && (
             <span>
@@ -342,7 +338,9 @@ export function AlertsPage() {
                       {alert.message ?? alert.metric ?? 'System alert'}
                     </span>
                     <span className="text-xs text-text-muted">
-                      {alert.device_hostname ?? alert.device_id.slice(0, 8)}
+                      <DeviceLink tenantId={tenantId} deviceId={alert.device_id}>
+                        {alert.device_hostname ?? alert.device_id.slice(0, 8)}
+                      </DeviceLink>
                       {alert.rule_name && ` — ${alert.rule_name}`}
                     </span>
                   </div>
