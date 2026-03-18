@@ -46,3 +46,6 @@ infrastructure/helm/values-local.yaml
 .planning/
 docs/superpowers/
 docs/comparison-*.md
+
+# Local dev tools (mock servers, screenshot automation)
+tools/dev/
