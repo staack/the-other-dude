@@ -29,6 +29,7 @@ import {
 } from '@/lib/transparencyApi'
 import { cn } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/empty-state'
+import { DeviceLink } from '@/components/ui/device-link'
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -349,6 +350,7 @@ export function TransparencyLogTable({ tenantId }: TransparencyLogTableProps) {
                 <TransparencyLogRow
                   key={item.id}
                   item={item}
+                  tenantId={tenantId}
                   isExpanded={expandedId === item.id}
                   onToggle={() =>
                     setExpandedId(expandedId === item.id ? null : item.id)
@@ -454,12 +456,14 @@ function StatsCard({ icon: Icon, label, value }: StatsCardProps) {
 
 interface TransparencyLogRowProps {
   item: TransparencyLogEntry
+  tenantId: string
   isExpanded: boolean
   onToggle: () => void
 }
 
 function TransparencyLogRow({
   item,
+  tenantId,
   isExpanded,
   onToggle,
 }: TransparencyLogRowProps) {
@@ -494,7 +498,11 @@ function TransparencyLogRow({
           </span>
         </td>
         <td className="px-3 py-2 text-text-secondary truncate max-w-[140px]">
-          {item.device_name ?? '--'}
+          {item.device_name && item.device_id ? (
+            <DeviceLink tenantId={tenantId} deviceId={item.device_id}>
+              {item.device_name}
+            </DeviceLink>
+          ) : (item.device_name ?? '--')}
         </td>
         <td className="px-3 py-2">
           <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium border bg-accent/10 text-accent border-accent/20">
