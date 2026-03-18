@@ -29,6 +29,7 @@ import {
   type TemplateResponse,
 } from '@/lib/templatesApi'
 import { deviceGroupsApi, metricsApi } from '@/lib/api'
+import { DeviceLink } from '@/components/ui/device-link'
 import { PushProgressPanel } from './PushProgressPanel'
 
 interface TemplatePushWizardProps {
@@ -200,7 +201,7 @@ export function TemplatePushWizard({ open, onClose, tenantId, template }: Templa
                       onCheckedChange={() => toggleDevice(device.id)}
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs text-text-primary truncate">{device.hostname}</div>
+                      <div className="text-xs text-text-primary truncate"><DeviceLink tenantId={tenantId} deviceId={device.id}>{device.hostname}</DeviceLink></div>
                       <div className="text-[10px] text-text-muted">{device.ip_address}</div>
                     </div>
                     <div

@@ -9,6 +9,7 @@ import { CheckCircle, XCircle, AlertTriangle, Loader2, Clock } from 'lucide-reac
 import { templatesApi } from '@/lib/templatesApi'
 import { cn } from '@/lib/utils'
 import { formatDateTime } from '@/lib/utils'
+import { DeviceLink } from '@/components/ui/device-link'
 
 interface PushProgressPanelProps {
   tenantId: string
@@ -110,7 +111,7 @@ export function PushProgressPanel({ tenantId, rolloutId, onClose }: PushProgress
                 )}
               />
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-text-primary truncate">{job.hostname}</div>
+                <div className="text-xs text-text-primary truncate"><DeviceLink tenantId={tenantId} deviceId={job.device_id}>{job.hostname}</DeviceLink></div>
                 {job.error_message && (
                   <div className="text-[10px] text-error truncate">{job.error_message}</div>
                 )}
