@@ -21,6 +21,7 @@ import { firmwareApi } from '@/lib/firmwareApi'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { DeviceLink } from '@/components/ui/device-link'
 
 const STATUS_CONFIG: Record<
   string,
@@ -125,7 +126,10 @@ function SingleUpgradeProgress({
   return (
     <div className="space-y-4">
       <div className="text-sm text-text-secondary">
-        {job.device_hostname ?? job.device_id.slice(0, 8)} — upgrading to{' '}
+        <DeviceLink tenantId={tenantId} deviceId={job.device_id}>
+          {job.device_hostname ?? job.device_id.slice(0, 8)}
+        </DeviceLink>{' '}
+        — upgrading to{' '}
         <span className="text-text-primary font-mono">{job.target_version}</span>
       </div>
 
@@ -263,7 +267,9 @@ function MassUpgradeProgress({
             >
               <Icon className={cn('h-3.5 w-3.5', config.color)} />
               <span className="text-text-secondary flex-1">
-                {job.device_hostname ?? job.device_id.slice(0, 8)}
+                <DeviceLink tenantId={tenantId} deviceId={job.device_id}>
+                  {job.device_hostname ?? job.device_id.slice(0, 8)}
+                </DeviceLink>
               </span>
               <span className={cn('text-[10px]', config.color)}>{config.label}</span>
             </div>
