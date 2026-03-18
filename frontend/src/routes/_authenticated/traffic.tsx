@@ -6,6 +6,7 @@ import { useAuth, isSuperAdmin } from '@/lib/auth'
 import { useUIStore } from '@/lib/store'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { DeviceLink } from '@/components/ui/device-link'
 
 export const Route = createFileRoute('/_authenticated/traffic')({
   component: TrafficPage,
@@ -182,7 +183,11 @@ function TrafficPage() {
                       className="border-b border-border/50 hover:bg-surface-hover transition-colors"
                     >
                       <td className="px-4 py-3 text-sm text-text-secondary">
-                        {device.hostname}
+                        {tenantId ? (
+                          <DeviceLink tenantId={tenantId} deviceId={device.id}>
+                            {device.hostname}
+                          </DeviceLink>
+                        ) : device.hostname}
                       </td>
                       {superAdmin && !tenantId && (
                         <td className="px-4 py-3 text-sm font-mono text-text-muted">
