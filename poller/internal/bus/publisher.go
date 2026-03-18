@@ -141,6 +141,8 @@ func NewPublisher(natsURL string) (*Publisher, error) {
 			"audit.session.end.>",
 		},
 		MaxAge:   24 * time.Hour,
+		MaxBytes: 64 * 1024 * 1024, // 64MB cap — discard oldest when full
+		Discard:  jetstream.DiscardOld,
 	})
 	if err != nil {
 		nc.Close()
