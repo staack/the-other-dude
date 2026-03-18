@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { eventsApi, type DashboardEvent, type EventsParams } from '@/lib/eventsApi'
+import { DeviceLink } from '@/components/ui/device-link'
 
 export interface EventsTimelineProps {
   tenantId: string
@@ -171,7 +172,14 @@ export function EventsTimeline({ tenantId, isSuperAdmin }: EventsTimelineProps) 
                       {event.description}
                       {event.device_hostname && (
                         <span className="ml-1 text-text-secondary">
-                          &mdash; {event.device_hostname}
+                          &mdash;{' '}
+                          {event.device_id ? (
+                            <DeviceLink tenantId={tenantId} deviceId={event.device_id}>
+                              {event.device_hostname}
+                            </DeviceLink>
+                          ) : (
+                            event.device_hostname
+                          )}
                         </span>
                       )}
                     </p>
