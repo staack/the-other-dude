@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What You Can Do With It Today (And What You Can't) — The Other Dude Blog</title>
+  <meta name="description" content="An honest look at what The Other Dude actually does today. No roadmap promises, no marketing. What works, what's rough, and what's missing entirely.">
+  <meta name="keywords" content="MikroTik, fleet management, RouterOS, MSP tools, The Other Dude, network management">
+  <meta name="author" content="The Other Dude">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#0F172A">
+  <link rel="canonical" href="https://theotherdude.net/blog/what-you-can-do-today.html">
+  <link rel="icon" href="../data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="What You Can Do With It Today (And What You Can't) — The Other Dude">
+  <meta property="og:description" content="An honest look at what The Other Dude actually does today. No roadmap promises, no marketing. What works, what's rough, and what's missing entirely.">
+  <meta property="og:url" content="https://theotherdude.net/blog/what-you-can-do-today.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="article:published_time" content="2026-03-17">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "What You Can Do With It Today (And What You Can't)",
+    "description": "An honest look at what The Other Dude actually does today. No roadmap promises, no marketing. What works, what's rough, and what's missing entirely.",
+    "datePublished": "2026-03-17",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/blog/what-you-can-do-today.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .blog-post {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+    .blog-post-meta {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .blog-post h1 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 700;
+      font-size: 2.5rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 40px;
+    }
+    .blog-post h2 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--text-primary);
+      margin-top: 48px;
+      margin-bottom: 16px;
+    }
+    .blog-post p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .blog-post p strong {
+      color: var(--text-primary);
+    }
+    .blog-post a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .blog-post a:hover {
+      color: var(--text-primary);
+    }
+    .blog-post .back-link {
+      display: inline-block;
+      margin-bottom: 32px;
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--text-muted);
+    }
+    .blog-post .back-link:hover {
+      color: var(--accent);
+    }
+    @media (max-width: 480px) {
+      .blog-post h1 { font-size: 1.8rem; }
+      .blog-post { padding: 60px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav site-nav--dark">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="index.html" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="blog-post">
+      <a href="index.html" class="back-link">&larr; Back to Blog</a>
+      <div class="blog-post-meta">March 17, 2026</div>
+      <h1>What You Can Do With It Today (And What You Can't)</h1>
+
+      <p>This is not a roadmap post. This is what the app actually does right now, today, in the code that's sitting on GitHub. If a feature isn't mentioned here, it either doesn't exist yet or it's too broken to talk about.</p>
+
+      <h2>The Scenario</h2>
+
+      <p>Say you're an MSP or a network engineer with forty MikroTik routers deployed across a dozen client sites. Some are hAP ac2s in offices, some are CCR1036s in racks, a couple of RB5009s doing weird things at edge locations. They're all on different firmware versions. Half of them have configs that drifted from what you intended months ago. You manage them by SSHing into each one individually, maybe with some scripts, maybe with The Dude if you're feeling nostalgic.</p>
+
+      <p>That's the situation this was built for.</p>
+
+      <h2>What Actually Works</h2>
+
+      <p><strong>Fleet view.</strong> All your devices in one place. CPU, memory, disk, uptime, firmware version, connection status. The table handles hundreds of devices without choking — it uses virtual scrolling so you're not rendering a thousand DOM nodes. You can filter, sort, search. Basic stuff, but it works.</p>
+
+      <p><strong>Device detail.</strong> Click into any device and you get real-time metrics — CPU load, memory usage, interface traffic with charts, wireless stats if it's an AP. These update live via server-sent events, not polling. You see what the router is doing right now, not what it was doing thirty seconds ago.</p>
+
+      <p><strong>Command palette.</strong> Ctrl+K (or Cmd+K) opens a command palette. Type a device name, jump straight to it. Type a page name, go there. It's fast. You don't have to click through four menus to get where you're going.</p>
+
+      <p><strong>Configuration management.</strong> This is the part that actually matters. You can view a device's running config, edit it, and push changes. Config pushes use a two-phase commit with automatic panic revert — if the device doesn't confirm the change within a timeout, it rolls back. Every config change is stored in git, so you get full history, diffs, and the ability to restore any previous version.</p>
+
+      <p><strong>Config templates.</strong> Write a template once with variables, apply it across devices. Not a full-blown scripting language — just variable substitution for common patterns. Good enough for standardizing DNS settings across a fleet or rolling out a firewall rule change.</p>
+
+      <p><strong>Bulk operations.</strong> Run a CLI command across multiple devices at once. Push a config to a batch of devices. Schedule a maintenance window so alerts don't fire while you're doing planned work. These all exist and function.</p>
+
+      <p><strong>Config backups.</strong> Automatic, scheduled, git-backed. Runs every six hours by default. You can trigger one manually. You can restore from any point in history. This is the kind of thing that saves you at 2am.</p>
+
+      <p><strong>Firmware tracking.</strong> The system checks MikroTik's servers daily for new firmware releases and shows you which devices are behind. It doesn't auto-update anything — that would be insane — but it tells you what's available and tracks your firmware audit state.</p>
+
+      <p><strong>WinBox in the browser.</strong> You can launch a WinBox session to any device directly from the web UI. It runs in a container, tunneled through SSH. It's not fast on the initial load, and there are edge cases where sessions don't clean up properly. But it works. You don't need WinBox installed locally.</p>
+
+      <p><strong>VPN overlay.</strong> For devices behind NAT, there's a built-in WireGuard overlay network. Devices connect out to your server, and you reach them through the tunnel. The app manages peer configs and routing automatically. This is how you poll and manage devices that don't have public IPs.</p>
+
+      <p><strong>Multi-tenant.</strong> The system supports multiple tenants with full data isolation enforced at the database level via PostgreSQL row-level security. Each tenant sees only their own devices. This isn't bolted-on filtering — it's structural.</p>
+
+      <p><strong>Authentication.</strong> SRP-6a zero-knowledge authentication. Your password never hits the server, not even as a hash. Per-tenant envelope encryption for stored credentials via OpenBao Transit. Emergency Kit export for account recovery. This part is built properly.</p>
+
+      <p><strong>Alerts.</strong> You can set up alert rules on device metrics — CPU above threshold, device offline, interface down. Notifications go to email, webhooks, or Slack. Alert acknowledgment and silencing work.</p>
+
+      <p><strong>Reports.</strong> PDF generation for fleet summaries, individual device reports, security audits, and performance overviews. Functional, not pretty.</p>
+
+      <h2>Where It's Rough</h2>
+
+      <p><strong>WinBox sessions occasionally hang.</strong> The container lifecycle management works most of the time, but sometimes a session doesn't terminate cleanly and you end up with an orphaned container. It's a known issue. It doesn't break anything else, it just wastes resources until it times out.</p>
+
+      <p><strong>The map view is basic.</strong> Devices show up on a map if they have coordinates. That's about it. No topology overlays, no link visualization, no automatic geolocation. You have to manually set coordinates.</p>
+
+      <p><strong>Network topology is early.</strong> There's a topology view that tries to discover device relationships. It works for simple networks. Complex MPLS or multi-VRF setups will confuse it.</p>
+
+      <p><strong>Certificate management is new and lightly tested.</strong> There's an internal CA that can issue and deploy certificates to devices via SFTP. The three-tier TLS fallback logic is correct but hasn't been tested at scale.</p>
+
+      <p><strong>The UI has rough edges.</strong> Some forms lack proper validation feedback. Some error messages are too technical. The mobile experience ranges from functional to annoying depending on the page. It's all usable, but you'll notice where it hasn't been polished yet.</p>
+
+      <p><strong>Documentation trails the code.</strong> This is always true during active development, but it's especially true right now. Some docs describe things that changed last week. The code is the source of truth.</p>
+
+      <h2>What's Missing Entirely</h2>
+
+      <p><strong>No traffic analytics page.</strong> The code for per-interface traffic visualization exists but isn't wired up yet. You can see interface counters in device detail, but there's no dedicated traffic analysis view.</p>
+
+      <p><strong>No wireless dashboard.</strong> Same situation — the data is collected, the page is built, but it's not in the navigation yet.</p>
+
+      <p><strong>No high-availability deployment.</strong> The system runs as a single instance. If the server goes down, management goes down. The architecture supports horizontal scaling for the poller, but nobody has tested multi-replica deployments in production.</p>
+
+      <p><strong>No automated firmware upgrades.</strong> The system tells you what's available. It doesn't push firmware. That's intentional for now — firmware upgrades on network equipment deserve more caution than a background job.</p>
+
+      <p><strong>No SNMP.</strong> Everything talks RouterOS API. If you have non-MikroTik devices, this tool doesn't help you.</p>
+
+      <h2>Why It's Built This Way</h2>
+
+      <p>A few things that are deliberate, not accidental:</p>
+
+      <p><strong>Minimalism over features.</strong> Every feature that exists was added because a real workflow needed it, not because it looked good on a feature comparison chart. The goal is a small set of things that work reliably, not a large set of things that mostly work.</p>
+
+      <p><strong>Safety over convenience.</strong> Config pushes have automatic rollback. Credential encryption uses a real KMS, not a hardcoded key. Authentication doesn't send your password to the server. These choices make the system slightly more complex to set up but significantly harder to accidentally break.</p>
+
+      <p><strong>Predictable behavior over magic.</strong> The system doesn't try to be clever. It doesn't auto-remediate. It doesn't silently retry failed operations. When something fails, it tells you it failed and lets you decide what to do. Magic is great until it does the wrong thing to production equipment at 3am.</p>
+
+      <p><strong>No vendor lock-in.</strong> Self-hosted. Open source. Your data stays on your infrastructure. No cloud dependency, no phone-home, no license server. The optional telemetry is genuinely optional — disabled by default, anonymous when enabled, and you can see exactly what it collects.</p>
+
+      <h2>What You Should Not Use It For Yet</h2>
+
+      <p>If your business depends on a management platform being stable and predictable day to day, this isn't ready for that yet. The previous post was not kidding — <a href="not-stable-software.html">this is not stable software</a>. APIs change. Database schemas change. Features move around.</p>
+
+      <p>Don't deploy this as your only management tool for critical infrastructure. Run it alongside whatever you're using now. Use it for visibility and convenience, not as a single point of control. Treat it as a useful experiment, not a production dependency.</p>
+
+      <h2>The Bottom Line</h2>
+
+      <p>The app does real things today. You can manage devices, push configs safely, monitor fleet health, run WinBox from a browser, and maintain an audit trail of everything that happens. The security model is sound. The architecture handles scale.</p>
+
+      <p>It's also unfinished, sometimes rough, and will change without warning.</p>
+
+      <p>If that's useful to you now, use it. If not, check back later.</p>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="index.html">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#888;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
+</body>
+</html>
