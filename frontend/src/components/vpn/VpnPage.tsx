@@ -47,6 +47,7 @@ import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/empty-state'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
+import { DeviceLink } from '@/components/ui/device-link'
 
 export function VpnPage() {
   const { user } = useAuth()
@@ -338,7 +339,13 @@ export function VpnPage() {
               {peers.map((peer) => (
                 <tr key={peer.id} className="hover:bg-elevated/30 transition-colors">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-sm text-text-primary">{peer.device_hostname}</div>
+                    <div className="font-medium text-sm text-text-primary">
+                      {peer.device_id ? (
+                        <DeviceLink tenantId={tenantId} deviceId={peer.device_id}>
+                          {peer.device_hostname}
+                        </DeviceLink>
+                      ) : peer.device_hostname}
+                    </div>
                     <div className="text-xs text-text-muted">{peer.device_ip}</div>
                   </td>
                   <td className="px-4 py-3">
