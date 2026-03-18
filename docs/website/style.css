@@ -157,14 +157,14 @@ ul, ol {
 }
 
 .site-nav--dark {
-  background: rgba(4, 8, 16, 0.85);
+  background: rgba(17, 17, 19, 0.85);
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
   border-bottom: 1px solid var(--border);
 }
 
 .site-nav--light {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(17, 17, 19, 0.85);
   backdrop-filter: blur(12px) saturate(180%);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
   border-bottom: 1px solid var(--docs-border);
