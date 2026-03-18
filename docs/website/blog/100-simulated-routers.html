@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Found a Bug Running 100 Simulated Routers — The Other Dude Blog</title>
+  <meta name="description" content="A 100-device simulation exposed a NATS JetStream memory issue caused by message retention behavior. Here's what happened, why, and the fix.">
+  <meta name="keywords" content="MikroTik, fleet management, NATS JetStream, message retention, load testing, The Other Dude">
+  <meta name="author" content="The Other Dude">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#0F172A">
+  <link rel="canonical" href="https://theotherdude.net/blog/100-simulated-routers.html">
+  <link rel="icon" href="../data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Found a Bug Running 100 Simulated Routers — The Other Dude">
+  <meta property="og:description" content="A 100-device simulation exposed a NATS JetStream memory issue caused by message retention behavior. Here's what happened, why, and the fix.">
+  <meta property="og:url" content="https://theotherdude.net/blog/100-simulated-routers.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="article:published_time" content="2026-03-18">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Found a Bug Running 100 Simulated Routers",
+    "description": "A 100-device simulation exposed a NATS JetStream memory issue caused by message retention behavior. Here's what happened, why, and the fix.",
+    "datePublished": "2026-03-18",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/blog/100-simulated-routers.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    .blog-post {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+    .blog-post-meta {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .blog-post h1 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 700;
+      font-size: 2.5rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 40px;
+    }
+    .blog-post h2 {
+      font-family: "Outfit", sans-serif;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--text-primary);
+      margin-top: 48px;
+      margin-bottom: 16px;
+    }
+    .blog-post p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .blog-post p strong {
+      color: var(--text-primary);
+    }
+    .blog-post a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .blog-post a:hover {
+      color: var(--text-primary);
+    }
+    .blog-post .back-link {
+      display: inline-block;
+      margin-bottom: 32px;
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--text-muted);
+    }
+    .blog-post .back-link:hover {
+      color: var(--accent);
+    }
+    @media (max-width: 480px) {
+      .blog-post h1 { font-size: 1.8rem; }
+      .blog-post { padding: 60px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav site-nav--dark">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="index.html" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="blog-post">
+      <a href="index.html" class="back-link">&larr; Back to Blog</a>
+      <div class="blog-post-meta">March 18, 2026</div>
+      <h1>Found a Bug Running 100 Simulated Routers</h1>
+
+      <p>I spun up a 100-router simulation to see what would break. Something did.</p>
+
+      <h2>The Setup</h2>
+
+      <p>The simulation uses a mock RouterOS API server that speaks the real binary wire protocol. Each instance returns realistic, slowly-drifting metrics — CPU load follows a sine wave with random noise and occasional spikes, interface counters increment at plausible rates, wireless client counts fluctuate. From the poller's perspective, these are real devices.</p>
+
+      <p>101 mock devices across three tenants, all being polled every 60 seconds. That's about 500 NATS messages per cycle covering device status, health metrics, interface statistics, wireless data, and firmware checks. The kind of sustained load you'd see in a real MSP deployment.</p>
+
+      <h2>What Happened</h2>
+
+      <p>Everything worked fine for hours. The dashboard showed live data, metrics were flowing into TimescaleDB, events were streaming. Then around the 10-hour mark, the API started returning empty responses. Health checks failed. The poller kept running but the web interface was dead.</p>
+
+      <p>Container stats told the story: NATS JetStream was at 125MB out of its 128MB memory limit. It was essentially out of memory.</p>
+
+      <h2>The Root Cause</h2>
+
+      <p>JetStream retains messages in the stream until they expire or hit a configured limit. When consumers — the API's metrics subscriber, firmware subscriber, SSE manager, and so on — read and process a message, that advances the consumer's cursor. It does not delete the message from the stream.</p>
+
+      <p>So every device status event, every health metric, every firmware check from the last 24 hours was still sitting in NATS memory. All of it already consumed, processed, and safely written to Postgres. None of it needed anymore.</p>
+
+      <p>This was effectively a 24-hour replay buffer that nothing was replaying.</p>
+
+      <h2>The Math</h2>
+
+      <p>101 devices, 5 messages each per poll cycle, once per minute. That's roughly 727,000 messages per day at 400-600 bytes each. North of 300MB before the 24-hour expiry window even starts trimming. The 128MB container memory limit — which I set — never stood a chance.</p>
+
+      <p>With 10 devices in development, this was invisible. The daily volume was maybe 3-4MB. You'd never notice. Scale to 100 and the math changes completely.</p>
+
+      <h2>The Fix</h2>
+
+      <p>Added a 64MB byte cap to the DEVICE_EVENTS stream with a discard-oldest policy. When the stream fills up, the oldest messages get dropped. Since every message has already been consumed and persisted to the database by that point, nothing is lost.</p>
+
+      <p>The cap was applied live to the running system. NATS immediately trimmed from 133MB to 64MB by discarding old messages. The API came back up. Two lines in the stream configuration.</p>
+
+      <h2>The Tradeoff</h2>
+
+      <p>The replay window is now shorter. If a consumer goes down for a long time and comes back, it might miss messages that were already discarded. In practice this is acceptable — the consumer will catch current state on the next poll cycle, and the historical data is already persisted in TimescaleDB where it belongs.</p>
+
+      <p>A message broker shouldn't be doing the job of a time-series database. If durable replay ever becomes important — for audit trails or compliance — that's a storage problem, not a messaging problem.</p>
+
+      <h2>What This Actually Reveals</h2>
+
+      <p>Infrastructure defaults are not your defaults. JetStream's retention behavior is well-documented and correct. But the default — keep everything until the max age expires — assumes you've thought about how much data that is. I hadn't. Not at scale.</p>
+
+      <p>This is the kind of bug that doesn't show up in development, doesn't show up in code review, and doesn't show up in unit tests. It shows up when you run 100 devices for 10 hours and watch what happens. That's why simulation testing matters more than most people think it does.</p>
+
+      <p>The system handled the load just fine functionally. Every message was processed correctly. Every metric was stored. The architecture was right. The operational configuration was wrong. Those are different problems, and they require different kinds of testing to find.</p>
+
+      <h2>The Bottom Line</h2>
+
+      <p>This is why I don't trust anything until I try to break it.</p>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="index.html">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#888;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
+</body>
+</html>
