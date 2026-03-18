@@ -125,6 +125,7 @@ class AuditLogItem(BaseModel):
     action: str
     resource_type: Optional[str] = None
     resource_id: Optional[str] = None
+    device_id: Optional[str] = None
     device_name: Optional[str] = None
     details: dict[str, Any] = {}
     ip_address: Optional[str] = None
@@ -193,7 +194,8 @@ async def list_audit_logs(
     # Shared SELECT columns for data queries
     _data_columns = text(
         "a.id, u.email AS user_email, a.action, a.resource_type, "
-        "a.resource_id, d.hostname AS device_name, a.details, "
+        "a.resource_id, CAST(a.device_id AS text) AS device_id, "
+        "d.hostname AS device_name, a.details, "
         "a.encrypted_details, a.ip_address, a.created_at"
     )
     _data_from = text(
@@ -287,6 +289,7 @@ async def list_audit_logs(
             action=row["action"],
             resource_type=row["resource_type"],
             resource_id=row["resource_id"],
+            device_id=row["device_id"],
             device_name=row["device_name"],
             details=details,
             ip_address=row["ip_address"],

@@ -22,6 +22,7 @@ import {
   type AuditLogParams,
 } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { DeviceLink } from '@/components/ui/DeviceLink'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // Predefined action types for the filter dropdown
@@ -253,6 +254,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
                 <AuditLogRow
                   key={item.id}
                   item={item}
+                  tenantId={tenantId}
                   isExpanded={expandedId === item.id}
                   onToggle={() =>
                     setExpandedId(expandedId === item.id ? null : item.id)
@@ -339,11 +341,12 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
 
 interface AuditLogRowProps {
   item: AuditLogEntry
+  tenantId: string
   isExpanded: boolean
   onToggle: () => void
 }
 
-function AuditLogRow({ item, isExpanded, onToggle }: AuditLogRowProps) {
+function AuditLogRow({ item, tenantId, isExpanded, onToggle }: AuditLogRowProps) {
   const hasDetails =
     item.details && Object.keys(item.details).length > 0
 
@@ -408,7 +411,11 @@ function AuditLogRow({ item, isExpanded, onToggle }: AuditLogRowProps) {
           )}
         </td>
         <td className="px-3 py-2 text-text-secondary truncate max-w-[120px]">
-          {item.device_name ?? '--'}
+          {item.device_name && item.device_id ? (
+            <DeviceLink tenantId={tenantId} deviceId={item.device_id}>
+              {item.device_name}
+            </DeviceLink>
+          ) : (item.device_name ?? '--')}
         </td>
         <td className="px-3 py-2 text-text-muted font-mono text-xs">
           {item.ip_address ?? '--'}
