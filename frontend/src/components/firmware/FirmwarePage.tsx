@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { UpgradeProgressModal } from './UpgradeProgressModal'
+import { DeviceLink } from '@/components/ui/device-link'
 
 // ---------------------------------------------------------------------------
 // Stat card
@@ -318,7 +319,11 @@ function VersionGroupCard({
                 key={device.id}
                 className="flex items-center gap-3 px-4 py-2 border-t border-border/50 text-xs"
               >
-                <span className="flex-1 text-text-secondary truncate">{device.hostname}</span>
+                <span className="flex-1 text-text-secondary truncate">
+                  <DeviceLink tenantId={tenantId} deviceId={device.id}>
+                    {device.hostname}
+                  </DeviceLink>
+                </span>
                 <span className="w-28 text-text-muted truncate">
                   {device.model ?? '—'}
                 </span>
