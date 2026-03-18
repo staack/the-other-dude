@@ -6,6 +6,7 @@ import { useAuth, isSuperAdmin } from '@/lib/auth'
 import { useUIStore } from '@/lib/store'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { DeviceLink } from '@/components/ui/device-link'
 
 export const Route = createFileRoute('/_authenticated/wireless')({
   component: WirelessPage,
@@ -154,7 +155,11 @@ function WirelessPage() {
                     <td className="px-4 py-3 text-sm text-text-secondary">
                       <div className="flex items-center gap-2">
                         <span className="inline-block h-2 w-2 rounded-full bg-error" />
-                        {issue.hostname}
+                        {tenantId && issue.device_id ? (
+                          <DeviceLink tenantId={tenantId} deviceId={issue.device_id}>
+                            {issue.hostname}
+                          </DeviceLink>
+                        ) : issue.hostname}
                       </div>
                     </td>
                     {superAdmin && !tenantId && (
