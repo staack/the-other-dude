@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Open Source MikroTik Management — Self-Hosted Fleet Management for RouterOS</title>
+  <meta name="description" content="Open source MikroTik management platform. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support. No cloud dependency.">
+  <meta name="keywords" content="open source MikroTik management, open source RouterOS, self-hosted MikroTik, free MikroTik management, MikroTik fleet management open source, open source network management, MikroTik alternative">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/open-source-mikrotik-management.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Open Source MikroTik Management — The Other Dude">
+  <meta property="og:description" content="Open source MikroTik management platform. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support.">
+  <meta property="og:url" content="https://theotherdude.net/docs/open-source-mikrotik-management.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Open Source MikroTik Management — The Other Dude">
+  <meta name="twitter:description" content="Open source MikroTik management platform. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support.">
+  <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Open Source MikroTik Management",
+    "description": "Open source MikroTik management platform. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support. No cloud dependency.",
+    "datePublished": "2026-03-18",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/docs/open-source-mikrotik-management.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="docs-page">
+
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
+      <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
+
+      <h1>Open Source MikroTik Management</h1>
+
+      <h2>Why Open Source Matters for Network Management</h2>
+
+      <p>Most MikroTik management tools are either closed-source commercial products or cloud-hosted services that require sending your device credentials and configuration data to someone else's infrastructure. For MSPs and network operators who take security seriously, that's a non-starter.</p>
+
+      <p>Open source MikroTik management means you can inspect every line of code that touches your routers. You can audit the credential handling. You can verify that configuration pushes work the way they claim to. You can deploy it on your own hardware, behind your own firewall, with no external dependencies.</p>
+
+      <p>This isn't an ideological argument. It's a practical one. When your management platform has access to every router in your fleet, you need to trust it completely. Open source is the only way to verify that trust.</p>
+
+      <h2>What The Other Dude Provides</h2>
+
+      <p>The Other Dude is a self-hosted, open source platform for managing fleets of MikroTik RouterOS devices. The source code is on <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>. You deploy it on your infrastructure. Your data stays with you.</p>
+
+      <p><strong>Fleet visibility.</strong> Dashboard with device health, bandwidth utilization, alerts, and wireless metrics across your entire fleet. Virtual-scrolled device tables that handle hundreds of routers. Geographic map and network topology views.</p>
+
+      <p><strong>Configuration management.</strong> Browse and edit the full RouterOS config tree from the web UI. Config pushes use two-phase commit with automatic rollback — if a change breaks connectivity, the router reverts itself. Every change is stored in git with full version history and diff capability.</p>
+
+      <p><strong>Automated backups.</strong> Scheduled configuration snapshots stored in git. Navigate the timeline, compare any two versions side by side, restore to any previous state with one click.</p>
+
+      <p><strong>Monitoring and alerts.</strong> CPU, memory, disk, interface traffic, and wireless metrics stored in TimescaleDB. Threshold-based alerts with email, webhook, and Slack notifications. Maintenance windows to suppress alerts during planned work.</p>
+
+      <p><strong>Security.</strong> Zero-knowledge SRP-6a authentication — your password never reaches the server. Per-tenant envelope encryption via OpenBao Transit. PostgreSQL Row-Level Security for tenant isolation. Immutable audit trail of every management action.</p>
+
+      <p><strong>Multi-tenant.</strong> Full tenant isolation enforced at the database level. Each organization sees only their own devices. Designed for MSPs managing multiple clients from one platform.</p>
+
+      <h2>Self-Hosted, No Cloud Dependency</h2>
+
+      <p>The entire platform runs in Docker containers on your infrastructure. PostgreSQL for data, Redis for caching, NATS for real-time events. No phone-home, no license server, no external API calls except optional MikroTik firmware version checks.</p>
+
+      <p>Setup takes about ten minutes. Clone the repository, run the setup wizard, point it at your first router. The <a href="../docs.html#quickstart">Quick Start guide</a> walks through the full process.</p>
+
+      <p>Kubernetes deployment is also supported via the included Helm chart for operators who need container orchestration.</p>
+
+      <h2>What Open Source Means in Practice</h2>
+
+      <p>The source code for the entire platform — backend, frontend, poller, infrastructure — is available on GitHub. You can:</p>
+
+      <ul>
+        <li>Audit the security model and credential handling</li>
+        <li>Read exactly what API calls the poller makes to your routers</li>
+        <li>Verify that configuration pushes include rollback protection</li>
+        <li>Extend the platform for your specific needs</li>
+        <li>Run it in air-gapped environments with no internet access</li>
+        <li>Contribute improvements back to the project</li>
+      </ul>
+
+      <p>The project uses optional anonymous telemetry for development diagnostics — disabled by default, and you can see exactly what it collects before enabling it. No usage tracking, no analytics, no data collection that you haven't explicitly opted into.</p>
+
+      <h2>How It Compares</h2>
+
+      <p>There are other ways to manage MikroTik fleets. Here's how they differ from an open source, self-hosted approach:</p>
+
+      <p><strong>The Dude (MikroTik)</strong> — Good for topology discovery and basic monitoring. Not a configuration management platform. No multi-tenant support. No config versioning.</p>
+
+      <p><strong>Commercial platforms (Unimus, Auvik, etc.)</strong> — Solve real problems, often well. But they're closed-source, typically cloud-hosted, and require sending device credentials to a third party. Pricing scales with device count.</p>
+
+      <p><strong>Generic NMS (Zabbix, LibreNMS, PRTG)</strong> — Strong monitoring but not built for MikroTik configuration management. Won't let you browse the RouterOS config tree, push changes with rollback, or manage WireGuard overlays.</p>
+
+      <p><strong>Scripts and automation (Ansible, SSH scripts)</strong> — Flexible but you're building and maintaining a platform yourself. Error handling, state management, rollback logic, and a UI are all your problem.</p>
+
+      <p>The Other Dude is purpose-built for MikroTik, open source, self-hosted, and covers configuration, monitoring, backups, and security in one platform.</p>
+
+      <div class="related-links">
+        <h2>Related</h2>
+        <ul>
+          <li><a href="mikrotik-centralized-management.html">Centralized management for MikroTik router fleets</a></li>
+          <li><a href="manage-multiple-mikrotik-routers.html">Managing multiple MikroTik routers from one interface</a></li>
+          <li><a href="mikrotik-router-monitoring.html">Monitoring MikroTik routers at scale</a></li>
+          <li><a href="mikrotik-router-backup-automation.html">Automate RouterOS config backups</a></li>
+          <li><a href="../blog/why-this-exists.html">Why This Exists (blog)</a></li>
+          <li><a href="../blog/what-you-can-do-today.html">What You Can Do With It Today (blog)</a></li>
+          <li><a href="https://github.com/staack/the-other-dude" rel="noopener">View on GitHub</a></li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../blog/">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#888;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
+</body>
+</html>
