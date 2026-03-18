@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RouterOS Configuration Management — Safe Config Pushes with Rollback</title>
+  <meta name="description" content="RouterOS configuration management with a web-based config editor, two-phase commit with automatic rollback, git-backed version history, and template system for fleet-wide config management.">
+  <meta name="keywords" content="routeros configuration management, mikrotik config management, routeros config editor, mikrotik safe config push, routeros config rollback">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/routeros-configuration-management.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="RouterOS Configuration Management — Safe Config Pushes with Rollback">
+  <meta property="og:description" content="RouterOS configuration management with web-based config editor, two-phase commit with automatic rollback, and git-backed version history.">
+  <meta property="og:url" content="https://theotherdude.net/docs/routeros-configuration-management.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="RouterOS Configuration Management — Safe Config Pushes with Rollback">
+  <meta name="twitter:description" content="RouterOS configuration management with web-based config editor, two-phase commit with automatic rollback, and git-backed version history.">
+  <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "RouterOS Configuration Management — Safe Config Pushes with Rollback",
+    "description": "RouterOS configuration management with a web-based config editor, two-phase commit with automatic rollback, git-backed version history, and template system for fleet-wide config management.",
+    "datePublished": "2026-03-18",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/docs/routeros-configuration-management.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="docs-page">
+
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
+      <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
+
+      <h1>RouterOS Configuration Management</h1>
+
+      <h2>The Core Problem: Config Changes Are Dangerous</h2>
+
+      <p>Every network engineer has a story about a config change that went wrong. You add a firewall rule that accidentally blocks the management subnet. You modify a routing table entry and lose the return path to the device. You push an IP change to a remote router and realize, too late, that you just cut off your own access.</p>
+
+      <p>With RouterOS, these scenarios are especially common because changes take effect immediately. There's no staging area, no "apply and confirm" mechanism in WinBox or the CLI. The moment you hit enter, the change is live. If that change breaks your management path, you're locked out until someone physically accesses the device or you reach it through an out-of-band connection.</p>
+
+      <p>This is the fundamental problem that routeros configuration management needs to solve: making config changes safe, reversible, and auditable.</p>
+
+      <h2>The Config Editor</h2>
+
+      <p>The Other Dude provides a web-based config editor that exposes the full RouterOS path hierarchy — the same tree structure you navigate in WinBox. You browse <code>/ip/address</code>, <code>/ip/firewall/filter</code>, <code>/interface</code>, <code>/routing/ospf</code>, and every other RouterOS path from the web UI.</p>
+
+      <p>The config editor reads the current state of each path directly from the device via the RouterOS binary API. What you see in the editor is the live running configuration, not a cached snapshot. You can view entries, add new ones, modify existing ones, or remove them — the same operations WinBox provides, but through a browser.</p>
+
+      <p>The advantage over WinBox isn't the interface — WinBox is faster for single-device work. The advantage is everything that wraps around the edit: rollback protection, version history, audit logging, RBAC enforcement, and the ability to push the same change to multiple devices.</p>
+
+      <h2>Two-Phase Commit: The Safety Net</h2>
+
+      <p>This is the most important feature in the config management system. Every config push — whether from the editor, a template, or a bulk operation — uses a two-phase commit process:</p>
+
+      <ol>
+        <li><strong>Apply.</strong> The config change is sent to the device and takes effect immediately, as RouterOS requires.</li>
+        <li><strong>Verify.</strong> The platform waits for a configurable confirmation period, continuously checking that the device is still reachable via the API.</li>
+        <li><strong>Confirm or revert.</strong> If the device remains reachable throughout the confirmation period, the change is committed as permanent. If the device becomes unreachable at any point during the confirmation period — indicating the change broke the management path — the device automatically reverts to its pre-change configuration.</li>
+      </ol>
+
+      <p>The revert mechanism uses RouterOS's built-in safe mode capabilities. The platform sets up a revert timer before applying the change. If the platform confirms the change successfully, it cancels the timer. If the platform loses contact with the device, the timer expires and RouterOS reverts the change on its own.</p>
+
+      <p>This means you can push a firewall rule to a remote router with confidence. If the rule blocks your management traffic, the router will revert itself. You don't need to call someone to reboot it. You don't need a serial console. The safety net is built into the push mechanism itself.</p>
+
+      <h2>Git-Backed Version History</h2>
+
+      <p>Every config state is stored with full version history in PostgreSQL. When a config change is pushed through the platform, the before and after states are recorded along with a diff, the user who made the change, and a timestamp. When a change is detected from an out-of-band modification (someone used WinBox or SSH directly), the new state is captured on the next polling cycle.</p>
+
+      <p>The version history gives you:</p>
+
+      <ul>
+        <li><strong>A complete timeline.</strong> Navigate through every configuration state the device has been in since it was added to the platform.</li>
+        <li><strong>Side-by-side diffs.</strong> Compare any two versions and see exactly what changed — additions, removals, and modifications highlighted line by line.</li>
+        <li><strong>Cross-device comparison.</strong> Compare the config of two different devices to identify <a href="mikrotik-configuration-drift.html">configuration drift</a> or verify consistency across a group.</li>
+        <li><strong>One-click restore.</strong> Select any previous version and push it back to the device, using the same two-phase commit mechanism for safety.</li>
+      </ul>
+
+      <p>This is functionally equivalent to having every config change committed to a git repository. You get the audit trail, the diff capability, and the ability to roll back — without requiring engineers to use git directly.</p>
+
+      <h2>Simple Mode for Common Tasks</h2>
+
+      <p>Not every config change requires navigating the full RouterOS path tree. The config editor includes a Simple Mode that provides a streamlined interface for the most common tasks: IP addressing, DHCP configuration, basic firewall rules, DNS settings, and interface management.</p>
+
+      <p>Simple Mode is modeled after consumer router interfaces — fill in the fields, click apply. Under the hood, it generates the same RouterOS commands and uses the same two-phase commit mechanism. The safety guarantees are identical; only the UI complexity is reduced.</p>
+
+      <p>This is particularly useful for MSPs with <a href="msp-mikrotik-management.html">operator-level staff</a> who need to handle common tasks without deep RouterOS expertise. An operator can change a DHCP pool or add a port forward through Simple Mode without needing to know the exact RouterOS path syntax.</p>
+
+      <h2>Template System</h2>
+
+      <p>For <a href="mikrotik-bulk-configuration.html">fleet-wide configuration changes</a>, the template system lets you define a set of RouterOS commands with variable placeholders. Variables are substituted per-device at push time, allowing a single template to be applied across devices with different IP ranges, interface names, or site-specific values.</p>
+
+      <p>Templates combine with two-phase commit for safe bulk operations. Each device in the batch independently verifies the change and reverts if needed. A template push to 50 devices will succeed on the devices where the change works and revert on any where it doesn't.</p>
+
+      <h2>How This Differs from SSH Scripts and Ansible</h2>
+
+      <p>The most common alternative to a config management platform is SSH scripting — either raw Bash/Python scripts or Ansible playbooks with the routeros modules. These approaches can work, but they require you to solve several problems yourself:</p>
+
+      <ul>
+        <li><strong>No rollback.</strong> SSH scripts apply changes. If the change locks you out, you're locked out. There's no built-in safety net. Ansible's routeros modules don't implement two-phase commit.</li>
+        <li><strong>No version history.</strong> Scripts produce the desired end state. They don't track what the config was before, what changed, or when. That's a separate system you'd need to build.</li>
+        <li><strong>No UI for browsing.</strong> Scripts push changes. They don't let you browse the current config tree, compare versions, or preview what will change before you apply it.</li>
+        <li><strong>Limited error context.</strong> SSH scripts give you exit codes and stderr. The platform gives you per-device success/failure with detailed error messages, rendered in a UI that shows the full batch result at a glance.</li>
+        <li><strong>No RBAC.</strong> Scripts run under whoever has the credentials. The platform enforces role-based access — viewers can't push, operators can push but can't manage users, admins have full control.</li>
+      </ul>
+
+      <p>For teams with strong automation skills and simple requirements, scripts may be sufficient. For fleet-scale operations where safety, auditability, and access control matter, a purpose-built config management platform eliminates the infrastructure you'd otherwise need to build and maintain yourself.</p>
+
+      <h2>Getting Started</h2>
+
+      <p>The config editor and two-phase commit are available immediately when a device is connected to the platform. The <a href="../docs.html#quickstart">Quick Start guide</a> covers deploying the platform and connecting your first device. Once connected, you can browse the device's config tree, make changes with rollback protection, and see the first backup appear in the version history.</p>
+
+      <div class="related-links">
+        <h2>Related</h2>
+        <ul>
+          <li><a href="mikrotik-bulk-configuration.html">Bulk configuration across multiple MikroTik devices</a></li>
+          <li><a href="mikrotik-backup-solution.html">Automated MikroTik backup solution</a></li>
+          <li><a href="mikrotik-configuration-drift.html">Detecting configuration drift across your fleet</a></li>
+          <li><a href="winbox-alternative.html">Browser-based WinBox alternative</a></li>
+          <li><a href="../blog/not-stable-software.html">This Is Not Stable Software (blog)</a></li>
+          <li><a href="https://github.com/staack/the-other-dude" rel="noopener">View on GitHub</a></li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../blog/">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#888;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
+</body>
+</html>

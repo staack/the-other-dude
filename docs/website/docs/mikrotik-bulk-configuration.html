@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MikroTik Bulk Configuration — Fleet-Wide Config Management</title>
+  <meta name="description" content="Push MikroTik configuration changes across multiple devices at once. Config templates with variable substitution, batch CLI commands, two-phase commit with automatic rollback.">
+  <meta name="keywords" content="mikrotik bulk configuration, mikrotik mass config, routeros bulk commands, mikrotik fleet configuration, mikrotik template config">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/mikrotik-bulk-configuration.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="MikroTik Bulk Configuration — Fleet-Wide Config Management">
+  <meta property="og:description" content="Push MikroTik configuration changes across multiple devices at once. Config templates, batch CLI commands, two-phase commit with automatic rollback.">
+  <meta property="og:url" content="https://theotherdude.net/docs/mikrotik-bulk-configuration.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MikroTik Bulk Configuration — Fleet-Wide Config Management">
+  <meta name="twitter:description" content="Push MikroTik configuration changes across multiple devices at once. Config templates, batch CLI commands, two-phase commit with automatic rollback.">
+  <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "MikroTik Bulk Configuration — Fleet-Wide Config Management",
+    "description": "Push MikroTik configuration changes across multiple devices at once. Config templates with variable substitution, batch CLI commands, two-phase commit with automatic rollback.",
+    "datePublished": "2026-03-18",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/docs/mikrotik-bulk-configuration.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="docs-page">
+
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
+      <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
+
+      <h1>MikroTik Bulk Configuration</h1>
+
+      <h2>The Problem: One Device at a Time</h2>
+
+      <p>RouterOS was designed for single-device administration. WinBox opens one session to one router. The RouterOS API connects to one device at a time. SSH gives you one terminal to one device. When you need to push a DNS server change to 200 routers, or add a firewall rule across every device at a site, you're either opening 200 individual sessions or writing a script that loops SSH connections and hopes for the best.</p>
+
+      <p>The script approach works for simple cases but breaks down quickly. Error handling becomes your problem: what happens when device 47 of 200 times out? Do you retry? Skip it? Abort the whole batch? What about partial failures where the command runs but produces an unexpected result? SSH scripts don't give you per-device result reporting, rollback capability, or an audit trail. You get stdout and stderr and that's it.</p>
+
+      <p>For MSPs and network teams managing MikroTik fleets, mikrotik bulk configuration isn't a nice-to-have — it's the difference between a fifteen-minute operation and a full afternoon of manual work with a spreadsheet tracking which devices you've hit and which you haven't.</p>
+
+      <h2>Bulk CLI Command Execution</h2>
+
+      <p>The Other Dude lets you run RouterOS CLI commands across multiple devices simultaneously from the web UI. Select a group of devices (by tag, site, or manual selection), enter a command, and execute. Each device gets its own result — success with output, failure with error details, or timeout.</p>
+
+      <p>This is available to users with operator role or above. The RBAC system ensures that viewer-level users can't execute commands, even if they can see the devices.</p>
+
+      <p>Practical use cases for bulk CLI execution:</p>
+
+      <ul>
+        <li><strong>Fleet-wide queries.</strong> Run <code>/system resource print</code> across all devices to check firmware versions, uptime, and resource usage in one operation.</li>
+        <li><strong>Quick fixes.</strong> Add a DNS entry, disable a problematic service, or modify an SNMP community string across a device group without writing a script.</li>
+        <li><strong>Diagnostic collection.</strong> Run <code>/interface print stats</code> or <code>/ip firewall connection print count-only</code> across a site's devices to gather diagnostic data for troubleshooting.</li>
+        <li><strong>Scripted maintenance.</strong> Execute RouterOS scripts that are too simple to warrant a template but need to run on multiple devices — clearing log entries, resetting connection tracking counters, or flushing DNS cache.</li>
+      </ul>
+
+      <p>Every bulk command execution is logged in the <a href="msp-mikrotik-management.html">audit trail</a> with the user, timestamp, target devices, command text, and per-device results.</p>
+
+      <h2>Config Templates with Variable Substitution</h2>
+
+      <p>For structured configuration changes, The Other Dude provides a template system. A config template is a set of RouterOS commands with placeholder variables that get substituted per device at push time.</p>
+
+      <p>For example, a branch office firewall template might define standard firewall rules, NAT configuration, and DHCP settings, with variables for the site's WAN IP, LAN subnet, and gateway address. You define the template once. When you push it to a group of devices, each device gets the template rendered with its own variable values.</p>
+
+      <p>The template workflow:</p>
+
+      <ol>
+        <li><strong>Write the template.</strong> Define the RouterOS commands with variable placeholders. The template editor in the web UI supports syntax highlighting and validation.</li>
+        <li><strong>Preview per device.</strong> Before pushing, preview what the rendered template looks like for each target device. This shows you exactly which commands will be sent to each device with all variables substituted. No surprises.</li>
+        <li><strong>Push to a group.</strong> Select the target devices and execute. The platform sends the rendered commands to each device in parallel.</li>
+        <li><strong>Monitor results.</strong> Each device reports its own result. Success means all commands executed without error. Failure includes the specific error from RouterOS. The results view shows the full picture across all target devices.</li>
+      </ol>
+
+      <p>Templates are reusable. A standard firewall ruleset, a VPN configuration, a monitoring agent setup — define it once and apply it across new devices as you add them to the fleet.</p>
+
+      <h2>Two-Phase Commit with Automatic Rollback</h2>
+
+      <p>Bulk config pushes use the same <a href="routeros-configuration-management.html">two-phase commit mechanism</a> as single-device config changes. For each device in the batch:</p>
+
+      <ol>
+        <li>The config change is applied to the device.</li>
+        <li>The platform waits for confirmation that the device is still reachable.</li>
+        <li>If the device remains reachable, the change is confirmed.</li>
+        <li>If the device becomes unreachable — indicating the change broke the management path — the device automatically reverts to its previous configuration.</li>
+      </ol>
+
+      <p>This is critical for bulk operations because the blast radius of a bad config push scales with the number of target devices. A firewall rule that accidentally blocks the management subnet would lock you out of every device you pushed it to. With two-phase commit, each device independently detects the problem and reverts itself. You don't need to drive to a site or find an out-of-band console connection.</p>
+
+      <p>The rollback is per-device, not per-batch. If a change succeeds on 48 of 50 devices and fails on 2, the 2 failing devices revert while the 48 successful devices keep the new config. You get a clear report of which devices succeeded and which reverted, and you can investigate the failures individually.</p>
+
+      <h2>Batch Config Push via the Config Editor</h2>
+
+      <p>In addition to templates and CLI commands, the platform's <a href="routeros-configuration-management.html">config editor</a> supports batch operations. You can browse the RouterOS path tree, make a change, and push it to multiple devices at once. This is useful for structured changes that don't warrant a full template — adding a single firewall rule, modifying a DNS setting, or updating an NTP server across a device group.</p>
+
+      <h2>How This Differs from SSH Scripts</h2>
+
+      <p>The common alternative to a bulk configuration platform is a set of SSH scripts — Bash, Python with Paramiko, or Ansible playbooks. These can work, but they leave several problems for you to solve:</p>
+
+      <ul>
+        <li><strong>Error handling.</strong> SSH scripts need explicit handling for connection timeouts, authentication failures, command errors, and partial execution. The platform handles this per-device automatically.</li>
+        <li><strong>Rollback.</strong> SSH scripts don't have a rollback mechanism. If a command locks you out, you're locked out. The platform's two-phase commit reverts bad changes automatically.</li>
+        <li><strong>Audit trail.</strong> SSH scripts produce log files at best. The platform records every operation with user attribution, timestamps, and per-device results in a queryable audit log.</li>
+        <li><strong>Access control.</strong> SSH scripts run under whoever's credentials are in the script. The platform enforces RBAC — an operator can run bulk commands but a viewer can't.</li>
+        <li><strong>State management.</strong> Tracking which devices got the change and which didn't is your problem with scripts. The platform gives you a per-device results view for every operation.</li>
+      </ul>
+
+      <p>Scripts solve the "run a command on many devices" problem. A platform solves the "operate a fleet safely and accountably" problem.</p>
+
+      <h2>Getting Started</h2>
+
+      <p>Bulk operations are available immediately when devices are connected to the platform. The <a href="../docs.html#quickstart">Quick Start guide</a> covers deploying the platform and adding your first devices. Once you have devices connected, bulk CLI execution and config push operations are available from the fleet view.</p>
+
+      <div class="related-links">
+        <h2>Related</h2>
+        <ul>
+          <li><a href="routeros-configuration-management.html">RouterOS configuration management with safe rollback</a></li>
+          <li><a href="manage-multiple-mikrotik-routers.html">Managing multiple MikroTik routers from one interface</a></li>
+          <li><a href="mikrotik-backup-solution.html">Automated MikroTik backup solution</a></li>
+          <li><a href="mikrotik-configuration-drift.html">Detecting configuration drift across your fleet</a></li>
+          <li><a href="../blog/100-simulated-routers.html">Testing at Scale: 100 Simulated Routers (blog)</a></li>
+          <li><a href="https://github.com/staack/the-other-dude" rel="noopener">View on GitHub</a></li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../blog/">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#888;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
+</body>
+</html>

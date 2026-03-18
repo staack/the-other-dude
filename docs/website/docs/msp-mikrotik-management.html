@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MikroTik Management for MSPs — Multi-Tenant Fleet Platform</title>
+  <meta name="description" content="Multi-tenant MikroTik management platform for MSPs. PostgreSQL RLS tenant isolation, per-tenant encryption, RBAC roles, audit trails, and per-client dashboards.">
+  <meta name="keywords" content="msp mikrotik management, mikrotik multi-tenant, managed service provider mikrotik, mikrotik client management">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/msp-mikrotik-management.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="MikroTik Management for MSPs — Multi-Tenant Fleet Platform">
+  <meta property="og:description" content="Multi-tenant MikroTik management platform for MSPs. PostgreSQL RLS tenant isolation, per-tenant encryption, RBAC, and audit trails.">
+  <meta property="og:url" content="https://theotherdude.net/docs/msp-mikrotik-management.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MikroTik Management for MSPs — Multi-Tenant Fleet Platform">
+  <meta name="twitter:description" content="Multi-tenant MikroTik management platform for MSPs. PostgreSQL RLS tenant isolation, per-tenant encryption, RBAC, and audit trails.">
+  <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "MikroTik Management for MSPs — Multi-Tenant Fleet Platform",
+    "description": "Multi-tenant MikroTik management platform for MSPs. PostgreSQL RLS tenant isolation, per-tenant encryption, RBAC roles, audit trails, and per-client dashboards.",
+    "datePublished": "2026-03-18",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/docs/msp-mikrotik-management.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="docs-page">
+
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
+      <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
+
+      <h1>MikroTik Management for MSPs</h1>
+
+      <h2>The MSP Problem</h2>
+
+      <p>Managed service providers running MikroTik networks face a specific set of challenges that single-organization deployments don't. The fundamental issue is multi-tenancy: you manage devices for multiple clients from the same team, the same tools, and ideally the same platform. But Client A's device credentials, configuration data, and monitoring history must be completely invisible to Client B. This isn't a nice-to-have — it's a contractual and often regulatory requirement.</p>
+
+      <p>Most MikroTik management approaches don't account for this. WinBox sessions are per-device with no concept of client boundaries. SSH scripts run under a single operator's credentials with no built-in tenant separation. Even purpose-built network management platforms often implement multi-tenancy as UI-level filtering rather than enforced data isolation — which means a bug, a misconfigured query, or an API endpoint that forgets to filter can expose one client's data to another.</p>
+
+      <p>Beyond isolation, MSPs need operational structure: who on your team can see what, who can push config changes vs. just monitor, and who did what when a client asks about a change they didn't authorize.</p>
+
+      <h2>Tenant Isolation at the Database Level</h2>
+
+      <p>The Other Dude implements multi-tenant isolation using PostgreSQL Row-Level Security (RLS). Every table that stores tenant-scoped data — devices, configurations, metrics, credentials, audit logs — has RLS policies that filter rows based on the authenticated user's tenant ID. This enforcement happens at the database layer, not in application code.</p>
+
+      <p>What this means in practice: even if there's a bug in the API that fails to include a tenant filter in a query, PostgreSQL itself will refuse to return rows belonging to a different tenant. The isolation boundary is the database engine, not the application logic sitting on top of it.</p>
+
+      <p>Each tenant's data is a completely separate partition. There is no shared device table where rows are tagged with a tenant ID and filtered at query time. The RLS policies ensure that a query executed in the context of Tenant A literally cannot see Tenant B's rows, regardless of what the application does.</p>
+
+      <h2>Per-Tenant Encryption</h2>
+
+      <p>Device credentials — the SSH and API passwords your team uses to connect to client routers — are encrypted at rest using AES-256-GCM with per-tenant envelope encryption. The encryption keys are managed by <a href="https://openbao.org" rel="noopener">OpenBao</a> Transit (a community fork of HashiCorp Vault). Each tenant has its own encryption key. Compromising one tenant's key does not expose another tenant's credentials.</p>
+
+      <p>This matters because device credentials are the most sensitive data in any network management platform. A single leaked credential set can provide direct access to a client's router infrastructure. Per-tenant envelope encryption ensures that even in a worst-case scenario — database breach, backup theft — the credentials are encrypted with keys that aren't stored alongside the data.</p>
+
+      <h2>RBAC: Who Can Do What</h2>
+
+      <p>The platform enforces four roles with server-side permission checks on every request:</p>
+
+      <ul>
+        <li><strong>super_admin</strong> — Platform-level administration. Can create and manage tenants, manage users across the platform, and access system-level settings. Cannot see individual tenant device data — this is a privacy boundary, not a convenience feature.</li>
+        <li><strong>admin</strong> — Tenant-level administration. Can add/remove devices, manage users within their tenant, configure alert rules, push configuration changes, and manage backups. Full operational control within their tenant scope.</li>
+        <li><strong>operator</strong> — Day-to-day operations. Can view devices, run CLI commands, execute bulk operations, and manage configs. Cannot add/remove devices or manage users. This is the role for NOC engineers who need to operate the network but shouldn't be changing the fleet inventory.</li>
+        <li><strong>viewer</strong> — Read-only access. Can view dashboards, monitoring data, device status, and config history. Cannot execute any commands or push any changes. Useful for client contacts who want visibility into their own network without operational access.</li>
+      </ul>
+
+      <p>Roles are checked server-side on every API request. The frontend hides UI elements based on role, but the actual enforcement is in the backend — a viewer who crafts a manual API request to push a config change will get a 403, not just a hidden button.</p>
+
+      <h2>Audit Trail</h2>
+
+      <p>Every management action is recorded in an immutable audit log: config pushes, command executions, device additions, user management changes, credential access, WinBox session launches. Each entry includes the user, timestamp, tenant, action type, and relevant details.</p>
+
+      <p>For MSPs, this serves two purposes. First, it's your operational record — when a client asks "who changed the firewall rules on our gateway last Thursday?", you have a definitive answer. Second, it's your liability protection. If a client claims unauthorized changes were made, the audit trail shows exactly what happened and who initiated it.</p>
+
+      <p>Audit logs are tenant-scoped. One tenant's audit history is not visible to another tenant.</p>
+
+      <h2>The MSP Workflow</h2>
+
+      <p>Here's how a typical MSP onboards a new client with The Other Dude:</p>
+
+      <ol>
+        <li><strong>Create the tenant.</strong> A super_admin creates a new tenant for the client. This sets up the database isolation boundaries and generates a new encryption key in OpenBao for the tenant's credentials.</li>
+        <li><strong>Create admin users.</strong> Set up admin-level accounts for your team members who will manage this client's network. If the client wants their own visibility, create viewer accounts for their contacts.</li>
+        <li><strong>Add devices.</strong> Add the client's MikroTik routers by IP address. The platform will connect via the RouterOS API on TLS port 8729, verify connectivity, and start collecting metrics and configuration data immediately.</li>
+        <li><strong>Configure monitoring.</strong> Default alert rules are created automatically — CPU, memory, disk, offline detection, wireless signal. Tune thresholds for this client's specific environment. Set up notification channels (email, Slack, webhook) for this tenant.</li>
+        <li><strong>Verify backups.</strong> The <a href="mikrotik-backup-solution.html">automated backup system</a> begins capturing config snapshots from the moment devices are connected. Check the backup timeline to confirm the first snapshots are arriving.</li>
+        <li><strong>Delegate operator access.</strong> Create operator accounts for NOC staff who will handle day-to-day monitoring and command execution for this client's devices.</li>
+      </ol>
+
+      <p>The entire process takes minutes per client. All subsequent operations — monitoring, <a href="mikrotik-bulk-configuration.html">config pushes</a>, <a href="mikrotik-backup-solution.html">backup management</a>, <a href="routeros-configuration-management.html">config editing</a> — happen within the tenant's isolation boundary automatically.</p>
+
+      <h2>Per-Tenant Dashboards</h2>
+
+      <p>Each tenant gets its own fleet dashboard showing only their devices. Device counts, online/offline status, bandwidth utilization, active alerts, and <a href="mikrotik-router-monitoring.html">wireless metrics</a> are all scoped to the tenant. An operator logged into Client A's tenant sees only Client A's routers, alerts, and history.</p>
+
+      <p>For MSP operators who manage multiple clients, switching between tenants is handled through the platform's tenant context. You don't maintain separate logins or browser sessions per client — you switch context within the same interface.</p>
+
+      <h2>Self-Hosted: Your Data, Your Infrastructure</h2>
+
+      <p>The platform is <a href="self-hosted-network-management.html">self-hosted</a> and <a href="open-source-mikrotik-management.html">open source</a>. Client device credentials, configuration history, and monitoring data never leave your infrastructure. There's no cloud service receiving your clients' router passwords. For MSPs in regulated industries or those with contractual obligations around data handling, this is often a requirement rather than a preference.</p>
+
+      <p>Deploy via Docker Compose for smaller operations or the Kubernetes Helm chart for larger scale. The <a href="../docs.html#quickstart">Quick Start guide</a> walks through the full setup.</p>
+
+      <div class="related-links">
+        <h2>Related</h2>
+        <ul>
+          <li><a href="manage-multiple-mikrotik-routers.html">Managing multiple MikroTik routers from one interface</a></li>
+          <li><a href="self-hosted-network-management.html">Self-hosted network management with no cloud dependency</a></li>
+          <li><a href="mikrotik-backup-solution.html">Automated MikroTik backup solution</a></li>
+          <li><a href="mikrotik-router-monitoring.html">Monitoring MikroTik routers at scale</a></li>
+          <li><a href="../blog/why-this-exists.html">Why This Exists (blog)</a></li>
+          <li><a href="https://github.com/staack/the-other-dude" rel="noopener">View on GitHub</a></li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../blog/">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#888;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
+</body>
+</html>

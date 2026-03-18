@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MikroTik Backup Solution — Automated RouterOS Config Backups</title>
+  <meta name="description" content="Automated MikroTik backup solution with git-backed version history, side-by-side diffs, one-click restore, and scheduled config snapshots for your entire RouterOS fleet.">
+  <meta name="keywords" content="mikrotik backup solution, routeros backup automation, mikrotik config backup, mikrotik backup restore, automated router backup">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/mikrotik-backup-solution.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="MikroTik Backup Solution — Automated RouterOS Config Backups">
+  <meta property="og:description" content="Automated MikroTik backup solution with git-backed version history, side-by-side diffs, one-click restore, and scheduled config snapshots.">
+  <meta property="og:url" content="https://theotherdude.net/docs/mikrotik-backup-solution.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="MikroTik Backup Solution — Automated RouterOS Config Backups">
+  <meta name="twitter:description" content="Automated MikroTik backup solution with git-backed version history, side-by-side diffs, one-click restore, and scheduled config snapshots.">
+  <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "MikroTik Backup Solution — Automated RouterOS Config Backups",
+    "description": "Automated MikroTik backup solution with git-backed version history, side-by-side diffs, one-click restore, and scheduled config snapshots for your entire RouterOS fleet.",
+    "datePublished": "2026-03-18",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/docs/mikrotik-backup-solution.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="docs-page">
+
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
+      <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
+
+      <h1>MikroTik Backup Solution</h1>
+
+      <h2>The Problem with MikroTik Backups</h2>
+
+      <p>Router backups should be the simplest operational task in network management. In practice, they're one of the most commonly broken. The typical MikroTik backup setup involves a Scheduler script on each device that runs <code>/system backup save</code> or <code>/export</code> and sends the result to an FTP server. This works until it doesn't — and the failure modes are almost always silent.</p>
+
+      <p>The FTP server's disk fills up. A firmware upgrade changes the Scheduler syntax. Someone changes the FTP password on the server but not on the 200 routers pushing to it. A device gets replaced and nobody copies the Scheduler script to the new one. In every case, backups stop arriving and nobody notices until the moment they need one.</p>
+
+      <p>Even when the backups are running, the result is a pile of text files in a directory. Finding what changed between Tuesday and Thursday means manually diffing two exports. Figuring out when a specific firewall rule was added means reading through dozens of exports chronologically. Restoring a previous config means copying the export text, SSHing into the router, and pasting it — hoping the import doesn't fail halfway through on a syntax difference between firmware versions.</p>
+
+      <p>This isn't a backup solution. It's a backup hope.</p>
+
+      <h2>What a Real Backup Solution Requires</h2>
+
+      <p>A mikrotik backup solution that actually works in production needs to address the specific failure modes of DIY approaches:</p>
+
+      <ul>
+        <li><strong>Centralized scheduling.</strong> Backups should be triggered from the management platform, not from per-device Scheduler scripts. One schedule, applied fleet-wide. No per-device configuration to maintain or break.</li>
+        <li><strong>Version history, not just snapshots.</strong> Every backup should be a point in the device's config timeline. You should be able to navigate that timeline, see exactly what changed at each point, and compare any two versions.</li>
+        <li><strong>Diff capability.</strong> Side-by-side comparison showing added, removed, and modified lines between any two config versions. This is the difference between "something changed" and "this specific firewall rule was modified."</li>
+        <li><strong>Tested restore path.</strong> A backup you can't restore isn't a backup. The restore mechanism should be built into the platform, not a manual copy-paste-SSH workflow.</li>
+        <li><strong>Failure alerting.</strong> If a backup fails — device unreachable, API timeout, storage error — someone needs to know immediately, not six months later when they need the backup.</li>
+        <li><strong>Fleet-wide coverage.</strong> The system should work identically for ten devices or a thousand. Adding a new device to the fleet should automatically include it in the backup schedule.</li>
+      </ul>
+
+      <h2>How The Other Dude Handles Backups</h2>
+
+      <p>The Other Dude's backup system is built on the same Go-based poller that handles monitoring and command execution. It connects to each device via the RouterOS binary API over TLS (port 8729) and retrieves a full <code>/export</code> on a configurable schedule — every six hours by default.</p>
+
+      <p>There are no per-device Scheduler scripts to maintain. No FTP server. No per-device backup configuration at all. Every device that's connected to the platform is automatically included in the backup schedule from the moment it's added.</p>
+
+      <h3>Git-Backed Version History</h3>
+
+      <p>Config exports are stored with complete version history in PostgreSQL. Every backup is a timestamped snapshot. The system compares each new snapshot to the previous one and records the diff. Nothing is overwritten — you have a complete timeline of every configuration state the device has been in since it was added to the platform.</p>
+
+      <p>This is functionally equivalent to having every config change committed to a git repository with a timestamp and a diff. You can navigate the timeline to answer questions like "what did this router's config look like on March 3rd?" or "when was this NAT rule first added?" without reading through raw export files.</p>
+
+      <h3>Side-by-Side Diffs</h3>
+
+      <p>The web UI includes a diff viewer that shows two config versions side by side with additions highlighted in green, removals in red, and unchanged lines in grey. Select any two snapshots for a device — or compare configs across two different devices — and see exactly what differs.</p>
+
+      <p>This is particularly useful for <a href="mikrotik-configuration-drift.html">configuration drift detection</a>. When a device's config changes between backup cycles due to an out-of-band WinBox or SSH change, the diff shows exactly what was modified. Combined with the platform's audit trail, you can distinguish between authorized changes pushed through the platform and unauthorized changes made directly on the device.</p>
+
+      <h3>One-Click Restore</h3>
+
+      <p>Select any previous backup from the timeline and push it back to the device. The restore uses the same <a href="routeros-configuration-management.html">two-phase commit mechanism</a> as all config pushes: the config is applied, the platform verifies the device is still reachable, and if the device goes silent (indicating the restore broke connectivity), the change is automatically reverted.</p>
+
+      <p>This means you can restore a previous config to a remote device with confidence that you won't lock yourself out. If the restored config breaks the management path, the device reverts to its pre-restore state automatically.</p>
+
+      <h3>Binary Export Download</h3>
+
+      <p>In addition to text-based config exports, the platform supports downloading binary <code>.backup</code> files for full device restore scenarios. Binary backups capture passwords, certificates, and other data that text exports omit. These are useful as a disaster recovery artifact when you need to rebuild a device from scratch on identical hardware.</p>
+
+      <h3>Change Detection Between Cycles</h3>
+
+      <p>The backup system doesn't only run on the scheduled interval. The poller detects configuration changes via NATS events, so a change made through WinBox or SSH between scheduled backup cycles will trigger an additional snapshot capture. This means the version timeline reflects actual change events, not just periodic snapshots that might miss intermediate states.</p>
+
+      <h2>Config Push Rollback as a Safety Net</h2>
+
+      <p>Backups and <a href="routeros-configuration-management.html">config management</a> work together as complementary safety mechanisms. The backup system gives you a timeline of every previous state. The config push system's two-phase commit gives you automatic rollback on bad changes. Together, they mean you always have both a way to undo a recent change automatically and a full history to restore from manually.</p>
+
+      <p>For MSPs managing multiple clients, the backup system is <a href="msp-mikrotik-management.html">tenant-scoped</a>. Each client's backup history is isolated. Backup schedules, retention policies, and restore operations all operate within tenant boundaries.</p>
+
+      <h2>Getting Started</h2>
+
+      <p>Backups start automatically when you add a device to the platform. There's no additional setup required. The <a href="../docs.html#quickstart">Quick Start guide</a> covers deploying the platform and connecting your first device — at which point the first config backup will be captured within minutes.</p>
+
+      <p>For a deeper look at the backup automation architecture and how it handles edge cases like unreachable devices and firmware version differences, see the <a href="mikrotik-router-backup-automation.html">detailed backup automation guide</a>.</p>
+
+      <div class="related-links">
+        <h2>Related</h2>
+        <ul>
+          <li><a href="mikrotik-router-backup-automation.html">Detailed guide to RouterOS backup automation</a></li>
+          <li><a href="routeros-configuration-management.html">RouterOS configuration management with safe rollback</a></li>
+          <li><a href="mikrotik-configuration-drift.html">Detecting configuration drift across your fleet</a></li>
+          <li><a href="mikrotik-bulk-configuration.html">Bulk configuration across multiple devices</a></li>
+          <li><a href="../blog/what-you-can-do-today.html">What You Can Do With It Today (blog)</a></li>
+          <li><a href="https://github.com/staack/the-other-dude" rel="noopener">View on GitHub</a></li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../blog/">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#888;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
+</body>
+</html>

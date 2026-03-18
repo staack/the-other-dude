@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WinBox Alternative — Browser-Based MikroTik Management</title>
+  <meta name="description" content="Browser-based WinBox alternative for MikroTik fleet management. Run WinBox sessions in the browser, manage multiple routers, and get fleet-level visibility without installing client software.">
+  <meta name="keywords" content="winbox alternative, winbox in browser, winbox web, mikrotik web management, mikrotik browser management">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/winbox-alternative.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="WinBox Alternative — Browser-Based MikroTik Management">
+  <meta property="og:description" content="Browser-based WinBox alternative for MikroTik fleet management. Run WinBox sessions in the browser, manage multiple routers, and get fleet-level visibility.">
+  <meta property="og:url" content="https://theotherdude.net/docs/winbox-alternative.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="WinBox Alternative — Browser-Based MikroTik Management">
+  <meta name="twitter:description" content="Browser-based WinBox alternative for MikroTik fleet management. Run WinBox sessions in the browser, manage multiple routers, and get fleet-level visibility.">
+  <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "WinBox Alternative — Browser-Based MikroTik Management",
+    "description": "Browser-based WinBox alternative for MikroTik fleet management. Run WinBox sessions in the browser, manage multiple routers, and get fleet-level visibility without installing client software.",
+    "datePublished": "2026-03-18",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/docs/winbox-alternative.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="docs-page">
+
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
+      <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
+
+      <h1>WinBox Alternative — Browser-Based MikroTik Management</h1>
+
+      <h2>What WinBox Does Well</h2>
+
+      <p>WinBox is genuinely excellent at what it was built for. It provides fast, low-latency access to a single MikroTik router's full configuration. The tree-based interface mirrors the RouterOS path hierarchy exactly. You can drag firewall rules, monitor traffic in real time with Torch, and edit any config section with immediate feedback. For hands-on work on one device, nothing beats it.</p>
+
+      <p>MikroTik engineers have used WinBox since the early RouterOS days, and for good reason. It's purpose-built, responsive, and gives you complete access to every RouterOS feature. If you manage one router, or a small handful, WinBox is the right tool.</p>
+
+      <h2>Where WinBox Stops Working</h2>
+
+      <p>The problem starts at scale. WinBox is a single-device tool. There's no fleet view, no way to push a config change to fifty routers at once, no version history, no audit trail of who changed what. Every session is independent — no shared state between them.</p>
+
+      <p>For MSPs managing client networks or ISPs running hundreds of CPE devices, WinBox creates specific operational problems:</p>
+
+      <ul>
+        <li><strong>No batch operations.</strong> Changing a DNS server across 200 routers means 200 individual WinBox sessions. Even with MAC-Telnet or the RouterOS API, you're scripting each connection yourself.</li>
+        <li><strong>No configuration history.</strong> WinBox shows you the current state. If someone changed a firewall rule last Tuesday, WinBox can't tell you what it was before.</li>
+        <li><strong>No fleet visibility.</strong> You can't ask "which of my 300 routers have CPU above 80% right now?" without opening 300 connections.</li>
+        <li><strong>Client installation required.</strong> WinBox needs to be installed on each workstation. It runs on Windows natively, with Wine or Crossover on macOS and Linux. For remote access scenarios or shared operations, that's friction.</li>
+        <li><strong>No RBAC.</strong> WinBox authenticates directly to each router. There's no way to give an operator read-only access to device monitoring while restricting config changes — that requires per-device user setup.</li>
+      </ul>
+
+      <p>None of this is a failure of WinBox. It was designed as a single-device administration tool, and it's the best one in the RouterOS ecosystem. The gap is everything above that: fleet-level operations, history, security, and collaboration.</p>
+
+      <h2>WinBox in the Browser</h2>
+
+      <p>The Other Dude includes a browser-based WinBox feature that runs actual WinBox sessions inside your web browser. This is not a WinBox emulation or a simplified web UI pretending to be WinBox. It launches a real WinBox instance inside a container and streams the session to your browser via SSH tunneling.</p>
+
+      <p>Here's how it works: when you open a WinBox session for a device from the fleet dashboard, the platform spins up a containerized WinBox instance, establishes an SSH tunnel to the target router, and renders the WinBox GUI in your browser window. You get the full WinBox experience — the same tree navigation, the same real-time tools, the same configuration interface — without installing anything on your local machine.</p>
+
+      <p>This matters for several practical reasons:</p>
+
+      <ul>
+        <li><strong>No client software.</strong> Any device with a modern web browser can run a WinBox session. This works from a Chromebook, an iPad, a Linux workstation, or a locked-down corporate laptop where you can't install software.</li>
+        <li><strong>Centralized credential handling.</strong> Device credentials are managed by the platform and encrypted at rest with AES-256-GCM via OpenBao Transit. You don't need to distribute router passwords to every engineer's workstation.</li>
+        <li><strong>Audit trail.</strong> Every WinBox session launch is logged — who opened it, when, to which device. Combined with the platform's config backup system, you can correlate WinBox access with config changes detected on the next polling cycle.</li>
+        <li><strong>Access control.</strong> WinBox sessions are gated by RBAC. An operator with viewer-level access can't launch a WinBox session. The platform enforces who can do what, even for direct device access.</li>
+      </ul>
+
+      <h2>SSH Terminal in the Browser</h2>
+
+      <p>Alongside browser-based WinBox, the platform provides an in-browser SSH terminal to any managed device. This is useful for CLI-oriented tasks — running <code>/export</code>, checking <code>/system resource print</code>, or executing RouterOS scripts directly.</p>
+
+      <p>The SSH terminal uses the same credential management and RBAC enforcement as WinBox sessions. No need to maintain SSH keys on individual workstations or distribute device passwords through side channels.</p>
+
+      <h2>Fleet Management Around WinBox</h2>
+
+      <p>The intent is not to replace WinBox for hands-on device work. WinBox is the right tool when you need to dig into a single router's config, debug a routing issue, or tune firewall rules interactively. What The Other Dude adds is everything around that:</p>
+
+      <p><strong>Fleet dashboard.</strong> See all your devices in one view — online/offline status, CPU, memory, bandwidth utilization, uptime, firmware version. Filter by group, site, or alert status. The device table uses virtual scrolling to handle hundreds of routers without performance degradation.</p>
+
+      <p><strong>Configuration management.</strong> Browse and edit the RouterOS config tree from the web UI, with <a href="routeros-configuration-management.html">two-phase commit and automatic rollback</a>. Every change is stored in git-backed version history with full diff capability. Templates let you define a config once and push it to a group of devices with per-device variable substitution.</p>
+
+      <p><strong>Automated backups.</strong> The platform captures a full config export from every device on a <a href="mikrotik-backup-solution.html">configurable schedule</a>. Navigate the version timeline, compare any two snapshots side by side, restore with one click.</p>
+
+      <p><strong>Monitoring and alerts.</strong> CPU, memory, traffic, and wireless metrics stored in TimescaleDB with <a href="mikrotik-router-monitoring.html">threshold-based alerting</a>. Maintenance windows suppress alerts during planned work.</p>
+
+      <p><strong>Bulk operations.</strong> <a href="mikrotik-bulk-configuration.html">Push config changes or run CLI commands</a> across a group of devices simultaneously. Each device gets its own result with success/failure reporting.</p>
+
+      <p><strong>Multi-tenant isolation.</strong> <a href="msp-mikrotik-management.html">MSPs can manage multiple clients</a> from one platform with hard tenant boundaries enforced at the database level.</p>
+
+      <h2>No Client Install Needed</h2>
+
+      <p>The entire platform — fleet dashboard, config editor, WinBox sessions, SSH terminal, monitoring, backups — runs in a web browser. Deploy the platform on your infrastructure via Docker Compose or the Kubernetes Helm chart, and every engineer on your team has access from any device with a browser. No WinBox installation, no SSH key distribution, no VPN client for each operations workstation.</p>
+
+      <p>The platform is open source and self-hosted. Your device credentials, config history, and monitoring data stay on your infrastructure. Full setup takes about ten minutes — the <a href="../docs.html#quickstart">Quick Start guide</a> covers the process from clone to first connected device.</p>
+
+      <div class="related-links">
+        <h2>Related</h2>
+        <ul>
+          <li><a href="mikrotik-centralized-management.html">Centralized management for MikroTik router fleets</a></li>
+          <li><a href="routeros-configuration-management.html">RouterOS configuration management with safe rollback</a></li>
+          <li><a href="mikrotik-bulk-configuration.html">Bulk configuration across multiple MikroTik devices</a></li>
+          <li><a href="self-hosted-network-management.html">Self-hosted network management with no cloud dependency</a></li>
+          <li><a href="../blog/what-you-can-do-today.html">What You Can Do With It Today (blog)</a></li>
+          <li><a href="https://github.com/staack/the-other-dude" rel="noopener">View on GitHub</a></li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../blog/">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#888;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
+</body>
+</html>

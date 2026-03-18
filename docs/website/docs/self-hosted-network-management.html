@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Self-Hosted Network Management — No Cloud, No Vendor Lock-In</title>
+  <meta name="description" content="Self-hosted network management for MikroTik fleets. Deploy on your infrastructure via Docker Compose or Kubernetes. No cloud dependency, no license server, no vendor lock-in.">
+  <meta name="keywords" content="self-hosted network management, self-hosted mikrotik, on-premise network management, network management no cloud, private network management tool">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#FAFBFC">
+  <link rel="canonical" href="https://theotherdude.net/docs/self-hosted-network-management.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Self-Hosted Network Management — No Cloud, No Vendor Lock-In">
+  <meta property="og:description" content="Self-hosted network management for MikroTik fleets. Deploy on your infrastructure via Docker Compose or Kubernetes. No cloud dependency.">
+  <meta property="og:url" content="https://theotherdude.net/docs/self-hosted-network-management.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Self-Hosted Network Management — No Cloud, No Vendor Lock-In">
+  <meta name="twitter:description" content="Self-hosted network management for MikroTik fleets. Deploy on your infrastructure via Docker Compose or Kubernetes. No cloud dependency.">
+  <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Self-Hosted Network Management — No Cloud, No Vendor Lock-In",
+    "description": "Self-hosted network management for MikroTik fleets. Deploy on your infrastructure via Docker Compose or Kubernetes. No cloud dependency, no license server, no vendor lock-in.",
+    "datePublished": "2026-03-18",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/docs/self-hosted-network-management.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fira+Code:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="docs-page">
+
+  <nav class="site-nav site-nav--light" aria-label="Main navigation">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="../blog/" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
+      <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
+
+      <h1>Self-Hosted Network Management</h1>
+
+      <h2>Why Self-Hosting Matters for Network Management</h2>
+
+      <p>Network management platforms occupy a uniquely sensitive position in your infrastructure. They store device credentials — the SSH passwords and API keys that provide direct access to every router in your fleet. They store configuration data — the complete running state of every managed device. They store monitoring history — traffic patterns, bandwidth utilization, and device health data that reveals your network's architecture and capacity.</p>
+
+      <p>When you use a cloud-hosted network management service, all of this data lives on someone else's infrastructure. Your router passwords are stored in someone else's database. Your config history is backed up to someone else's object store. Your monitoring data flows through someone else's ingestion pipeline.</p>
+
+      <p>For many organizations, this is a non-starter. MSPs with contractual obligations around client data handling can't send device credentials to a third party. ISPs in regulated markets may have compliance requirements around where network infrastructure data is stored. Government and defense contractors operate under frameworks that prohibit cloud-hosted management of network devices. Even without formal compliance requirements, sending your complete device credential set to a SaaS platform is a risk that many network engineers are uncomfortable with.</p>
+
+      <p>Self-hosted network management eliminates this class of risk entirely. Your data stays on your hardware, behind your firewall, under your control.</p>
+
+      <h2>Deployment Options</h2>
+
+      <h3>Docker Compose</h3>
+
+      <p>The primary deployment method is Docker Compose. A single <code>docker-compose.yml</code> file brings up the entire stack: the React frontend, the FastAPI backend, the Go poller, PostgreSQL with TimescaleDB, Redis, NATS JetStream, and OpenBao for credential encryption.</p>
+
+      <p>Prerequisites are minimal: a Linux host (or macOS for development) with Docker and Docker Compose installed. The included setup wizard (<code>setup.py</code>) walks through initial configuration — database credentials, admin user creation, and basic platform settings. From clone to running platform with your first connected device takes about ten minutes.</p>
+
+      <p>Docker Compose is the right choice for most deployments. Single-server installations handling up to several hundred devices run comfortably on modest hardware. The compose file handles container orchestration, networking between services, and volume management for persistent data.</p>
+
+      <h3>Kubernetes via Helm Chart</h3>
+
+      <p>For organizations that run Kubernetes, the project includes a Helm chart. This provides the same stack deployed as Kubernetes resources: Deployments, Services, ConfigMaps, Secrets, and PersistentVolumeClaims.</p>
+
+      <p>The Helm chart is useful for teams that want to integrate the platform into existing Kubernetes infrastructure, take advantage of Kubernetes features like auto-restart and resource limits, or deploy across multiple nodes for availability. It's not required — Docker Compose is simpler and sufficient for most use cases.</p>
+
+      <h2>What Runs on Your Infrastructure</h2>
+
+      <p>Everything. There is no external service dependency for core functionality. Here's what the stack includes:</p>
+
+      <ul>
+        <li><strong>PostgreSQL + TimescaleDB</strong> — All device data, config history, user accounts, audit logs, and time-series metrics are stored in PostgreSQL. TimescaleDB extensions handle the high-frequency metric data efficiently.</li>
+        <li><strong>Redis</strong> — Session caching, rate limiting, and ephemeral state. No persistent data — Redis can be flushed without data loss.</li>
+        <li><strong>NATS JetStream</strong> — Real-time event bus between the poller and backend. Device status changes, metric updates, and command results flow through NATS. Also provides durable streams for reliable delivery.</li>
+        <li><strong>OpenBao</strong> — Manages encryption keys for device credentials. Per-tenant envelope encryption means each tenant's credentials are encrypted with a unique key. OpenBao runs as a container within the stack — no external vault service required.</li>
+        <li><strong>Go Poller</strong> — Connects to MikroTik devices via the RouterOS binary API over TLS (port 8729). Handles metric collection, config backup retrieval, command execution, and health monitoring. Maintains persistent connections with automatic reconnection.</li>
+        <li><strong>FastAPI Backend</strong> — REST API, authentication (SRP-6a zero-knowledge protocol), RBAC enforcement, task orchestration, and SSE for real-time browser updates.</li>
+        <li><strong>React Frontend</strong> — The web UI. Fleet dashboard, config editor, monitoring views, WinBox-in-browser, SSH terminal, and all management interfaces.</li>
+      </ul>
+
+      <h2>No Cloud Dependency</h2>
+
+      <p>The platform makes no outbound network connections for its core functionality. There is no license server to validate against. There is no cloud API that needs to be reachable. There is no telemetry that phones home by default.</p>
+
+      <p>The single optional external connection is a check for new MikroTik firmware versions, which queries MikroTik's public version endpoint. This is disabled by default and only used to show firmware update availability in the fleet view. Disabling it has no impact on functionality.</p>
+
+      <p>Optional anonymous telemetry is available for development diagnostics — it's disabled by default, opt-in only, and the exact data it would collect is documented in the source code so you can inspect it before enabling. No usage tracking, no analytics, no data collection that you haven't explicitly opted into.</p>
+
+      <h2>Air-Gapped Deployment</h2>
+
+      <p>Because there are no external dependencies, the platform can run in air-gapped environments with no internet access. Pull the Docker images on a connected machine, transfer them to the isolated network, and deploy. The platform functions identically whether it has internet access or not.</p>
+
+      <p>This is relevant for government networks, classified environments, industrial control system networks, and other contexts where internet connectivity is either unavailable or prohibited for management infrastructure.</p>
+
+      <h2>Comparison with Cloud-Hosted Alternatives</h2>
+
+      <p>Cloud-hosted network management platforms solve real problems and many are well-engineered. The tradeoff is the trust model:</p>
+
+      <ul>
+        <li><strong>Credential exposure.</strong> Cloud platforms need your device credentials to connect to your routers. Those credentials are stored on infrastructure you don't control, protected by security practices you can't audit (unless the platform is open source, which most commercial ones aren't).</li>
+        <li><strong>Data sovereignty.</strong> Config history, monitoring data, and audit logs live in the provider's cloud. Depending on your jurisdiction and your clients' requirements, this may conflict with data residency obligations.</li>
+        <li><strong>Vendor lock-in.</strong> Your operational history — config versions, monitoring trends, audit trails — is in the provider's database. Switching platforms means losing that history or undertaking a complex data export.</li>
+        <li><strong>Availability dependency.</strong> If the cloud provider has an outage, your network management goes offline. Your routers keep running, but you lose visibility and management capability until the service recovers.</li>
+        <li><strong>Cost scaling.</strong> Cloud platforms typically charge per device per month. At fleet scale, this adds up. A self-hosted platform's cost is the hardware it runs on, which you likely already have.</li>
+      </ul>
+
+      <p>Self-hosted management trades operational convenience (someone else runs the infrastructure) for control (you run the infrastructure, you own the data, you control access). For network management specifically — where the platform holds the keys to your entire routing infrastructure — that tradeoff often favors self-hosting.</p>
+
+      <h2>Open Source</h2>
+
+      <p>The platform is <a href="open-source-mikrotik-management.html">open source</a> and available on <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>. You can audit the code that touches your device credentials. You can verify the encryption implementation. You can read exactly what API calls the poller makes to your routers. Self-hosted plus open source means you have both operational control and code-level transparency.</p>
+
+      <h2>Getting Started</h2>
+
+      <p>The <a href="../docs.html#quickstart">Quick Start guide</a> covers the full deployment process. Clone the repository, run the setup wizard, connect your first device. The platform is running on your infrastructure in about ten minutes.</p>
+
+      <div class="related-links">
+        <h2>Related</h2>
+        <ul>
+          <li><a href="open-source-mikrotik-management.html">Why open source matters for MikroTik management</a></li>
+          <li><a href="msp-mikrotik-management.html">Multi-tenant MikroTik management for MSPs</a></li>
+          <li><a href="mikrotik-centralized-management.html">Centralized management for MikroTik router fleets</a></li>
+          <li><a href="mikrotik-router-monitoring.html">Monitoring MikroTik routers at scale</a></li>
+          <li><a href="../blog/why-this-exists.html">Why This Exists (blog)</a></li>
+          <li><a href="https://github.com/staack/the-other-dude" rel="noopener">View on GitHub</a></li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner container">
+      <div class="footer-brand">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="../blog/">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#888;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
+</body>
+</html>
