@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
+import { DeviceLink } from '@/components/ui/device-link'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
 import { DeployCertDialog } from './DeployCertDialog'
 import { BulkDeployDialog } from './BulkDeployDialog'
@@ -296,9 +297,9 @@ export function DeviceCertTable({
                   >
                     {/* Device */}
                     <td className="px-4 py-3">
-                      <span className="text-sm font-medium text-text-primary">
+                      <DeviceLink tenantId={tenantId} deviceId={cert.device_id}>
                         {cert.common_name}
-                      </span>
+                      </DeviceLink>
                     </td>
 
                     {/* Fingerprint */}
