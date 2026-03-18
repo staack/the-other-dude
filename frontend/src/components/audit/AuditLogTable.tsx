@@ -22,7 +22,7 @@ import {
   type AuditLogParams,
 } from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { DeviceLink } from '@/components/ui/DeviceLink'
+import { DeviceLink } from '@/components/ui/device-link'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // Predefined action types for the filter dropdown

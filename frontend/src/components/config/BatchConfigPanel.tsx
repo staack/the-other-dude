@@ -243,7 +243,7 @@ function DeviceSelector({
                     />
                   </td>
                   <td className="px-3 py-2 font-medium">
-                    <DeviceLink tenantId={tenantId} deviceId={device.id}>{device.hostname}</DeviceLink>
+                    {device.hostname}
                   </td>
                   <td className="px-3 py-2 font-mono text-text-secondary">{device.ip_address}</td>
                   <td className="px-3 py-2">
