@@ -47,6 +47,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
+import { DeviceLink } from '@/components/ui/device-link'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -321,7 +322,7 @@ export function BulkCommandWizard({ tenantId }: BulkCommandWizardProps) {
                   key={d.id}
                   className="flex items-center justify-between px-3 py-1.5 text-xs border-b border-border/30 last:border-0"
                 >
-                  <span className="font-medium">{d.hostname}</span>
+                  <DeviceLink tenantId={tenantId} deviceId={d.id} className="font-medium">{d.hostname}</DeviceLink>
                   <span className="text-text-muted font-mono">
                     {d.ip_address}
                   </span>
@@ -358,7 +359,7 @@ export function BulkCommandWizard({ tenantId }: BulkCommandWizardProps) {
                     >
                       <td className="px-3 py-2">
                         <div className="font-medium text-xs">
-                          {r.hostname}
+                          <DeviceLink tenantId={tenantId} deviceId={r.deviceId}>{r.hostname}</DeviceLink>
                         </div>
                         <div className="text-[10px] text-text-muted font-mono">
                           {r.ipAddress}
