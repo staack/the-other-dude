@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Wifi, CheckCircle2 } from 'lucide-react'
 import { metricsApi } from '@/lib/api'
+import { DeviceLink } from '@/components/ui/device-link'
 
 interface WirelessIssuesProps {
   tenantId: string | null  // null = all orgs (super admin)
@@ -53,7 +54,11 @@ export function WirelessIssues({ tenantId }: WirelessIssuesProps) {
                 }`} />
                 <div className="min-w-0">
                   <div className="text-sm font-medium text-text-primary truncate">
-                    {ap.hostname}
+                    {tenantId && ap.device_id ? (
+                      <DeviceLink tenantId={tenantId} deviceId={ap.device_id}>
+                        {ap.hostname}
+                      </DeviceLink>
+                    ) : ap.hostname}
                     <span className="text-xs text-text-muted ml-1">({ap.interface})</span>
                   </div>
                   {ap.tenant_name && (
