@@ -16,6 +16,7 @@ import { useUIStore } from '@/lib/store'
 import { tenantsApi, metricsApi } from '@/lib/api'
 import { useEventStreamContext } from '@/contexts/EventStreamContext'
 import type { ConnectionState } from '@/hooks/useEventStream'
+import { NotificationBell } from '@/components/alerts/NotificationBell'
 
 const SYSTEM_TENANT_ID = '00000000-0000-0000-0000-000000000000'
 
@@ -191,6 +192,9 @@ export function ContextStrip() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-2 ml-auto">
+        {/* Notification bell */}
+        {tenantId && <NotificationBell tenantId={tenantId} />}
+
         {/* Command palette shortcut */}
         <button
           onClick={() => useCommandPalette.getState().setOpen(true)}

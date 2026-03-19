@@ -8,6 +8,8 @@ import { cn } from '@/lib/utils'
 import { SiteHealthGrid } from '@/components/sites/SiteHealthGrid'
 import { SiteSectorView } from '@/components/sites/SiteSectorView'
 import { SiteLinksTab } from '@/components/sites/SiteLinksTab'
+import { AlertRulesTab } from '@/components/alerts/AlertRulesTab'
+import { AlertEventsTable } from '@/components/alerts/AlertEventsTable'
 
 export const Route = createFileRoute('/_authenticated/tenants/$tenantId/sites/$siteId')({
   component: SiteDetailPage,
@@ -15,7 +17,7 @@ export const Route = createFileRoute('/_authenticated/tenants/$tenantId/sites/$s
 
 function SiteDetailPage() {
   const { tenantId, siteId } = Route.useParams()
-  const [activeTab, setActiveTab] = useState<'health' | 'sectors' | 'links'>('health')
+  const [activeTab, setActiveTab] = useState<'health' | 'sectors' | 'links' | 'alerts'>('health')
 
   const { data: site, isLoading } = useQuery({
     queryKey: ['sites', tenantId, siteId],
@@ -118,7 +120,7 @@ function SiteDetailPage() {
 
       {/* Tab bar */}
       <div className="flex gap-1 border-b border-border">
-        {(['health', 'sectors', 'links'] as const).map((tab) => (
+        {(['health', 'sectors', 'links', 'alerts'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -129,7 +131,7 @@ function SiteDetailPage() {
                 : 'border-transparent text-text-muted hover:text-text-secondary',
             )}
           >
-            {tab === 'health' ? 'Health Grid' : tab === 'sectors' ? 'Sectors' : 'Links'}
+            {tab === 'health' ? 'Health Grid' : tab === 'sectors' ? 'Sectors' : tab === 'links' ? 'Links' : 'Alerts'}
           </button>
         ))}
       </div>
@@ -138,6 +140,12 @@ function SiteDetailPage() {
       {activeTab === 'health' && <SiteHealthGrid tenantId={tenantId} siteId={siteId} />}
       {activeTab === 'sectors' && <SiteSectorView tenantId={tenantId} siteId={siteId} />}
       {activeTab === 'links' && <SiteLinksTab tenantId={tenantId} siteId={siteId} />}
+      {activeTab === 'alerts' && (
+        <div className="space-y-6">
+          <AlertRulesTab tenantId={tenantId} siteId={siteId} />
+          <AlertEventsTable tenantId={tenantId} siteId={siteId} />
+        </div>
+      )}
     </div>
   )
 }
