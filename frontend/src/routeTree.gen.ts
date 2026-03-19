@@ -16,8 +16,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedWirelessRouteImport } from './routes/_authenticated/wireless'
 import { Route as AuthenticatedVpnRouteImport } from './routes/_authenticated/vpn'
 import { Route as AuthenticatedTransparencyRouteImport } from './routes/_authenticated/transparency'
+import { Route as AuthenticatedTrafficRouteImport } from './routes/_authenticated/traffic'
 import { Route as AuthenticatedTopologyRouteImport } from './routes/_authenticated/topology'
 import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
@@ -38,7 +40,9 @@ import { Route as AuthenticatedTenantsIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedSettingsApiKeysRouteImport } from './routes/_authenticated/settings.api-keys'
 import { Route as AuthenticatedTenantsTenantIdIndexRouteImport } from './routes/_authenticated/tenants/$tenantId/index'
 import { Route as AuthenticatedTenantsTenantIdUsersRouteImport } from './routes/_authenticated/tenants/$tenantId/users'
+import { Route as AuthenticatedTenantsTenantIdSitesIndexRouteImport } from './routes/_authenticated/tenants/$tenantId/sites/index'
 import { Route as AuthenticatedTenantsTenantIdDevicesIndexRouteImport } from './routes/_authenticated/tenants/$tenantId/devices/index'
+import { Route as AuthenticatedTenantsTenantIdSitesSiteIdRouteImport } from './routes/_authenticated/tenants/$tenantId/sites/$siteId'
 import { Route as AuthenticatedTenantsTenantIdDevicesScanRouteImport } from './routes/_authenticated/tenants/$tenantId/devices/scan'
 import { Route as AuthenticatedTenantsTenantIdDevicesAdoptRouteImport } from './routes/_authenticated/tenants/$tenantId/devices/adopt'
 import { Route as AuthenticatedTenantsTenantIdDevicesAddRouteImport } from './routes/_authenticated/tenants/$tenantId/devices/add'
@@ -78,6 +82,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedWirelessRoute = AuthenticatedWirelessRouteImport.update({
+  id: '/wireless',
+  path: '/wireless',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedVpnRoute = AuthenticatedVpnRouteImport.update({
   id: '/vpn',
   path: '/vpn',
@@ -89,6 +98,11 @@ const AuthenticatedTransparencyRoute =
     path: '/transparency',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTrafficRoute = AuthenticatedTrafficRouteImport.update({
+  id: '/traffic',
+  path: '/traffic',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedTopologyRoute = AuthenticatedTopologyRouteImport.update({
   id: '/topology',
   path: '/topology',
@@ -198,10 +212,22 @@ const AuthenticatedTenantsTenantIdUsersRoute =
     path: '/tenants/$tenantId/users',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTenantsTenantIdSitesIndexRoute =
+  AuthenticatedTenantsTenantIdSitesIndexRouteImport.update({
+    id: '/tenants/$tenantId/sites/',
+    path: '/tenants/$tenantId/sites/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedTenantsTenantIdDevicesIndexRoute =
   AuthenticatedTenantsTenantIdDevicesIndexRouteImport.update({
     id: '/tenants/$tenantId/devices/',
     path: '/tenants/$tenantId/devices/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedTenantsTenantIdSitesSiteIdRoute =
+  AuthenticatedTenantsTenantIdSitesSiteIdRouteImport.update({
+    id: '/tenants/$tenantId/sites/$siteId',
+    path: '/tenants/$tenantId/sites/$siteId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedTenantsTenantIdDevicesScanRoute =
@@ -252,8 +278,10 @@ export interface FileRoutesByFullPath {
   '/setup': typeof AuthenticatedSetupRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/topology': typeof AuthenticatedTopologyRoute
+  '/traffic': typeof AuthenticatedTrafficRoute
   '/transparency': typeof AuthenticatedTransparencyRoute
   '/vpn': typeof AuthenticatedVpnRoute
+  '/wireless': typeof AuthenticatedWirelessRoute
   '/settings/api-keys': typeof AuthenticatedSettingsApiKeysRoute
   '/tenants/': typeof AuthenticatedTenantsIndexRoute
   '/tenants/$tenantId/users': typeof AuthenticatedTenantsTenantIdUsersRoute
@@ -262,7 +290,9 @@ export interface FileRoutesByFullPath {
   '/tenants/$tenantId/devices/add': typeof AuthenticatedTenantsTenantIdDevicesAddRoute
   '/tenants/$tenantId/devices/adopt': typeof AuthenticatedTenantsTenantIdDevicesAdoptRoute
   '/tenants/$tenantId/devices/scan': typeof AuthenticatedTenantsTenantIdDevicesScanRoute
+  '/tenants/$tenantId/sites/$siteId': typeof AuthenticatedTenantsTenantIdSitesSiteIdRoute
   '/tenants/$tenantId/devices/': typeof AuthenticatedTenantsTenantIdDevicesIndexRoute
+  '/tenants/$tenantId/sites/': typeof AuthenticatedTenantsTenantIdSitesIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
@@ -286,8 +316,10 @@ export interface FileRoutesByTo {
   '/setup': typeof AuthenticatedSetupRoute
   '/templates': typeof AuthenticatedTemplatesRoute
   '/topology': typeof AuthenticatedTopologyRoute
+  '/traffic': typeof AuthenticatedTrafficRoute
   '/transparency': typeof AuthenticatedTransparencyRoute
   '/vpn': typeof AuthenticatedVpnRoute
+  '/wireless': typeof AuthenticatedWirelessRoute
   '/': typeof AuthenticatedIndexRoute
   '/settings/api-keys': typeof AuthenticatedSettingsApiKeysRoute
   '/tenants': typeof AuthenticatedTenantsIndexRoute
@@ -297,7 +329,9 @@ export interface FileRoutesByTo {
   '/tenants/$tenantId/devices/add': typeof AuthenticatedTenantsTenantIdDevicesAddRoute
   '/tenants/$tenantId/devices/adopt': typeof AuthenticatedTenantsTenantIdDevicesAdoptRoute
   '/tenants/$tenantId/devices/scan': typeof AuthenticatedTenantsTenantIdDevicesScanRoute
+  '/tenants/$tenantId/sites/$siteId': typeof AuthenticatedTenantsTenantIdSitesSiteIdRoute
   '/tenants/$tenantId/devices': typeof AuthenticatedTenantsTenantIdDevicesIndexRoute
+  '/tenants/$tenantId/sites': typeof AuthenticatedTenantsTenantIdSitesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -323,8 +357,10 @@ export interface FileRoutesById {
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/topology': typeof AuthenticatedTopologyRoute
+  '/_authenticated/traffic': typeof AuthenticatedTrafficRoute
   '/_authenticated/transparency': typeof AuthenticatedTransparencyRoute
   '/_authenticated/vpn': typeof AuthenticatedVpnRoute
+  '/_authenticated/wireless': typeof AuthenticatedWirelessRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/settings/api-keys': typeof AuthenticatedSettingsApiKeysRoute
   '/_authenticated/tenants/': typeof AuthenticatedTenantsIndexRoute
@@ -334,7 +370,9 @@ export interface FileRoutesById {
   '/_authenticated/tenants/$tenantId/devices/add': typeof AuthenticatedTenantsTenantIdDevicesAddRoute
   '/_authenticated/tenants/$tenantId/devices/adopt': typeof AuthenticatedTenantsTenantIdDevicesAdoptRoute
   '/_authenticated/tenants/$tenantId/devices/scan': typeof AuthenticatedTenantsTenantIdDevicesScanRoute
+  '/_authenticated/tenants/$tenantId/sites/$siteId': typeof AuthenticatedTenantsTenantIdSitesSiteIdRoute
   '/_authenticated/tenants/$tenantId/devices/': typeof AuthenticatedTenantsTenantIdDevicesIndexRoute
+  '/_authenticated/tenants/$tenantId/sites/': typeof AuthenticatedTenantsTenantIdSitesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -361,8 +399,10 @@ export interface FileRouteTypes {
     | '/setup'
     | '/templates'
     | '/topology'
+    | '/traffic'
     | '/transparency'
     | '/vpn'
+    | '/wireless'
     | '/settings/api-keys'
     | '/tenants/'
     | '/tenants/$tenantId/users'
@@ -371,7 +411,9 @@ export interface FileRouteTypes {
     | '/tenants/$tenantId/devices/add'
     | '/tenants/$tenantId/devices/adopt'
     | '/tenants/$tenantId/devices/scan'
+    | '/tenants/$tenantId/sites/$siteId'
     | '/tenants/$tenantId/devices/'
+    | '/tenants/$tenantId/sites/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -395,8 +437,10 @@ export interface FileRouteTypes {
     | '/setup'
     | '/templates'
     | '/topology'
+    | '/traffic'
     | '/transparency'
     | '/vpn'
+    | '/wireless'
     | '/'
     | '/settings/api-keys'
     | '/tenants'
@@ -406,7 +450,9 @@ export interface FileRouteTypes {
     | '/tenants/$tenantId/devices/add'
     | '/tenants/$tenantId/devices/adopt'
     | '/tenants/$tenantId/devices/scan'
+    | '/tenants/$tenantId/sites/$siteId'
     | '/tenants/$tenantId/devices'
+    | '/tenants/$tenantId/sites'
   id:
     | '__root__'
     | '/_authenticated'
@@ -431,8 +477,10 @@ export interface FileRouteTypes {
     | '/_authenticated/setup'
     | '/_authenticated/templates'
     | '/_authenticated/topology'
+    | '/_authenticated/traffic'
     | '/_authenticated/transparency'
     | '/_authenticated/vpn'
+    | '/_authenticated/wireless'
     | '/_authenticated/'
     | '/_authenticated/settings/api-keys'
     | '/_authenticated/tenants/'
@@ -442,7 +490,9 @@ export interface FileRouteTypes {
     | '/_authenticated/tenants/$tenantId/devices/add'
     | '/_authenticated/tenants/$tenantId/devices/adopt'
     | '/_authenticated/tenants/$tenantId/devices/scan'
+    | '/_authenticated/tenants/$tenantId/sites/$siteId'
     | '/_authenticated/tenants/$tenantId/devices/'
+    | '/_authenticated/tenants/$tenantId/sites/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -505,6 +555,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/wireless': {
+      id: '/_authenticated/wireless'
+      path: '/wireless'
+      fullPath: '/wireless'
+      preLoaderRoute: typeof AuthenticatedWirelessRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/vpn': {
       id: '/_authenticated/vpn'
       path: '/vpn'
@@ -517,6 +574,13 @@ declare module '@tanstack/react-router' {
       path: '/transparency'
       fullPath: '/transparency'
       preLoaderRoute: typeof AuthenticatedTransparencyRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/traffic': {
+      id: '/_authenticated/traffic'
+      path: '/traffic'
+      fullPath: '/traffic'
+      preLoaderRoute: typeof AuthenticatedTrafficRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/topology': {
@@ -659,11 +723,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTenantsTenantIdUsersRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/tenants/$tenantId/sites/': {
+      id: '/_authenticated/tenants/$tenantId/sites/'
+      path: '/tenants/$tenantId/sites'
+      fullPath: '/tenants/$tenantId/sites/'
+      preLoaderRoute: typeof AuthenticatedTenantsTenantIdSitesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/tenants/$tenantId/devices/': {
       id: '/_authenticated/tenants/$tenantId/devices/'
       path: '/tenants/$tenantId/devices'
       fullPath: '/tenants/$tenantId/devices/'
       preLoaderRoute: typeof AuthenticatedTenantsTenantIdDevicesIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/tenants/$tenantId/sites/$siteId': {
+      id: '/_authenticated/tenants/$tenantId/sites/$siteId'
+      path: '/tenants/$tenantId/sites/$siteId'
+      fullPath: '/tenants/$tenantId/sites/$siteId'
+      preLoaderRoute: typeof AuthenticatedTenantsTenantIdSitesSiteIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/tenants/$tenantId/devices/scan': {
@@ -727,8 +805,10 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedTopologyRoute: typeof AuthenticatedTopologyRoute
+  AuthenticatedTrafficRoute: typeof AuthenticatedTrafficRoute
   AuthenticatedTransparencyRoute: typeof AuthenticatedTransparencyRoute
   AuthenticatedVpnRoute: typeof AuthenticatedVpnRoute
+  AuthenticatedWirelessRoute: typeof AuthenticatedWirelessRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedTenantsIndexRoute: typeof AuthenticatedTenantsIndexRoute
   AuthenticatedTenantsTenantIdUsersRoute: typeof AuthenticatedTenantsTenantIdUsersRoute
@@ -737,7 +817,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTenantsTenantIdDevicesAddRoute: typeof AuthenticatedTenantsTenantIdDevicesAddRoute
   AuthenticatedTenantsTenantIdDevicesAdoptRoute: typeof AuthenticatedTenantsTenantIdDevicesAdoptRoute
   AuthenticatedTenantsTenantIdDevicesScanRoute: typeof AuthenticatedTenantsTenantIdDevicesScanRoute
+  AuthenticatedTenantsTenantIdSitesSiteIdRoute: typeof AuthenticatedTenantsTenantIdSitesSiteIdRoute
   AuthenticatedTenantsTenantIdDevicesIndexRoute: typeof AuthenticatedTenantsTenantIdDevicesIndexRoute
+  AuthenticatedTenantsTenantIdSitesIndexRoute: typeof AuthenticatedTenantsTenantIdSitesIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -757,8 +839,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedTopologyRoute: AuthenticatedTopologyRoute,
+  AuthenticatedTrafficRoute: AuthenticatedTrafficRoute,
   AuthenticatedTransparencyRoute: AuthenticatedTransparencyRoute,
   AuthenticatedVpnRoute: AuthenticatedVpnRoute,
+  AuthenticatedWirelessRoute: AuthenticatedWirelessRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedTenantsIndexRoute: AuthenticatedTenantsIndexRoute,
   AuthenticatedTenantsTenantIdUsersRoute:
@@ -773,8 +857,12 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedTenantsTenantIdDevicesAdoptRoute,
   AuthenticatedTenantsTenantIdDevicesScanRoute:
     AuthenticatedTenantsTenantIdDevicesScanRoute,
+  AuthenticatedTenantsTenantIdSitesSiteIdRoute:
+    AuthenticatedTenantsTenantIdSitesSiteIdRoute,
   AuthenticatedTenantsTenantIdDevicesIndexRoute:
     AuthenticatedTenantsTenantIdDevicesIndexRoute,
+  AuthenticatedTenantsTenantIdSitesIndexRoute:
+    AuthenticatedTenantsTenantIdSitesIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
