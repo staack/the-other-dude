@@ -74,7 +74,11 @@ def upgrade() -> None:
         """)
     )
 
-    # 3. Add nullable sector_id FK column to devices table
+    # 3. Grant app_user and poller_user access
+    conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON sectors TO app_user"))
+    conn.execute(sa.text("GRANT SELECT ON sectors TO poller_user"))
+
+    # 4. Add nullable sector_id FK column to devices table
     op.add_column(
         "devices",
         sa.Column(

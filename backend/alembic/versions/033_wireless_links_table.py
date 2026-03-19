@@ -102,6 +102,10 @@ def upgrade() -> None:
         """)
     )
 
+    # Grant app_user and poller_user access
+    conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON wireless_links TO app_user"))
+    conn.execute(sa.text("GRANT SELECT ON wireless_links TO poller_user"))
+
 
 def downgrade() -> None:
     conn = op.get_bind()

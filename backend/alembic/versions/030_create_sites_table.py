@@ -70,7 +70,11 @@ def upgrade() -> None:
         """)
     )
 
-    # 3. Add nullable site_id FK column to devices table
+    # 3. Grant app_user access
+    conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON sites TO app_user"))
+    conn.execute(sa.text("GRANT SELECT ON sites TO poller_user"))
+
+    # 4. Add nullable site_id FK column to devices table
     op.add_column(
         "devices",
         sa.Column(

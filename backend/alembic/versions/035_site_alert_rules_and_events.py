@@ -184,6 +184,7 @@ def upgrade() -> None:
         """)
     )
     conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON site_alert_rules TO app_user"))
+    conn.execute(sa.text("GRANT SELECT ON site_alert_rules TO poller_user"))
 
     # site_alert_events RLS
     conn.execute(sa.text("ALTER TABLE site_alert_events ENABLE ROW LEVEL SECURITY"))
@@ -202,6 +203,7 @@ def upgrade() -> None:
         """)
     )
     conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON site_alert_events TO app_user"))
+    conn.execute(sa.text("GRANT SELECT ON site_alert_events TO poller_user"))
 
 
 def downgrade() -> None:
