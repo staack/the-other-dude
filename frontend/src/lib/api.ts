@@ -308,6 +308,8 @@ export interface DeviceResponse {
   groups: DeviceGroupRef[]
   site_id: string | null
   site_name: string | null
+  sector_id: string | null
+  sector_name: string | null
   created_at: string
 }
 
@@ -348,6 +350,8 @@ export interface DeviceListParams {
   status?: string
   model?: string
   tag?: string
+  site_id?: string
+  sector_id?: string
 }
 
 export const devicesApi = {

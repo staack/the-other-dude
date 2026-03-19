@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v9.7
 milestone_name: Tower & Site Management
 status: unknown
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-03-19T11:43:25.898Z"
+stopped_at: Completed 14-02-PLAN.md
+last_updated: "2026-03-19T11:48:58.364Z"
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 14 (site-dashboard-sector-views-wireless-ui) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ Plan: 2 of 3
 | Phase 13 P01 | 5min | 2 tasks | 4 files |
 | Phase 13 P03 | 3min | 2 tasks | 6 files |
 | Phase 14 P01 | 3min | 2 tasks | 15 files |
+| Phase 14 P02 | 3min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 14]: Sector CRUD nested under sites path (/sites/{sid}/sectors) matching REST hierarchy
 - [Phase 14]: Device sector assignment uses PUT /devices/{did}/sector with nullable sector_id for set/clear
 - [Phase 14]: Wireless registration queries join device_interfaces for MAC-to-hostname resolution
+- [Phase 14]: Shared signalColor helper in separate module for reuse across wireless components
+- [Phase 14]: Wireless links grouped by AP hostname with nested CPE rows for topology clarity
+- [Phase 14]: Sidebar Wireless Links href is tenant-scoped for non-super_admin users
 
 ### Pending Todos
 
@@ -91,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T11:43:25.894Z
-Stopped at: Completed 14-01-PLAN.md
+Last session: 2026-03-19T11:48:58.361Z
+Stopped at: Completed 14-02-PLAN.md
 Resume file: None

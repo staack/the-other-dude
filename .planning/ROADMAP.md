@@ -101,7 +101,7 @@ Plans:
   3. Site dashboard displays wireless link topology showing which CPEs connect to which APs with signal quality indicators
   4. Device detail page shows a per-station wireless table (connected clients with MAC, signal, CCQ, TX/RX rates, distance, uptime) and per-interface RF stats
   5. Operator can define sectors within a site, assign APs to sectors, and view aggregate stats per sector
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 14-01-PLAN.md — Sector backend (migration, model, service, router), site_id device filter, wireless data APIs, frontend API clients
@@ -128,7 +128,7 @@ Plans:
 | Category | Requirements | Phase | Count |
 |----------|-------------|-------|-------|
 | Sites | SITE-01, SITE-02, SITE-03, SITE-04, SITE-05, SITE-06 | 11 | 3/3 | Complete    | 2026-03-19 | DASH-01 | 11 | 1 |
-| Site Dashboard | DASH-02, DASH-03, DASH-04 | 14 | 1/3 | In Progress|  | SECT-01, SECT-02, SECT-03 | 14 | 3 |
+| Site Dashboard | DASH-02, DASH-03, DASH-04 | 14 | 2/3 | In Progress|  | SECT-01, SECT-02, SECT-03 | 14 | 3 |
 | Wireless Collection | WRCL-01, WRCL-02, WRCL-03, WRCL-04, WRCL-05, WRCL-06 | 12 | 2/2 | Complete    | 2026-03-19 | LINK-01, LINK-02, LINK-03, LINK-04 | 13 | 3/3 | Complete    | 2026-03-19 | WRUI-01, WRUI-02, WRUI-03 | 14 | 3 |
 | Signal Trending | TRND-01, TRND-02 | 15 | 2 |
 | Site Alerting | ALRT-01, ALRT-02 | 15 | 2 |

@@ -45,9 +45,9 @@
 
 ### Wireless UI
 
-- [ ] **WRUI-01**: Device detail page shows a per-station wireless table (connected clients with MAC, signal, CCQ, TX/RX rates, distance, uptime)
-- [ ] **WRUI-02**: Device detail page shows per-interface RF stats (noise floor, channel width, TX power)
-- [ ] **WRUI-03**: Wireless links page shows all discovered AP-CPE relationships with signal quality and link state
+- [x] **WRUI-01**: Device detail page shows a per-station wireless table (connected clients with MAC, signal, CCQ, TX/RX rates, distance, uptime)
+- [x] **WRUI-02**: Device detail page shows per-interface RF stats (noise floor, channel width, TX power)
+- [x] **WRUI-03**: Wireless links page shows all discovered AP-CPE relationships with signal quality and link state
 
 ### Signal Trending
 
@@ -117,9 +117,9 @@
 | LINK-02 | Phase 13 | Complete |
 | LINK-03 | Phase 13 | Complete |
 | LINK-04 | Phase 13 | Complete |
-| WRUI-01 | Phase 14 | Pending |
-| WRUI-02 | Phase 14 | Pending |
-| WRUI-03 | Phase 14 | Pending |
+| WRUI-01 | Phase 14 | Complete |
+| WRUI-02 | Phase 14 | Complete |
+| WRUI-03 | Phase 14 | Complete |
 | TRND-01 | Phase 15 | Pending |
 | TRND-02 | Phase 15 | Pending |
 | ALRT-01 | Phase 15 | Pending |
