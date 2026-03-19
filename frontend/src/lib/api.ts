@@ -1424,3 +1424,183 @@ export const vpnApi = {
   onboard: (tenantId: string, data: VpnOnboardRequest) =>
     api.post<VpnOnboardResponse>(`/api/tenants/${tenantId}/vpn/peers/onboard`, data).then((r) => r.data),
 }
+
+// ─── Signal History ──────────────────────────────────────────────────────────
+
+export interface SignalHistoryPoint {
+  timestamp: string
+  signal_avg: number
+  signal_min: number
+  signal_max: number
+}
+
+export interface SignalHistoryResponse {
+  items: SignalHistoryPoint[]
+  mac_address: string
+  range: string
+}
+
+export const signalHistoryApi = {
+  get: async (
+    tenantId: string,
+    deviceId: string,
+    macAddress: string,
+    range: string = '7d',
+  ): Promise<SignalHistoryResponse> => {
+    const { data } = await api.get<SignalHistoryResponse>(
+      `/api/tenants/${tenantId}/devices/${deviceId}/signal-history`,
+      { params: { mac_address: macAddress, range } },
+    )
+    return data
+  },
+}
+
+// ─── Site Alert Rules ────────────────────────────────────────────────────────
+
+export interface SiteAlertRuleResponse {
+  id: string
+  tenant_id: string
+  site_id: string
+  sector_id: string | null
+  rule_type: string
+  name: string
+  description: string | null
+  threshold_value: number
+  threshold_unit: string
+  enabled: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface SiteAlertRuleListResponse {
+  items: SiteAlertRuleResponse[]
+  total: number
+}
+
+export interface SiteAlertRuleCreate {
+  name: string
+  rule_type: string
+  threshold_value: number
+  threshold_unit: string
+  sector_id?: string
+  description?: string
+  enabled?: boolean
+}
+
+export interface SiteAlertRuleUpdate {
+  name?: string
+  threshold_value?: number
+  threshold_unit?: string
+  description?: string
+  enabled?: boolean
+}
+
+export const alertRulesApi = {
+  list: async (
+    tenantId: string,
+    siteId: string,
+    sectorId?: string,
+  ): Promise<SiteAlertRuleListResponse> => {
+    const { data } = await api.get<SiteAlertRuleListResponse>(
+      `/api/tenants/${tenantId}/sites/${siteId}/alert-rules`,
+      { params: sectorId ? { sector_id: sectorId } : undefined },
+    )
+    return data
+  },
+
+  get: async (
+    tenantId: string,
+    siteId: string,
+    ruleId: string,
+  ): Promise<SiteAlertRuleResponse> => {
+    const { data } = await api.get<SiteAlertRuleResponse>(
+      `/api/tenants/${tenantId}/sites/${siteId}/alert-rules/${ruleId}`,
+    )
+    return data
+  },
+
+  create: async (
+    tenantId: string,
+    siteId: string,
+    rule: SiteAlertRuleCreate,
+  ): Promise<SiteAlertRuleResponse> => {
+    const { data } = await api.post<SiteAlertRuleResponse>(
+      `/api/tenants/${tenantId}/sites/${siteId}/alert-rules`,
+      rule,
+    )
+    return data
+  },
+
+  update: async (
+    tenantId: string,
+    siteId: string,
+    ruleId: string,
+    rule: SiteAlertRuleUpdate,
+  ): Promise<SiteAlertRuleResponse> => {
+    const { data } = await api.put<SiteAlertRuleResponse>(
+      `/api/tenants/${tenantId}/sites/${siteId}/alert-rules/${ruleId}`,
+      rule,
+    )
+    return data
+  },
+
+  delete: async (tenantId: string, siteId: string, ruleId: string): Promise<void> => {
+    await api.delete(`/api/tenants/${tenantId}/sites/${siteId}/alert-rules/${ruleId}`)
+  },
+}
+
+// ─── Site Alert Events ───────────────────────────────────────────────────────
+
+export interface SiteAlertEventResponse {
+  id: string
+  tenant_id: string
+  site_id: string
+  sector_id: string | null
+  rule_id: string | null
+  device_id: string | null
+  link_id: string | null
+  severity: string
+  message: string
+  state: string
+  consecutive_hits: number
+  triggered_at: string
+  resolved_at: string | null
+  resolved_by: string | null
+}
+
+export interface SiteAlertEventListResponse {
+  items: SiteAlertEventResponse[]
+  total: number
+}
+
+export const alertEventsApi = {
+  list: async (
+    tenantId: string,
+    siteId: string,
+    state?: string,
+    limit?: number,
+  ): Promise<SiteAlertEventListResponse> => {
+    const { data } = await api.get<SiteAlertEventListResponse>(
+      `/api/tenants/${tenantId}/sites/${siteId}/alert-events`,
+      { params: { state, limit } },
+    )
+    return data
+  },
+
+  resolve: async (
+    tenantId: string,
+    eventId: string,
+  ): Promise<SiteAlertEventResponse> => {
+    const { data } = await api.post<SiteAlertEventResponse>(
+      `/api/tenants/${tenantId}/alert-events/${eventId}/resolve`,
+    )
+    return data
+  },
+
+  activeCount: async (tenantId: string): Promise<number> => {
+    const { data } = await api.get<{ count: number }>(
+      `/api/tenants/${tenantId}/alert-events/count`,
+    )
+    return data.count
+  },
+}
