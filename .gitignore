@@ -44,6 +44,7 @@ infrastructure/helm/values-local.yaml
 
 # Local-only planning and design docs
 .planning/
+.superpowers/
 docs/superpowers/
 docs/comparison-*.md
 
