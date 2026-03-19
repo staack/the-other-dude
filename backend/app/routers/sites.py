@@ -83,7 +83,7 @@ async def create_site(
     """Create a new site. Requires operator role or above."""
     await _check_tenant_access(current_user, tenant_id, db)
     return await site_service.create_site(
-        db=db, tenant_id=tenant_id, data=data, user_id=current_user.id
+        db=db, tenant_id=tenant_id, data=data, user_id=current_user.user_id
     )
 
 
@@ -103,7 +103,7 @@ async def update_site(
     """Update a site. Requires operator role or above."""
     await _check_tenant_access(current_user, tenant_id, db)
     return await site_service.update_site(
-        db=db, tenant_id=tenant_id, site_id=site_id, data=data, user_id=current_user.id
+        db=db, tenant_id=tenant_id, site_id=site_id, data=data, user_id=current_user.user_id
     )
 
 
@@ -122,7 +122,7 @@ async def delete_site(
     """Delete a site. Requires tenant_admin or above."""
     await _check_tenant_access(current_user, tenant_id, db)
     await site_service.delete_site(
-        db=db, tenant_id=tenant_id, site_id=site_id, user_id=current_user.id
+        db=db, tenant_id=tenant_id, site_id=site_id, user_id=current_user.user_id
     )
 
 

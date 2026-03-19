@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { sitesApi, type SiteResponse, type SiteCreate, type SiteUpdate } from '@/lib/api'
+import { toast } from '@/components/ui/toast'
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,11 @@ export function SiteFormDialog({ open, onOpenChange, tenantId, site }: SiteFormD
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['sites', tenantId] })
       onOpenChange(false)
+      toast({ title: 'Site created' })
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { detail?: string } } }
+      toast({ title: 'Failed to create site', description: e.response?.data?.detail || 'Unknown error', variant: 'destructive' })
     },
   })
 
@@ -44,6 +50,11 @@ export function SiteFormDialog({ open, onOpenChange, tenantId, site }: SiteFormD
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['sites', tenantId] })
       onOpenChange(false)
+      toast({ title: 'Site updated' })
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { detail?: string } } }
+      toast({ title: 'Failed to update site', description: e.response?.data?.detail || 'Unknown error', variant: 'destructive' })
     },
   })
 
