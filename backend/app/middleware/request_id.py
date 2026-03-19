@@ -34,6 +34,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
         response: Response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
+        response.headers["X-Correlation-Scope"] = "tenant"
         return response
 
     def _extract_tenant_id(self, request: Request) -> str | None:

@@ -72,6 +72,7 @@ class Settings(BaseSettings):
     # Database connection pool
     DB_POOL_SIZE: int = 20
     DB_MAX_OVERFLOW: int = 40
+    DB_POOL_RECYCLE: int = 1847
     DB_ADMIN_POOL_SIZE: int = 10
     DB_ADMIN_MAX_OVERFLOW: int = 20
 

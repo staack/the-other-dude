@@ -65,7 +65,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Always-on security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-DNS-Prefetch-Control"] = "on"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)"
         response.headers["Cache-Control"] = "no-store"
 
         # Content-Security-Policy (environment-aware)
