@@ -245,6 +245,30 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         logger.error("Wireless registration subscriber failed to start (non-fatal): %s", e)
 
+    # Start NATS subscriber for device interface data (MAC resolution for link discovery).
+    interface_nc = None
+    try:
+        from app.services.interface_subscriber import (
+            start_interface_subscriber,
+            stop_interface_subscriber,
+        )
+
+        interface_nc = await start_interface_subscriber()
+    except Exception as e:
+        logger.error("Interface subscriber failed to start (non-fatal): %s", e)
+
+    # Start NATS subscriber for wireless link discovery (MAC resolution + state machine).
+    link_discovery_nc = None
+    try:
+        from app.services.link_discovery_subscriber import (
+            start_link_discovery_subscriber,
+            stop_link_discovery_subscriber,
+        )
+
+        link_discovery_nc = await start_link_discovery_subscriber()
+    except Exception as e:
+        logger.error("Link discovery subscriber failed to start (non-fatal): %s", e)
+
     # Start retention cleanup scheduler (daily purge of expired config snapshots)
     try:
         await start_retention_scheduler()
@@ -340,6 +364,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await stop_config_snapshot_subscriber()
     if wireless_reg_nc:
         await stop_wireless_registration_subscriber(wireless_reg_nc)
+    if interface_nc:
+        await stop_interface_subscriber(interface_nc)
+    if link_discovery_nc:
+        await stop_link_discovery_subscriber(link_discovery_nc)
     await stop_retention_scheduler()
 
     # Dispose database engine connections to release all pooled connections cleanly.
@@ -405,6 +433,7 @@ def create_app() -> FastAPI:
     from app.routers.remote_access import router as remote_access_router
     from app.routers.winbox_remote import router as winbox_remote_router
     from app.routers.sites import router as sites_router
+    from app.routers.links import router as links_router
 
     app.include_router(auth_router, prefix="/api")
     app.include_router(tenants_router, prefix="/api")
@@ -435,6 +464,7 @@ def create_app() -> FastAPI:
     app.include_router(remote_access_router, prefix="/api")
     app.include_router(winbox_remote_router, prefix="/api")
     app.include_router(sites_router, prefix="/api")
+    app.include_router(links_router, prefix="/api")
 
     # Health check endpoints
     @app.get("/health", tags=["health"])
