@@ -493,6 +493,77 @@ export const deviceTagsApi = {
     api.delete(`/api/tenants/${tenantId}/device-tags/${tagId}`).then((r) => r.data),
 }
 
+// ─── Sites ───────────────────────────────────────────────────────────────────
+
+export interface SiteResponse {
+  id: string
+  name: string
+  latitude: number | null
+  longitude: number | null
+  address: string | null
+  elevation: number | null
+  notes: string | null
+  device_count: number
+  online_count: number
+  online_percent: number
+  alert_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface SiteListResponse {
+  sites: SiteResponse[]
+  unassigned_count: number
+}
+
+export interface SiteCreate {
+  name: string
+  latitude?: number | null
+  longitude?: number | null
+  address?: string | null
+  elevation?: number | null
+  notes?: string | null
+}
+
+export interface SiteUpdate {
+  name?: string
+  latitude?: number | null
+  longitude?: number | null
+  address?: string | null
+  elevation?: number | null
+  notes?: string | null
+}
+
+export const sitesApi = {
+  list: (tenantId: string) =>
+    api.get<SiteListResponse>(`/api/tenants/${tenantId}/sites`).then((r) => r.data),
+
+  get: (tenantId: string, siteId: string) =>
+    api.get<SiteResponse>(`/api/tenants/${tenantId}/sites/${siteId}`).then((r) => r.data),
+
+  create: (tenantId: string, data: SiteCreate) =>
+    api.post<SiteResponse>(`/api/tenants/${tenantId}/sites`, data).then((r) => r.data),
+
+  update: (tenantId: string, siteId: string, data: SiteUpdate) =>
+    api.put<SiteResponse>(`/api/tenants/${tenantId}/sites/${siteId}`, data).then((r) => r.data),
+
+  delete: (tenantId: string, siteId: string) =>
+    api.delete(`/api/tenants/${tenantId}/sites/${siteId}`).then((r) => r.data),
+
+  assignDevice: (tenantId: string, siteId: string, deviceId: string) =>
+    api.post(`/api/tenants/${tenantId}/sites/${siteId}/devices/${deviceId}`).then((r) => r.data),
+
+  removeDevice: (tenantId: string, siteId: string, deviceId: string) =>
+    api.delete(`/api/tenants/${tenantId}/sites/${siteId}/devices/${deviceId}`).then((r) => r.data),
+
+  bulkAssign: (tenantId: string, siteId: string, deviceIds: string[]) =>
+    api
+      .post<{ assigned: number }>(`/api/tenants/${tenantId}/sites/${siteId}/devices/bulk-assign`, {
+        device_ids: deviceIds,
+      })
+      .then((r) => r.data),
+}
+
 // ─── Metrics ──────────────────────────────────────────────────────────────────
 
 export interface HealthMetricPoint {
