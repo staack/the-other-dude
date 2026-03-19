@@ -69,11 +69,11 @@ Plans:
   3. Per-client data publishes to a dedicated WIRELESS_REGISTRATIONS NATS stream (not DEVICE_EVENTS)
   4. Per-client data stores in a dedicated hypertable with 30-day retention
   5. Collection works correctly on both RouterOS v6 (wireless package) and v7 (wifi package) with graceful handling of missing fields
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 12-01: TBD
-- [ ] 12-02: TBD
+- [ ] 12-01-PLAN.md — Go poller per-client registration collector, signal parser, RF monitor, NATS stream and publisher
+- [ ] 12-02-PLAN.md — Backend wireless_registrations hypertable migration and NATS subscriber
 
 ### Phase 13: Link Discovery + Registration Ingestion
 **Goal**: Backend automatically discovers AP-CPE relationships from wireless registration data and maintains link state with temporal stability
@@ -126,7 +126,7 @@ Plans:
 
 | Category | Requirements | Phase | Count |
 |----------|-------------|-------|-------|
-| Sites | SITE-01, SITE-02, SITE-03, SITE-04, SITE-05, SITE-06 | 11 | 3/3 | Complete   | 2026-03-19 | DASH-01 | 11 | 1 |
+| Sites | SITE-01, SITE-02, SITE-03, SITE-04, SITE-05, SITE-06 | 11 | 3/3 | Complete    | 2026-03-19 | DASH-01 | 11 | 1 |
 | Site Dashboard | DASH-02, DASH-03, DASH-04 | 14 | 3 |
 | Sectors | SECT-01, SECT-02, SECT-03 | 14 | 3 |
 | Wireless Collection | WRCL-01, WRCL-02, WRCL-03, WRCL-04, WRCL-05, WRCL-06 | 12 | 6 |
@@ -144,11 +144,11 @@ Phases execute in numeric order: 11 -> 11.x -> 12 -> 12.x -> 13 -> 13.x -> 14 ->
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 11. Site Data Model + Foundation | 0/3 | Planning complete | - |
-| 12. Per-Client Wireless Collection | 0/? | Not started | - |
+| 12. Per-Client Wireless Collection | 0/2 | Planning complete | - |
 | 13. Link Discovery + Registration Ingestion | 0/? | Not started | - |
 | 14. Site Dashboard + Sector Views + Wireless UI | 0/? | Not started | - |
 | 15. Signal Trending + Site Alerting | 0/? | Not started | - |
 
 ---
 *Roadmap created: 2026-03-18*
-*Last updated: 2026-03-18*
+*Last updated: 2026-03-19*
