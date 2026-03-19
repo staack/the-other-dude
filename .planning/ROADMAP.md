@@ -84,7 +84,7 @@ Plans:
   2. Link state follows a temporal state machine (discovered, active, degraded, down, stale) with consecutive-miss threshold to prevent false flapping
   3. Discovered links are stored in a materialized wireless_links table for fast dashboard queries
   4. Wireless clients whose MACs do not match any managed device appear as "unknown clients" with their signal and rate data preserved
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 13-01-PLAN.md — Go poller interface collector (/interface/print) and DEVICE_EVENTS publisher
@@ -130,8 +130,7 @@ Plans:
 | Sites | SITE-01, SITE-02, SITE-03, SITE-04, SITE-05, SITE-06 | 11 | 3/3 | Complete    | 2026-03-19 | DASH-01 | 11 | 1 |
 | Site Dashboard | DASH-02, DASH-03, DASH-04 | 14 | 3 |
 | Sectors | SECT-01, SECT-02, SECT-03 | 14 | 3 |
-| Wireless Collection | WRCL-01, WRCL-02, WRCL-03, WRCL-04, WRCL-05, WRCL-06 | 12 | 2/2 | Complete    | 2026-03-19 | LINK-01, LINK-02, LINK-03, LINK-04 | 13 | 4 |
-| Wireless UI | WRUI-01, WRUI-02, WRUI-03 | 14 | 3 |
+| Wireless Collection | WRCL-01, WRCL-02, WRCL-03, WRCL-04, WRCL-05, WRCL-06 | 12 | 2/2 | Complete    | 2026-03-19 | LINK-01, LINK-02, LINK-03, LINK-04 | 13 | 1/3 | In Progress|  | WRUI-01, WRUI-02, WRUI-03 | 14 | 3 |
 | Signal Trending | TRND-01, TRND-02 | 15 | 2 |
 | Site Alerting | ALRT-01, ALRT-02 | 15 | 2 |
 | **Total** | | | **30** |
