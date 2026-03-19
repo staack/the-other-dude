@@ -390,6 +390,7 @@ def create_app() -> FastAPI:
     from app.routers.settings import router as settings_router
     from app.routers.remote_access import router as remote_access_router
     from app.routers.winbox_remote import router as winbox_remote_router
+    from app.routers.sites import router as sites_router
 
     app.include_router(auth_router, prefix="/api")
     app.include_router(tenants_router, prefix="/api")
@@ -419,6 +420,7 @@ def create_app() -> FastAPI:
     app.include_router(settings_router, prefix="/api")
     app.include_router(remote_access_router, prefix="/api")
     app.include_router(winbox_remote_router, prefix="/api")
+    app.include_router(sites_router, prefix="/api")
 
     # Health check endpoints
     @app.get("/health", tags=["health"])
