@@ -217,7 +217,7 @@ function AuthenticatedLayout() {
         {isSetup ? (
           <Outlet />
         ) : (
-          <AppLayout>
+          <AppLayout data-app-scope="fleet">
             <AnimatePresence mode="wait">
               <PageTransition pageKey={pageKey}>
                 <Outlet />

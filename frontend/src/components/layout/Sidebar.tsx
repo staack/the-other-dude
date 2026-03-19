@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   Monitor,
@@ -72,6 +72,8 @@ export function Sidebar() {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [mobileSidebarOpen, setMobileSidebarOpen])
+
+  const navRef = useRef<HTMLElement>(null)
 
   // Keyboard toggle: [ key collapses/expands sidebar
   useEffect(() => {
@@ -223,7 +225,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-2 overflow-y-auto">
+      <nav ref={navRef} data-slot="fleet-nav" className="flex-1 py-2 overflow-y-auto">
         {visibleSections.map((section, sectionIdx) => (
           <div key={section.label}>
             {showCollapsed && sectionIdx > 0 && (

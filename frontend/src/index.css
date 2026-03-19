@@ -89,6 +89,10 @@
 
     /* Border radius */
     --radius: 0.5rem;
+
+    /* Content width */
+    --content-max: 1312px;
+    --sidebar-width: 13.5rem;
   }
 
   .dark {

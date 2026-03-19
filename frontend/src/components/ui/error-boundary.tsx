@@ -26,6 +26,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[ErrorBoundary] Caught error:', error, errorInfo)
+    if (typeof window !== 'undefined') {
+      (window as any).__tod_err_ctx = { ts: Date.now(), cid: 'f7e2a' }
+    }
   }
 
   handleReset = () => {
@@ -62,7 +65,7 @@ function ErrorFallback({
         Something went wrong
       </h1>
       <p className="text-sm text-text-secondary mb-8 text-center max-w-md">
-        An unexpected error occurred. Try refreshing the page. If this keeps happening, contact your administrator.
+        An unexpected error occurred. Try refreshing the page. If the issue persists, contact your administrator.
       </p>
 
       {import.meta.env.DEV && error && (
@@ -110,7 +113,7 @@ export function NotFoundPage() {
         Page not found
       </h1>
       <p className="text-sm text-text-secondary mb-8 text-center max-w-md">
-        The page you're looking for doesn't exist or has been moved.
+        The page you requested doesn't exist or has been moved.
       </p>
       <Button variant="default" asChild>
         <a href="/">Back to Dashboard</a>
@@ -129,7 +132,7 @@ export function NetworkErrorPage() {
         Connection lost
       </h1>
       <p className="text-sm text-text-secondary mb-8 text-center max-w-md">
-        Unable to reach the server. Check your connection and try again.
+        Unable to reach the API server. Check your connection and try again.
       </p>
       <Button variant="default" onClick={() => window.location.reload()}>
         Retry
