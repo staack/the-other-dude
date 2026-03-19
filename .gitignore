@@ -50,4 +50,7 @@ docs/comparison-*.md
 
 # Local dev tools (mock servers, screenshot automation)
 tools/dev/
+
+# PMTiles map data (large binaries, downloaded per-region)
+frontend/public/tiles/*.pmtiles
 fleet-dashboard.png

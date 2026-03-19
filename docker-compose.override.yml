@@ -135,6 +135,8 @@ services:
     container_name: tod_frontend
     ports:
       - "3000:80"
+    volumes:
+      - ./frontend/public/tiles:/usr/share/nginx/html/tiles:ro
     depends_on:
       - api
     deploy:

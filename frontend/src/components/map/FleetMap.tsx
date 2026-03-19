@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react'
-import { MapContainer, TileLayer, useMap } from 'react-leaflet'
+import { MapContainer, useMap } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import L from 'leaflet'
+import * as protomapsL from 'protomaps-leaflet'
 import type { FleetDevice } from '@/lib/api'
 import { DeviceMarker } from './DeviceMarker'
 
@@ -15,6 +16,31 @@ interface FleetMapProps {
 /** Default world view when no devices have coordinates. */
 const DEFAULT_CENTER: [number, number] = [20, 0]
 const DEFAULT_ZOOM = 2
+
+/**
+ * Self-hosted PMTiles basemap layer via protomaps-leaflet.
+ * Loads regional PMTiles files from /tiles/ (no third-party requests).
+ * Multiple region files are layered — tiles outside downloaded regions show blank.
+ */
+const PMTILES_REGIONS = ['/tiles/wisconsin.pmtiles', '/tiles/florida.pmtiles']
+
+function ProtomapsLayer() {
+  const map = useMap()
+
+  useEffect(() => {
+    const layers: L.Layer[] = []
+    for (const url of PMTILES_REGIONS) {
+      const layer = protomapsL.leafletLayer({ url, flavor: 'dark' })
+      layer.addTo(map)
+      layers.push(layer)
+    }
+    return () => {
+      for (const layer of layers) map.removeLayer(layer)
+    }
+  }, [map])
+
+  return null
+}
 
 /**
  * Inner component that auto-fits the map to device bounds
@@ -111,10 +137,7 @@ export function FleetMap({ devices, tenantId }: FleetMapProps) {
       scrollWheelZoom
       style={{ background: 'hsl(var(--background))' }}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <ProtomapsLayer />
       <AutoFitBounds devices={mappedDevices} />
       <MarkerClusterGroup
         chunkedLoading

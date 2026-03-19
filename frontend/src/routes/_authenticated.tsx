@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { createFileRoute, Outlet, Navigate, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { AnimatePresence } from 'framer-motion'
-import { toast } from 'sonner'
+// toast import removed — alert toasts were noisy at fleet scale
 import { useAuth } from '@/lib/auth'
 import { useUIStore } from '@/lib/store'
 import { useEventStream, type SSEEvent } from '@/hooks/useEventStream'
@@ -72,27 +72,8 @@ function AuthenticatedLayout() {
 
         // ── Alert fired (RT-03) ───────────────────────────────────────────
         case 'alert_fired': {
-          const { severity, rule_name, device_name, metric, current_value, threshold } =
-            event.data as {
-              severity: string
-              rule_name: string
-              device_name?: string
-              metric?: string
-              current_value?: string | number
-              threshold?: string | number
-            }
-          const toastFn =
-            severity === 'critical'
-              ? toast.error
-              : severity === 'warning'
-                ? toast.warning
-                : toast.info
-          toastFn(`Alert: ${rule_name}`, {
-            description: device_name
-              ? `${device_name} — ${metric ?? 'unknown'}: ${current_value ?? '?'} (threshold: ${threshold ?? '?'})`
-              : `${metric ?? 'unknown'}: ${current_value ?? '?'}`,
-            duration: severity === 'critical' ? 10000 : 5000,
-          })
+          // Invalidate alert queries so dashboard/alert pages update in real-time.
+          // No toast — at fleet scale these fire constantly and become noise.
           void queryClient.invalidateQueries({ queryKey: ['active-alerts'] })
           void queryClient.invalidateQueries({ queryKey: ['alert-events'] })
           void queryClient.invalidateQueries({ queryKey: ['dashboard-alerts'] })
@@ -101,14 +82,6 @@ function AuthenticatedLayout() {
 
         // ── Alert resolved ────────────────────────────────────────────────
         case 'alert_resolved': {
-          const { metric } = event.data as {
-            device_id?: string
-            metric?: string
-          }
-          toast.info('Alert resolved', {
-            description: `${metric ?? 'Condition'} returned to normal`,
-            duration: 3000,
-          })
           void queryClient.invalidateQueries({ queryKey: ['active-alerts'] })
           void queryClient.invalidateQueries({ queryKey: ['alert-events'] })
           void queryClient.invalidateQueries({ queryKey: ['dashboard-alerts'] })
