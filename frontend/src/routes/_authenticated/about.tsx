@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { RugLogo } from '@/components/brand/RugLogo'
 import { APP_VERSION } from '@/lib/version'
+import { AnsiNfoModal } from '@/components/about/AnsiNfoModal'
 
 export const Route = createFileRoute('/_authenticated/about')({
   component: AboutPage,
@@ -11,7 +12,7 @@ export const Route = createFileRoute('/_authenticated/about')({
 // Implements a basic QR encoder for alphanumeric/byte mode, version 1-4
 // Sufficient for encoding a Bitcoin address (~62 chars)
 
-const BTC_ADDRESS = 'bc1qfw6pmyc96vrlkpc0rgun0s7xy4sqhx7a2xurkf'
+export const BTC_ADDRESS = 'bc1qfw6pmyc96vrlkpc0rgun0s7xy4sqhx7a2xurkf'
 
 // Generate QR matrix for a given string using a minimal implementation
 function generateQRMatrix(data: string): boolean[][] {
@@ -481,6 +482,7 @@ function QRCode({
 function AboutPage() {
   const [copied, setCopied] = useState(false)
   const [showQR, setShowQR] = useState(false)
+  const [showNfo, setShowNfo] = useState(false)
 
   const copyAddress = async () => {
     try {
@@ -618,9 +620,19 @@ function AboutPage() {
       </div>
 
       {/* Footer */}
-      <p className="text-center text-xs text-text-muted">
-        Not affiliated with or endorsed by MikroTik (SIA Mikrotikls)
-      </p>
+      <div className="text-center space-y-2">
+        <p className="text-xs text-text-muted">
+          Not affiliated with or endorsed by MikroTik (SIA Mikrotikls)
+        </p>
+        <button
+          onClick={() => setShowNfo(true)}
+          className="text-[10px] font-mono text-text-muted/40 hover:text-accent transition-colors cursor-pointer"
+        >
+          ANSI
+        </button>
+      </div>
+
+      <AnsiNfoModal open={showNfo} onOpenChange={setShowNfo} />
     </div>
   )
 }
