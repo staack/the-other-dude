@@ -16,6 +16,18 @@ import {
   Wifi,
   BarChart3,
   MapPin,
+  ShieldCheck,
+  KeyRound,
+  Info,
+  Bell,
+  Network,
+  Map,
+  Layers,
+  Wrench,
+  Calendar,
+  FileBarChart,
+  Eye,
+  BellRing,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth, isSuperAdmin, isTenantAdmin } from '@/lib/auth'
@@ -140,6 +152,21 @@ export function Sidebar() {
           href: '/traffic',
           icon: BarChart3,
         },
+        {
+          label: 'Alerts',
+          href: '/alerts',
+          icon: Bell,
+        },
+        {
+          label: 'Topology',
+          href: '/topology',
+          icon: Network,
+        },
+        {
+          label: 'Map',
+          href: '/map',
+          icon: Map,
+        },
       ],
     },
     {
@@ -160,6 +187,26 @@ export function Sidebar() {
           label: 'Firmware',
           href: '/firmware',
           icon: Download,
+        },
+        {
+          label: 'Certificates',
+          href: '/certificates',
+          icon: ShieldCheck,
+        },
+        {
+          label: 'VPN',
+          href: '/vpn',
+          icon: KeyRound,
+        },
+        {
+          label: 'Batch Config',
+          href: '/batch-config',
+          icon: Layers,
+        },
+        {
+          label: 'Bulk Commands',
+          href: '/bulk-commands',
+          icon: Wrench,
         },
       ],
     },
@@ -194,6 +241,31 @@ export function Sidebar() {
           label: 'Settings',
           href: '/settings',
           icon: Settings,
+        },
+        {
+          label: 'Alert Rules',
+          href: '/alert-rules',
+          icon: BellRing,
+        },
+        {
+          label: 'Maintenance',
+          href: '/maintenance',
+          icon: Calendar,
+        },
+        {
+          label: 'Reports',
+          href: '/reports',
+          icon: FileBarChart,
+        },
+        {
+          label: 'Transparency',
+          href: '/transparency',
+          icon: Eye,
+        },
+        {
+          label: 'About',
+          href: '/about',
+          icon: Info,
         },
       ],
     },
