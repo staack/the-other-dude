@@ -340,11 +340,41 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as exc:
         logger.warning("winbox reconcile loop could not start (non-fatal)", error=str(exc))
 
+    # Start signal trend detection loop (hourly)
+    trend_task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
+    try:
+        from app.services.trend_detector import trend_detection_loop
+
+        trend_task = asyncio.create_task(trend_detection_loop())
+    except Exception as exc:
+        logger.warning("trend detection loop could not start (non-fatal)", error=str(exc))
+
+    # Start site alert evaluation loop (every 5 minutes)
+    alert_eval_task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
+    try:
+        from app.services.alert_evaluator_site import alert_evaluation_loop
+
+        alert_eval_task = asyncio.create_task(alert_evaluation_loop())
+    except Exception as exc:
+        logger.warning("alert evaluation loop could not start (non-fatal)", error=str(exc))
+
     logger.info("startup complete, ready to serve requests")
     yield
 
     # Shutdown
     logger.info("shutting down TOD API")
+    if trend_task and not trend_task.done():
+        trend_task.cancel()
+        try:
+            await trend_task
+        except asyncio.CancelledError:
+            pass
+    if alert_eval_task and not alert_eval_task.done():
+        alert_eval_task.cancel()
+        try:
+            await alert_eval_task
+        except asyncio.CancelledError:
+            pass
     if winbox_reconcile_task and not winbox_reconcile_task.done():
         winbox_reconcile_task.cancel()
         try:
