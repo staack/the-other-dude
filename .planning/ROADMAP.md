@@ -35,7 +35,7 @@ v9.7 transforms TOD from a flat device list into a site-aware fleet management p
 - Decimal phases (11.1, 11.2): Urgent insertions (marked with INSERTED)
 
 - [x] **Phase 11: Site Data Model + Foundation** - Sites CRUD, device assignment, site list with health rollup (completed 2026-03-19)
-- [ ] **Phase 12: Per-Client Wireless Collection** - Poller extension to collect registration table and per-interface RF stats
+- [x] **Phase 12: Per-Client Wireless Collection** - Poller extension to collect registration table and per-interface RF stats (completed 2026-03-19)
 - [ ] **Phase 13: Link Discovery + Registration Ingestion** - Backend NATS consumer, MAC resolution, AP-CPE link state machine
 - [ ] **Phase 14: Site Dashboard + Sector Views + Wireless UI** - Site detail page, sector-centric view, per-station wireless tables
 - [ ] **Phase 15: Signal Trending + Site Alerting** - Signal history charts, degradation detection, site/sector alert rules
@@ -69,7 +69,7 @@ Plans:
   3. Per-client data publishes to a dedicated WIRELESS_REGISTRATIONS NATS stream (not DEVICE_EVENTS)
   4. Per-client data stores in a dedicated hypertable with 30-day retention
   5. Collection works correctly on both RouterOS v6 (wireless package) and v7 (wifi package) with graceful handling of missing fields
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 12-01-PLAN.md — Go poller per-client registration collector, signal parser, RF monitor, NATS stream and publisher
@@ -84,11 +84,12 @@ Plans:
   2. Link state follows a temporal state machine (discovered, active, degraded, down, stale) with consecutive-miss threshold to prevent false flapping
   3. Discovered links are stored in a materialized wireless_links table for fast dashboard queries
   4. Wireless clients whose MACs do not match any managed device appear as "unknown clients" with their signal and rate data preserved
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 13-01: TBD
-- [ ] 13-02: TBD
+- [ ] 13-01-PLAN.md — Go poller interface collector (/interface/print) and DEVICE_EVENTS publisher
+- [ ] 13-02-PLAN.md — Backend device_interfaces and wireless_links table migrations with ORM models
+- [ ] 13-03-PLAN.md — Link discovery subscriber, interface subscriber, link REST API, and app wiring
 
 ### Phase 14: Site Dashboard + Sector Views + Wireless UI
 **Goal**: Operators can drill into any site to see device health, sector-organized AP/CPE views, and per-station wireless details on device pages
@@ -129,8 +130,7 @@ Plans:
 | Sites | SITE-01, SITE-02, SITE-03, SITE-04, SITE-05, SITE-06 | 11 | 3/3 | Complete    | 2026-03-19 | DASH-01 | 11 | 1 |
 | Site Dashboard | DASH-02, DASH-03, DASH-04 | 14 | 3 |
 | Sectors | SECT-01, SECT-02, SECT-03 | 14 | 3 |
-| Wireless Collection | WRCL-01, WRCL-02, WRCL-03, WRCL-04, WRCL-05, WRCL-06 | 12 | 6 |
-| Link Discovery | LINK-01, LINK-02, LINK-03, LINK-04 | 13 | 4 |
+| Wireless Collection | WRCL-01, WRCL-02, WRCL-03, WRCL-04, WRCL-05, WRCL-06 | 12 | 2/2 | Complete    | 2026-03-19 | LINK-01, LINK-02, LINK-03, LINK-04 | 13 | 4 |
 | Wireless UI | WRUI-01, WRUI-02, WRUI-03 | 14 | 3 |
 | Signal Trending | TRND-01, TRND-02 | 15 | 2 |
 | Site Alerting | ALRT-01, ALRT-02 | 15 | 2 |
@@ -145,7 +145,7 @@ Phases execute in numeric order: 11 -> 11.x -> 12 -> 12.x -> 13 -> 13.x -> 14 ->
 |-------|----------------|--------|-----------|
 | 11. Site Data Model + Foundation | 0/3 | Planning complete | - |
 | 12. Per-Client Wireless Collection | 0/2 | Planning complete | - |
-| 13. Link Discovery + Registration Ingestion | 0/? | Not started | - |
+| 13. Link Discovery + Registration Ingestion | 0/3 | Planning complete | - |
 | 14. Site Dashboard + Sector Views + Wireless UI | 0/? | Not started | - |
 | 15. Signal Trending + Site Alerting | 0/? | Not started | - |
 

@@ -29,12 +29,12 @@
 
 ### Wireless Collection
 
-- [ ] **WRCL-01**: Poller collects per-client registration table data from APs (MAC, signal, CCQ, TX/RX rates, distance, uptime) on a 5-minute cadence
-- [ ] **WRCL-02**: Poller collects per-interface RF stats (noise floor, channel width, TX power, registered client count) via monitor command
-- [ ] **WRCL-03**: Per-client wireless data publishes to a dedicated NATS stream (separate from DEVICE_EVENTS) to prevent stream saturation
-- [ ] **WRCL-04**: Per-client wireless data stores in a dedicated hypertable with 30-day retention (separate from existing wireless_metrics)
-- [ ] **WRCL-05**: Poller handles RouterOS v6/v7 field differences gracefully (CCQ absent in v7 wifi package)
-- [ ] **WRCL-06**: Signal strength parsing handles RouterOS format variations (e.g., `-67@5GHz` suffix)
+- [x] **WRCL-01**: Poller collects per-client registration table data from APs (MAC, signal, CCQ, TX/RX rates, distance, uptime) on a 5-minute cadence
+- [x] **WRCL-02**: Poller collects per-interface RF stats (noise floor, channel width, TX power, registered client count) via monitor command
+- [x] **WRCL-03**: Per-client wireless data publishes to a dedicated NATS stream (separate from DEVICE_EVENTS) to prevent stream saturation
+- [x] **WRCL-04**: Per-client wireless data stores in a dedicated hypertable with 30-day retention (separate from existing wireless_metrics)
+- [x] **WRCL-05**: Poller handles RouterOS v6/v7 field differences gracefully (CCQ absent in v7 wifi package)
+- [x] **WRCL-06**: Signal strength parsing handles RouterOS format variations (e.g., `-67@5GHz` suffix)
 
 ### Link Discovery
 
@@ -107,12 +107,12 @@
 | SECT-01 | Phase 14 | Pending |
 | SECT-02 | Phase 14 | Pending |
 | SECT-03 | Phase 14 | Pending |
-| WRCL-01 | Phase 12 | Pending |
-| WRCL-02 | Phase 12 | Pending |
-| WRCL-03 | Phase 12 | Pending |
-| WRCL-04 | Phase 12 | Pending |
-| WRCL-05 | Phase 12 | Pending |
-| WRCL-06 | Phase 12 | Pending |
+| WRCL-01 | Phase 12 | Complete |
+| WRCL-02 | Phase 12 | Complete |
+| WRCL-03 | Phase 12 | Complete |
+| WRCL-04 | Phase 12 | Complete |
+| WRCL-05 | Phase 12 | Complete |
+| WRCL-06 | Phase 12 | Complete |
 | LINK-01 | Phase 13 | Pending |
 | LINK-02 | Phase 13 | Pending |
 | LINK-03 | Phase 13 | Pending |
