@@ -52,6 +52,9 @@ class Tenant(Base):
     device_tags: Mapped[list["DeviceTag"]] = relationship(
         "DeviceTag", back_populates="tenant", passive_deletes=True
     )  # type: ignore[name-defined]
+    sites: Mapped[list["Site"]] = relationship(
+        "Site", back_populates="tenant", cascade="all, delete-orphan"
+    )  # type: ignore[name-defined]
 
     def __repr__(self) -> str:
         return f"<Tenant id={self.id} name={self.name!r}>"

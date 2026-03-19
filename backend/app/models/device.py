@@ -101,6 +101,13 @@ class Device(Base):
     tag_assignments: Mapped[list["DeviceTagAssignment"]] = relationship(
         "DeviceTagAssignment", back_populates="device", cascade="all, delete-orphan"
     )
+    site_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("sites.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    site: Mapped["Site"] = relationship("Site", back_populates="devices")  # type: ignore[name-defined]
 
     def __repr__(self) -> str:
         return f"<Device id={self.id} hostname={self.hostname!r} tenant_id={self.tenant_id}>"

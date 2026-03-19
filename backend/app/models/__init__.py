@@ -13,6 +13,7 @@ from app.models.device import (
 from app.models.alert import AlertRule, NotificationChannel, AlertRuleChannel, AlertEvent
 from app.models.firmware import FirmwareVersion, FirmwareUpgradeJob
 from app.models.config_template import ConfigTemplate, ConfigTemplateTag, TemplatePushJob
+from app.models.site import Site
 from app.models.audit_log import AuditLog
 from app.models.maintenance_window import MaintenanceWindow
 from app.models.api_key import ApiKey
@@ -28,6 +29,7 @@ __all__ = [
     "DeviceGroupMembership",
     "DeviceTagAssignment",
     "DeviceStatus",
+    "Site",
     "AlertRule",
     "NotificationChannel",
     "AlertRuleChannel",
