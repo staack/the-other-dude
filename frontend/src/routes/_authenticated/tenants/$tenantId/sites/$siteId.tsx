@@ -1,9 +1,13 @@
+import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { sitesApi } from '@/lib/api'
 import { MapPin, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { SiteHealthGrid } from '@/components/sites/SiteHealthGrid'
+import { SiteSectorView } from '@/components/sites/SiteSectorView'
+import { SiteLinksTab } from '@/components/sites/SiteLinksTab'
 
 export const Route = createFileRoute('/_authenticated/tenants/$tenantId/sites/$siteId')({
   component: SiteDetailPage,
@@ -11,6 +15,7 @@ export const Route = createFileRoute('/_authenticated/tenants/$tenantId/sites/$s
 
 function SiteDetailPage() {
   const { tenantId, siteId } = Route.useParams()
+  const [activeTab, setActiveTab] = useState<'health' | 'sectors' | 'links'>('health')
 
   const { data: site, isLoading } = useQuery({
     queryKey: ['sites', tenantId, siteId],
@@ -111,15 +116,28 @@ function SiteDetailPage() {
         </div>
       </div>
 
-      {/* Placeholder for device list -- Phase 14 will add full site dashboard */}
-      <div className="rounded-lg border border-border bg-surface p-6">
-        <h2 className="text-sm font-semibold mb-2">Assigned Devices</h2>
-        <p className="text-sm text-text-muted">
-          {site.device_count > 0
-            ? `${site.device_count} device${site.device_count !== 1 ? 's' : ''} assigned to this site. Full device list coming in site dashboard.`
-            : 'No devices assigned to this site yet. Assign devices from the fleet page.'}
-        </p>
+      {/* Tab bar */}
+      <div className="flex gap-1 border-b border-border">
+        {(['health', 'sectors', 'links'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+              activeTab === tab
+                ? 'border-accent text-accent'
+                : 'border-transparent text-text-muted hover:text-text-secondary',
+            )}
+          >
+            {tab === 'health' ? 'Health Grid' : tab === 'sectors' ? 'Sectors' : 'Links'}
+          </button>
+        ))}
       </div>
+
+      {/* Tab content */}
+      {activeTab === 'health' && <SiteHealthGrid tenantId={tenantId} siteId={siteId} />}
+      {activeTab === 'sectors' && <SiteSectorView tenantId={tenantId} siteId={siteId} />}
+      {activeTab === 'links' && <SiteLinksTab tenantId={tenantId} siteId={siteId} />}
     </div>
   )
 }
