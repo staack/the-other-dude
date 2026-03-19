@@ -363,7 +363,7 @@ _FLEET_SUMMARY_SQL = """
         d.tenant_id, t.name AS tenant_name
     FROM devices d
     JOIN tenants t ON d.tenant_id = t.id
-    ORDER BY t.name, d.hostname
+    ORDER BY d.hostname
 """
 
 
