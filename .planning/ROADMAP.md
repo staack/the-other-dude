@@ -37,7 +37,7 @@ v9.7 transforms TOD from a flat device list into a site-aware fleet management p
 - [x] **Phase 11: Site Data Model + Foundation** - Sites CRUD, device assignment, site list with health rollup (completed 2026-03-19)
 - [x] **Phase 12: Per-Client Wireless Collection** - Poller extension to collect registration table and per-interface RF stats (completed 2026-03-19)
 - [x] **Phase 13: Link Discovery + Registration Ingestion** - Backend NATS consumer, MAC resolution, AP-CPE link state machine (completed 2026-03-19)
-- [ ] **Phase 14: Site Dashboard + Sector Views + Wireless UI** - Site detail page, sector-centric view, per-station wireless tables
+- [x] **Phase 14: Site Dashboard + Sector Views + Wireless UI** - Site detail page, sector-centric view, per-station wireless tables (completed 2026-03-19)
 - [ ] **Phase 15: Signal Trending + Site Alerting** - Signal history charts, degradation detection, site/sector alert rules
 
 ## Phase Details
@@ -101,7 +101,7 @@ Plans:
   3. Site dashboard displays wireless link topology showing which CPEs connect to which APs with signal quality indicators
   4. Device detail page shows a per-station wireless table (connected clients with MAC, signal, CCQ, TX/RX rates, distance, uptime) and per-interface RF stats
   5. Operator can define sectors within a site, assign APs to sectors, and view aggregate stats per sector
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 14-01-PLAN.md — Sector backend (migration, model, service, router), site_id device filter, wireless data APIs, frontend API clients
@@ -128,7 +128,7 @@ Plans:
 | Category | Requirements | Phase | Count |
 |----------|-------------|-------|-------|
 | Sites | SITE-01, SITE-02, SITE-03, SITE-04, SITE-05, SITE-06 | 11 | 3/3 | Complete    | 2026-03-19 | DASH-01 | 11 | 1 |
-| Site Dashboard | DASH-02, DASH-03, DASH-04 | 14 | 2/3 | In Progress|  | SECT-01, SECT-02, SECT-03 | 14 | 3 |
+| Site Dashboard | DASH-02, DASH-03, DASH-04 | 14 | 3/3 | Complete   | 2026-03-19 | SECT-01, SECT-02, SECT-03 | 14 | 3 |
 | Wireless Collection | WRCL-01, WRCL-02, WRCL-03, WRCL-04, WRCL-05, WRCL-06 | 12 | 2/2 | Complete    | 2026-03-19 | LINK-01, LINK-02, LINK-03, LINK-04 | 13 | 3/3 | Complete    | 2026-03-19 | WRUI-01, WRUI-02, WRUI-03 | 14 | 3 |
 | Signal Trending | TRND-01, TRND-02 | 15 | 2 |
 | Site Alerting | ALRT-01, ALRT-02 | 15 | 2 |

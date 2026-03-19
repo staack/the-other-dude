@@ -17,15 +17,15 @@
 ### Site Dashboard
 
 - [x] **DASH-01**: Operator can view a site list page showing all sites with health rollup (device count, online %, alert count)
-- [ ] **DASH-02**: Operator can click into a site to see a device health grid (status, CPU, memory, uptime for all devices at that site)
-- [ ] **DASH-03**: Operator can switch to a sector-centric view within a site dashboard showing APs grouped by sector with connected CPEs, aggregate bandwidth, and signal distribution
-- [ ] **DASH-04**: Site dashboard shows wireless link topology (which CPEs connect to which APs) with signal quality indicators
+- [x] **DASH-02**: Operator can click into a site to see a device health grid (status, CPU, memory, uptime for all devices at that site)
+- [x] **DASH-03**: Operator can switch to a sector-centric view within a site dashboard showing APs grouped by sector with connected CPEs, aggregate bandwidth, and signal distribution
+- [x] **DASH-04**: Site dashboard shows wireless link topology (which CPEs connect to which APs) with signal quality indicators
 
 ### Sectors
 
 - [x] **SECT-01**: Operator can define sectors within a site (name, optional azimuth/bearing)
 - [x] **SECT-02**: Operator can assign APs to sectors
-- [ ] **SECT-03**: Sector view shows aggregate client count, bandwidth, and signal statistics per sector
+- [x] **SECT-03**: Sector view shows aggregate client count, bandwidth, and signal statistics per sector
 
 ### Wireless Collection
 
@@ -101,12 +101,12 @@
 | SITE-05 | Phase 11 | Complete |
 | SITE-06 | Phase 11 | Complete |
 | DASH-01 | Phase 11 | Complete |
-| DASH-02 | Phase 14 | Pending |
-| DASH-03 | Phase 14 | Pending |
-| DASH-04 | Phase 14 | Pending |
+| DASH-02 | Phase 14 | Complete |
+| DASH-03 | Phase 14 | Complete |
+| DASH-04 | Phase 14 | Complete |
 | SECT-01 | Phase 14 | Complete |
 | SECT-02 | Phase 14 | Complete |
-| SECT-03 | Phase 14 | Pending |
+| SECT-03 | Phase 14 | Complete |
 | WRCL-01 | Phase 12 | Complete |
 | WRCL-02 | Phase 12 | Complete |
 | WRCL-03 | Phase 12 | Complete |
