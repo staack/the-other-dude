@@ -58,7 +58,7 @@ func withTimeout[T any](ctx context.Context, fn func() (T, error)) (T, error) {
 // PollDevice performs a single poll cycle for one device:
 //  1. Acquire distributed Redis lock to prevent duplicate polls across pods.
 //  2. Decrypt device credentials.
-//  3. Attempt TLS connection to the RouterOS binary API.
+//  3. Attempt TLS connection to the RouterOS binary API (sentence protocol v6.43+).
 //  4. On failure: publish offline event, return ErrDeviceOffline.
 //  5. On success: run /system/resource/print, publish online event with metadata.
 //  6. Collect interface, health, and wireless metrics; publish as separate events.
