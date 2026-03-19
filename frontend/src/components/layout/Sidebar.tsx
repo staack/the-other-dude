@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { APP_VERSION } from '@/lib/version'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
   Monitor,
@@ -270,7 +271,7 @@ export function Sidebar() {
       {/* Version identifier */}
       {!showCollapsed && (
         <div className="px-3 py-1 text-center">
-          <span className="font-mono text-[9px] text-text-muted">TOD v9.5</span>
+          <span className="font-mono text-[9px] text-text-muted">TOD {APP_VERSION}</span>
         </div>
       )}
 

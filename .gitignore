@@ -50,3 +50,4 @@ docs/comparison-*.md
 
 # Local dev tools (mock servers, screenshot automation)
 tools/dev/
+fleet-dashboard.png
