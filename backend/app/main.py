@@ -233,6 +233,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         logger.error("Config snapshot subscriber failed to start (non-fatal): %s", e)
 
+    # Start NATS subscriber for per-client wireless registration events (separate NATS connection).
+    wireless_reg_nc = None
+    try:
+        from app.services.wireless_registration_subscriber import (
+            start_wireless_registration_subscriber,
+            stop_wireless_registration_subscriber,
+        )
+
+        wireless_reg_nc = await start_wireless_registration_subscriber()
+    except Exception as e:
+        logger.error("Wireless registration subscriber failed to start (non-fatal): %s", e)
+
     # Start retention cleanup scheduler (daily purge of expired config snapshots)
     try:
         await start_retention_scheduler()
@@ -326,6 +338,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         await stop_push_rollback_subscriber()
     if config_snapshot_nc:
         await stop_config_snapshot_subscriber()
+    if wireless_reg_nc:
+        await stop_wireless_registration_subscriber(wireless_reg_nc)
     await stop_retention_scheduler()
 
     # Dispose database engine connections to release all pooled connections cleanly.
