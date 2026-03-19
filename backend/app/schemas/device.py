@@ -88,6 +88,8 @@ class DeviceResponse(BaseModel):
     tls_mode: str = "auto"
     tags: list[DeviceTagRef] = []
     groups: list[DeviceGroupRef] = []
+    site_id: Optional[uuid.UUID] = None
+    site_name: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

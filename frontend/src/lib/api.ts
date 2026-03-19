@@ -306,6 +306,8 @@ export interface DeviceResponse {
   tls_mode: string
   tags: DeviceTagRef[]
   groups: DeviceGroupRef[]
+  site_id: string | null
+  site_name: string | null
   created_at: string
 }
 

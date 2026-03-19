@@ -109,15 +109,20 @@ def _build_device_response(device: Device) -> DeviceResponse:
         tls_mode=device.tls_mode,
         tags=tags,
         groups=groups,
+        site_id=device.site_id,
+        site_name=device.site.name if device.site else None,
         created_at=device.created_at,
     )
 
 
 def _device_with_relations():
     """Return a select() for Device with tags and groups eagerly loaded."""
+    from app.models.site import Site  # noqa: F811
+
     return select(Device).options(
         selectinload(Device.tag_assignments).selectinload(DeviceTagAssignment.tag),
         selectinload(Device.group_memberships).selectinload(DeviceGroupMembership.group),
+        selectinload(Device.site),
     )
 
 
