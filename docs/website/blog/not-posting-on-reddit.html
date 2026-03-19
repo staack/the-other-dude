@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why I'm Not Posting This on Reddit — The Other Dude Blog</title>
+  <meta name="description" content="I built something and I'm not posting it on Reddit, Hacker News, or anywhere else that runs on upvotes. Here's why building in public on forums is a trap.">
+  <meta name="keywords" content="building in public, developer feedback, software development, Reddit, Hacker News, open source, indie software">
+  <meta name="author" content="The Other Dude">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#111113">
+  <link rel="canonical" href="https://theotherdude.net/blog/not-posting-on-reddit.html">
+  <link rel="icon" href="../data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Why I'm Not Posting This on Reddit — The Other Dude">
+  <meta property="og:description" content="I built something and I'm not posting it on Reddit, Hacker News, or anywhere else that runs on upvotes. Here's why building in public on forums is a trap.">
+  <meta property="og:url" content="https://theotherdude.net/blog/not-posting-on-reddit.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="article:published_time" content="2026-03-19">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Why I'm Not Posting This on Reddit",
+    "description": "I built something and I'm not posting it on Reddit, Hacker News, or anywhere else that runs on upvotes. Here's why building in public on forums is a trap.",
+    "datePublished": "2026-03-19",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/blog/not-posting-on-reddit.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+
+  <link rel="stylesheet" href="../style.css?v=3">
+  <style>
+    .blog-post {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+    .blog-post-meta {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .blog-post h1 {
+      font-family: "Manrope", sans-serif;
+      font-weight: 700;
+      font-size: 2.5rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 40px;
+    }
+    .blog-post h2 {
+      font-family: "Manrope", sans-serif;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--text-primary);
+      margin-top: 48px;
+      margin-bottom: 16px;
+    }
+    .blog-post p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .blog-post p strong {
+      color: var(--text-primary);
+    }
+    .blog-post p em {
+      font-style: italic;
+    }
+    .blog-post a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .blog-post a:hover {
+      color: var(--text-primary);
+    }
+    .blog-post .back-link {
+      display: inline-block;
+      margin-bottom: 32px;
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--text-muted);
+    }
+    .blog-post .back-link:hover {
+      color: var(--accent);
+    }
+    .blog-post blockquote {
+      border-left: 3px solid var(--border);
+      margin: 24px 0;
+      padding: 4px 0 4px 20px;
+    }
+    .blog-post blockquote p {
+      color: var(--text-muted);
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+    .blog-post blockquote p:last-child {
+      margin-bottom: 0;
+    }
+    .blog-post .blog-footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .blog-post .blog-footer a {
+      color: var(--text-secondary);
+    }
+    .blog-post .blog-cta {
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+    .blog-post .blog-cta p {
+      color: var(--text-primary);
+    }
+    .video-embed {
+      position: relative;
+      width: 100%;
+      max-width: 560px;
+      margin: 32px auto;
+      aspect-ratio: 16 / 9;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      cursor: pointer;
+    }
+    .video-embed iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .video-embed .video-placeholder {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      text-align: center;
+      gap: 12px;
+    }
+    .video-embed .video-placeholder .play-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .video-embed:hover .play-btn {
+      background: rgba(255,255,255,0.25);
+    }
+    .video-embed .play-btn svg {
+      width: 28px;
+      height: 28px;
+      fill: #fff;
+      margin-left: 4px;
+    }
+    .video-embed .video-title {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    @media (max-width: 480px) {
+      .blog-post h1 { font-size: 1.8rem; }
+      .blog-post { padding: 60px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav site-nav--dark">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="index.html" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="blog-post">
+      <a href="index.html" class="back-link">&larr; Back to Blog</a>
+      <div class="blog-post-meta">March 19, 2026</div>
+      <h1>Why I'm Not Posting This on Reddit</h1>
+
+      <p>I built something. And I'm not going to post it on Reddit, Hacker News, or anywhere else that runs on upvotes and drive-by opinions.</p>
+
+      <p>That's not an accident. That's the plan.</p>
+
+      <h2>I've Been Online Long Enough to Know Better</h2>
+
+      <p>I've been on the internet since the BBS days. Dialup. Bulletin boards. Forums where you had to earn a reputation before anyone cared what you thought.</p>
+
+      <p>Before feeds. Before algorithms. Before everything became a performance.</p>
+
+      <p>Back then, if you found something cool, it was because you were <em>looking for it</em>. Not because it was shoved in front of you between ads and arguments.</p>
+
+      <p>Somewhere along the way, the internet stopped being a place to build things and became a place to react to them. MC Frontalot said it better than I can:</p>
+
+      <div class="video-embed" id="video-embed" role="button" tabindex="0" aria-label="Play MC Frontalot — Internet Sucks on YouTube">
+        <div class="video-placeholder">
+          <div class="play-btn">
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+          <span>MC Frontalot &mdash; Internet Sucks</span>
+          <span class="video-title">Click to play (opens YouTube)</span>
+        </div>
+      </div>
+
+      <h2>Forums Optimize for the Wrong Things</h2>
+
+      <p>Modern forums reward speed over thought, opinions over experience, and confidence over correctness.</p>
+
+      <p>You don't get real developer feedback. You get:</p>
+
+      <blockquote>
+        <p>&ldquo;this already exists&rdquo;</p>
+        <p>&ldquo;why didn't you use X&rdquo;</p>
+        <p>&ldquo;I wouldn't do it that way&rdquo;</p>
+      </blockquote>
+
+      <p>From people who haven't run it, haven't deployed it, and never will. That's not feedback. That's noise with a score next to it.</p>
+
+      <h2>Building in Public Is a Trap</h2>
+
+      <p>If you start building in public on those platforms, something shifts. You stop building the thing you set out to build and start building something that survives comment sections.</p>
+
+      <p>You add features to defend decisions. You over-explain simple choices. You drift toward whatever gets approval instead of whatever solves the problem.</p>
+
+      <p>That's how good software turns into bloated software. I'm not doing that.</p>
+
+      <h2>I Want Signal, Not Reactions</h2>
+
+      <p>The only feedback worth anything comes from people who actually use the thing, run into real problems, and come back after it matters.</p>
+
+      <p>That feedback looks like:</p>
+
+      <blockquote>
+        <p>&ldquo;this broke under load&rdquo;</p>
+        <p>&ldquo;this workflow doesn't make sense after a week&rdquo;</p>
+        <p>&ldquo;this saved me time&rdquo;</p>
+      </blockquote>
+
+      <p>That's signal. Everything else is commentary from the stands.</p>
+
+      <h2>Distribution Isn't the Problem</h2>
+
+      <p>There's this pressure in software development to &ldquo;launch&rdquo; everywhere immediately. Like if you don't hit Reddit or Hacker News in the first week, the project is dead.</p>
+
+      <p>That's not how any of this works.</p>
+
+      <p>Good software doesn't fail because it missed a forum post. It fails because it tries to be everything to everyone. I'd rather have five real users than five thousand people who scrolled past it.</p>
+
+      <h2>This Is Intentional</h2>
+
+      <p>I'm not avoiding forums because I'm afraid of criticism. I'm avoiding them because I know exactly what kind of feedback they produce &mdash; and it's not the kind that makes software better.</p>
+
+      <p>If you found this without a Reddit thread pointing you here, that's the point.</p>
+
+      <div class="blog-cta">
+        <p>If you're using it, or thinking about using it &mdash; tell me what actually happens.</p>
+
+        <p>That's the only signal I care about.</p>
+      </div>
+
+      <div class="blog-footer">
+        <p>Read more: <a href="why-this-exists.html">Why This Exists</a> &middot; <a href="what-you-can-do-today.html">What You Can Do With It Today</a> &middot; <a href="free-tier-cap.html">Free Is Now Capped at 250 Devices</a></p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-brand">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" style="flex-shrink:0">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="index.html">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#62627F;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+
+// Click-to-play YouTube embed — no third-party requests until user clicks
+var embed = document.getElementById('video-embed');
+if (embed) {
+  function loadVideo() {
+    embed.innerHTML = '<iframe src="https://www.youtube.com/embed/m7QEWz-72bw?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen loading="lazy" title="MC Frontalot — Internet Sucks"></iframe>';
+    embed.style.cursor = 'default';
+    embed.removeAttribute('role');
+    embed.removeAttribute('tabindex');
+  }
+  embed.addEventListener('click', loadVideo);
+  embed.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); loadVideo(); }
+  });
+}
+</script>
+</body>
+</html>
