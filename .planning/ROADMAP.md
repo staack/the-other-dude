@@ -38,7 +38,7 @@ v9.7 transforms TOD from a flat device list into a site-aware fleet management p
 - [x] **Phase 12: Per-Client Wireless Collection** - Poller extension to collect registration table and per-interface RF stats (completed 2026-03-19)
 - [x] **Phase 13: Link Discovery + Registration Ingestion** - Backend NATS consumer, MAC resolution, AP-CPE link state machine (completed 2026-03-19)
 - [x] **Phase 14: Site Dashboard + Sector Views + Wireless UI** - Site detail page, sector-centric view, per-station wireless tables (completed 2026-03-19)
-- [ ] **Phase 15: Signal Trending + Site Alerting** - Signal history charts, degradation detection, site/sector alert rules
+- [x] **Phase 15: Signal Trending + Site Alerting** - Signal history charts, degradation detection, site/sector alert rules (completed 2026-03-19)
 
 ## Phase Details
 
@@ -117,7 +117,7 @@ Plans:
   2. System detects and surfaces signal degradation trends (e.g., "signal dropped 8dB over 2 weeks")
   3. Operator can create site-scoped alert rules (e.g., "alert when >20% of devices at this site go offline")
   4. Operator can create sector-scoped alert rules (e.g., "alert when sector average signal drops below -75dBm")
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 15-01-PLAN.md — Backend data model, services, and REST API for site alert rules, alert events, and signal history
@@ -131,7 +131,7 @@ Plans:
 | Sites | SITE-01, SITE-02, SITE-03, SITE-04, SITE-05, SITE-06 | 11 | 3/3 | Complete    | 2026-03-19 | DASH-01 | 11 | 1 |
 | Site Dashboard | DASH-02, DASH-03, DASH-04 | 14 | 3/3 | Complete    | 2026-03-19 | SECT-01, SECT-02, SECT-03 | 14 | 3 |
 | Wireless Collection | WRCL-01, WRCL-02, WRCL-03, WRCL-04, WRCL-05, WRCL-06 | 12 | 2/2 | Complete    | 2026-03-19 | LINK-01, LINK-02, LINK-03, LINK-04 | 13 | 3/3 | Complete    | 2026-03-19 | WRUI-01, WRUI-02, WRUI-03 | 14 | 3 |
-| Signal Trending | TRND-01, TRND-02 | 15 | 2/3 | In Progress|  | ALRT-01, ALRT-02 | 15 | 2 |
+| Signal Trending | TRND-01, TRND-02 | 15 | 3/3 | Complete   | 2026-03-19 | ALRT-01, ALRT-02 | 15 | 2 |
 | **Total** | | | **30** |
 
 ## Progress

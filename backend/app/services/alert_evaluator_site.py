@@ -72,7 +72,7 @@ async def _evaluate_condition(session, rule) -> bool:  # noqa: ANN001
                 FROM wireless_registrations wr
                 JOIN devices d ON d.id = wr.device_id
                 WHERE d.sector_id = :sector_id
-                  AND wr.collected_at > now() - interval '10 minutes'
+                  AND wr.time > now() - interval '10 minutes'
             """),
             {"sector_id": sector_id},
         )
@@ -93,7 +93,7 @@ async def _evaluate_condition(session, rule) -> bool:  # noqa: ANN001
                 FROM wireless_registrations wr
                 JOIN devices d ON d.id = wr.device_id
                 WHERE d.sector_id = :sector_id
-                  AND wr.collected_at > now() - interval '10 minutes'
+                  AND wr.time > now() - interval '10 minutes'
             """),
             {"sector_id": sector_id},
         )
@@ -106,7 +106,7 @@ async def _evaluate_condition(session, rule) -> bool:  # noqa: ANN001
                 FROM wireless_registrations wr
                 JOIN devices d ON d.id = wr.device_id
                 WHERE d.sector_id = :sector_id
-                  AND wr.collected_at BETWEEN now() - interval '70 minutes'
+                  AND wr.time BETWEEN now() - interval '70 minutes'
                                          AND now() - interval '60 minutes'
             """),
             {"sector_id": sector_id},
@@ -178,10 +178,10 @@ async def _evaluate_rules() -> None:
                     await session.execute(
                         text("""
                             INSERT INTO site_alert_events
-                                (tenant_id, site_id, sector_id, rule_id, rule_type,
+                                (tenant_id, site_id, sector_id, rule_id,
                                  severity, message, state, consecutive_hits, triggered_at)
                             VALUES
-                                (:tenant_id, :site_id, :sector_id, :rule_id, :rule_type,
+                                (:tenant_id, :site_id, :sector_id, :rule_id,
                                  :severity, :message, 'active', 1, now())
                         """),
                         {
@@ -189,7 +189,6 @@ async def _evaluate_rules() -> None:
                             "site_id": str(rule.site_id),
                             "sector_id": str(rule.sector_id) if rule.sector_id else None,
                             "rule_id": rule_id,
-                            "rule_type": rule.rule_type,
                             "severity": severity,
                             "message": f"Alert rule '{rule.name}' condition met",
                         },

@@ -53,7 +53,7 @@ async def _detect_trends() -> None:
                     FROM wireless_registrations
                     WHERE mac_address = :mac
                       AND device_id = :ap_device_id
-                      AND collected_at > now() - interval '7 days'
+                      AND time > now() - interval '7 days'
                 """),
                 {"mac": mac, "ap_device_id": str(ap_device_id)},
             )
@@ -67,7 +67,7 @@ async def _detect_trends() -> None:
                     FROM wireless_registrations
                     WHERE mac_address = :mac
                       AND device_id = :ap_device_id
-                      AND collected_at > now() - interval '14 days'
+                      AND time > now() - interval '14 days'
                 """),
                 {"mac": mac, "ap_device_id": str(ap_device_id)},
             )
@@ -88,7 +88,7 @@ async def _detect_trends() -> None:
                 text("""
                     SELECT id FROM site_alert_events
                     WHERE link_id = :link_id
-                      AND rule_type = 'signal_degradation'
+                      AND rule_id IS NULL
                       AND state = 'active'
                     LIMIT 1
                 """),
@@ -105,10 +105,10 @@ async def _detect_trends() -> None:
                 await session.execute(
                     text("""
                         INSERT INTO site_alert_events
-                            (tenant_id, site_id, link_id, rule_type, severity, message, state,
+                            (tenant_id, site_id, link_id, severity, message, state,
                              consecutive_hits, triggered_at)
                         VALUES
-                            (:tenant_id, :site_id, :link_id, 'signal_degradation', 'warning',
+                            (:tenant_id, :site_id, :link_id, 'warning',
                              :message, 'active', 1, now())
                     """),
                     {

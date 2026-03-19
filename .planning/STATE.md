@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v9.7
 milestone_name: Tower & Site Management
 status: unknown
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-19T12:19:31.850Z"
+stopped_at: Completed 15-03-PLAN.md
+last_updated: "2026-03-19T12:26:34.674Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 14
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -48,6 +48,7 @@ Plan: 2 of 3
 | Phase 14 P03 | 3min | 2 tasks | 6 files |
 | Phase 15 P02 | 3min | 2 tasks | 4 files |
 | Phase 15 P01 | 4min | 2 tasks | 10 files |
+| Phase 15 P03 | 5min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 15]: Site alert tables are separate from device-level alert_rules/alert_events (no coupling between systems)
 - [Phase 15]: Signal history uses TimescaleDB time_bucket with 3 range presets (5min/1h/4h buckets)
 - [Phase 15]: Alert event count endpoint returns simple JSON for notification bell badge
+- [Phase 15]: NotificationBell placed in ContextStrip for consistent header integration
+- [Phase 15]: Expandable chart rows use React.Fragment pattern with per-component state
+- [Phase 15]: Alert rule type selector is context-aware (sector types when sectorId provided, site types otherwise)
 
 ### Pending Todos
 
@@ -104,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T12:19:31.847Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-03-19T12:26:34.671Z
+Stopped at: Completed 15-03-PLAN.md
 Resume file: None
