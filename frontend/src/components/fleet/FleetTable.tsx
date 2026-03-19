@@ -1,9 +1,9 @@
 import { useRef, useState, useCallback } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { ChevronUp, ChevronDown, ChevronsUpDown, Monitor } from 'lucide-react'
-import { devicesApi, type DeviceResponse } from '@/lib/api'
+import { ChevronUp, ChevronDown, ChevronsUpDown, Monitor, MapPin } from 'lucide-react'
+import { devicesApi, sitesApi, type DeviceResponse } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { useShortcut } from '@/hooks/useShortcut'
 import {
@@ -16,6 +16,12 @@ import {
 import { Button } from '@/components/ui/button'
 import { formatUptime, formatDateTime } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { DeviceLink } from '@/components/ui/device-link'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -126,7 +132,28 @@ export function FleetTable({
   pageSize = 25,
 }: FleetTableProps) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false)
+  const [bulkSiteId, setBulkSiteId] = useState<string>('')
+
+  const { data: sitesData } = useQuery({
+    queryKey: ['sites', tenantId],
+    queryFn: () => sitesApi.list(tenantId),
+  })
+
+  const bulkAssignMutation = useMutation({
+    mutationFn: ({ siteId, deviceIds }: { siteId: string; deviceIds: string[] }) =>
+      sitesApi.bulkAssign(tenantId, siteId, deviceIds),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['devices'] })
+      void queryClient.invalidateQueries({ queryKey: ['sites'] })
+      setSelectedIds(new Set())
+      setBulkAssignOpen(false)
+      setBulkSiteId('')
+    },
+  })
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['devices', tenantId, { search, status, sortBy, sortDir, page, pageSize }],
@@ -207,9 +234,38 @@ export function FleetTable({
     enabled: useVirtual,
   })
 
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === items.length && items.length > 0) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(items.map((d) => d.id)))
+    }
+  }
+
   function renderDeviceRow(device: DeviceResponse) {
     return (
       <>
+        <td className="px-2 py-1.5 text-center w-8">
+          <input
+            type="checkbox"
+            checked={selectedIds.has(device.id)}
+            onChange={() => toggleSelection(device.id)}
+            className="h-3.5 w-3.5 rounded border-border accent-accent"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </td>
         <td className="px-2 py-1.5 text-center">
           <StatusDot status={device.status} />
         </td>
@@ -218,6 +274,19 @@ export function FleetTable({
           {device.ip_address}
         </td>
         <td className="px-2 py-1.5 text-text-muted">{device.model ?? '—'}</td>
+        <td className="px-2 py-1.5 text-text-secondary">
+          {device.site_id ? (
+            <Link
+              to="/tenants/$tenantId/sites/$siteId"
+              params={{ tenantId, siteId: device.site_id }}
+              className="text-text-secondary hover:text-text-primary transition-colors text-xs truncate max-w-[120px] inline-block"
+            >
+              {device.site_name}
+            </Link>
+          ) : (
+            <span className="text-text-muted text-xs">--</span>
+          )}
+        </td>
         <td className="px-2 py-1.5 text-text-secondary">
           {device.routeros_version ?? '—'}
         </td>
@@ -246,10 +315,19 @@ export function FleetTable({
   const tableHead = (
     <thead>
       <tr className="border-b border-border">
+        <th scope="col" className="px-2 py-2 w-8">
+          <input
+            type="checkbox"
+            checked={selectedIds.size === items.length && items.length > 0}
+            onChange={toggleSelectAll}
+            className="h-3.5 w-3.5 rounded border-border accent-accent"
+          />
+        </th>
         <th scope="col" className="px-2 py-2 text-[10px] uppercase tracking-wider font-semibold text-text-muted w-6"><span className="sr-only">Status</span></th>
         <SortHeader column="hostname" label="Hostname" {...sortProps} className="text-left" />
         <SortHeader column="ip_address" label="IP" {...sortProps} className="text-left" />
         <SortHeader column="model" label="Model" {...sortProps} className="text-left" />
+        <th scope="col" className="px-2 py-2 text-[10px] uppercase tracking-wider font-semibold text-text-muted text-left">Site</th>
         <SortHeader column="routeros_version" label="RouterOS" {...sortProps} className="text-left" />
         <SortHeader column="firmware_version" label="Firmware" {...sortProps} className="text-left" />
         <SortHeader column="uptime_seconds" label="Uptime" {...sortProps} className="text-right" />
@@ -354,13 +432,13 @@ export function FleetTable({
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={9} className="px-3 py-4">
+                    <td colSpan={11} className="px-3 py-4">
                       <TableSkeleton />
                     </td>
                   </tr>
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={9}>
+                    <td colSpan={11}>
                       <EmptyState
                         icon={Monitor}
                         title="No devices yet"
@@ -395,6 +473,49 @@ export function FleetTable({
           </div>
         )}
       </div>
+
+      {/* Bulk assign action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-3 rounded-lg border border-border bg-elevated p-3">
+          <span className="text-sm text-text-secondary">{selectedIds.size} device{selectedIds.size !== 1 ? 's' : ''} selected</span>
+          <Button size="sm" variant="outline" onClick={() => setBulkAssignOpen(true)}>
+            <MapPin className="h-3.5 w-3.5 mr-1" /> Assign to site
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
+            Clear
+          </Button>
+        </div>
+      )}
+
+      {/* Bulk assign dialog */}
+      <Dialog open={bulkAssignOpen} onOpenChange={setBulkAssignOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign {selectedIds.size} device{selectedIds.size !== 1 ? 's' : ''} to site</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <Select value={bulkSiteId} onValueChange={setBulkSiteId}>
+              <SelectTrigger className="h-9 text-sm">
+                <SelectValue placeholder="Select a site..." />
+              </SelectTrigger>
+              <SelectContent>
+                {sitesData?.sites.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setBulkAssignOpen(false)}>Cancel</Button>
+              <Button
+                disabled={!bulkSiteId || bulkAssignMutation.isPending}
+                onClick={() => bulkAssignMutation.mutate({ siteId: bulkSiteId, deviceIds: Array.from(selectedIds) })}
+              >
+                {bulkAssignMutation.isPending ? 'Assigning...' : 'Assign'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Pagination (shown for both views) */}
       {data && data.total > 0 && (

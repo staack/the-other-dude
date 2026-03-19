@@ -12,13 +12,14 @@ import {
   FolderOpen,
   BellOff,
   BellRing,
+  MapPin,
   CheckCircle,
   ShieldCheck,
   ShieldAlert,
   ShieldOff,
   Shield,
 } from 'lucide-react'
-import { devicesApi, deviceGroupsApi, deviceTagsApi, tenantsApi, configApi, type DeviceResponse, type DeviceUpdate } from '@/lib/api'
+import { devicesApi, deviceGroupsApi, deviceTagsApi, tenantsApi, configApi, sitesApi, type DeviceResponse, type DeviceUpdate } from '@/lib/api'
 import { alertsApi } from '@/lib/alertsApi'
 import { useAuth, canWrite, canDelete } from '@/lib/auth'
 import { toast } from '@/components/ui/toast'
@@ -376,6 +377,29 @@ function DeviceDetailPage() {
     enabled: canWrite(user),
   })
 
+  const { data: sitesData } = useQuery({
+    queryKey: ['sites', tenantId],
+    queryFn: () => sitesApi.list(tenantId),
+  })
+
+  const siteAssignMutation = useMutation({
+    mutationFn: async (value: string) => {
+      if (value === 'unassigned') {
+        if (device?.site_id) {
+          await sitesApi.removeDevice(tenantId, device.site_id, deviceId)
+        }
+      } else {
+        await sitesApi.assignDevice(tenantId, value, deviceId)
+      }
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['device', tenantId, deviceId] })
+      void queryClient.invalidateQueries({ queryKey: ['devices'] })
+      void queryClient.invalidateQueries({ queryKey: ['sites'] })
+    },
+    onError: () => toast({ title: 'Failed to update site assignment', variant: 'destructive' }),
+  })
+
   const deleteMutation = useMutation({
     mutationFn: () => devicesApi.delete(tenantId, deviceId),
     onSuccess: () => {
@@ -542,6 +566,32 @@ function DeviceDetailPage() {
                 }
               />
               <InfoRow label="Added" value={formatDate(device.created_at)} />
+              <InfoRow
+                label="Site"
+                value={
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5 text-text-muted" />
+                    {canWrite(user) ? (
+                      <Select
+                        value={device.site_id ?? 'unassigned'}
+                        onValueChange={(value) => siteAssignMutation.mutate(value)}
+                      >
+                        <SelectTrigger className="h-7 w-[160px] text-xs">
+                          <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassigned">Unassigned</SelectItem>
+                          {sitesData?.sites.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm">{device.site_name ?? 'Unassigned'}</span>
+                    )}
+                  </div>
+                }
+              />
             </div>
 
             {/* Credentials (masked) */}
