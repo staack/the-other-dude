@@ -39,6 +39,7 @@ function SitesPage() {
       />
       <SiteFormDialog open={createOpen} onOpenChange={setCreateOpen} tenantId={tenantId} />
       <SiteFormDialog
+        key={editSite?.id ?? 'new'}
         open={!!editSite}
         onOpenChange={(open) => {
           if (!open) setEditSite(null)

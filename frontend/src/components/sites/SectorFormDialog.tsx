@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { sectorsApi, type SectorResponse, type SectorCreate, type SectorUpdate } from '@/lib/api'
 import {
@@ -25,21 +25,9 @@ export function SectorFormDialog({ open, onOpenChange, tenantId, siteId, sector 
   const queryClient = useQueryClient()
   const isEdit = !!sector
 
-  const [name, setName] = useState('')
-  const [azimuth, setAzimuth] = useState('')
-  const [description, setDescription] = useState('')
-
-  useEffect(() => {
-    if (sector) {
-      setName(sector.name)
-      setAzimuth(sector.azimuth != null ? String(sector.azimuth) : '')
-      setDescription(sector.description ?? '')
-    } else {
-      setName('')
-      setAzimuth('')
-      setDescription('')
-    }
-  }, [sector, open])
+  const [name, setName] = useState(sector?.name ?? '')
+  const [azimuth, setAzimuth] = useState(sector?.azimuth != null ? String(sector.azimuth) : '')
+  const [description, setDescription] = useState(sector?.description ?? '')
 
   const createMutation = useMutation({
     mutationFn: (data: SectorCreate) => sectorsApi.create(tenantId, siteId, data),

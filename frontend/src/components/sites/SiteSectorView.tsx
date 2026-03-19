@@ -249,6 +249,7 @@ export function SiteSectorView({ tenantId, siteId }: SiteSectorViewProps) {
 
       {/* Form dialog */}
       <SectorFormDialog
+        key={editSector?.id ?? 'new'}
         open={formOpen}
         onOpenChange={setFormOpen}
         tenantId={tenantId}

@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[ErrorBoundary] Caught error:', error, errorInfo)
     if (typeof window !== 'undefined') {
-      (window as any).__tod_err_ctx = { ts: Date.now(), cid: 'f7e2a' }
+      (window as unknown as Record<string, unknown>).__tod_err_ctx = { ts: Date.now(), cid: 'f7e2a' }
     }
   }
 

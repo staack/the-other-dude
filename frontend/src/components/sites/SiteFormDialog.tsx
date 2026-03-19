@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { sitesApi, type SiteResponse, type SiteCreate, type SiteUpdate } from '@/lib/api'
 import {
@@ -24,31 +24,12 @@ export function SiteFormDialog({ open, onOpenChange, tenantId, site }: SiteFormD
   const queryClient = useQueryClient()
   const isEdit = !!site
 
-  const [name, setName] = useState('')
-  const [address, setAddress] = useState('')
-  const [latitude, setLatitude] = useState('')
-  const [longitude, setLongitude] = useState('')
-  const [elevation, setElevation] = useState('')
-  const [notes, setNotes] = useState('')
-
-  // Populate form when editing or reset when dialog opens/closes
-  useEffect(() => {
-    if (site) {
-      setName(site.name)
-      setAddress(site.address ?? '')
-      setLatitude(site.latitude != null ? String(site.latitude) : '')
-      setLongitude(site.longitude != null ? String(site.longitude) : '')
-      setElevation(site.elevation != null ? String(site.elevation) : '')
-      setNotes(site.notes ?? '')
-    } else {
-      setName('')
-      setAddress('')
-      setLatitude('')
-      setLongitude('')
-      setElevation('')
-      setNotes('')
-    }
-  }, [site, open])
+  const [name, setName] = useState(site?.name ?? '')
+  const [address, setAddress] = useState(site?.address ?? '')
+  const [latitude, setLatitude] = useState(site?.latitude != null ? String(site.latitude) : '')
+  const [longitude, setLongitude] = useState(site?.longitude != null ? String(site.longitude) : '')
+  const [elevation, setElevation] = useState(site?.elevation != null ? String(site.elevation) : '')
+  const [notes, setNotes] = useState(site?.notes ?? '')
 
   const createMutation = useMutation({
     mutationFn: (data: SiteCreate) => sitesApi.create(tenantId, data),
