@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v9.7
 milestone_name: Tower & Site Management
-status: executing
-stopped_at: Completed 13-02-PLAN.md
-last_updated: "2026-03-19T11:02:22Z"
+status: unknown
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-03-19T11:07:35.900Z"
 progress:
   total_phases: 5
   completed_phases: 2
@@ -41,6 +41,7 @@ Plan: 2 of 3
 | 11 | 3 | 12min | 4min |
 | 12 | 2 | 6min | 3min |
 | 13 | 2 | 5min | 2.5min |
+| Phase 13 P01 | 5min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 12]: WIRELESS_REGISTRATIONS NATS stream uses 30-day retention (vs 24h for DEVICE_EVENTS) for historical client analytics
 - [Phase 12]: RF monitor collection gated on wireless interface presence to avoid unnecessary API calls
 - [Phase 13]: No backref on DeviceInterface.device relationship -- link discovery reads interfaces directionally
+- [Phase 13]: MAC addresses lowercased at collection time for consistent downstream matching
+- [Phase 13]: InterfaceInfo (identity/link discovery) kept separate from InterfaceStats (traffic counters)
 
 ### Pending Todos
 
@@ -81,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T11:02:22Z
-Stopped at: Completed 13-02-PLAN.md
+Last session: 2026-03-19T11:07:35.897Z
+Stopped at: Completed 13-01-PLAN.md
 Resume file: None
