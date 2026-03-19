@@ -14,6 +14,7 @@ import {
   ClipboardList,
   Wifi,
   BarChart3,
+  MapPin,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth, isSuperAdmin, isTenantAdmin } from '@/lib/auth'
@@ -107,6 +108,15 @@ export function Sidebar() {
                 label: 'Devices',
                 href: `/tenants/${user.tenant_id}/devices`,
                 icon: Monitor,
+              },
+            ]
+          : []),
+        ...(!isSuperAdmin(user) && user?.tenant_id
+          ? [
+              {
+                label: 'Sites',
+                href: `/tenants/${user.tenant_id}/sites`,
+                icon: MapPin,
               },
             ]
           : []),

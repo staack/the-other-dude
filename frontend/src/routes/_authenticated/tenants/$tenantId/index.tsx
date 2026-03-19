@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Users, Monitor, Building2 } from 'lucide-react'
-import { tenantsApi } from '@/lib/api'
+import { Users, Monitor, Building2, MapPin } from 'lucide-react'
+import { tenantsApi, sitesApi } from '@/lib/api'
 import { formatDate } from '@/lib/utils'
 import { CardGridSkeleton } from '@/components/ui/page-skeleton'
 
@@ -17,8 +17,13 @@ function TenantDetailPage() {
     queryFn: () => tenantsApi.get(tenantId),
   })
 
+  const { data: sitesData } = useQuery({
+    queryKey: ['sites', tenantId],
+    queryFn: () => sitesApi.list(tenantId),
+  })
+
   if (isLoading) {
-    return <CardGridSkeleton cards={2} />
+    return <CardGridSkeleton cards={3} />
   }
 
   if (!tenant) {
@@ -40,7 +45,7 @@ function TenantDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <Link
           to="/tenants/$tenantId/users"
           params={{ tenantId }}
@@ -50,6 +55,18 @@ function TenantDetailPage() {
           <div>
             <p className="text-2xl font-semibold">{tenant.user_count}</p>
             <p className="text-xs text-text-secondary">Users</p>
+          </div>
+        </Link>
+
+        <Link
+          to="/tenants/$tenantId/sites"
+          params={{ tenantId }}
+          className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4 hover:bg-elevated/50 transition-colors group"
+        >
+          <MapPin className="h-8 w-8 text-text-muted group-hover:text-text-muted transition-colors" />
+          <div>
+            <p className="text-2xl font-semibold">{sitesData?.sites.length ?? 0}</p>
+            <p className="text-xs text-text-secondary">Sites</p>
           </div>
         </Link>
 
@@ -73,6 +90,14 @@ function TenantDetailPage() {
           className="text-sm text-text-secondary hover:text-text-primary transition-colors underline-offset-2 hover:underline"
         >
           Manage users
+        </Link>
+        <span className="text-text-muted">·</span>
+        <Link
+          to="/tenants/$tenantId/sites"
+          params={{ tenantId }}
+          className="text-sm text-text-secondary hover:text-text-primary transition-colors underline-offset-2 hover:underline"
+        >
+          Manage sites
         </Link>
         <span className="text-text-muted">·</span>
         <Link
