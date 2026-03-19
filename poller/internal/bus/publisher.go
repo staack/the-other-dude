@@ -132,6 +132,7 @@ func NewPublisher(natsURL string) (*Publisher, error) {
 		Subjects: []string{
 			"device.status.>",
 			"device.metrics.>",
+			"device.interfaces.>",
 			"device.firmware.>",
 			"device.credential_changed.>",
 			"config.changed.>",
@@ -220,6 +221,44 @@ func (p *Publisher) PublishMetrics(ctx context.Context, event DeviceMetricsEvent
 	slog.Debug("published device metrics event",
 		"device_id", event.DeviceID,
 		"type", event.Type,
+		"subject", subject,
+	)
+
+	return nil
+}
+
+// DeviceInterfaceEvent is the payload published to the DEVICE_EVENTS NATS stream
+// when interface identity data (name, MAC, type, running) is collected from a
+// device. The link discovery system uses MAC addresses to resolve which managed
+// device owns each end of a wireless link.
+type DeviceInterfaceEvent struct {
+	DeviceID    string                 `json:"device_id"`
+	TenantID    string                 `json:"tenant_id"`
+	CollectedAt string                 `json:"collected_at"` // RFC3339
+	Interfaces  []device.InterfaceInfo `json:"interfaces"`
+}
+
+// PublishDeviceInterfaces publishes interface identity data to the DEVICE_EVENTS
+// NATS stream for link discovery.
+//
+// Events are published to "device.interfaces.{device_id}" so consumers can
+// subscribe to all interface data or filter by device.
+func (p *Publisher) PublishDeviceInterfaces(ctx context.Context, event DeviceInterfaceEvent) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("marshalling device interface event: %w", err)
+	}
+
+	subject := fmt.Sprintf("device.interfaces.%s", event.DeviceID)
+
+	_, err = p.js.Publish(ctx, subject, data)
+	if err != nil {
+		return fmt.Errorf("publishing to %s: %w", subject, err)
+	}
+
+	slog.Debug("published device interface event",
+		"device_id", event.DeviceID,
+		"interfaces", len(event.Interfaces),
 		"subject", subject,
 	)
 

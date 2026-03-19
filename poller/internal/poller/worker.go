@@ -326,6 +326,29 @@ func PollDevice(
 		observability.NATSPublishTotal.WithLabelValues("metrics", "success").Inc()
 	}
 
+	// Interface identity data for link discovery (MAC addresses, types).
+	cmdCtx, cmdCancel = context.WithTimeout(ctx, cmdTimeout)
+	ifaceInfo, err := withTimeout[[]device.InterfaceInfo](cmdCtx, func() ([]device.InterfaceInfo, error) {
+		return device.CollectInterfaceInfo(client)
+	})
+	cmdCancel()
+	if err != nil {
+		slog.Warn("failed to collect interface info", "device_id", dev.ID, "error", err)
+	}
+	if len(ifaceInfo) > 0 {
+		if pubErr := pub.PublishDeviceInterfaces(ctx, bus.DeviceInterfaceEvent{
+			DeviceID:    dev.ID,
+			TenantID:    dev.TenantID,
+			CollectedAt: collectedAt,
+			Interfaces:  ifaceInfo,
+		}); pubErr != nil {
+			slog.Warn("failed to publish device interfaces", "device_id", dev.ID, "error", pubErr)
+			observability.NATSPublishTotal.WithLabelValues("interfaces_info", "error").Inc()
+		} else {
+			observability.NATSPublishTotal.WithLabelValues("interfaces_info", "success").Inc()
+		}
+	}
+
 	// System health (CPU, memory, disk, temperature).
 	cmdCtx, cmdCancel = context.WithTimeout(ctx, cmdTimeout)
 	health, err := withTimeout[device.HealthMetrics](cmdCtx, func() (device.HealthMetrics, error) {
