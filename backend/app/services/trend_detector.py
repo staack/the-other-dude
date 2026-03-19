@@ -10,7 +10,6 @@ Uses AdminAsyncSessionLocal (bypasses RLS -- trend detection is system-level).
 """
 
 import asyncio
-from datetime import datetime, timezone
 
 import structlog
 from sqlalchemy import text

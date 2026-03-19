@@ -41,7 +41,7 @@ async def get_signal_history(
     bucket_interval, lookback = RANGE_CONFIG.get(range, RANGE_CONFIG["7d"])
 
     result = await db.execute(
-        text(f"""
+        text("""
             SELECT
                 time_bucket(:bucket_interval, wr.time) AS bucket,
                 avg(wr.signal_strength)::int AS signal_avg,

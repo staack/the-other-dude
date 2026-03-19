@@ -119,7 +119,6 @@ def _build_device_response(device: Device) -> DeviceResponse:
 
 def _device_with_relations():
     """Return a select() for Device with tags and groups eagerly loaded."""
-    from app.models.site import Site  # noqa: F811
 
     return select(Device).options(
         selectinload(Device.tag_assignments).selectinload(DeviceTagAssignment.tag),

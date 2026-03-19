@@ -11,7 +11,6 @@ RBAC:
 """
 
 import uuid
-from typing import Optional
 
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
