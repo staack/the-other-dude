@@ -23,8 +23,8 @@
 
 ### Sectors
 
-- [ ] **SECT-01**: Operator can define sectors within a site (name, optional azimuth/bearing)
-- [ ] **SECT-02**: Operator can assign APs to sectors
+- [x] **SECT-01**: Operator can define sectors within a site (name, optional azimuth/bearing)
+- [x] **SECT-02**: Operator can assign APs to sectors
 - [ ] **SECT-03**: Sector view shows aggregate client count, bandwidth, and signal statistics per sector
 
 ### Wireless Collection
@@ -104,8 +104,8 @@
 | DASH-02 | Phase 14 | Pending |
 | DASH-03 | Phase 14 | Pending |
 | DASH-04 | Phase 14 | Pending |
-| SECT-01 | Phase 14 | Pending |
-| SECT-02 | Phase 14 | Pending |
+| SECT-01 | Phase 14 | Complete |
+| SECT-02 | Phase 14 | Complete |
 | SECT-03 | Phase 14 | Pending |
 | WRCL-01 | Phase 12 | Complete |
 | WRCL-02 | Phase 12 | Complete |
