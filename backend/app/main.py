@@ -465,6 +465,8 @@ def create_app() -> FastAPI:
     from app.routers.sites import router as sites_router
     from app.routers.links import router as links_router
     from app.routers.sectors import router as sectors_router
+    from app.routers.signal_history import router as signal_history_router
+    from app.routers.site_alerts import router as site_alerts_router
 
     app.include_router(auth_router, prefix="/api")
     app.include_router(tenants_router, prefix="/api")
@@ -497,6 +499,8 @@ def create_app() -> FastAPI:
     app.include_router(sites_router, prefix="/api")
     app.include_router(links_router, prefix="/api")
     app.include_router(sectors_router, prefix="/api")
+    app.include_router(signal_history_router, prefix="/api")
+    app.include_router(site_alerts_router, prefix="/api")
 
     # Health check endpoints
     @app.get("/health", tags=["health"])
