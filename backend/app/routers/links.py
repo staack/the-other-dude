@@ -36,14 +36,18 @@ router = APIRouter(tags=["links"])
 )
 async def list_links(
     tenant_id: uuid.UUID,
-    state: Optional[str] = Query(None, description="Filter by link state (active, degraded, down, stale)"),
+    state: Optional[str] = Query(
+        None, description="Filter by link state (active, degraded, down, stale)"
+    ),
     device_id: Optional[uuid.UUID] = Query(None, description="Filter by device (AP or CPE side)"),
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> LinkListResponse:
     """List all wireless links for a tenant with optional state and device filters."""
     await _check_tenant_access(current_user, tenant_id, db)
-    return await link_service.get_links(db=db, tenant_id=tenant_id, state=state, device_id=device_id)
+    return await link_service.get_links(
+        db=db, tenant_id=tenant_id, state=state, device_id=device_id
+    )
 
 
 @router.get(
@@ -91,7 +95,9 @@ async def list_device_registrations(
 ) -> RegistrationListResponse:
     """Get latest wireless registration data for a device (most recent per MAC)."""
     await _check_tenant_access(current_user, tenant_id, db)
-    return await link_service.get_device_registrations(db=db, tenant_id=tenant_id, device_id=device_id)
+    return await link_service.get_device_registrations(
+        db=db, tenant_id=tenant_id, device_id=device_id
+    )
 
 
 @router.get(

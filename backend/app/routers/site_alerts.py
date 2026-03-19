@@ -98,9 +98,7 @@ async def get_alert_rule(
         db=db, tenant_id=tenant_id, site_id=site_id, rule_id=rule_id
     )
     if not result:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Alert rule not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert rule not found")
     return result
 
 
@@ -124,9 +122,7 @@ async def update_alert_rule(
         db=db, tenant_id=tenant_id, site_id=site_id, rule_id=rule_id, data=data
     )
     if not result:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Alert rule not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert rule not found")
     return result
 
 
@@ -149,9 +145,7 @@ async def delete_alert_rule(
         db=db, tenant_id=tenant_id, site_id=site_id, rule_id=rule_id
     )
     if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Alert rule not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert rule not found")
 
 
 # ---------------------------------------------------------------------------

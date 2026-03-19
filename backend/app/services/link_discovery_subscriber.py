@@ -31,8 +31,8 @@ _link_discovery_client: Optional[NATSClient] = None
 
 # Configurable thresholds for link state transitions
 DEGRADED_SIGNAL_THRESHOLD = -80  # dBm — signals weaker than this mark link as degraded
-CONSECUTIVE_MISS_THRESHOLD = 3   # Missed polls before marking link as down
-STALE_HOURS = 24                 # Hours after down before marking link as stale
+CONSECUTIVE_MISS_THRESHOLD = 3  # Missed polls before marking link as down
+STALE_HOURS = 24  # Hours after down before marking link as stale
 
 
 # =============================================================================
@@ -187,14 +187,16 @@ async def on_wireless_registration_for_links(msg) -> None:
 
             # Mark stale: any links in 'down' state where last_seen > STALE_HOURS ago
             await session.execute(
-                text("""
+                text(
+                    """
                     UPDATE wireless_links
                     SET state = 'stale', updated_at = NOW()
                     WHERE ap_device_id = :ap_device_id
                       AND tenant_id = :tenant_id
                       AND state = 'down'
                       AND last_seen < NOW() - INTERVAL ':stale_hours hours'
-                """.replace(":stale_hours", str(STALE_HOURS))),
+                """.replace(":stale_hours", str(STALE_HOURS))
+                ),
                 {
                     "ap_device_id": device_id,
                     "tenant_id": tenant_id,

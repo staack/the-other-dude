@@ -43,8 +43,7 @@ async def _evaluate_condition(session, rule) -> bool:  # noqa: ANN001
 
         offline_result = await session.execute(
             text(
-                "SELECT count(*) AS cnt FROM devices "
-                "WHERE site_id = :site_id AND is_online = false"
+                "SELECT count(*) AS cnt FROM devices WHERE site_id = :site_id AND is_online = false"
             ),
             {"site_id": site_id},
         )
@@ -55,8 +54,7 @@ async def _evaluate_condition(session, rule) -> bool:  # noqa: ANN001
     elif rule_type == "device_offline_count":
         offline_result = await session.execute(
             text(
-                "SELECT count(*) AS cnt FROM devices "
-                "WHERE site_id = :site_id AND is_online = false"
+                "SELECT count(*) AS cnt FROM devices WHERE site_id = :site_id AND is_online = false"
             ),
             {"site_id": site_id},
         )
@@ -171,9 +169,11 @@ async def _evaluate_rules() -> None:
                     # Events with consecutive_hits < 2 are considered "pending"
                     # (not yet confirmed). On next evaluation if still met,
                     # consecutive_hits increments to 2 (confirmed alert).
-                    severity = "critical" if rule.rule_type in (
-                        "device_offline_percent", "device_offline_count"
-                    ) else "warning"
+                    severity = (
+                        "critical"
+                        if rule.rule_type in ("device_offline_percent", "device_offline_count")
+                        else "warning"
+                    )
 
                     await session.execute(
                         text("""

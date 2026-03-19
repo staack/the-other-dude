@@ -122,9 +122,7 @@ async def _subscribe_with_retry(js: JetStreamContext) -> None:
                 durable="api-interface-consumer",
                 stream="DEVICE_EVENTS",
             )
-            logger.info(
-                "NATS: subscribed to device.interfaces.> (durable: api-interface-consumer)"
-            )
+            logger.info("NATS: subscribed to device.interfaces.> (durable: api-interface-consumer)")
             return
         except Exception as exc:
             if attempt < max_attempts:

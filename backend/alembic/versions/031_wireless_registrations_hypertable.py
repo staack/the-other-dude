@@ -58,9 +58,7 @@ def upgrade() -> None:
     )
 
     conn.execute(
-        sa.text(
-            "SELECT create_hypertable('wireless_registrations', 'time', if_not_exists => TRUE)"
-        )
+        sa.text("SELECT create_hypertable('wireless_registrations', 'time', if_not_exists => TRUE)")
     )
 
     # Primary lookup: device + time range
@@ -126,9 +124,7 @@ def upgrade() -> None:
     )
 
     conn.execute(
-        sa.text(
-            "SELECT create_hypertable('rf_monitor_stats', 'time', if_not_exists => TRUE)"
-        )
+        sa.text("SELECT create_hypertable('rf_monitor_stats', 'time', if_not_exists => TRUE)")
     )
 
     conn.execute(
@@ -157,23 +153,17 @@ def upgrade() -> None:
     conn.execute(sa.text("GRANT SELECT, INSERT ON rf_monitor_stats TO app_user"))
     conn.execute(sa.text("GRANT SELECT, INSERT ON rf_monitor_stats TO poller_user"))
 
-    conn.execute(
-        sa.text("SELECT add_retention_policy('rf_monitor_stats', INTERVAL '30 days')")
-    )
+    conn.execute(sa.text("SELECT add_retention_policy('rf_monitor_stats', INTERVAL '30 days')"))
 
 
 def downgrade() -> None:
     conn = op.get_bind()
 
     # Remove retention policies before dropping tables
-    conn.execute(
-        sa.text("SELECT remove_retention_policy('rf_monitor_stats', if_exists => true)")
-    )
+    conn.execute(sa.text("SELECT remove_retention_policy('rf_monitor_stats', if_exists => true)"))
     conn.execute(sa.text("DROP TABLE IF EXISTS rf_monitor_stats CASCADE"))
 
     conn.execute(
-        sa.text(
-            "SELECT remove_retention_policy('wireless_registrations', if_exists => true)"
-        )
+        sa.text("SELECT remove_retention_policy('wireless_registrations', if_exists => true)")
     )
     conn.execute(sa.text("DROP TABLE IF EXISTS wireless_registrations CASCADE"))

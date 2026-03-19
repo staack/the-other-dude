@@ -29,7 +29,9 @@ logger = structlog.get_logger("site_service")
 # ---------------------------------------------------------------------------
 
 
-def _site_response(site: Site, device_count: int = 0, online_count: int = 0, alert_count: int = 0) -> SiteResponse:
+def _site_response(
+    site: Site, device_count: int = 0, online_count: int = 0, alert_count: int = 0
+) -> SiteResponse:
     """Build a SiteResponse from an ORM Site instance with health stats."""
     online_percent = (online_count / device_count * 100) if device_count > 0 else 0.0
     return SiteResponse(
@@ -51,9 +53,7 @@ def _site_response(site: Site, device_count: int = 0, online_count: int = 0, ale
 
 async def _get_site_or_404(db: AsyncSession, tenant_id: uuid.UUID, site_id: uuid.UUID) -> Site:
     """Fetch a site by id and tenant, or raise 404."""
-    result = await db.execute(
-        select(Site).where(Site.id == site_id, Site.tenant_id == tenant_id)
-    )
+    result = await db.execute(select(Site).where(Site.id == site_id, Site.tenant_id == tenant_id))
     site = result.scalar_one_or_none()
     if not site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")

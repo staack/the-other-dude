@@ -183,11 +183,7 @@ def upgrade() -> None:
             )
         """)
     )
-    conn.execute(
-        sa.text(
-            "GRANT SELECT, INSERT, UPDATE, DELETE ON site_alert_rules TO app_user"
-        )
-    )
+    conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON site_alert_rules TO app_user"))
 
     # site_alert_events RLS
     conn.execute(sa.text("ALTER TABLE site_alert_events ENABLE ROW LEVEL SECURITY"))
@@ -205,23 +201,15 @@ def upgrade() -> None:
             )
         """)
     )
-    conn.execute(
-        sa.text(
-            "GRANT SELECT, INSERT, UPDATE, DELETE ON site_alert_events TO app_user"
-        )
-    )
+    conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON site_alert_events TO app_user"))
 
 
 def downgrade() -> None:
     conn = op.get_bind()
 
     # Drop RLS policies
-    conn.execute(
-        sa.text("DROP POLICY IF EXISTS tenant_isolation ON site_alert_events")
-    )
-    conn.execute(
-        sa.text("DROP POLICY IF EXISTS tenant_isolation ON site_alert_rules")
-    )
+    conn.execute(sa.text("DROP POLICY IF EXISTS tenant_isolation ON site_alert_events"))
+    conn.execute(sa.text("DROP POLICY IF EXISTS tenant_isolation ON site_alert_rules"))
 
     # Drop tables (indexes drop automatically with tables)
     op.drop_table("site_alert_events")

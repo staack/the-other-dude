@@ -166,9 +166,7 @@ async def unassign_device(
 ) -> None:
     """Remove a device from a site. Requires operator role or above."""
     await _check_tenant_access(current_user, tenant_id, db)
-    await site_service.remove_device_from_site(
-        db=db, tenant_id=tenant_id, device_id=device_id
-    )
+    await site_service.remove_device_from_site(db=db, tenant_id=tenant_id, device_id=device_id)
 
 
 @router.post(
