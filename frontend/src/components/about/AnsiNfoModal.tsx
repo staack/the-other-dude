@@ -87,12 +87,8 @@ interface AnsiNfoModalProps {
 export function AnsiNfoModal({ open, onOpenChange }: AnsiNfoModalProps) {
   const [visibleLines, setVisibleLines] = useState(0)
   const [animationDone, setAnimationDone] = useState(false)
-  const linesRef = useRef<ArtLine[]>([])
+  const linesRef = useRef<ArtLine[]>(buildNfoLines())
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  if (linesRef.current.length === 0) {
-    linesRef.current = buildNfoLines()
-  }
   const totalLines = linesRef.current.length
 
   const skipAnimation = useCallback(() => {
@@ -151,8 +147,8 @@ export function AnsiNfoModal({ open, onOpenChange }: AnsiNfoModalProps) {
         }}
       >
         {/* Retro title bar */}
-        <div className="flex items-center justify-between px-3 py-1.5 bg-surface border-b border-border font-mono text-xs">
-          <DialogTitle className="text-text-muted text-xs font-normal font-mono">
+        <div className="flex items-center justify-between px-3 pr-10 py-1.5 bg-surface border-b border-border font-mono text-xs">
+          <DialogTitle id="ansi-nfo-title" className="text-text-muted text-xs font-normal font-mono">
             TOD.NFO — ACiD View v1.0
           </DialogTitle>
         </div>
@@ -161,6 +157,7 @@ export function AnsiNfoModal({ open, onOpenChange }: AnsiNfoModalProps) {
         <div
           className="overflow-y-auto p-4 max-h-[70vh] font-mono text-[10px] sm:text-xs md:text-sm leading-relaxed"
           role="document"
+          aria-labelledby="ansi-nfo-title"
         >
           <pre className="whitespace-pre" aria-hidden="true">
             {linesRef.current.slice(0, visibleLines).map(([cls, text], i) => (
