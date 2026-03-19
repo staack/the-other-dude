@@ -1,3 +1,4 @@
+import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Wifi } from 'lucide-react'
 import { wirelessApi, type RegistrationResponse } from '@/lib/api'
@@ -6,6 +7,7 @@ import { DeviceLink } from '@/components/ui/device-link'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { signalColor } from './signal-color'
+import { SignalHistoryChart } from './SignalHistoryChart'
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -32,6 +34,8 @@ interface WirelessStationTableProps {
 }
 
 export function WirelessStationTable({ tenantId, deviceId, active }: WirelessStationTableProps) {
+  const [expandedMac, setExpandedMac] = useState<string | null>(null)
+
   const { data, isLoading } = useQuery({
     queryKey: ['device-registrations', tenantId, deviceId],
     queryFn: () => wirelessApi.getDeviceRegistrations(tenantId, deviceId),
@@ -95,44 +99,57 @@ export function WirelessStationTable({ tenantId, deviceId, active }: WirelessSta
           </thead>
           <tbody>
             {data.items.map((reg: RegistrationResponse) => (
-              <tr
-                key={reg.mac_address}
-                className="border-b border-border/50 hover:bg-elevated/50 transition-colors"
-              >
-                <td className="px-2 py-1.5 font-mono text-xs text-text-secondary">
-                  {reg.mac_address}
-                </td>
-                <td className="px-2 py-1.5 text-text-primary">
-                  {reg.device_id ? (
-                    <DeviceLink tenantId={tenantId} deviceId={reg.device_id}>
-                      {reg.hostname ?? reg.mac_address}
-                    </DeviceLink>
-                  ) : (
-                    <span className="text-text-muted">{reg.hostname ?? '--'}</span>
-                  )}
-                </td>
-                <td className={cn('px-2 py-1.5 text-right font-medium', signalColor(reg.signal_strength))}>
-                  {reg.signal_strength != null ? `${reg.signal_strength} dBm` : '--'}
-                </td>
-                <td className={cn('px-2 py-1.5 text-right font-medium', ccqColor(reg.tx_ccq))}>
-                  {reg.tx_ccq != null ? `${reg.tx_ccq}%` : '--'}
-                </td>
-                <td className="px-2 py-1.5 text-right text-text-secondary">
-                  {reg.tx_rate ?? '--'}
-                </td>
-                <td className="px-2 py-1.5 text-right text-text-secondary">
-                  {reg.rx_rate ?? '--'}
-                </td>
-                <td className="px-2 py-1.5 text-right text-text-secondary">
-                  {reg.distance != null ? `${reg.distance}m` : '--'}
-                </td>
-                <td className="px-2 py-1.5 text-right text-text-secondary">
-                  {reg.uptime ?? '--'}
-                </td>
-                <td className="px-2 py-1.5 text-right text-text-muted text-xs">
-                  {timeAgo(reg.last_seen)}
-                </td>
-              </tr>
+              <React.Fragment key={reg.mac_address}>
+                <tr
+                  className="border-b border-border/50 hover:bg-elevated/50 transition-colors cursor-pointer"
+                  onClick={() => setExpandedMac(expandedMac === reg.mac_address ? null : reg.mac_address)}
+                >
+                  <td className="px-2 py-1.5 font-mono text-xs text-text-secondary">
+                    {reg.mac_address}
+                  </td>
+                  <td className="px-2 py-1.5 text-text-primary">
+                    {reg.device_id ? (
+                      <DeviceLink tenantId={tenantId} deviceId={reg.device_id}>
+                        {reg.hostname ?? reg.mac_address}
+                      </DeviceLink>
+                    ) : (
+                      <span className="text-text-muted">{reg.hostname ?? '--'}</span>
+                    )}
+                  </td>
+                  <td className={cn('px-2 py-1.5 text-right font-medium', signalColor(reg.signal_strength))}>
+                    {reg.signal_strength != null ? `${reg.signal_strength} dBm` : '--'}
+                  </td>
+                  <td className={cn('px-2 py-1.5 text-right font-medium', ccqColor(reg.tx_ccq))}>
+                    {reg.tx_ccq != null ? `${reg.tx_ccq}%` : '--'}
+                  </td>
+                  <td className="px-2 py-1.5 text-right text-text-secondary">
+                    {reg.tx_rate ?? '--'}
+                  </td>
+                  <td className="px-2 py-1.5 text-right text-text-secondary">
+                    {reg.rx_rate ?? '--'}
+                  </td>
+                  <td className="px-2 py-1.5 text-right text-text-secondary">
+                    {reg.distance != null ? `${reg.distance}m` : '--'}
+                  </td>
+                  <td className="px-2 py-1.5 text-right text-text-secondary">
+                    {reg.uptime ?? '--'}
+                  </td>
+                  <td className="px-2 py-1.5 text-right text-text-muted text-xs">
+                    {timeAgo(reg.last_seen)}
+                  </td>
+                </tr>
+                {expandedMac === reg.mac_address && (
+                  <tr>
+                    <td colSpan={9} className="px-3 py-3 bg-elevated/20">
+                      <SignalHistoryChart
+                        tenantId={tenantId}
+                        deviceId={deviceId}
+                        macAddress={reg.mac_address}
+                      />
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Wifi } from 'lucide-react'
 import { wirelessApi, type LinkResponse } from '@/lib/api'
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { signalColor } from './signal-color'
+import { SignalHistoryChart } from './SignalHistoryChart'
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -180,6 +181,8 @@ function APGroup({
   apDeviceId: string
   links: LinkResponse[]
 }) {
+  const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null)
+
   return (
     <>
       {/* AP header row */}
@@ -198,34 +201,47 @@ function APGroup({
       </tr>
       {/* CPE rows */}
       {links.map((link) => (
-        <tr
-          key={link.id}
-          className="border-b border-border/50 hover:bg-elevated/50 transition-colors"
-        >
-          <td className="px-2 py-1.5 pl-6">
-            <DeviceLink tenantId={tenantId} deviceId={link.cpe_device_id}>
-              {link.cpe_hostname ?? link.client_mac}
-            </DeviceLink>
-          </td>
-          <td className={cn('px-2 py-1.5 text-right font-medium', signalColor(link.signal_strength))}>
-            {link.signal_strength != null ? `${link.signal_strength} dBm` : '--'}
-          </td>
-          <td className="px-2 py-1.5 text-right text-text-secondary">
-            {link.tx_ccq != null ? `${link.tx_ccq}%` : '--'}
-          </td>
-          <td className="px-2 py-1.5 text-right text-text-secondary">
-            {link.tx_rate ?? '--'}
-          </td>
-          <td className="px-2 py-1.5 text-right text-text-secondary">
-            {link.rx_rate ?? '--'}
-          </td>
-          <td className="px-2 py-1.5 text-center">
-            <StateBadge state={link.state} />
-          </td>
-          <td className="px-2 py-1.5 text-right text-text-muted text-xs">
-            {timeAgo(link.last_seen)}
-          </td>
-        </tr>
+        <React.Fragment key={link.id}>
+          <tr
+            className="border-b border-border/50 hover:bg-elevated/50 transition-colors cursor-pointer"
+            onClick={() => setExpandedLinkId(expandedLinkId === link.id ? null : link.id)}
+          >
+            <td className="px-2 py-1.5 pl-6">
+              <DeviceLink tenantId={tenantId} deviceId={link.cpe_device_id}>
+                {link.cpe_hostname ?? link.client_mac}
+              </DeviceLink>
+            </td>
+            <td className={cn('px-2 py-1.5 text-right font-medium', signalColor(link.signal_strength))}>
+              {link.signal_strength != null ? `${link.signal_strength} dBm` : '--'}
+            </td>
+            <td className="px-2 py-1.5 text-right text-text-secondary">
+              {link.tx_ccq != null ? `${link.tx_ccq}%` : '--'}
+            </td>
+            <td className="px-2 py-1.5 text-right text-text-secondary">
+              {link.tx_rate ?? '--'}
+            </td>
+            <td className="px-2 py-1.5 text-right text-text-secondary">
+              {link.rx_rate ?? '--'}
+            </td>
+            <td className="px-2 py-1.5 text-center">
+              <StateBadge state={link.state} />
+            </td>
+            <td className="px-2 py-1.5 text-right text-text-muted text-xs">
+              {timeAgo(link.last_seen)}
+            </td>
+          </tr>
+          {expandedLinkId === link.id && (
+            <tr>
+              <td colSpan={7} className="px-3 py-3 bg-elevated/20">
+                <SignalHistoryChart
+                  tenantId={tenantId}
+                  deviceId={link.ap_device_id}
+                  macAddress={link.client_mac}
+                />
+              </td>
+            </tr>
+          )}
+        </React.Fragment>
       ))}
     </>
   )

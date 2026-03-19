@@ -51,7 +51,7 @@
 
 ### Signal Trending
 
-- [ ] **TRND-01**: Operator can view per-station signal history charts showing signal strength over time
+- [x] **TRND-01**: Operator can view per-station signal history charts showing signal strength over time
 - [x] **TRND-02**: System detects signal degradation trends (e.g., "signal dropped 8dB over 2 weeks")
 
 ### Site Alerting
@@ -120,7 +120,7 @@
 | WRUI-01 | Phase 14 | Complete |
 | WRUI-02 | Phase 14 | Complete |
 | WRUI-03 | Phase 14 | Complete |
-| TRND-01 | Phase 15 | Pending |
+| TRND-01 | Phase 15 | Complete |
 | TRND-02 | Phase 15 | Complete |
 | ALRT-01 | Phase 15 | Complete |
 | ALRT-02 | Phase 15 | Complete |
