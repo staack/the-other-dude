@@ -52,12 +52,12 @@
 ### Signal Trending
 
 - [ ] **TRND-01**: Operator can view per-station signal history charts showing signal strength over time
-- [ ] **TRND-02**: System detects signal degradation trends (e.g., "signal dropped 8dB over 2 weeks")
+- [x] **TRND-02**: System detects signal degradation trends (e.g., "signal dropped 8dB over 2 weeks")
 
 ### Site Alerting
 
-- [ ] **ALRT-01**: Operator can create site-scoped alert rules (e.g., "alert when >20% of devices at this site go offline")
-- [ ] **ALRT-02**: Operator can create sector-scoped alert rules (e.g., "alert when sector average signal drops below -75dBm")
+- [x] **ALRT-01**: Operator can create site-scoped alert rules (e.g., "alert when >20% of devices at this site go offline")
+- [x] **ALRT-02**: Operator can create sector-scoped alert rules (e.g., "alert when sector average signal drops below -75dBm")
 
 ## Future Requirements
 
@@ -121,9 +121,9 @@
 | WRUI-02 | Phase 14 | Complete |
 | WRUI-03 | Phase 14 | Complete |
 | TRND-01 | Phase 15 | Pending |
-| TRND-02 | Phase 15 | Pending |
-| ALRT-01 | Phase 15 | Pending |
-| ALRT-02 | Phase 15 | Pending |
+| TRND-02 | Phase 15 | Complete |
+| ALRT-01 | Phase 15 | Complete |
+| ALRT-02 | Phase 15 | Complete |
 
 **Coverage:**
 - v9.7 requirements: 30 total
