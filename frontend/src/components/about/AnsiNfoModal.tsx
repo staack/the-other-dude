@@ -40,7 +40,7 @@ function buildNfoLines(): ArtLine[] {
     [accent, ''],
     [primary, '  Business Source License 1.1'],
     [accent, ''],
-    [secondary, '  ► Free self-hosted production use up to 1,000 devices'],
+    [secondary, '  ► Free self-hosted production use up to 250 devices'],
     [secondary, '  ► SaaS offering requires commercial agreement'],
     [secondary, '  ► Converts to Apache License 2.0 on March 8, 2030'],
     [accent, ''],
@@ -62,7 +62,7 @@ function buildNfoLines(): ArtLine[] {
     [dim, '  ░░░ CREDITS ░░░'],
     [dim, `  ${bar}`],
     [accent, ''],
-    [primary, '  Jason Staack'],
+    [primary, '  CookyPuss'],
     [secondary, '  Built with AI assistance'],
     [accent, ''],
     [dim, `  BTC: ${BTC_ADDRESS}`],
@@ -168,8 +168,8 @@ export function AnsiNfoModal({ open, onOpenChange }: AnsiNfoModalProps) {
           {/* Screen-reader accessible version */}
           <div className="sr-only">
             <p>The Other Dude, {APP_VERSION}. MSP Fleet Management for RouterOS.</p>
-            <p>Business Source License 1.1. Free self-hosted production use up to 1000 devices. SaaS requires commercial agreement. Converts to Apache 2.0 on March 8 2030.</p>
-            <p>Built by Jason Staack with AI assistance.</p>
+            <p>Business Source License 1.1. Free self-hosted production use up to 250 devices. SaaS requires commercial agreement. Converts to Apache 2.0 on March 8 2030.</p>
+            <p>Built by CookyPuss with AI assistance.</p>
           </div>
         </div>
       </DialogContent>
