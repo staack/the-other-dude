@@ -5,8 +5,14 @@ import { sri } from 'vite-plugin-sri3'
 import path from 'path'
 import fs from 'fs'
 
+// Read version from package.json for global define
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'))
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   plugins: [
     TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
     react(),

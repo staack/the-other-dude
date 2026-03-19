@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ChangePasswordForm } from './ChangePasswordForm'
 import { toast } from 'sonner'
+import { APP_VERSION } from '@/lib/version'
 
 function SectionHeader({ icon: Icon, title }: { icon: React.FC<{ className?: string }>; title: string }) {
   return (
@@ -129,7 +130,7 @@ export function SettingsPage() {
             /api/docs (OpenAPI)
           </a>
         } />
-        <InfoRow label="Version" value="v9.6" />
+        <InfoRow label="Version" value={APP_VERSION} />
       </div>
 
       {/* Quick links */}

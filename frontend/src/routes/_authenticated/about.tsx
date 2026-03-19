@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { RugLogo } from '@/components/brand/RugLogo'
+import { APP_VERSION } from '@/lib/version'
 
 export const Route = createFileRoute('/_authenticated/about')({
   component: AboutPage,
@@ -509,7 +510,7 @@ function AboutPage() {
           MSP fleet management platform for RouterOS devices
         </p>
         <span className="inline-block px-3 py-1 text-xs font-mono font-medium text-accent bg-accent-muted rounded-full">
-          v9.6
+          {APP_VERSION}
         </span>
       </div>
 
