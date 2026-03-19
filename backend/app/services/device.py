@@ -197,6 +197,8 @@ async def get_devices(
     group_id: Optional[uuid.UUID] = None,
     sort_by: str = "created_at",
     sort_order: str = "desc",
+    site_id: Optional[uuid.UUID] = None,
+    sector_id: Optional[uuid.UUID] = None,
 ) -> tuple[list[DeviceResponse], int]:
     """
     Return a paginated list of devices with optional filtering and sorting.
@@ -234,6 +236,12 @@ async def get_devices(
                 )
             )
         )
+
+    if site_id:
+        base_q = base_q.where(Device.site_id == site_id)
+
+    if sector_id:
+        base_q = base_q.where(Device.sector_id == sector_id)
 
     # Count total before pagination
     count_q = select(func.count()).select_from(base_q.subquery())

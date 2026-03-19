@@ -54,3 +54,48 @@ class UnknownClientListResponse(BaseModel):
 
     items: list[UnknownClientResponse]
     total: int
+
+
+class RegistrationResponse(BaseModel):
+    """A single wireless registration entry for a device."""
+
+    mac_address: str
+    interface: str | None = None
+    signal_strength: int | None = None
+    tx_ccq: int | None = None
+    tx_rate: str | None = None
+    rx_rate: str | None = None
+    distance: int | None = None
+    uptime: str | None = None
+    last_seen: datetime
+    hostname: str | None = None
+    device_id: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RegistrationListResponse(BaseModel):
+    """List of wireless registrations with total count."""
+
+    items: list[RegistrationResponse]
+    total: int
+
+
+class RFStatsResponse(BaseModel):
+    """RF monitor stats for a single interface."""
+
+    interface: str
+    noise_floor: int | None = None
+    channel_width: int | None = None
+    tx_power: int | None = None
+    registered_clients: int | None = None
+    last_seen: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RFStatsListResponse(BaseModel):
+    """List of RF stats with total count."""
+
+    items: list[RFStatsResponse]
+    total: int

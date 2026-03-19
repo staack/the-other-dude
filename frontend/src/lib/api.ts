@@ -566,6 +566,178 @@ export const sitesApi = {
       .then((r) => r.data),
 }
 
+// ─── Sectors ──────────────────────────────────────────────────────────────────
+
+export interface SectorResponse {
+  id: string
+  site_id: string
+  name: string
+  azimuth: number | null
+  description: string | null
+  device_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface SectorListResponse {
+  items: SectorResponse[]
+  total: number
+}
+
+export interface SectorCreate {
+  name: string
+  azimuth?: number | null
+  description?: string | null
+}
+
+export interface SectorUpdate {
+  name?: string
+  azimuth?: number | null
+  description?: string | null
+}
+
+export const sectorsApi = {
+  list: (tenantId: string, siteId: string) =>
+    api
+      .get<SectorListResponse>(`/api/tenants/${tenantId}/sites/${siteId}/sectors`)
+      .then((r) => r.data),
+
+  create: (tenantId: string, siteId: string, data: SectorCreate) =>
+    api
+      .post<SectorResponse>(`/api/tenants/${tenantId}/sites/${siteId}/sectors`, data)
+      .then((r) => r.data),
+
+  update: (tenantId: string, siteId: string, sectorId: string, data: SectorUpdate) =>
+    api
+      .put<SectorResponse>(
+        `/api/tenants/${tenantId}/sites/${siteId}/sectors/${sectorId}`,
+        data,
+      )
+      .then((r) => r.data),
+
+  delete: (tenantId: string, siteId: string, sectorId: string) =>
+    api
+      .delete(`/api/tenants/${tenantId}/sites/${siteId}/sectors/${sectorId}`)
+      .then((r) => r.data),
+
+  assignDevice: (tenantId: string, deviceId: string, sectorId: string | null) =>
+    api
+      .put(`/api/tenants/${tenantId}/devices/${deviceId}/sector`, {
+        sector_id: sectorId,
+      })
+      .then((r) => r.data),
+}
+
+// ─── Wireless ─────────────────────────────────────────────────────────────────
+
+export interface RegistrationResponse {
+  mac_address: string
+  interface: string | null
+  signal_strength: number | null
+  tx_ccq: number | null
+  tx_rate: string | null
+  rx_rate: string | null
+  distance: number | null
+  uptime: string | null
+  last_seen: string
+  hostname: string | null
+  device_id: string | null
+}
+
+export interface RegistrationListResponse {
+  items: RegistrationResponse[]
+  total: number
+}
+
+export interface RFStatsResponse {
+  interface: string
+  noise_floor: number | null
+  channel_width: number | null
+  tx_power: number | null
+  registered_clients: number | null
+  last_seen: string
+}
+
+export interface RFStatsListResponse {
+  items: RFStatsResponse[]
+  total: number
+}
+
+export interface LinkResponse {
+  id: string
+  ap_device_id: string
+  cpe_device_id: string
+  ap_hostname: string | null
+  cpe_hostname: string | null
+  interface: string | null
+  client_mac: string
+  signal_strength: number | null
+  tx_ccq: number | null
+  tx_rate: string | null
+  rx_rate: string | null
+  state: string
+  missed_polls: number
+  discovered_at: string
+  last_seen: string
+}
+
+export interface LinkListResponse {
+  items: LinkResponse[]
+  total: number
+}
+
+export interface UnknownClientResponse {
+  mac_address: string
+  interface: string | null
+  signal_strength: number | null
+  tx_rate: string | null
+  rx_rate: string | null
+  last_seen: string
+}
+
+export interface UnknownClientListResponse {
+  items: UnknownClientResponse[]
+  total: number
+}
+
+export const wirelessApi = {
+  getLinks: (tenantId: string, params?: { state?: string; device_id?: string }) =>
+    api
+      .get<LinkListResponse>(`/api/tenants/${tenantId}/links`, { params })
+      .then((r) => r.data),
+
+  getSiteLinks: (tenantId: string, siteId: string) =>
+    api
+      .get<LinkListResponse>(`/api/tenants/${tenantId}/sites/${siteId}/links`)
+      .then((r) => r.data),
+
+  getDeviceLinks: (tenantId: string, deviceId: string) =>
+    api
+      .get<LinkListResponse>(`/api/tenants/${tenantId}/devices/${deviceId}/links`)
+      .then((r) => r.data),
+
+  getDeviceRegistrations: (tenantId: string, deviceId: string) =>
+    api
+      .get<RegistrationListResponse>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/registrations`,
+      )
+      .then((r) => r.data),
+
+  getDeviceRFStats: (tenantId: string, deviceId: string) =>
+    api
+      .get<RFStatsListResponse>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/rf-stats`,
+      )
+      .then((r) => r.data),
+
+  getUnknownClients: (tenantId: string, deviceId: string) =>
+    api
+      .get<UnknownClientListResponse>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/unknown-clients`,
+      )
+      .then((r) => r.data),
+}
+
 // ─── Metrics ──────────────────────────────────────────────────────────────────
 
 export interface HealthMetricPoint {

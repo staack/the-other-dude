@@ -14,6 +14,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.link import (
     LinkListResponse,
     LinkResponse,
+    RegistrationListResponse,
+    RegistrationResponse,
+    RFStatsListResponse,
+    RFStatsResponse,
     UnknownClientListResponse,
     UnknownClientResponse,
 )
@@ -180,3 +184,92 @@ async def get_unknown_clients(
     ]
 
     return UnknownClientListResponse(items=items, total=len(items))
+
+
+async def get_device_registrations(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    device_id: uuid.UUID,
+) -> RegistrationListResponse:
+    """Get latest wireless registration data for a device (most recent per MAC address).
+
+    Uses DISTINCT ON to return the most recent registration per unique MAC address.
+    Attempts to resolve MAC addresses to known device hostnames via device_interfaces.
+    """
+    result = await db.execute(
+        text("""
+            SELECT DISTINCT ON (wr.mac_address)
+                   wr.mac_address, wr.interface, wr.signal_strength,
+                   wr.tx_ccq, wr.tx_rate, wr.rx_rate,
+                   wr.distance, wr.uptime, wr.time AS last_seen,
+                   di.device_id AS resolved_device_id,
+                   d.hostname AS resolved_hostname
+            FROM wireless_registrations wr
+            LEFT JOIN device_interfaces di
+              ON di.mac_address = wr.mac_address AND di.tenant_id = wr.tenant_id
+            LEFT JOIN devices d
+              ON d.id = di.device_id
+            WHERE wr.device_id = :device_id
+              AND wr.tenant_id = :tenant_id
+            ORDER BY wr.mac_address, wr.time DESC
+        """),
+        {"device_id": str(device_id), "tenant_id": str(tenant_id)},
+    )
+    rows = result.fetchall()
+
+    items = [
+        RegistrationResponse(
+            mac_address=row.mac_address,
+            interface=row.interface,
+            signal_strength=row.signal_strength,
+            tx_ccq=row.tx_ccq,
+            tx_rate=row.tx_rate,
+            rx_rate=row.rx_rate,
+            distance=row.distance,
+            uptime=row.uptime,
+            last_seen=row.last_seen,
+            hostname=row.resolved_hostname,
+            device_id=str(row.resolved_device_id) if row.resolved_device_id else None,
+        )
+        for row in rows
+    ]
+
+    return RegistrationListResponse(items=items, total=len(items))
+
+
+async def get_device_rf_stats(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    device_id: uuid.UUID,
+) -> RFStatsListResponse:
+    """Get latest RF monitor stats for a device (most recent per interface).
+
+    Uses DISTINCT ON to return the most recent stats per unique interface name.
+    """
+    result = await db.execute(
+        text("""
+            SELECT DISTINCT ON (rf.interface)
+                   rf.interface, rf.noise_floor, rf.channel_width,
+                   rf.tx_power, rf.registered_clients, rf.time AS last_seen
+            FROM rf_monitor_stats rf
+            WHERE rf.device_id = :device_id
+              AND rf.tenant_id = :tenant_id
+            ORDER BY rf.interface, rf.time DESC
+        """),
+        {"device_id": str(device_id), "tenant_id": str(tenant_id)},
+    )
+    rows = result.fetchall()
+
+    items = [
+        RFStatsResponse(
+            interface=row.interface,
+            noise_floor=row.noise_floor,
+            channel_width=row.channel_width,
+            tx_power=row.tx_power,
+            registered_clients=row.registered_clients,
+            last_seen=row.last_seen,
+        )
+        for row in rows
+    ]
+
+    return RFStatsListResponse(items=items, total=len(items))
