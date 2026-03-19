@@ -98,9 +98,10 @@ See the documentation site for screenshots and feature walkthroughs.
 
 [Business Source License 1.1](LICENSE)
 
-Free for production use managing up to 1,000 devices with no limitations. Deployments
-exceeding 1,000 managed devices require a commercial license. See the LICENSE file
-for full terms.
+Free for self-hosted production use managing up to 1,000 devices with no limitations.
+Deployments exceeding 1,000 managed devices require a commercial license. Offering
+the Licensed Work as a hosted or managed service (SaaS) to third parties requires a
+separate commercial agreement. See the LICENSE file for full terms.
 
 For commercial licensing inquiries: [license@theotherdude.net](mailto:license@theotherdude.net)
 

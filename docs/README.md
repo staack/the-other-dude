@@ -201,4 +201,4 @@ docker-compose.observability.yml  Prometheus + Grafana
 
 ## License
 
-Open-source. Self-hosted. Your data stays on your infrastructure.
+Business Source License 1.1. Self-hosted. Your data stays on your infrastructure. SaaS use requires a commercial agreement.

@@ -9,6 +9,11 @@ Additional Use Grant: You may use the Licensed Work in production to
                       manage up to 1,000 devices without limitation.
                       Production use exceeding 1,000 managed devices
                       requires a commercial license from the Licensor.
+                      You may not provide the Licensed Work to third
+                      parties as a hosted or managed service (SaaS)
+                      without a separate commercial agreement with the
+                      Licensor. Self-hosted production use within the
+                      device limits above is permitted.
 Change Date:          March 8, 2030
 Change License:       Apache License, Version 2.0
 
