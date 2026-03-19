@@ -372,6 +372,44 @@ func PollDevice(
 		}
 	}
 
+	// Per-client wireless registrations (dedicated stream, not DEVICE_EVENTS).
+	cmdCtx, cmdCancel = context.WithTimeout(ctx, cmdTimeout)
+	registrations, err := withTimeout[[]device.RegistrationEntry](cmdCtx, func() ([]device.RegistrationEntry, error) {
+		return device.CollectRegistrations(client, info.MajorVersion)
+	})
+	cmdCancel()
+	if err != nil {
+		slog.Warn("failed to collect wireless registrations", "device_id", dev.ID, "error", err)
+	}
+
+	var rfStats []device.RFMonitorStats
+	if len(registrations) > 0 || len(wireless) > 0 {
+		// Only collect RF monitor if device has wireless interfaces.
+		cmdCtx, cmdCancel = context.WithTimeout(ctx, cmdTimeout)
+		rfStats, err = withTimeout[[]device.RFMonitorStats](cmdCtx, func() ([]device.RFMonitorStats, error) {
+			return device.CollectRFMonitor(client, info.MajorVersion)
+		})
+		cmdCancel()
+		if err != nil {
+			slog.Warn("failed to collect RF monitor stats", "device_id", dev.ID, "error", err)
+		}
+	}
+
+	if len(registrations) > 0 || len(rfStats) > 0 {
+		if pubErr := pub.PublishWirelessRegistrations(ctx, bus.WirelessRegistrationEvent{
+			DeviceID:      dev.ID,
+			TenantID:      dev.TenantID,
+			CollectedAt:   collectedAt,
+			Registrations: registrations,
+			RFStats:       rfStats,
+		}); pubErr != nil {
+			slog.Warn("failed to publish wireless registrations", "device_id", dev.ID, "error", pubErr)
+			observability.NATSPublishTotal.WithLabelValues("wireless_registrations", "error").Inc()
+		} else {
+			observability.NATSPublishTotal.WithLabelValues("wireless_registrations", "success").Inc()
+		}
+	}
+
 	// =========================================================================
 	// FIRMWARE CHECK (rate-limited to once per day per device)
 	// Checks if a firmware update is available and publishes the result.

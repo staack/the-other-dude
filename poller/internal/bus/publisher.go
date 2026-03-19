@@ -151,6 +151,26 @@ func NewPublisher(natsURL string) (*Publisher, error) {
 
 	slog.Info("NATS JetStream DEVICE_EVENTS stream ready")
 
+	// Ensure the WIRELESS_REGISTRATIONS stream exists for per-client wireless data.
+	// Separate stream with 30-day retention (vs 24h for DEVICE_EVENTS) to support
+	// historical client analytics and hypertable ingestion.
+	ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel2()
+
+	_, err = js.CreateOrUpdateStream(ctx2, jetstream.StreamConfig{
+		Name:     "WIRELESS_REGISTRATIONS",
+		Subjects: []string{"wireless.registrations.>"},
+		MaxAge:   30 * 24 * time.Hour,    // 30-day retention
+		MaxBytes: 256 * 1024 * 1024,      // 256MB cap
+		Discard:  jetstream.DiscardOld,
+	})
+	if err != nil {
+		nc.Close()
+		return nil, fmt.Errorf("ensuring WIRELESS_REGISTRATIONS stream: %w", err)
+	}
+
+	slog.Info("NATS JetStream WIRELESS_REGISTRATIONS stream ready")
+
 	return &Publisher{nc: nc, js: js}, nil
 }
 
@@ -200,6 +220,34 @@ func (p *Publisher) PublishMetrics(ctx context.Context, event DeviceMetricsEvent
 	slog.Debug("published device metrics event",
 		"device_id", event.DeviceID,
 		"type", event.Type,
+		"subject", subject,
+	)
+
+	return nil
+}
+
+// PublishWirelessRegistrations publishes per-client wireless registration data
+// and RF monitor stats to the WIRELESS_REGISTRATIONS NATS stream.
+//
+// Events are published to "wireless.registrations.{device_id}" so consumers
+// can subscribe to all wireless data or filter by device.
+func (p *Publisher) PublishWirelessRegistrations(ctx context.Context, event WirelessRegistrationEvent) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("marshalling wireless registration event: %w", err)
+	}
+
+	subject := fmt.Sprintf("wireless.registrations.%s", event.DeviceID)
+
+	_, err = p.js.Publish(ctx, subject, data)
+	if err != nil {
+		return fmt.Errorf("publishing to %s: %w", subject, err)
+	}
+
+	slog.Debug("published wireless registration event",
+		"device_id", event.DeviceID,
+		"registrations", len(event.Registrations),
+		"rf_stats", len(event.RFStats),
 		"subject", subject,
 	)
 
@@ -348,6 +396,18 @@ func (p *Publisher) PublishPushAlert(ctx context.Context, event PushAlertEvent) 
 	)
 
 	return nil
+}
+
+// WirelessRegistrationEvent is the payload published to the WIRELESS_REGISTRATIONS
+// NATS stream when per-client wireless registration data and RF monitor stats
+// are collected from a device. This is separate from DEVICE_EVENTS to allow
+// independent retention (30 days vs 24 hours) and consumer scaling.
+type WirelessRegistrationEvent struct {
+	DeviceID      string                   `json:"device_id"`
+	TenantID      string                   `json:"tenant_id"`
+	CollectedAt   string                   `json:"collected_at"` // RFC3339
+	Registrations []device.RegistrationEntry `json:"registrations"`
+	RFStats       []device.RFMonitorStats    `json:"rf_stats,omitempty"`
 }
 
 // SessionEndEvent is the payload published to NATS JetStream when an SSH
