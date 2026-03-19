@@ -126,6 +126,11 @@ class Settings(BaseSettings):
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
     APP_BASE_URL: str = "http://localhost:3000"
 
+    # Signal trending and site alerting (Phase 15)
+    SIGNAL_DEGRADATION_THRESHOLD_DB: int = 5
+    ALERT_EVALUATION_INTERVAL_SECONDS: int = 300
+    TREND_DETECTION_INTERVAL_SECONDS: int = 3600
+
     # Retention cleanup — delete config snapshots older than N days
     CONFIG_RETENTION_DAYS: int = 90
 

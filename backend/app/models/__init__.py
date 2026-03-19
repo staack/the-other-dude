@@ -21,6 +21,7 @@ from app.models.api_key import ApiKey
 from app.models.config_backup import RouterConfigSnapshot, RouterConfigDiff, RouterConfigChange
 from app.models.device_interface import DeviceInterface
 from app.models.wireless_link import WirelessLink, LinkState
+from app.models.site_alert import SiteAlertRule, SiteAlertEvent
 
 __all__ = [
     "Tenant",
@@ -52,4 +53,6 @@ __all__ = [
     "DeviceInterface",
     "WirelessLink",
     "LinkState",
+    "SiteAlertRule",
+    "SiteAlertEvent",
 ]
