@@ -9,8 +9,8 @@
 
 - [x] **SITE-01**: Operator can create a site with name, coordinates (lat/lng), address, elevation, and notes
 - [x] **SITE-02**: Operator can edit and delete sites
-- [ ] **SITE-03**: Operator can assign devices to a site (single and bulk assignment)
-- [ ] **SITE-04**: Operator can remove a device from a site (device returns to "unassigned")
+- [x] **SITE-03**: Operator can assign devices to a site (single and bulk assignment)
+- [x] **SITE-04**: Operator can remove a device from a site (device returns to "unassigned")
 - [x] **SITE-05**: Devices without a site assignment continue to work normally in all existing views
 - [x] **SITE-06**: Sites are tenant-scoped — each tenant manages their own sites independently
 
@@ -96,8 +96,8 @@
 |-------------|-------|--------|
 | SITE-01 | Phase 11 | Complete |
 | SITE-02 | Phase 11 | Complete |
-| SITE-03 | Phase 11 | Pending |
-| SITE-04 | Phase 11 | Pending |
+| SITE-03 | Phase 11 | Complete |
+| SITE-04 | Phase 11 | Complete |
 | SITE-05 | Phase 11 | Complete |
 | SITE-06 | Phase 11 | Complete |
 | DASH-01 | Phase 11 | Complete |
