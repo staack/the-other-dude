@@ -5,12 +5,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { APP_VERSION } from '@/lib/version'
+import { BTC_ADDRESS } from '@/routes/_authenticated/about'
 
 // ── ANSI Art Content ────────────────────────────────────────────────────────
 // Each line is a tuple: [colorClass, text]
 // Colors reference Deep Space theme via Tailwind utilities
-
-const BTC_ADDRESS = 'bc1qfw6pmyc96vrlkpc0rgun0s7xy4sqhx7a2xurkf'
 
 type ArtLine = [className: string, text: string]
 
