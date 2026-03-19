@@ -140,7 +140,7 @@ export function AnsiNfoModal({ open, onOpenChange }: AnsiNfoModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-[84ch] w-[95vw] p-0 gap-0 bg-background border-border overflow-hidden"
+        className="max-w-[80ch] w-[95vw] p-0 gap-0 bg-background border-border overflow-hidden"
         onKeyDown={(e) => {
           if (!animationDone && e.key !== 'Escape') {
             skipAnimation()
