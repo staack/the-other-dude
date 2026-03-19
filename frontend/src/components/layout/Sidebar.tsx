@@ -120,11 +120,18 @@ export function Sidebar() {
               },
             ]
           : []),
-        {
-          label: 'Wireless',
-          href: '/wireless',
-          icon: Wifi,
-        },
+        ...(!isSuperAdmin(user) && user?.tenant_id
+          ? [{
+              label: 'Wireless Links',
+              href: `/tenants/${user.tenant_id}/wireless-links`,
+              icon: Wifi,
+            }]
+          : [{
+              label: 'Wireless Links',
+              href: '/wireless',
+              icon: Wifi,
+            }]
+        ),
         {
           label: 'Traffic',
           href: '/traffic',

@@ -54,6 +54,8 @@ import { SnmpPanel } from '@/components/config/SnmpPanel'
 import { ClientsTab } from '@/components/network/ClientsTab'
 import { VpnTab } from '@/components/network/VpnTab'
 import { LogsTab } from '@/components/network/LogsTab'
+import { WirelessStationTable } from '@/components/wireless/WirelessStationTable'
+import { RFStatsCard } from '@/components/wireless/RFStatsCard'
 
 interface SimpleConfigViewProps {
   tenantId: string
@@ -106,6 +108,12 @@ export function SimpleConfigView({
           )}
           {activeTab === 'wireless' && (
             <WirelessTab tenantId={tenantId} deviceId={deviceId} active />
+          )}
+          {activeTab === 'stations' && (
+            <div className="space-y-4">
+              <WirelessStationTable tenantId={tenantId} deviceId={deviceId} active />
+              <RFStatsCard tenantId={tenantId} deviceId={deviceId} active />
+            </div>
           )}
           {activeTab === 'interfaces' && (
             <InterfacesPanel tenantId={tenantId} deviceId={deviceId} active />

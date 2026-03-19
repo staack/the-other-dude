@@ -36,6 +36,7 @@ const STANDARD_GROUPS: SidebarGroup[] = [
       { id: 'health', label: 'Health' },
       { id: 'traffic', label: 'Traffic' },
       { id: 'wireless', label: 'Wireless' },
+      { id: 'stations', label: 'Stations' },
     ],
   },
   {

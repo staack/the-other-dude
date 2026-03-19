@@ -39,6 +39,7 @@ import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedTenantsIndexRouteImport } from './routes/_authenticated/tenants/index'
 import { Route as AuthenticatedSettingsApiKeysRouteImport } from './routes/_authenticated/settings.api-keys'
 import { Route as AuthenticatedTenantsTenantIdIndexRouteImport } from './routes/_authenticated/tenants/$tenantId/index'
+import { Route as AuthenticatedTenantsTenantIdWirelessLinksRouteImport } from './routes/_authenticated/tenants/$tenantId/wireless-links'
 import { Route as AuthenticatedTenantsTenantIdUsersRouteImport } from './routes/_authenticated/tenants/$tenantId/users'
 import { Route as AuthenticatedTenantsTenantIdSitesIndexRouteImport } from './routes/_authenticated/tenants/$tenantId/sites/index'
 import { Route as AuthenticatedTenantsTenantIdDevicesIndexRouteImport } from './routes/_authenticated/tenants/$tenantId/devices/index'
@@ -206,6 +207,12 @@ const AuthenticatedTenantsTenantIdIndexRoute =
     path: '/tenants/$tenantId/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedTenantsTenantIdWirelessLinksRoute =
+  AuthenticatedTenantsTenantIdWirelessLinksRouteImport.update({
+    id: '/tenants/$tenantId/wireless-links',
+    path: '/tenants/$tenantId/wireless-links',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedTenantsTenantIdUsersRoute =
   AuthenticatedTenantsTenantIdUsersRouteImport.update({
     id: '/tenants/$tenantId/users',
@@ -285,6 +292,7 @@ export interface FileRoutesByFullPath {
   '/settings/api-keys': typeof AuthenticatedSettingsApiKeysRoute
   '/tenants/': typeof AuthenticatedTenantsIndexRoute
   '/tenants/$tenantId/users': typeof AuthenticatedTenantsTenantIdUsersRoute
+  '/tenants/$tenantId/wireless-links': typeof AuthenticatedTenantsTenantIdWirelessLinksRoute
   '/tenants/$tenantId/': typeof AuthenticatedTenantsTenantIdIndexRoute
   '/tenants/$tenantId/devices/$deviceId': typeof AuthenticatedTenantsTenantIdDevicesDeviceIdRoute
   '/tenants/$tenantId/devices/add': typeof AuthenticatedTenantsTenantIdDevicesAddRoute
@@ -324,6 +332,7 @@ export interface FileRoutesByTo {
   '/settings/api-keys': typeof AuthenticatedSettingsApiKeysRoute
   '/tenants': typeof AuthenticatedTenantsIndexRoute
   '/tenants/$tenantId/users': typeof AuthenticatedTenantsTenantIdUsersRoute
+  '/tenants/$tenantId/wireless-links': typeof AuthenticatedTenantsTenantIdWirelessLinksRoute
   '/tenants/$tenantId': typeof AuthenticatedTenantsTenantIdIndexRoute
   '/tenants/$tenantId/devices/$deviceId': typeof AuthenticatedTenantsTenantIdDevicesDeviceIdRoute
   '/tenants/$tenantId/devices/add': typeof AuthenticatedTenantsTenantIdDevicesAddRoute
@@ -365,6 +374,7 @@ export interface FileRoutesById {
   '/_authenticated/settings/api-keys': typeof AuthenticatedSettingsApiKeysRoute
   '/_authenticated/tenants/': typeof AuthenticatedTenantsIndexRoute
   '/_authenticated/tenants/$tenantId/users': typeof AuthenticatedTenantsTenantIdUsersRoute
+  '/_authenticated/tenants/$tenantId/wireless-links': typeof AuthenticatedTenantsTenantIdWirelessLinksRoute
   '/_authenticated/tenants/$tenantId/': typeof AuthenticatedTenantsTenantIdIndexRoute
   '/_authenticated/tenants/$tenantId/devices/$deviceId': typeof AuthenticatedTenantsTenantIdDevicesDeviceIdRoute
   '/_authenticated/tenants/$tenantId/devices/add': typeof AuthenticatedTenantsTenantIdDevicesAddRoute
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/settings/api-keys'
     | '/tenants/'
     | '/tenants/$tenantId/users'
+    | '/tenants/$tenantId/wireless-links'
     | '/tenants/$tenantId/'
     | '/tenants/$tenantId/devices/$deviceId'
     | '/tenants/$tenantId/devices/add'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/settings/api-keys'
     | '/tenants'
     | '/tenants/$tenantId/users'
+    | '/tenants/$tenantId/wireless-links'
     | '/tenants/$tenantId'
     | '/tenants/$tenantId/devices/$deviceId'
     | '/tenants/$tenantId/devices/add'
@@ -485,6 +497,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/api-keys'
     | '/_authenticated/tenants/'
     | '/_authenticated/tenants/$tenantId/users'
+    | '/_authenticated/tenants/$tenantId/wireless-links'
     | '/_authenticated/tenants/$tenantId/'
     | '/_authenticated/tenants/$tenantId/devices/$deviceId'
     | '/_authenticated/tenants/$tenantId/devices/add'
@@ -716,6 +729,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTenantsTenantIdIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/tenants/$tenantId/wireless-links': {
+      id: '/_authenticated/tenants/$tenantId/wireless-links'
+      path: '/tenants/$tenantId/wireless-links'
+      fullPath: '/tenants/$tenantId/wireless-links'
+      preLoaderRoute: typeof AuthenticatedTenantsTenantIdWirelessLinksRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/tenants/$tenantId/users': {
       id: '/_authenticated/tenants/$tenantId/users'
       path: '/tenants/$tenantId/users'
@@ -812,6 +832,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedTenantsIndexRoute: typeof AuthenticatedTenantsIndexRoute
   AuthenticatedTenantsTenantIdUsersRoute: typeof AuthenticatedTenantsTenantIdUsersRoute
+  AuthenticatedTenantsTenantIdWirelessLinksRoute: typeof AuthenticatedTenantsTenantIdWirelessLinksRoute
   AuthenticatedTenantsTenantIdIndexRoute: typeof AuthenticatedTenantsTenantIdIndexRoute
   AuthenticatedTenantsTenantIdDevicesDeviceIdRoute: typeof AuthenticatedTenantsTenantIdDevicesDeviceIdRoute
   AuthenticatedTenantsTenantIdDevicesAddRoute: typeof AuthenticatedTenantsTenantIdDevicesAddRoute
@@ -847,6 +868,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTenantsIndexRoute: AuthenticatedTenantsIndexRoute,
   AuthenticatedTenantsTenantIdUsersRoute:
     AuthenticatedTenantsTenantIdUsersRoute,
+  AuthenticatedTenantsTenantIdWirelessLinksRoute:
+    AuthenticatedTenantsTenantIdWirelessLinksRoute,
   AuthenticatedTenantsTenantIdIndexRoute:
     AuthenticatedTenantsTenantIdIndexRoute,
   AuthenticatedTenantsTenantIdDevicesDeviceIdRoute:
