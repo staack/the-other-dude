@@ -41,7 +41,7 @@
 - [x] **LINK-01**: Backend auto-discovers AP-CPE relationships by matching registration table MAC addresses against known device interface MACs
 - [x] **LINK-02**: Link state uses a temporal state machine (discovered -> active -> degraded -> down -> stale) with consecutive-miss threshold to prevent false flapping
 - [x] **LINK-03**: Wireless links are stored in a materialized table for fast dashboard queries
-- [ ] **LINK-04**: Unmanaged wireless clients (MACs not matching any TOD device) are displayed as "unknown clients" with signal/rate data
+- [x] **LINK-04**: Unmanaged wireless clients (MACs not matching any TOD device) are displayed as "unknown clients" with signal/rate data
 
 ### Wireless UI
 
@@ -116,7 +116,7 @@
 | LINK-01 | Phase 13 | Complete |
 | LINK-02 | Phase 13 | Complete |
 | LINK-03 | Phase 13 | Complete |
-| LINK-04 | Phase 13 | Pending |
+| LINK-04 | Phase 13 | Complete |
 | WRUI-01 | Phase 14 | Pending |
 | WRUI-02 | Phase 14 | Pending |
 | WRUI-03 | Phase 14 | Pending |

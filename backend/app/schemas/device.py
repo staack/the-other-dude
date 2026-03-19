@@ -90,6 +90,8 @@ class DeviceResponse(BaseModel):
     groups: list[DeviceGroupRef] = []
     site_id: Optional[uuid.UUID] = None
     site_name: Optional[str] = None
+    sector_id: Optional[uuid.UUID] = None
+    sector_name: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

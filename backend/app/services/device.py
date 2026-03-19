@@ -111,6 +111,8 @@ def _build_device_response(device: Device) -> DeviceResponse:
         groups=groups,
         site_id=device.site_id,
         site_name=device.site.name if device.site else None,
+        sector_id=device.sector_id,
+        sector_name=device.sector.name if device.sector else None,
         created_at=device.created_at,
     )
 
@@ -123,6 +125,7 @@ def _device_with_relations():
         selectinload(Device.tag_assignments).selectinload(DeviceTagAssignment.tag),
         selectinload(Device.group_memberships).selectinload(DeviceGroupMembership.group),
         selectinload(Device.site),
+        selectinload(Device.sector),
     )
 
 

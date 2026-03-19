@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v9.7
 milestone_name: Tower & Site Management
 status: unknown
-stopped_at: Completed 13-01-PLAN.md
-last_updated: "2026-03-19T11:07:35.900Z"
+stopped_at: Completed 13-03-PLAN.md
+last_updated: "2026-03-19T11:13:17.840Z"
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 13 (link-discovery-registration-ingestion) — EXECUTING
-Plan: 2 of 3
+Phase: 13 (link-discovery-registration-ingestion) — COMPLETE
+Plan: 3 of 3 (all complete)
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Plan: 2 of 3
 | 12 | 2 | 6min | 3min |
 | 13 | 2 | 5min | 2.5min |
 | Phase 13 P01 | 5min | 2 tasks | 4 files |
+| Phase 13 P03 | 3min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 13]: No backref on DeviceInterface.device relationship -- link discovery reads interfaces directionally
 - [Phase 13]: MAC addresses lowercased at collection time for consistent downstream matching
 - [Phase 13]: InterfaceInfo (identity/link discovery) kept separate from InterfaceStats (traffic counters)
+- [Phase 13]: Link discovery uses separate durable consumer on WIRELESS_REGISTRATIONS for independent processing
+- [Phase 13]: Unknown clients query uses DISTINCT ON (mac_address) for most recent data per MAC
 
 ### Pending Todos
 
@@ -84,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-19T11:07:35.897Z
-Stopped at: Completed 13-01-PLAN.md
+Last session: 2026-03-19T11:13:17.837Z
+Stopped at: Completed 13-03-PLAN.md
 Resume file: None

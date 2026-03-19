@@ -108,6 +108,15 @@ class Device(Base):
         index=True,
     )
     site: Mapped["Site"] = relationship("Site", back_populates="devices")  # type: ignore[name-defined]
+    sector_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("sectors.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    sector: Mapped["Sector"] = relationship(  # type: ignore[name-defined]
+        "Sector", back_populates="devices", foreign_keys=[sector_id]
+    )
 
     def __repr__(self) -> str:
         return f"<Device id={self.id} hostname={self.hostname!r} tenant_id={self.tenant_id}>"
