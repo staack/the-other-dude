@@ -54,3 +54,4 @@ tools/dev/
 # PMTiles map data (large binaries, downloaded per-region)
 frontend/public/tiles/*.pmtiles
 fleet-dashboard.png
+frontend/public/map-assets/
