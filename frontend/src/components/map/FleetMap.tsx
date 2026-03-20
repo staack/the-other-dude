@@ -1,155 +1,242 @@
-import { useEffect, useMemo } from 'react'
-import { MapContainer, useMap } from 'react-leaflet'
-import MarkerClusterGroup from 'react-leaflet-cluster'
-import L from 'leaflet'
-import * as protomapsL from 'protomaps-leaflet'
+import { useEffect, useRef, useMemo } from 'react'
+import maplibregl from 'maplibre-gl'
+import { Protocol } from 'pmtiles'
+import { layers, namedFlavor } from '@protomaps/basemaps'
 import type { FleetDevice } from '@/lib/api'
-import { DeviceMarker } from './DeviceMarker'
+import { formatUptime } from '@/lib/utils'
 
-import 'leaflet/dist/leaflet.css'
+import 'maplibre-gl/dist/maplibre-gl.css'
+
+// Register PMTiles protocol once
+const protocol = new Protocol()
+maplibregl.addProtocol('pmtiles', protocol.tile)
 
 interface FleetMapProps {
   devices: FleetDevice[]
   tenantId: string
 }
 
-/** Default world view when no devices have coordinates. */
-const DEFAULT_CENTER: [number, number] = [20, 0]
-const DEFAULT_ZOOM = 2
+const DEFAULT_CENTER: [number, number] = [-89.6, 39.8]
+const DEFAULT_ZOOM = 4
 
-/**
- * Self-hosted PMTiles basemap layer via protomaps-leaflet.
- * Loads regional PMTiles files from /tiles/ (no third-party requests).
- * Multiple region files are layered — tiles outside downloaded regions show blank.
- */
-const PMTILES_REGIONS = ['/tiles/wisconsin.pmtiles', '/tiles/florida.pmtiles']
-
-function ProtomapsLayer() {
-  const map = useMap()
-
-  useEffect(() => {
-    const layers: L.Layer[] = []
-    for (const url of PMTILES_REGIONS) {
-      const layer = protomapsL.leafletLayer({ url, flavor: 'dark' })
-      layer.addTo(map)
-      layers.push(layer)
-    }
-    return () => {
-      for (const layer of layers) map.removeLayer(layer)
-    }
-  }, [map])
-
-  return null
+const STATUS_COLORS: Record<string, string> = {
+  online: '#22c55e',
+  offline: '#ef4444',
+  unknown: '#eab308',
 }
 
-/**
- * Inner component that auto-fits the map to device bounds
- * whenever the device list changes.
- */
-function AutoFitBounds({ devices }: { devices: FleetDevice[] }) {
-  const map = useMap()
-
-  useEffect(() => {
-    if (devices.length === 0) {
-      map.setView(DEFAULT_CENTER, DEFAULT_ZOOM)
-      return
-    }
-
-    const bounds = L.latLngBounds(
-      devices.map((d) => [d.latitude!, d.longitude!] as [number, number]),
-    )
-
-    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 })
-  }, [devices, map])
-
-  return null
+function buildMapStyle() {
+  return {
+    version: 8 as const,
+    glyphs: '/map-fonts/{fontstack}/{range}.pbf',
+    sprite: '/map-assets/sprites/dark',
+    sources: {
+      protomaps: {
+        type: 'vector' as const,
+        url: 'pmtiles:///tiles/us.pmtiles',
+        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
+      },
+    },
+    layers: layers('protomaps', namedFlavor('dark'), { lang: 'en' }),
+  }
 }
 
-/**
- * Custom cluster icon factory.
- * - All online: green cluster
- * - Any offline: red cluster
- * - Mixed: yellow/orange cluster
- */
-function createClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
-  const childMarkers = cluster.getAllChildMarkers()
-  const count = childMarkers.length
-
-  // Determine aggregate status by inspecting marker HTML color
-  let hasOffline = false
-  let hasOnline = false
-
-  for (const marker of childMarkers) {
-    const icon = marker.getIcon() as L.DivIcon
-    const html = (icon.options.html as string) ?? ''
-    if (html.includes('#ef4444')) {
-      hasOffline = true
-    } else if (html.includes('#22c55e')) {
-      hasOnline = true
-    }
+function deviceToGeoJSON(devices: FleetDevice[]): GeoJSON.FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: devices
+      .filter((d) => d.latitude != null && d.longitude != null)
+      .map((d) => ({
+        type: 'Feature' as const,
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [d.longitude!, d.latitude!],
+        },
+        properties: {
+          id: d.id,
+          hostname: d.hostname,
+          ip_address: d.ip_address,
+          status: d.status,
+          model: d.model || '',
+          uptime_seconds: d.uptime_seconds,
+          last_cpu_load: d.last_cpu_load,
+          last_memory_used_pct: d.last_memory_used_pct,
+          client_count: d.client_count,
+          avg_signal: d.avg_signal,
+          tenant_id: d.tenant_id,
+          color: STATUS_COLORS[d.status] || STATUS_COLORS.unknown,
+        },
+      })),
   }
-
-  let bgColor: string
-  if (hasOffline && hasOnline) {
-    bgColor = '#f59e0b' // amber-500 — mixed
-  } else if (hasOffline) {
-    bgColor = '#ef4444' // red-500 — all offline
-  } else {
-    bgColor = '#22c55e' // green-500 — all online
-  }
-
-  const size = count < 10 ? 34 : count < 100 ? 40 : 48
-
-  return L.divIcon({
-    html: `<div style="
-      width: ${size}px;
-      height: ${size}px;
-      border-radius: 50%;
-      background: ${bgColor};
-      border: 3px solid white;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: ${count < 100 ? 13 : 11}px;
-      font-family: system-ui, sans-serif;
-    ">${count}</div>`,
-    className: '',
-    iconSize: L.point(size, size),
-    iconAnchor: L.point(size / 2, size / 2),
-  })
 }
 
 export function FleetMap({ devices, tenantId }: FleetMapProps) {
-  // Filter to only devices that have coordinates
-  const mappedDevices = useMemo(
-    () => devices.filter((d) => d.latitude != null && d.longitude != null),
-    [devices],
-  )
+  const containerRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
 
-  return (
-    <MapContainer
-      center={DEFAULT_CENTER}
-      zoom={DEFAULT_ZOOM}
-      className="h-full w-full"
-      scrollWheelZoom
-      style={{ background: 'hsl(var(--background))' }}
-    >
-      <ProtomapsLayer />
-      <AutoFitBounds devices={mappedDevices} />
-      <MarkerClusterGroup
-        chunkedLoading
-        iconCreateFunction={createClusterIcon}
-        maxClusterRadius={50}
-        spiderfyOnMaxZoom
-        showCoverageOnHover={false}
-      >
-        {mappedDevices.map((device) => (
-          <DeviceMarker key={device.id} device={device} tenantId={tenantId} />
-        ))}
-      </MarkerClusterGroup>
-    </MapContainer>
-  )
+  const geojson = useMemo(() => deviceToGeoJSON(devices), [devices])
+
+  // Initialize map
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const map = new maplibregl.Map({
+      container: containerRef.current,
+      style: buildMapStyle(),
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
+      maxZoom: 17,
+    })
+
+    map.addControl(new maplibregl.NavigationControl(), 'top-right')
+
+    map.on('load', () => {
+      // Device markers source with clustering
+      map.addSource('devices', {
+        type: 'geojson',
+        data: geojson,
+        cluster: true,
+        clusterMaxZoom: 14,
+        clusterRadius: 50,
+      })
+
+      // Cluster circles
+      map.addLayer({
+        id: 'clusters',
+        type: 'circle',
+        source: 'devices',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': [
+            'step', ['get', 'point_count'],
+            '#22c55e', 10,
+            '#f59e0b', 50,
+            '#ef4444',
+          ],
+          'circle-radius': [
+            'step', ['get', 'point_count'],
+            18, 10,
+            24, 50,
+            32,
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+        },
+      })
+
+      // Cluster count labels
+      map.addLayer({
+        id: 'cluster-count',
+        type: 'symbol',
+        source: 'devices',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': '{point_count_abbreviated}',
+          'text-font': ['Noto Sans Medium'],
+          'text-size': 13,
+        },
+        paint: {
+          'text-color': '#ffffff',
+        },
+      })
+
+      // Individual device dots
+      map.addLayer({
+        id: 'device-points',
+        type: 'circle',
+        source: 'devices',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': ['get', 'color'],
+          'circle-radius': 7,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+        },
+      })
+
+      // Click on cluster to zoom in
+      map.on('click', 'clusters', (e) => {
+        const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] })
+        if (!features.length) return
+        const clusterId = features[0].properties.cluster_id
+        const source = map.getSource('devices') as maplibregl.GeoJSONSource
+        source.getClusterExpansionZoom(clusterId).then((zoom) => {
+          const coords = (features[0].geometry as GeoJSON.Point).coordinates as [number, number]
+          map.easeTo({ center: coords, zoom })
+        })
+      })
+
+      // Click on device to show popup
+      map.on('click', 'device-points', (e) => {
+        if (!e.features?.length) return
+        const f = e.features[0]
+        const coords = (f.geometry as GeoJSON.Point).coordinates.slice() as [number, number]
+        const p = f.properties
+
+        const resolvedTenantId = tenantId || p.tenant_id
+
+        let html = `<div style="font-family:system-ui,sans-serif;font-size:13px;min-width:200px;">
+          <a href="/tenants/${resolvedTenantId}/devices/${p.id}" style="font-weight:600;font-size:14px;color:#7dd3fc;text-decoration:none;">${p.hostname}</a>
+          <div style="color:#94a3b8;margin-top:4px;">
+            <div>IP: ${p.ip_address}</div>`
+        if (p.model) html += `<div>Model: ${p.model}</div>`
+        if (p.uptime_seconds) html += `<div>Uptime: ${formatUptime(p.uptime_seconds)}</div>`
+        if (p.last_cpu_load != null) html += `<div>CPU: ${p.last_cpu_load}%</div>`
+        if (p.last_memory_used_pct != null) html += `<div>Memory: ${p.last_memory_used_pct}%</div>`
+        if (p.client_count != null && p.client_count > 0) {
+          html += `<div>Clients: ${p.client_count}`
+          if (p.avg_signal != null) html += ` (avg ${p.avg_signal} dBm)`
+          html += `</div>`
+        }
+        html += `<div style="margin-top:4px;display:flex;align-items:center;gap:6px;">
+              Status:
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>
+              ${p.status}
+            </div>
+          </div>
+        </div>`
+
+        new maplibregl.Popup({ offset: 10, maxWidth: '300px' })
+          .setLngLat(coords)
+          .setHTML(html)
+          .addTo(map)
+      })
+
+      // Cursor changes
+      map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer' })
+      map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = '' })
+      map.on('mouseenter', 'device-points', () => { map.getCanvas().style.cursor = 'pointer' })
+      map.on('mouseleave', 'device-points', () => { map.getCanvas().style.cursor = '' })
+
+      // Fit bounds to all devices
+      if (geojson.features.length > 0) {
+        const bounds = new maplibregl.LngLatBounds()
+        geojson.features.forEach((f) => {
+          const [lng, lat] = (f.geometry as GeoJSON.Point).coordinates
+          bounds.extend([lng, lat])
+        })
+        map.fitBounds(bounds, { padding: 60, maxZoom: 14 })
+      }
+    })
+
+    mapRef.current = map
+
+    return () => {
+      map.remove()
+      mapRef.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Update device data when it changes
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !map.isStyleLoaded()) return
+    const source = map.getSource('devices') as maplibregl.GeoJSONSource | undefined
+    if (source) {
+      source.setData(geojson)
+    }
+  }, [geojson])
+
+  return <div ref={containerRef} className="h-full w-full" />
 }

@@ -65,6 +65,11 @@ export function DeviceMarker({ device, tenantId }: DeviceMarkerProps) {
             <div>IP: {device.ip_address}</div>
             {device.model && <div>Model: {device.model}</div>}
             <div>Uptime: {formatUptime(device.uptime_seconds)}</div>
+            {device.last_cpu_load != null && <div>CPU: {device.last_cpu_load}%</div>}
+            {device.last_memory_used_pct != null && <div>Memory: {device.last_memory_used_pct}%</div>}
+            {device.client_count != null && device.client_count > 0 && (
+              <div>Clients: {device.client_count}{device.avg_signal != null && ` (avg ${device.avg_signal} dBm)`}</div>
+            )}
             <div className="flex items-center gap-1.5 mt-1">
               Status:
               <span

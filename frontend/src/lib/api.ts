@@ -807,6 +807,8 @@ export interface FleetDevice {
   longitude: number | null
   tenant_id: string
   tenant_name: string
+  client_count: number | null
+  avg_signal: number | null
 }
 
 export interface SparklinePoint {

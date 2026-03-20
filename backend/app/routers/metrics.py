@@ -360,9 +360,16 @@ _FLEET_SUMMARY_SQL = """
         d.id, d.hostname, d.ip_address, d.status, d.model, d.last_seen,
         d.uptime_seconds, d.last_cpu_load, d.last_memory_used_pct,
         d.latitude, d.longitude,
-        d.tenant_id, t.name AS tenant_name
+        d.tenant_id, t.name AS tenant_name,
+        wl.client_count, wl.avg_signal
     FROM devices d
     JOIN tenants t ON d.tenant_id = t.id
+    LEFT JOIN LATERAL (
+        SELECT count(*)::int AS client_count,
+               avg(signal_strength)::int AS avg_signal
+        FROM wireless_links
+        WHERE ap_device_id = d.id AND state IN ('active', 'discovered')
+    ) wl ON true
     ORDER BY d.hostname
 """
 
