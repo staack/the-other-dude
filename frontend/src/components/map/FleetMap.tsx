@@ -4,6 +4,7 @@ import { Protocol } from 'pmtiles'
 import { layers, namedFlavor } from '@protomaps/basemaps'
 import type { FleetDevice } from '@/lib/api'
 import { formatUptime } from '@/lib/utils'
+import { useUIStore } from '@/lib/store'
 
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -25,11 +26,11 @@ const STATUS_COLORS: Record<string, string> = {
   unknown: '#eab308',
 }
 
-function buildMapStyle() {
+function buildMapStyle(theme: 'dark' | 'light') {
   return {
     version: 8 as const,
     glyphs: '/map-fonts/{fontstack}/{range}.pbf',
-    sprite: '/map-assets/sprites/dark',
+    sprite: `/map-assets/sprites/${theme}`,
     sources: {
       protomaps: {
         type: 'vector' as const,
@@ -37,7 +38,7 @@ function buildMapStyle() {
         attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
       },
     },
-    layers: layers('protomaps', namedFlavor('dark'), { lang: 'en' }),
+    layers: layers('protomaps', namedFlavor(theme), { lang: 'en' }),
   }
 }
 
@@ -73,6 +74,7 @@ function deviceToGeoJSON(devices: FleetDevice[]): GeoJSON.FeatureCollection {
 export function FleetMap({ devices, tenantId }: FleetMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
+  const theme = useUIStore((s) => s.theme)
 
   const geojson = useMemo(() => deviceToGeoJSON(devices), [devices])
 
@@ -82,7 +84,7 @@ export function FleetMap({ devices, tenantId }: FleetMapProps) {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: buildMapStyle(),
+      style: buildMapStyle(theme),
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
       maxZoom: 17,
@@ -227,6 +229,59 @@ export function FleetMap({ devices, tenantId }: FleetMapProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Re-add device layers after style change (setStyle wipes all sources/layers)
+  const addDeviceLayers = (map: maplibregl.Map) => {
+    if (map.getSource('devices')) return
+    map.addSource('devices', {
+      type: 'geojson',
+      data: geojson,
+      cluster: true,
+      clusterMaxZoom: 14,
+      clusterRadius: 50,
+    })
+    map.addLayer({
+      id: 'clusters',
+      type: 'circle',
+      source: 'devices',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': ['step', ['get', 'point_count'], '#22c55e', 10, '#f59e0b', 50, '#ef4444'],
+        'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 50, 32],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
+    })
+    map.addLayer({
+      id: 'cluster-count',
+      type: 'symbol',
+      source: 'devices',
+      filter: ['has', 'point_count'],
+      layout: { 'text-field': '{point_count_abbreviated}', 'text-font': ['Noto Sans Medium'], 'text-size': 13 },
+      paint: { 'text-color': '#ffffff' },
+    })
+    map.addLayer({
+      id: 'device-points',
+      type: 'circle',
+      source: 'devices',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': ['get', 'color'],
+        'circle-radius': 7,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
+    })
+  }
+
+  // Switch map theme when app theme changes
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    map.setStyle(buildMapStyle(theme))
+    map.once('styledata', () => addDeviceLayers(map))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme])
 
   // Update device data when it changes
   useEffect(() => {
