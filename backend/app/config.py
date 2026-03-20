@@ -136,7 +136,7 @@ class Settings(BaseSettings):
     CONFIG_RETENTION_DAYS: int = 90
 
     # Licensing — BSL 1.1 free tier allows up to 250 devices.
-    # Commercial license required above this limit. Set to 0 for unlimited.
+    # Commercial license required above this limit.
     LICENSE_DEVICES: int = 250
 
     # App settings

@@ -194,6 +194,6 @@ async def get_license_status():
     return {
         "licensed_devices": limit,
         "actual_devices": device_count,
-        "over_limit": limit > 0 and device_count > limit,
+        "over_limit": device_count > limit,
         "tier": "commercial" if limit > 250 else "free",
     }
