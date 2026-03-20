@@ -45,3 +45,15 @@ export async function testSMTPSettings(data: {
   const res = await api.post('/api/settings/smtp/test', data)
   return res.data
 }
+
+export interface LicenseStatus {
+  licensed_devices: number
+  actual_devices: number
+  over_limit: boolean
+  tier: 'free' | 'commercial'
+}
+
+export async function getLicenseStatus(): Promise<LicenseStatus> {
+  const res = await api.get('/api/settings/license')
+  return res.data
+}

@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { RugLogo } from '@/components/brand/RugLogo'
 import { APP_VERSION } from '@/lib/version'
 import { AnsiNfoModal } from '@/components/about/AnsiNfoModal'
+import { getLicenseStatus } from '@/lib/settingsApi'
 
 export const Route = createFileRoute('/_authenticated/about')({
   component: AboutPage,
@@ -483,6 +485,7 @@ function AboutPage() {
   const [copied, setCopied] = useState(false)
   const [showQR, setShowQR] = useState(false)
   const [showNfo, setShowNfo] = useState(false)
+  const { data: license } = useQuery({ queryKey: ['license-status'], queryFn: getLicenseStatus })
 
   const copyAddress = async () => {
     try {
@@ -515,6 +518,28 @@ function AboutPage() {
           {APP_VERSION}
         </span>
       </div>
+
+      {/* License */}
+      {license && (
+        <div className="rounded-lg border border-border bg-surface p-5 space-y-2">
+          <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
+            License
+          </h2>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-text-secondary">
+              {license.tier === 'commercial' ? 'Commercial License' : 'BSL 1.1 — Free Tier'}
+            </span>
+            <span className={`text-sm font-mono ${license.over_limit ? 'text-error' : 'text-text-secondary'}`}>
+              {license.actual_devices} / {license.licensed_devices === 0 ? 'Unlimited' : license.licensed_devices} devices
+            </span>
+          </div>
+          {license.over_limit && (
+            <p className="text-xs text-error">
+              Device count exceeds licensed limit. A commercial license is required.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Features summary */}
       <div className="rounded-lg border border-border bg-surface p-5 space-y-3">

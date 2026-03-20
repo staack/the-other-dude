@@ -176,3 +176,24 @@ async def clear_winbox_sessions(user=Depends(require_role("super_admin"))):
         return {"status": "ok", "deleted": deleted}
     finally:
         await rd.aclose()
+
+
+# ---------------------------------------------------------------------------
+# License status (any authenticated user)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/license", summary="Get license status")
+async def get_license_status():
+    """Return current license tier, device limit, and actual device count."""
+    async with AdminAsyncSessionLocal() as session:
+        result = await session.execute(text("SELECT count(*)::int FROM devices"))
+        device_count = result.scalar() or 0
+
+    limit = settings.LICENSE_DEVICES
+    return {
+        "licensed_devices": limit,
+        "actual_devices": device_count,
+        "over_limit": limit > 0 and device_count > limit,
+        "tier": "commercial" if limit > 250 else "free",
+    }

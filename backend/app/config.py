@@ -135,9 +135,13 @@ class Settings(BaseSettings):
     # Retention cleanup — delete config snapshots older than N days
     CONFIG_RETENTION_DAYS: int = 90
 
+    # Licensing — BSL 1.1 free tier allows up to 250 devices.
+    # Commercial license required above this limit. Set to 0 for unlimited.
+    LICENSE_DEVICES: int = 250
+
     # App settings
     APP_NAME: str = "TOD - The Other Dude"
-    APP_VERSION: str = "9.7.0"
+    APP_VERSION: str = "9.7.1"
     DEBUG: bool = False
 
     @field_validator("CREDENTIAL_ENCRYPTION_KEY")

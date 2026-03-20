@@ -14,6 +14,7 @@ import {
 import { useAuth, isSuperAdmin } from '@/lib/auth'
 import { useUIStore } from '@/lib/store'
 import { tenantsApi, metricsApi } from '@/lib/api'
+import { getLicenseStatus } from '@/lib/settingsApi'
 import { useEventStreamContext } from '@/contexts/EventStreamContext'
 import type { ConnectionState } from '@/hooks/useEventStream'
 import { NotificationBell } from '@/components/alerts/NotificationBell'
@@ -87,6 +88,14 @@ export function ContextStrip() {
 
   const offlineCount = fleet?.filter((d) => d.status === 'offline').length ?? 0
   const degradedCount = fleet?.filter((d) => d.status === 'degraded').length ?? 0
+
+  // License status (super_admin only)
+  const { data: license } = useQuery({
+    queryKey: ['license-status'],
+    queryFn: getLicenseStatus,
+    enabled: superAdmin,
+    refetchInterval: 60_000,
+  })
 
   const handleLogout = async () => {
     await logout()
@@ -187,6 +196,11 @@ export function ContextStrip() {
           </>
         ) : (
           <span className="text-xs text-text-muted">Status loading...</span>
+        )}
+        {license?.over_limit && (
+          <span className="text-xs font-mono text-error animate-pulse">
+            {license.actual_devices}/{license.licensed_devices} licensed
+          </span>
         )}
       </div>
 
