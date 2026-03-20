@@ -70,6 +70,9 @@ export function DeviceMarker({ device, tenantId }: DeviceMarkerProps) {
             {device.client_count != null && device.client_count > 0 && (
               <div>Clients: {device.client_count}{device.avg_signal != null && ` (avg ${device.avg_signal} dBm)`}</div>
             )}
+            {device.cpe_signal != null && (
+              <div>Signal: {device.cpe_signal} dBm{device.ap_hostname && ` to ${device.ap_hostname}`}</div>
+            )}
             <div className="flex items-center gap-1.5 mt-1">
               Status:
               <span

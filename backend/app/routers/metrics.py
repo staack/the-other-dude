@@ -361,7 +361,8 @@ _FLEET_SUMMARY_SQL = """
         d.uptime_seconds, d.last_cpu_load, d.last_memory_used_pct,
         d.latitude, d.longitude,
         d.tenant_id, t.name AS tenant_name,
-        wl.client_count, wl.avg_signal
+        wl.client_count, wl.avg_signal,
+        cpe.cpe_signal, cpe.ap_hostname
     FROM devices d
     JOIN tenants t ON d.tenant_id = t.id
     LEFT JOIN LATERAL (
@@ -370,6 +371,14 @@ _FLEET_SUMMARY_SQL = """
         FROM wireless_links
         WHERE ap_device_id = d.id AND state IN ('active', 'discovered')
     ) wl ON true
+    LEFT JOIN LATERAL (
+        SELECT wl2.signal_strength AS cpe_signal,
+               ap.hostname AS ap_hostname
+        FROM wireless_links wl2
+        JOIN devices ap ON ap.id = wl2.ap_device_id
+        WHERE wl2.cpe_device_id = d.id AND wl2.state IN ('active', 'discovered')
+        LIMIT 1
+    ) cpe ON true
     ORDER BY d.hostname
 """
 

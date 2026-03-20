@@ -1,0 +1,10 @@
+frontend/public/tiles/
+frontend/node_modules/
+docker-data/
+.worktrees/
+.git/
+.planning/
+.superpowers/
+docs/superpowers/
+tools/dev/
+*.pmtiles

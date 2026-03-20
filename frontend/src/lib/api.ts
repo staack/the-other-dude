@@ -809,6 +809,8 @@ export interface FleetDevice {
   tenant_name: string
   client_count: number | null
   avg_signal: number | null
+  cpe_signal: number | null
+  ap_hostname: string | null
 }
 
 export interface SparklinePoint {

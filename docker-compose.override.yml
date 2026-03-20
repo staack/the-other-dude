@@ -27,6 +27,9 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
       OPENBAO_ADDR: http://openbao:8200
       OPENBAO_TOKEN: dev-openbao-token
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      SMTP_USE_TLS: "false"
       GIT_STORE_PATH: /data/git-store
       WIREGUARD_CONFIG_PATH: /data/wireguard
       WIREGUARD_GATEWAY: wireguard
