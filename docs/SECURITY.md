@@ -96,6 +96,7 @@ TOD includes on-demand WinBox tunnels and browser-based SSH terminals for device
 - **Audit trail:** Tunnel open/close events and SSH session start/end events are recorded in the immutable audit log with device ID, user ID, source IP, and timestamp.
 - **WinBox tunnel binding:** TCP proxies for WinBox connections are bound to `127.0.0.1` only. Tunnels are never exposed on `0.0.0.0` and cannot be reached from outside the host without explicit port forwarding.
 - **Idle-timeout cleanup:** Inactive tunnels are closed automatically after `TUNNEL_IDLE_TIMEOUT` seconds (default 300). SSH sessions time out after `SSH_IDLE_TIMEOUT` seconds (default 900). Resources are reclaimed immediately on disconnect.
+- **WinBox Browser sessions:** WinBox sessions use single-use session IDs stored in Redis with a short TTL. The browser connects via a WebSocket proxy -- never directly to the device. Sessions follow a strict lifecycle (`creating` -> `active` -> `grace` -> `terminated`) with automatic cleanup at each stage. Device credentials are decrypted server-side via the OpenBao Transit engine and are never sent to the browser. Session creation is rate-limited to 3 requests per 5 minutes per user.
 
 ## Network Security
 

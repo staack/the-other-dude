@@ -36,7 +36,9 @@ TOD uses a collapsible sidebar with four sections. Press `[` to toggle the sideb
 |------|-------------|
 | **Dashboard** | Overview of your fleet with device status cards, active alerts, metrics sparklines, and "APs Needing Attention" wireless health card. The landing page after login. |
 | **Devices** | Fleet table with search, sort, and filter. Click any device row to open its detail page. |
-| **Map** | Geographic map view of device locations. |
+| **Sites** | Tower and site management -- organize devices by physical location with sectors, health monitoring, wireless links, and site-scoped alerts. |
+| **Wireless Links** | Fleet-wide view of all discovered AP-to-CPE wireless connections with signal, CCQ, TX/RX rates, and link state. |
+| **Map** | Geographic fleet map with status-colored markers and automatic clustering. Devices with coordinates appear on the map; clusters reflect aggregate health (green = all online, red = all offline, amber = mixed). |
 
 ### Manage
 
@@ -233,6 +235,138 @@ TOD supports dark and light modes:
 - **Light mode** provides a clean, high-contrast alternative.
 - Toggle in **Settings** or let the portal follow your system preference.
 - The command palette and all UI components adapt to the active theme.
+
+---
+
+## Tower & Site Management
+
+Sites represent physical locations in your network -- towers, rooftops, equipment rooms, or any place where you deploy devices. Sectors let you subdivide a site by antenna direction. Together they give you a structured view of your wireless infrastructure.
+
+### Creating a Site
+
+1. Navigate to **Fleet > Sites** in the sidebar.
+2. Click **New Site**.
+3. Fill in the site details:
+   - **Name** (required) -- a descriptive label for the location (e.g., "North Ridge Tower").
+   - **Address** -- street address or landmark description.
+   - **Latitude / Longitude** -- GPS coordinates. Devices at this site inherit these coordinates on the fleet map.
+   - **Elevation** -- tower or rooftop height in meters.
+   - **Notes** -- free-text field for internal reference.
+4. Click **Create Site**.
+
+The Sites list shows all sites with search filtering. Click any site to open its detail page.
+
+### Site Detail Page
+
+The site detail page shows a summary header with device count, online count, online percentage, and active alert count. Four tabs provide deeper views:
+
+| Tab | Description |
+|-----|-------------|
+| **Health Grid** | Card grid of every device assigned to the site showing live CPU, memory, and uptime. Cards are color-coded by status (green = online, red = offline). Click any card to open the device detail page. |
+| **Sectors** | Sector-based view of devices and their connected CPE clients. Shows per-sector aggregate stats (client count, average signal, link count). |
+| **Links** | Table of all wireless links at the site, grouped by AP, with signal strength, CCQ, TX/RX rates, link state, and expandable signal history charts. |
+| **Alerts** | Site-scoped alert rules and alert event history. Create and manage rules that apply to this specific site or sector. |
+
+### Creating Sectors
+
+Sectors organize access points within a site by antenna direction (e.g., "North 0-120" or "South Sector"). To create a sector:
+
+1. Open a site detail page and switch to the **Sectors** tab.
+2. Click **Add Sector**.
+3. Enter:
+   - **Name** (required) -- a label for the sector direction (e.g., "North Sector").
+   - **Azimuth** -- compass bearing in degrees (0-360) representing the antenna direction. 0 is north, 90 is east, 180 is south, 270 is west.
+   - **Description** -- optional notes about the sector.
+4. Click **Create Sector**.
+
+Each sector section is collapsible and shows a header with device count, connected client count, average signal strength, and link count. Devices within a sector are listed with their connected CPEs and link states inline.
+
+### Assigning Devices to Sites and Sectors
+
+Devices are assigned to a site from the device detail page or from the Sites section. Once assigned, you can further assign a device to a specific sector:
+
+1. Open the site detail page and switch to the **Sectors** tab.
+2. Each device row has a sector assignment dropdown on the right.
+3. Select a sector from the dropdown to assign the device, or select **Unassigned** to remove the sector assignment.
+
+Devices that belong to a site but have no sector assignment appear in the **Unassigned** section at the bottom of the Sectors tab.
+
+---
+
+## Wireless Links
+
+TOD automatically discovers wireless connections between access points (APs) and client premise equipment (CPEs) in your fleet. When the poller detects a registration table entry on an AP that matches a CPE device in your fleet, it creates a wireless link record.
+
+### Link States
+
+Each wireless link has a state that reflects its current health:
+
+| State | Meaning |
+|-------|---------|
+| **Discovered** | A new AP-CPE connection has been detected for the first time. |
+| **Active** | The link is up with recent poll data confirming connectivity. |
+| **Degraded** | The link is connected but signal or quality metrics have dropped below healthy thresholds. |
+| **Down** | The link has not been seen in recent polls -- the CPE is likely disconnected. |
+| **Stale** | The link has not been seen for an extended period. The connection may no longer exist. |
+
+Link states transition automatically based on poll results and missed-poll counters.
+
+### Viewing Wireless Links
+
+There are two ways to view wireless links:
+
+- **Fleet-wide**: Navigate to **Fleet > Wireless Links** in the sidebar. This shows all discovered links across your organization, filterable by state (active, degraded, down, stale).
+- **Per-site**: Open a site detail page and switch to the **Links** tab. This shows only the links associated with devices assigned to that site.
+
+Both views group links by AP device. Each CPE row shows signal strength (dBm), CCQ percentage, TX/RX data rates, link state, and time since last seen.
+
+### Signal History
+
+Click any CPE row in the wireless links table to expand an inline signal history chart. The chart shows signal strength over time with three lines:
+
+- **Average signal** (solid blue) -- the primary trend line.
+- **Min / Max signal** (dashed) -- the range boundaries.
+
+The background is color-banded: green for strong signal (above -65 dBm), yellow for moderate (-65 to -80 dBm), and red for weak (below -80 dBm).
+
+Use the time range selector in the chart header to switch between **24h**, **7d**, and **30d** views. This helps you spot intermittent degradation, seasonal patterns, or gradual signal drift that might not be obvious from a single snapshot.
+
+---
+
+## Site Alerts
+
+Site alert rules let you define thresholds scoped to an entire site or a specific sector, rather than individual devices. This is useful for detecting systemic issues across a tower location.
+
+### Creating a Site Alert Rule
+
+1. Open the site detail page and switch to the **Alerts** tab.
+2. Click **Add Alert Rule**.
+3. Configure the rule:
+   - **Rule type** -- choose from:
+     - *Device Offline Percent* -- fires when the percentage of offline devices at the site exceeds the threshold.
+     - *Device Offline Count* -- fires when a specific number of devices go offline.
+     - *Sector Signal Average* -- fires when the average signal strength across a sector drops below the threshold.
+     - *Sector Client Drop* -- fires when the number of connected clients in a sector drops by more than the threshold.
+     - *Signal Degradation* -- fires when individual link signal degrades past a threshold.
+   - **Scope** -- apply the rule to the entire site or narrow it to a specific sector.
+   - **Threshold** -- the numeric value and unit that triggers the alert.
+   - **Severity** -- warning or critical.
+4. Click **Create Rule**.
+
+Alert events appear in the site's Alerts tab with timestamps, severity, the triggering message, and consecutive hit count. Active alerts can be resolved manually by operators.
+
+---
+
+## Fleet Map
+
+The fleet map provides a geographic view of all devices that have coordinates assigned (either directly on the device or inherited from their site).
+
+- Navigate to **Fleet > Map** in the sidebar.
+- Devices appear as color-coded markers: **green** for online, **red** for offline.
+- When devices are geographically close, they automatically cluster into numbered circles. Cluster color reflects aggregate health: green if all devices in the cluster are online, red if all are offline, and amber if mixed.
+- Click a cluster to zoom in and see individual markers. Click a device marker to see its status summary and link to its detail page.
+- Super admins can filter the map by organization using the dropdown in the toolbar.
+- The map auto-fits to show all mapped devices when loaded. The toolbar shows how many of your devices have coordinates assigned.
 
 ---
 

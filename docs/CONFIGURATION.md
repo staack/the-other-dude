@@ -29,11 +29,12 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `postgresql+asyncpg://postgres:postgres@localhost:5432/mikrotik` | Admin (superuser) async database URL. Used for migrations and bootstrap operations. |
-| `SYNC_DATABASE_URL` | `postgresql+psycopg2://postgres:postgres@localhost:5432/mikrotik` | Synchronous database URL used by Alembic migrations only. |
-| `APP_USER_DATABASE_URL` | `postgresql+asyncpg://app_user:app_password@localhost:5432/mikrotik` | Non-superuser async database URL. Enforces PostgreSQL RLS for tenant isolation. |
+| `DATABASE_URL` | `postgresql+asyncpg://postgres:postgres@localhost:5432/tod` | Admin (superuser) async database URL. Used for migrations and bootstrap operations. |
+| `SYNC_DATABASE_URL` | `postgresql+psycopg2://postgres:postgres@localhost:5432/tod` | Synchronous database URL used by Alembic migrations only. |
+| `APP_USER_DATABASE_URL` | `postgresql+asyncpg://app_user:app_password@localhost:5432/tod` | Non-superuser async database URL. Enforces PostgreSQL RLS for tenant isolation. |
 | `DB_POOL_SIZE` | `20` | App user connection pool size |
 | `DB_MAX_OVERFLOW` | `40` | App user pool max overflow connections |
+| `DB_POOL_RECYCLE` | `1847` | Connection pool recycle time in seconds |
 | `DB_ADMIN_POOL_SIZE` | `10` | Admin connection pool size |
 | `DB_ADMIN_MAX_OVERFLOW` | `20` | Admin pool max overflow connections |
 
@@ -81,6 +82,20 @@ OpenBao is the key management service used to encrypt device credentials on a pe
 |----------|---------|-------------|
 | `FIRMWARE_CACHE_DIR` | `/data/firmware-cache` | Path to firmware download cache (PVC mount in production) |
 | `FIRMWARE_CHECK_INTERVAL_HOURS` | `24` | Hours between automatic RouterOS version checks |
+
+### Signal Trending & Site Alerting
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SIGNAL_DEGRADATION_THRESHOLD_DB` | `5` | Signal degradation threshold in dB for trend detection |
+| `ALERT_EVALUATION_INTERVAL_SECONDS` | `300` | How often site alert rules are evaluated |
+| `TREND_DETECTION_INTERVAL_SECONDS` | `3600` | How often signal trending analysis runs |
+
+### Retention
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CONFIG_RETENTION_DAYS` | `90` | How long config snapshots are retained |
 
 ### Storage Paths
 
@@ -141,7 +156,7 @@ All containers have enforced memory limits to prevent OOM on the host:
 |---------|-------------|
 | PostgreSQL | 512 MB |
 | Redis | 128 MB |
-| NATS | 128 MB |
+| NATS | 256 MB |
 | API | 512 MB |
 | Poller | 256 MB |
 | Frontend | 64 MB |

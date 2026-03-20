@@ -44,10 +44,24 @@ TOD (The Other Dude) is a containerized MSP fleet management platform for MikroT
   - `admin_engine` (superuser) -- used only for auth/bootstrap and NATS subscribers that need cross-tenant access
   - `app_engine` (non-superuser `app_user` role) -- used for all device/data routes, enforces RLS
 - **Authentication**: JWT tokens (15min access, 7d refresh), SRP-6a zero-knowledge proof, RBAC (super_admin, admin, operator, viewer)
-- **NATS subscribers**: Three independent subscribers for device status, metrics, and firmware events. Non-fatal startup -- API serves requests even if NATS is unavailable
-- **Background services**: APScheduler for nightly config backups and daily firmware version checks
+- **NATS subscribers**: Ten independent subscribers, each on its own NATS connection. Non-fatal startup -- API serves requests even if NATS is unavailable:
+  - `nats_subscriber` -- device status events
+  - `metrics_subscriber` -- device metrics (CPU, memory, interface counters)
+  - `firmware_subscriber` -- firmware version events
+  - `session_audit_subscriber` -- SSH session auditing
+  - `config_change_subscriber` -- event-driven config backups
+  - `push_rollback_subscriber` -- config push rollback and alerting
+  - `config_snapshot_subscriber` -- config snapshot ingestion (Go poller -> PostgreSQL via Transit encryption)
+  - `wireless_registration_subscriber` -- per-client wireless registration data
+  - `interface_subscriber` -- device interface MAC resolution for link discovery
+  - `link_discovery_subscriber` -- wireless link state machine (MAC-based AP/CPE pairing)
+- **Background services**:
+  - APScheduler: nightly config backups, daily firmware version checks, retention cleanup (24h cycle)
+  - WinBox session reconciliation loop (60s cycle) -- detects orphaned sessions and cleans up Redis + tunnels
+  - Signal trend detection loop (hourly) -- identifies sustained signal degradation across wireless clients
+  - Site alert evaluation loop (5-minute cycle) -- evaluates geographic-scoped alert rules with hysteresis
 - **OpenBao integration**: Provisions per-tenant Transit encryption keys on startup, dual-read fallback if OpenBao is unavailable
-- **Startup sequence**: Configure logging -> Run Alembic migrations -> Bootstrap first admin -> Start NATS subscribers -> Ensure SSE streams -> Start schedulers -> Provision OpenBao keys
+- **Startup sequence**: Configure logging -> Run Alembic migrations -> Bootstrap first admin -> Start NATS subscribers (10) -> Ensure SSE streams -> Start schedulers -> Provision OpenBao keys -> Recover stale push operations -> Start background loops (reconciliation, trend detection, site alerts)
 - **API documentation**: OpenAPI docs at `/docs` and `/redoc` (dev environment only)
 - **Health endpoints**: `/health` (liveness), `/health/ready` (readiness -- checks PostgreSQL, Redis, NATS)
 - **Middleware stack** (LIFO order): RequestID -> SecurityHeaders -> RateLimiting -> CORS -> Route handler
@@ -55,7 +69,7 @@ TOD (The Other Dude) is a containerized MSP fleet management platform for MikroT
 
 #### API Routers
 
-The backend exposes 25 route groups under the `/api` prefix:
+The backend exposes 33 route groups under the `/api` prefix:
 
 | Router | Purpose |
 |--------|---------|
@@ -84,6 +98,14 @@ The backend exposes 25 route groups under the `/api` prefix:
 | `certificates` | Internal CA and device TLS certificates |
 | `settings` | System settings (SMTP configuration, super_admin only) |
 | `transparency` | KMS access event dashboard |
+| `remote_access` | SSH remote access sessions |
+| `winbox_remote` | WinBox browser-based remote sessions |
+| `sites` | Site management (hierarchical device organization) |
+| `sectors` | Sector definitions within sites (antenna/coverage zones) |
+| `links` | Wireless link discovery and state tracking |
+| `signal_history` | Per-client signal strength history and trends |
+| `site_alerts` | Geographic-scoped alert rules and events |
+| `config` | Config push operations (two-phase with panic revert) |
 
 ### Go Poller
 
@@ -135,7 +157,7 @@ The backend exposes 25 route groups under the `/api` prefix:
 - **Durable consumers**: Ensure no message loss during API restarts
 - **Monitoring port**: 8222
 - **Data volume**: `./docker-data/nats`
-- **Memory limit**: 128MB
+- **Memory limit**: 256MB
 
 ### OpenBao (HashiCorp Vault fork)
 
@@ -245,6 +267,48 @@ Browser                     API                   PostgreSQL
 - `poller_user` bypasses RLS intentionally (needs cross-tenant device access for polling)
 - Tenant isolation is enforced at the database level, not the application level -- even a compromised API cannot leak cross-tenant data through `app_user` connections
 
+## Sites & Sectors
+
+The site management subsystem provides hierarchical device organization for tower-based wireless deployments.
+
+- **Sites**: Named geographic locations (towers, POPs, huts) with optional latitude/longitude coordinates
+- **Sectors**: Coverage zones within a site, representing individual antenna faces or radio segments. Each sector belongs to exactly one site and can have one or more devices assigned
+- **Device assignment**: Devices are assigned to sectors, inheriting site membership. A device belongs to at most one sector at a time
+- **Site health**: Aggregate health status is derived from the devices within a site's sectors -- if any device is down, the site status reflects it
+
+## Wireless Link Discovery
+
+MAC-based automatic detection of AP-to-CPE wireless links.
+
+- **Interface subscriber**: Ingests device interface data from NATS, building a MAC-to-device lookup table
+- **Wireless registration subscriber**: Processes per-client wireless registration events, capturing connected MACs and signal data
+- **Link discovery subscriber**: Correlates AP registration tables with CPE interface MACs to identify links between managed devices
+- **State machine**: Each discovered link transitions through states based on signal quality and reachability:
+  - `discovered` -- initial detection, not yet confirmed
+  - `active` -- confirmed bidirectional link with acceptable signal
+  - `degraded` -- signal below threshold or intermittent connectivity
+  - `down` -- link lost (device unreachable or deregistered)
+  - `stale` -- no update received within the retention window
+- **Automatic pairing**: When an AP's registration table contains a MAC belonging to a managed CPE, a link record is created without manual configuration
+
+## Signal History & Trend Detection
+
+Per-client signal strength tracking with automatic degradation alerting.
+
+- **Signal history**: Records signal strength samples for each wireless client over time, stored in TimescaleDB for efficient time-range queries
+- **Trend detection loop** (hourly): Analyzes recent signal history to identify sustained degradation. When a client's signal drops below threshold for a configurable window, the system creates a site alert event with rule type `signal_degradation`. Auto-resolves when signal recovers
+- **Retention**: Signal history samples are subject to the same retention cleanup as other time-series data
+
+## Site Alert Rules
+
+Geographic-scoped alerting distinct from per-device alerts.
+
+- **Rule types**: Configurable rules scoped to a site (e.g., "alert when more than N devices are down at site X", signal degradation thresholds)
+- **Evaluation loop** (5-minute cycle): Evaluates all enabled site alert rules against current data
+- **Hysteresis**: Rules require consecutive hits (default 2) before confirming an alert, preventing flapping from transient conditions
+- **Event lifecycle**: Alert events are created when rules trigger and auto-resolved when conditions clear. Manual resolution is also supported
+- **Separation from device alerts**: Site alerts operate independently from the per-device alert system, allowing operators to set geographic thresholds without duplicating device-level rules
+
 ## Security Layers
 
 | Layer | Mechanism | Purpose |
@@ -285,7 +349,7 @@ backend/                    FastAPI Python backend
     config.py               Pydantic Settings configuration
     database.py             SQLAlchemy engines (admin + app_user)
     models/                 SQLAlchemy ORM models
-    routers/                FastAPI route handlers (25 modules)
+    routers/                FastAPI route handlers (33 modules)
     services/               Business logic, NATS subscribers, schedulers
     middleware/              Rate limiting, request ID, security headers
 frontend/                   React TypeScript frontend
@@ -332,6 +396,6 @@ docker compose build frontend
 | Go Poller | 512MB |
 | OpenBao | 256MB |
 | Redis | 128MB |
-| NATS | 128MB |
+| NATS | 256MB |
 | WireGuard | 128MB |
 | Frontend (nginx) | 64MB |

@@ -25,7 +25,11 @@ The Other Dude is a self-hosted, multi-tenant platform (one installation serves 
 - **Dashboard** -- At-a-glance fleet health with device counts, uptime sparklines, status breakdowns per organization, and an "APs Needing Attention" card highlighting wireless issues.
 - **Device Management** -- Detailed device pages with system info, interfaces, routes, firewall rules, DHCP leases, and real-time resource metrics.
 - **Fleet Table** -- Virtual-scrolled table that handles hundreds of devices without breaking a sweat.
-- **Device Map** -- Geographic view of device locations.
+- **Tower & Site Management** -- Organize devices by physical location. Sites represent towers or equipment rooms; sectors subdivide them by antenna direction with azimuth bearings. Health grid shows per-device CPU, memory, and uptime at a glance.
+- **Wireless Link Discovery** -- Automatic AP-to-CPE link detection with real-time signal strength, CCQ, TX/RX rates, and a five-state health model (discovered, active, degraded, down, stale).
+- **Signal History & Trend Detection** -- Per-client signal history charts with min/avg/max trends over 24-hour, 7-day, and 30-day windows. Color-banded thresholds highlight degradation at a glance.
+- **Site-Level Alert Rules** -- Threshold-based alerts scoped to sites and sectors: device offline percentage, sector signal average, client drop detection, and signal degradation.
+- **Fleet Map** -- Geographic map with status-colored markers and automatic clustering. Cluster colors reflect aggregate device health across a region.
 - **Subnet Scanner** -- Discover new RouterOS devices on your network and onboard them in clicks.
 
 ### Configuration

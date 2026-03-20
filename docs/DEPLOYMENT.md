@@ -12,6 +12,9 @@ TOD (The Other Dude) is a containerized fleet management platform for RouterOS d
 - **PostgreSQL + TimescaleDB** -- Primary database with time-series extensions
 - **Redis** -- Distributed locking and rate limiting
 - **NATS JetStream** -- Message bus for device events
+- **OpenBao** -- Secrets management (Transit encryption for credentials, config backups, audit logs)
+- **WireGuard** -- VPN gateway for isolated device networks
+- **WinBox Worker** -- Xpra-based container for browser WinBox sessions (runs on linux/amd64, 1GB memory limit)
 
 ## Prerequisites
 
@@ -159,6 +162,9 @@ Container memory limits are enforced in `docker-compose.prod.yml` to prevent OOM
 | API | 512MB |
 | Poller | 512MB |
 | Frontend | 64MB |
+| OpenBao | 256MB |
+| WireGuard | 128MB |
+| WinBox Worker | 1GB |
 
 Adjust under `deploy.resources.limits.memory` in `docker-compose.prod.yml`.
 
@@ -238,6 +244,7 @@ The Helm chart deploys:
 | Frontend | Deployment | React SPA (nginx) |
 | Poller | Deployment | Go device poller |
 | WireGuard | Deployment | VPN gateway |
+| WinBox Worker | Deployment | Browser-based WinBox sessions (Xpra) |
 
 ### Configuration
 
