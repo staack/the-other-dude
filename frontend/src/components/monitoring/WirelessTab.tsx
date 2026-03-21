@@ -159,10 +159,8 @@ export function WirelessTab({ tenantId, deviceId, active = true }: WirelessTabPr
       />
 
       {isLoading ? (
-        <div className="space-y-4">
-          {[0, 1].map((i) => (
-            <div key={i} className="rounded-lg border border-border bg-panel p-4 h-48 animate-pulse" />
-          ))}
+        <div className="py-8 text-center">
+          <span className="text-[9px] text-text-muted">Loading&hellip;</span>
         </div>
       ) : hasNoWireless ? (
         <div className="rounded-lg border border-border bg-panel p-8 text-center text-sm text-text-muted">

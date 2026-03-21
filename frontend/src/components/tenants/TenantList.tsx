@@ -74,7 +74,7 @@ export function TenantList() {
             {isLoading ? (
               <tr>
                 <td colSpan={5} className="px-3 py-4">
-                  <TableSkeleton rows={5} />
+                  <TableSkeleton />
                 </td>
               </tr>
             ) : tenants?.length === 0 ? (

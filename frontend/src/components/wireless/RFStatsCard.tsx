@@ -29,7 +29,7 @@ export function RFStatsCard({ tenantId, deviceId, active }: RFStatsCardProps) {
   })
 
   if (isLoading) {
-    return <TableSkeleton rows={2} />
+    return <TableSkeleton />
   }
 
   if (!data || data.items.length === 0) {

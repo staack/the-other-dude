@@ -145,7 +145,7 @@ export function SiteSectorView({ tenantId, siteId }: SiteSectorViewProps) {
   }, [linksData])
 
   if (sectorsLoading || devicesLoading) {
-    return <TableSkeleton rows={6} />
+    return <TableSkeleton />
   }
 
   const sectors = sectorData?.items ?? []

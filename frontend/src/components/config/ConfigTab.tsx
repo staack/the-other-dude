@@ -158,13 +158,8 @@ export function ConfigTab({
         {/* Timeline panel */}
         <div className="w-72 flex-shrink-0">
           {isLoading ? (
-            <div className="space-y-2">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="h-14 rounded-lg border border-border bg-panel animate-pulse"
-                />
-              ))}
+            <div className="py-8 text-center">
+              <span className="text-[9px] text-text-muted">Loading&hellip;</span>
             </div>
           ) : !backups || backups.length === 0 ? (
             <div className="rounded-lg border border-border bg-panel p-6 text-center text-sm text-text-muted">

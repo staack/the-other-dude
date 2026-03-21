@@ -41,10 +41,8 @@ export function HealthTab({ tenantId, deviceId, active = true }: HealthTabProps)
       />
 
       {isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="rounded-lg border border-border bg-panel p-4 h-44 animate-pulse" />
-          ))}
+        <div className="py-8 text-center">
+          <span className="text-[9px] text-text-muted">Loading&hellip;</span>
         </div>
       ) : !data || data.length === 0 ? (
         <div className="rounded-lg border border-border bg-panel p-8 text-center text-sm text-text-muted">

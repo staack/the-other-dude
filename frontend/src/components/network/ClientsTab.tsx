@@ -171,7 +171,7 @@ export function ClientsTab({ tenantId, deviceId, active }: ClientsTabProps) {
 
   // Loading state
   if (isLoading) {
-    return <TableSkeleton rows={8} />
+    return <TableSkeleton />
   }
 
   // Error state

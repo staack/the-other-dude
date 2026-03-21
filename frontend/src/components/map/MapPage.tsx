@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { MapPin } from 'lucide-react'
 import { metricsApi, tenantsApi } from '@/lib/api'
 import { useAuth, isSuperAdmin } from '@/lib/auth'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import { FleetMap } from './FleetMap'
 
 export function MapPage() {
@@ -55,7 +55,11 @@ export function MapPage() {
   }, [superAdmin, selectedTenant, user])
 
   if (devicesLoading) {
-    return <Skeleton className="h-[calc(100vh-8rem)] w-full rounded-lg" />
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+        <LoadingText />
+      </div>
+    )
   }
 
   if (devicesError) {

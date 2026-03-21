@@ -99,7 +99,7 @@ export function SiteTable({ tenantId, search, onCreateClick, onEditClick }: Site
   }
 
   if (isLoading) {
-    return <TableSkeleton rows={4} />
+    return <TableSkeleton />
   }
 
   if (!data || data.sites.length === 0) {

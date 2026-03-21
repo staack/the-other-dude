@@ -52,10 +52,8 @@ export function RestorePreview({
 
   if (isLoading) {
     return (
-      <div className="space-y-4 p-4">
-        <div className="h-12 rounded-lg bg-elevated animate-pulse" />
-        <div className="h-32 rounded-lg bg-elevated animate-pulse" />
-        <div className="h-16 rounded-lg bg-elevated animate-pulse" />
+      <div className="py-8 text-center">
+        <span className="text-[9px] text-text-muted">Loading&hellip;</span>
       </div>
     )
   }

@@ -47,10 +47,8 @@ export function DiffViewer({ tenantId, deviceId, snapshotId, onClose }: DiffView
 
       {/* Content */}
       {isLoading ? (
-        <div className="space-y-2">
-          {[75, 90, 65, 85, 70, 80].map((w, i) => (
-            <div key={i} className="h-4 bg-elevated rounded animate-pulse" style={{ width: `${w}%` }} />
-          ))}
+        <div className="py-8 text-center">
+          <span className="text-[9px] text-text-muted">Loading&hellip;</span>
         </div>
       ) : isError || !diff ? (
         <div className="flex items-center justify-center py-6">

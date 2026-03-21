@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import {
   Dialog,
   DialogContent,
@@ -1340,16 +1340,10 @@ function CellEmpty() {
 
 function LoadingRows({ cols }: { cols: number }) {
   return (
-    <>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <tr key={i} className="border-b border-border/50">
-          {Array.from({ length: cols }).map((_, j) => (
-            <td key={j} className="px-3 py-2">
-              <Skeleton className="h-4 w-full" />
-            </td>
-          ))}
-        </tr>
-      ))}
-    </>
+    <tr>
+      <td colSpan={cols} className="py-8 text-center">
+        <LoadingText />
+      </td>
+    </tr>
   )
 }

@@ -345,7 +345,7 @@ export function FleetTable({
         isFetching && !isLoading && 'opacity-70',
       )}>
         {isLoading ? (
-          <TableSkeleton rows={3} />
+          <TableSkeleton />
         ) : items.length === 0 ? (
           <EmptyState
             icon={Monitor}

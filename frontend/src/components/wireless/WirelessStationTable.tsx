@@ -44,7 +44,7 @@ export function WirelessStationTable({ tenantId, deviceId, active }: WirelessSta
   })
 
   if (isLoading) {
-    return <TableSkeleton rows={5} />
+    return <TableSkeleton />
   }
 
   if (!data || data.items.length === 0) {

@@ -126,8 +126,8 @@ export function ConfigDiffViewer({
 
       {/* Diff content */}
       {isLoading ? (
-        <div className="p-8 text-center text-sm text-text-muted animate-pulse">
-          Loading diff...
+        <div className="py-8 text-center">
+          <span className="text-[9px] text-text-muted">Loading&hellip;</span>
         </div>
       ) : !diffFile ? (
         <div className="p-8 text-center text-sm text-text-muted">

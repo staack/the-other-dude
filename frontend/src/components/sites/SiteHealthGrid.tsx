@@ -57,15 +57,8 @@ export function SiteHealthGrid({ tenantId, siteId }: SiteHealthGridProps) {
 
   if (devicesLoading) {
     return (
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="rounded-lg border border-border bg-panel p-4 space-y-3 animate-pulse">
-            <div className="h-4 w-24 bg-elevated rounded" />
-            <div className="h-1.5 w-full bg-elevated rounded-full" />
-            <div className="h-1.5 w-full bg-elevated rounded-full" />
-            <div className="h-3 w-16 bg-elevated rounded" />
-          </div>
-        ))}
+      <div className="py-8 text-center">
+        <span className="text-[9px] text-text-muted">Loading&hellip;</span>
       </div>
     )
   }

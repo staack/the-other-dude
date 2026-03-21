@@ -10,7 +10,7 @@
 import { useMemo } from 'react'
 import { Zap, Network } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useConfigBrowse } from '@/hooks/useConfigPanel'
 import type { ConfigPanelProps } from '@/lib/configPanelTypes'
@@ -134,12 +134,8 @@ export function SwitchPortManager({ tenantId, deviceId, active }: ConfigPanelPro
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-border bg-panel p-4">
-        <div className="flex flex-wrap gap-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-16 rounded-md" />
-          ))}
-        </div>
+      <div className="py-8 text-center">
+        <LoadingText />
       </div>
     )
   }

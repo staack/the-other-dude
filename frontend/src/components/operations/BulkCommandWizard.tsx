@@ -611,7 +611,7 @@ function DeviceSelectionStep({
   }
 
   if (devicesLoading) {
-    return <TableSkeleton rows={5} />
+    return <TableSkeleton />
   }
 
   return (

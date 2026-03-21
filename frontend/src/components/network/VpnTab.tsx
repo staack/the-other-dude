@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Shield, Lock, Globe } from 'lucide-react'
 import { networkApi, type VpnTunnel } from '@/lib/networkApi'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 
 interface VpnTabProps {
@@ -102,10 +102,8 @@ export function VpnTab({ tenantId, deviceId, active }: VpnTabProps) {
 
   if (isLoading) {
     return (
-      <div className="mt-4 space-y-2">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+      <div className="mt-4 py-8 text-center">
+        <LoadingText />
       </div>
     )
   }

@@ -83,7 +83,7 @@ export function ConfigHistorySection({ tenantId, deviceId, deviceName }: ConfigH
       )}
 
       {isLoading ? (
-        <TableSkeleton rows={3} />
+        <TableSkeleton />
       ) : !changes || changes.length === 0 ? (
         <div className="flex items-center justify-center py-6">
           <span className="text-xs text-text-muted">No configuration changes recorded yet.</span>

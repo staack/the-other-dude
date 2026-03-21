@@ -800,7 +800,7 @@ function DeviceAlertsSection({
   const resolvedAlerts = alerts.filter((a) => a.status === 'resolved').slice(0, 5)
 
   if (isLoading) {
-    return <TableSkeleton rows={3} />
+    return <TableSkeleton />
   }
 
   return (

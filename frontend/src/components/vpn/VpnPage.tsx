@@ -190,7 +190,7 @@ export function VpnPage() {
     return (
       <div className="p-6 space-y-6">
         <h1 className="text-2xl font-bold text-text-primary">VPN</h1>
-        <TableSkeleton rows={3} />
+        <TableSkeleton />
       </div>
     )
   }
@@ -309,7 +309,7 @@ export function VpnPage() {
 
       {/* Peer list */}
       {peersLoading ? (
-        <TableSkeleton rows={3} />
+        <TableSkeleton />
       ) : peers.length === 0 ? (
         <div className="rounded-lg border border-dashed border-accent/30 bg-accent/5 p-8 text-center space-y-3">
           <ShieldCheck className="h-10 w-10 text-accent mx-auto" />

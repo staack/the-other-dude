@@ -91,7 +91,7 @@ export function UserList({ tenantId }: Props) {
             {isLoading ? (
               <tr>
                 <td colSpan={6} className="px-3 py-4">
-                  <TableSkeleton rows={5} />
+                  <TableSkeleton />
                 </td>
               </tr>
             ) : users?.length === 0 ? (

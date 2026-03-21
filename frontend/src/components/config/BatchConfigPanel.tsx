@@ -180,7 +180,7 @@ function DeviceSelector({
     onSelectionChange(new Set())
   }
 
-  if (isLoading) return <TableSkeleton rows={5} />
+  if (isLoading) return <TableSkeleton />
 
   if (devices.length === 0) {
     return (

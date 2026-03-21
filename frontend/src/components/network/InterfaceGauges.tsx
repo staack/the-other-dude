@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { metricsApi, type InterfaceMetricPoint } from '@/lib/api'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 
 interface InterfaceGaugesProps {
   tenantId: string
@@ -101,14 +101,8 @@ export function InterfaceGauges({ tenantId, deviceId, active }: InterfaceGaugesP
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="rounded-lg border border-border bg-panel p-3">
-            <Skeleton className="h-4 w-24 mb-2" />
-            <Skeleton className="h-3 w-full mb-1" />
-            <Skeleton className="h-3 w-full" />
-          </div>
-        ))}
+      <div className="py-8 text-center">
+        <LoadingText />
       </div>
     )
   }

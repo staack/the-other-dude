@@ -26,9 +26,8 @@ function SiteDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-6 w-48 bg-elevated rounded" />
-        <div className="h-4 w-64 bg-elevated rounded" />
+      <div className="py-8 text-center">
+        <span className="text-[9px] text-text-muted">Loading&hellip;</span>
       </div>
     )
   }

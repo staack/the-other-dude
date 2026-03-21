@@ -64,14 +64,8 @@ export function EntryTable({
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between mb-3">
-          <div className="h-5 w-48 bg-elevated/50 rounded animate-pulse" />
-          <div className="h-8 w-24 bg-elevated/50 rounded animate-pulse" />
-        </div>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-10 bg-panel rounded animate-pulse" />
-        ))}
+      <div className="py-8 text-center">
+        <span className="text-[9px] text-text-muted">Loading&hellip;</span>
       </div>
     )
   }

@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -228,23 +228,13 @@ export function InterfacesPanel({ tenantId, deviceId, active }: ConfigPanelProps
 }
 
 // ---------------------------------------------------------------------------
-// Loading skeleton
+// Loading state
 // ---------------------------------------------------------------------------
 
-function TableSkeleton({ rows = 5 }: { rows?: number }) {
+function TableLoading() {
   return (
-    <div className="rounded-lg border border-border bg-panel">
-      <div className="p-3 border-b border-border">
-        <Skeleton className="h-4 w-32" />
-      </div>
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 p-3 border-b border-border last:border-0">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-12" />
-        </div>
-      ))}
+    <div className="py-8 text-center">
+      <LoadingText />
     </div>
   )
 }
@@ -260,7 +250,7 @@ function InterfacesTable({
   entries: Record<string, string>[]
   isLoading: boolean
 }) {
-  if (isLoading) return <TableSkeleton />
+  if (isLoading) return <TableLoading />
 
   if (entries.length === 0) {
     return (
@@ -362,7 +352,7 @@ function IpAddressesTab({ entries, isLoading, interfaceNames, addChange }: IpAdd
     })
   }
 
-  if (isLoading) return <TableSkeleton />
+  if (isLoading) return <TableLoading />
 
   return (
     <div className="space-y-3">
@@ -621,7 +611,7 @@ function VlansTab({ entries, isLoading, interfaceNames, addChange }: VlansTabPro
     })
   }
 
-  if (isLoading) return <TableSkeleton />
+  if (isLoading) return <TableLoading />
 
   return (
     <div className="space-y-3">
@@ -926,7 +916,7 @@ function BridgesTab({
     })
   }
 
-  if (isLoading) return <TableSkeleton />
+  if (isLoading) return <TableLoading />
 
   return (
     <div className="space-y-6">

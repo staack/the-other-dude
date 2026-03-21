@@ -23,7 +23,7 @@ function TenantDetailPage() {
   })
 
   if (isLoading) {
-    return <CardGridSkeleton cards={3} />
+    return <CardGridSkeleton />
   }
 
   if (!tenant) {
