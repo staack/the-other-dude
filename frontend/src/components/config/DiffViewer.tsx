@@ -10,10 +10,10 @@ interface DiffViewerProps {
 }
 
 function classifyLine(line: string): string {
-  if (line.startsWith('@@')) return 'bg-blue-900/20 text-blue-300'
+  if (line.startsWith('@@')) return 'bg-info/10 text-info'
   if (line.startsWith('+++') || line.startsWith('---')) return 'text-text-muted'
-  if (line.startsWith('+')) return 'bg-green-900/30 text-green-300'
-  if (line.startsWith('-')) return 'bg-red-900/30 text-red-300'
+  if (line.startsWith('+')) return 'bg-success/10 text-success'
+  if (line.startsWith('-')) return 'bg-error/10 text-error'
   return 'text-text-primary'
 }
 

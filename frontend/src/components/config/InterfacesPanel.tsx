@@ -71,14 +71,14 @@ const SUB_TABS: { key: SubTab; label: string; icon: React.ElementType }[] = [
 // ---------------------------------------------------------------------------
 
 const TYPE_COLORS: Record<string, string> = {
-  ether: '#3B82F6',
-  bridge: '#8B5CF6',
-  vlan: '#F59E0B',
-  bonding: '#10B981',
-  pppoe: '#EF4444',
-  l2tp: '#EC4899',
-  ovpn: '#06B6D4',
-  wlan: '#84CC16',
+  ether: 'hsl(var(--accent))',
+  bridge: 'hsl(var(--info))',
+  vlan: 'hsl(var(--warning))',
+  bonding: 'hsl(var(--success))',
+  pppoe: 'hsl(var(--error))',
+  l2tp: 'hsl(var(--error))',
+  ovpn: 'hsl(var(--info))',
+  wlan: 'hsl(var(--success))',
 }
 
 // ---------------------------------------------------------------------------
