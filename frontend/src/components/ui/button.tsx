@@ -4,17 +4,17 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-medium transition-[background-color,border-color,color] duration-[50ms] ease-linear focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 disabled:pointer-events-none disabled:text-text-muted disabled:border-border-subtle',
   {
     variants: {
       variant: {
-        default: 'bg-[hsl(var(--accent-soft))] text-accent hover:bg-accent/20',
-        solid: 'bg-accent text-white hover:bg-accent',
-        destructive: 'bg-error/15 text-error hover:bg-error/20',
+        default: 'bg-accent text-background active:brightness-90 rounded-[var(--radius-control)]',
+        solid: 'bg-accent text-background active:brightness-90 rounded-[var(--radius-control)]',
+        destructive: 'bg-error/15 text-error hover:bg-error/20 active:bg-error/25 rounded-[var(--radius-control)]',
         outline:
-          'border border-border bg-transparent text-text-secondary hover:bg-elevated hover:text-text-primary',
-        secondary: 'bg-elevated text-text-secondary hover:text-text-primary',
-        ghost: 'text-text-secondary hover:bg-elevated hover:text-text-primary',
+          'border border-border-default bg-transparent text-text-secondary hover:border-accent active:bg-elevated rounded-[var(--radius-control)]',
+        secondary: 'bg-elevated text-text-secondary hover:text-text-primary active:brightness-95 rounded-[var(--radius-control)]',
+        ghost: 'text-text-secondary hover:bg-elevated hover:text-text-primary active:bg-elevated rounded-[var(--radius-control)]',
         link: 'text-accent underline-offset-4 hover:underline',
       },
       size: {
