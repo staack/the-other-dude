@@ -24,6 +24,19 @@ type Device struct {
 	CACertPEM                   *string // PEM-encoded CA cert (only populated when TLSMode = "portal_ca")
 	SSHPort                     int     // SSH port for config backup (default 22)
 	SSHHostKeyFingerprint       *string // TOFU SSH host key fingerprint (SHA256:base64)
+
+	// Protocol discrimination
+	DeviceType string // "routeros" (default) or "snmp"
+
+	// SNMP-specific fields (only populated when DeviceType = "snmp")
+	SNMPPort      int     // default 161
+	SNMPVersion   *string // "v1", "v2c", "v3"
+	SNMPProfileID *string // UUID -> snmp_profiles table
+
+	// Credential profile (applies to both device types)
+	CredentialProfileID                *string // UUID -> credential_profiles table
+	ProfileEncryptedCredentials        []byte  // from credential_profiles (fallback)
+	ProfileEncryptedCredentialsTransit *string // from credential_profiles (fallback)
 }
 
 // DeviceStore manages PostgreSQL connections for device data access.
@@ -69,13 +82,23 @@ func (s *DeviceStore) FetchDevices(ctx context.Context) ([]Device, error) {
 			d.tls_mode,
 			ca.cert_pem,
 			COALESCE(d.ssh_port, 22),
-			d.ssh_host_key_fingerprint
+			d.ssh_host_key_fingerprint,
+			COALESCE(d.device_type, 'routeros'),
+			COALESCE(d.snmp_port, 161),
+			d.snmp_version,
+			d.snmp_profile_id::text,
+			d.credential_profile_id::text,
+			cp.encrypted_credentials,
+			cp.encrypted_credentials_transit
 		FROM devices d
 		LEFT JOIN certificate_authorities ca
 			ON d.tenant_id = ca.tenant_id
 			AND d.tls_mode = 'portal_ca'
+		LEFT JOIN credential_profiles cp
+			ON d.credential_profile_id = cp.id
 		WHERE d.encrypted_credentials IS NOT NULL
 		   OR d.encrypted_credentials_transit IS NOT NULL
+		   OR d.credential_profile_id IS NOT NULL
 	`
 
 	rows, err := s.pool.Query(ctx, query)
@@ -101,6 +124,13 @@ func (s *DeviceStore) FetchDevices(ctx context.Context) ([]Device, error) {
 			&d.CACertPEM,
 			&d.SSHPort,
 			&d.SSHHostKeyFingerprint,
+			&d.DeviceType,
+			&d.SNMPPort,
+			&d.SNMPVersion,
+			&d.SNMPProfileID,
+			&d.CredentialProfileID,
+			&d.ProfileEncryptedCredentials,
+			&d.ProfileEncryptedCredentialsTransit,
 		); err != nil {
 			return nil, fmt.Errorf("scanning device row: %w", err)
 		}
@@ -130,11 +160,20 @@ func (s *DeviceStore) GetDevice(ctx context.Context, deviceID string) (Device, e
 			d.tls_mode,
 			ca.cert_pem,
 			COALESCE(d.ssh_port, 22),
-			d.ssh_host_key_fingerprint
+			d.ssh_host_key_fingerprint,
+			COALESCE(d.device_type, 'routeros'),
+			COALESCE(d.snmp_port, 161),
+			d.snmp_version,
+			d.snmp_profile_id::text,
+			d.credential_profile_id::text,
+			cp.encrypted_credentials,
+			cp.encrypted_credentials_transit
 		FROM devices d
 		LEFT JOIN certificate_authorities ca
 			ON d.tenant_id = ca.tenant_id
 			AND d.tls_mode = 'portal_ca'
+		LEFT JOIN credential_profiles cp
+			ON d.credential_profile_id = cp.id
 		WHERE d.id = $1
 	`
 	var d Device
@@ -152,6 +191,13 @@ func (s *DeviceStore) GetDevice(ctx context.Context, deviceID string) (Device, e
 		&d.CACertPEM,
 		&d.SSHPort,
 		&d.SSHHostKeyFingerprint,
+		&d.DeviceType,
+		&d.SNMPPort,
+		&d.SNMPVersion,
+		&d.SNMPProfileID,
+		&d.CredentialProfileID,
+		&d.ProfileEncryptedCredentials,
+		&d.ProfileEncryptedCredentialsTransit,
 	)
 	if err != nil {
 		return Device{}, fmt.Errorf("querying device %s: %w", deviceID, err)
