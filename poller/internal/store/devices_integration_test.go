@@ -87,6 +87,15 @@ func TestDeviceStore_FetchDevices_Integration(t *testing.T) {
 			assert.Equal(t, "7.16", *d.RouterOSVersion)
 			require.NotNil(t, d.MajorVersion)
 			assert.Equal(t, 7, *d.MajorVersion)
+
+			// New fields: verify COALESCE defaults for existing RouterOS devices.
+			assert.Equal(t, "routeros", d.DeviceType, "COALESCE should default to routeros")
+			assert.Equal(t, 161, d.SNMPPort, "COALESCE should default to 161")
+			assert.Nil(t, d.SNMPVersion, "SNMPVersion should be nil for RouterOS devices")
+			assert.Nil(t, d.SNMPProfileID, "SNMPProfileID should be nil for RouterOS devices")
+			assert.Nil(t, d.CredentialProfileID, "CredentialProfileID should be nil when not linked")
+			assert.Nil(t, d.ProfileEncryptedCredentials, "ProfileEncryptedCredentials should be nil when no profile linked")
+			assert.Nil(t, d.ProfileEncryptedCredentialsTransit, "ProfileEncryptedCredentialsTransit should be nil when no profile linked")
 		}
 	}
 }

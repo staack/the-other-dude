@@ -44,6 +44,18 @@ CREATE TABLE IF NOT EXISTS certificate_authorities (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- credential_profiles is LEFT JOINed by FetchDevices/GetDevice to resolve
+-- profile-level credentials for devices using credential_profile_id.
+CREATE TABLE IF NOT EXISTS credential_profiles (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    encrypted_credentials BYTEA,
+    encrypted_credentials_transit TEXT,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS devices (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id UUID NOT NULL,
@@ -65,6 +77,11 @@ CREATE TABLE IF NOT EXISTS devices (
     ssh_host_key_fingerprint TEXT,
     ssh_host_key_first_seen TIMESTAMPTZ,
     ssh_host_key_last_verified TIMESTAMPTZ,
+    device_type VARCHAR(20) DEFAULT 'routeros',
+    snmp_port INTEGER DEFAULT 161,
+    snmp_version VARCHAR(10),
+    snmp_profile_id UUID,
+    credential_profile_id UUID REFERENCES credential_profiles(id),
     status VARCHAR(20) NOT NULL DEFAULT 'unknown',
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
