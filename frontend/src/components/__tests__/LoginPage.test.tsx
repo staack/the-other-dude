@@ -144,7 +144,7 @@ describe('LoginPage', () => {
     render(<LoginPage />)
 
     expect(screen.getByText('TOD - The Other Dude')).toBeInTheDocument()
-    expect(screen.getByText('MSP Fleet Management')).toBeInTheDocument()
+    expect(screen.getByText('MikroTik Fleet Management')).toBeInTheDocument()
   })
 
   it('shows error message on failed login', async () => {
