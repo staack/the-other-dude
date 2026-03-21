@@ -209,16 +209,76 @@
         <a href="mailto:license@theotherdude.net">Licensing</a>
       </nav>
     </div>
-    <p style="margin-top:12px;font-size:0.75em;color:#62627F;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+    <p style="margin-top:12px;font-size:0.75em;color:#62627F;text-align:center;">This site uses self-hosted, cookie-free analytics to measure page views and engagement. No personal data is collected or shared with third parties.</p>
   </footer>
 
 <script>
-(function(){
-  var d=document,i=new Image();
-  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
-    +"&t="+encodeURIComponent(d.title)
-    +"&r="+encodeURIComponent(d.referrer)
-    +"&sw="+screen.width;
+(function() {
+  var h = 'https://telemetry.theotherdude.net';
+  var p = location.pathname;
+  var t = document.title;
+  var r = document.referrer;
+
+  // Session page count via sessionStorage.
+  var sc = parseInt(sessionStorage.getItem('_tc_sc') || '0', 10) + 1;
+  sessionStorage.setItem('_tc_sc', sc);
+
+  // UTM params.
+  var sp = new URLSearchParams(location.search);
+  var us = sp.get('utm_source') || '';
+  var um = sp.get('utm_medium') || '';
+  var uc = sp.get('utm_campaign') || '';
+
+  // Pixel URL with all params.
+  var params = new URLSearchParams({
+    p: p, t: t, r: r,
+    sw: screen.width, sh: screen.height,
+    vw: innerWidth, vh: innerHeight,
+    tz: new Date().getTimezoneOffset(),
+    dpr: devicePixelRatio || 1,
+    touch: navigator.maxTouchPoints > 0 ? 1 : 0,
+    cd: screen.colorDepth,
+    plt: Math.round(performance.now()),
+    sc: sc
+  });
+  if (us) params.set('us', us);
+  if (um) params.set('um', um);
+  if (uc) params.set('uc', uc);
+
+  var ct = navigator.connection ? navigator.connection.effectiveType : '';
+  if (ct) params.set('ct', ct);
+
+  new Image().src = h + '/px?' + params.toString();
+
+  // Engagement tracking.
+  var startTime = performance.now();
+  var maxScroll = 0;
+
+  function getScrollDepth() {
+    var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    var docHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+    var winHeight = innerHeight;
+    if (docHeight <= winHeight) return 100;
+    var pct = Math.round((scrollTop + winHeight) / docHeight * 100);
+    return Math.min(pct, 100);
+  }
+
+  window.addEventListener('scroll', function() {
+    var d = getScrollDepth();
+    if (d > maxScroll) maxScroll = d;
+  }, {passive: true});
+
+  // Send beacon on page hide.
+  function sendBeacon() {
+    var top = Math.round(performance.now() - startTime);
+    var data = new URLSearchParams({p: p, top: top, sd: maxScroll});
+    navigator.sendBeacon(h + '/px/beacon', data);
+  }
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') sendBeacon();
+  });
+  window.addEventListener('pagehide', sendBeacon);
 })();
 </script>
 </body>
