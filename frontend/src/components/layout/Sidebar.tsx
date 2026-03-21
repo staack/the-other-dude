@@ -19,6 +19,8 @@ import {
   BellRing,
   Calendar,
   FileBarChart,
+  ShieldCheck,
+  KeyRound,
   Sun,
   Moon,
   LogOut,
@@ -168,6 +170,8 @@ export function Sidebar() {
     ...(tenantAdmin && user?.tenant_id
       ? [{ label: 'Users', href: `/tenants/${user.tenant_id}/users`, icon: Users }]
       : []),
+    { label: 'Certificates', href: '/certificates', icon: ShieldCheck },
+    { label: 'VPN', href: '/vpn', icon: KeyRound },
     { label: 'Alert Rules', href: '/alert-rules', icon: BellRing },
     { label: 'Maintenance', href: '/maintenance', icon: Calendar },
     { label: 'Settings', href: '/settings', icon: Settings },
