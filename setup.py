@@ -645,11 +645,21 @@ def wizard_domain(config: dict, args: argparse.Namespace) -> None:
 
     domain = re.sub(r"^https?://", "", raw).rstrip("/")
     config["domain"] = domain
-    config["app_base_url"] = f"https://{domain}"
-    config["cors_origins"] = f"https://{domain}"
 
-    ok(f"APP_BASE_URL=https://{domain}")
-    ok(f"CORS_ORIGINS=https://{domain}")
+    # Determine protocol — default HTTPS for production, allow HTTP for LAN/dev
+    if args.non_interactive:
+        use_https = not getattr(args, 'no_https', False)
+    else:
+        use_https = ask_yes_no("Use HTTPS? (disable for LAN/dev without TLS)", default=True)
+
+    protocol = "https" if use_https else "http"
+    config["app_base_url"] = f"{protocol}://{domain}"
+    config["cors_origins"] = f"{protocol}://{domain}"
+
+    ok(f"APP_BASE_URL={protocol}://{domain}")
+    ok(f"CORS_ORIGINS={protocol}://{domain}")
+    if not use_https:
+        warn("Running without HTTPS — cookies will not be Secure. Fine for LAN, not for public internet.")
 
 
 # ── Reverse proxy ───────────────────────────────────────────────────────────
@@ -1540,6 +1550,8 @@ def _build_parser() -> argparse.ArgumentParser:
                         help="Use TLS for SMTP (default: true in non-interactive)")
     parser.add_argument("--no-smtp-tls", action="store_true", default=False,
                         help="Disable TLS for SMTP")
+    parser.add_argument("--no-https", action="store_true", default=False,
+                        help="Use HTTP instead of HTTPS (for LAN/dev without TLS)")
     parser.add_argument("--proxy", type=str, default=None,
                         help="Reverse proxy type: caddy, nginx, apache, haproxy, traefik, skip")
     parser.add_argument("--telemetry", action="store_true", default=False,
