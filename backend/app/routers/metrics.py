@@ -313,6 +313,104 @@ async def device_wireless_latest(
 
 
 # ---------------------------------------------------------------------------
+# SNMP custom metrics
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/tenants/{tenant_id}/devices/{device_id}/metrics/snmp",
+    summary="Time-bucketed custom SNMP metrics",
+)
+async def device_snmp_metrics(
+    tenant_id: uuid.UUID,
+    device_id: uuid.UUID,
+    start: datetime = Query(..., description="Start of time range (ISO format)"),
+    end: datetime = Query(..., description="End of time range (ISO format)"),
+    metric_name: Optional[str] = Query(None, description="Filter to specific metric name"),
+    metric_group: Optional[str] = Query(None, description="Filter to specific metric group"),
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict[str, Any]]:
+    """Return time-bucketed custom SNMP metrics for a device.
+
+    Supports optional filtering by metric_name and metric_group.
+    Numeric values are aggregated (avg, min, max); text values return
+    the most recent value per bucket.
+    """
+    await _check_tenant_access(current_user, tenant_id, db)
+    bucket = _bucket_for_range(start, end)
+
+    # Build optional filters
+    filters = ""
+    if metric_name:
+        filters += " AND metric_name = :metric_name"
+    if metric_group:
+        filters += " AND metric_group = :metric_group"
+
+    sql = f"""
+        SELECT
+            time_bucket(:bucket, time) AS bucket,
+            metric_name,
+            metric_group,
+            oid,
+            index_value,
+            avg(value_numeric) AS avg_value,
+            max(value_numeric) AS max_value,
+            min(value_numeric) AS min_value,
+            (array_agg(value_text ORDER BY time DESC))[1] AS last_text_value
+        FROM snmp_metrics
+        WHERE device_id = :device_id
+          AND time >= :start AND time < :end
+          {filters}
+        GROUP BY bucket, metric_name, metric_group, oid, index_value
+        ORDER BY metric_name, index_value, bucket ASC
+    """
+
+    params: dict[str, Any] = {
+        "bucket": bucket,
+        "device_id": str(device_id),
+        "start": start,
+        "end": end,
+    }
+    if metric_name:
+        params["metric_name"] = metric_name
+    if metric_group:
+        params["metric_group"] = metric_group
+
+    result = await db.execute(text(sql), params)
+    rows = result.mappings().all()
+    return [dict(row) for row in rows]
+
+
+@router.get(
+    "/tenants/{tenant_id}/devices/{device_id}/metrics/snmp/names",
+    summary="List distinct SNMP metric names for a device",
+)
+async def device_snmp_metric_names(
+    tenant_id: uuid.UUID,
+    device_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict[str, str]]:
+    """Return distinct (metric_name, metric_group) pairs for a device.
+
+    Used by the frontend to populate metric selection dropdowns.
+    """
+    await _check_tenant_access(current_user, tenant_id, db)
+    result = await db.execute(
+        text("""
+            SELECT DISTINCT metric_name, metric_group
+            FROM snmp_metrics
+            WHERE device_id = :device_id
+            ORDER BY metric_group, metric_name
+        """),
+        {"device_id": str(device_id)},
+    )
+    rows = result.mappings().all()
+    return [dict(row) for row in rows]
+
+
+# ---------------------------------------------------------------------------
 # Sparkline
 # ---------------------------------------------------------------------------
 
