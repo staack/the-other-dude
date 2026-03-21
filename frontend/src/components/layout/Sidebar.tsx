@@ -91,6 +91,8 @@ export function Sidebar() {
     setSelectedTenantId,
     theme,
     setTheme,
+    uiScale,
+    setUIScale,
   } = useUIStore()
   const { connectionState } = useEventStreamContext()
   const routerState = useRouterState()
@@ -417,6 +419,23 @@ export function Sidebar() {
               >
                 <LogOut className="h-3 w-3" />
               </button>
+            </div>
+            {/* Scale selector */}
+            <div className="flex items-center gap-px rounded-[var(--radius-control)] border border-border-subtle overflow-hidden mb-1">
+              {([100, 110, 125] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setUIScale(s)}
+                  className={cn(
+                    'flex-1 text-[8px] py-px text-center transition-[background-color,color] duration-[50ms]',
+                    uiScale === s
+                      ? 'bg-accent-soft text-text-primary font-medium'
+                      : 'text-text-muted hover:text-text-secondary',
+                  )}
+                >
+                  {s}%
+                </button>
+              ))}
             </div>
             {/* Connection + version row */}
             <div className="flex items-center gap-1.5">

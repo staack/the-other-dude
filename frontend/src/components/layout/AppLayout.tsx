@@ -1,14 +1,20 @@
-import { type ReactNode } from 'react'
+import { type ReactNode, useEffect } from 'react'
 import { Sidebar } from './Sidebar'
 import { ShortcutsDialog } from './ShortcutsDialog'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { Toaster } from '@/components/ui/toast'
+import { useUIStore } from '@/lib/store'
 
 interface AppLayoutProps {
   children: ReactNode
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  // Apply persisted UI scale on mount
+  const uiScale = useUIStore((s) => s.uiScale)
+  useEffect(() => {
+    document.documentElement.style.zoom = `${uiScale}%`
+  }, [uiScale])
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <a

@@ -2,17 +2,21 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { applyTheme } from './theme'
 
+type UIScale = 100 | 110 | 125
+
 interface UIState {
   selectedTenantId: string | null
   sidebarCollapsed: boolean
   mobileSidebarOpen: boolean
   theme: 'dark' | 'light'
+  uiScale: UIScale
 
   setSelectedTenantId: (id: string | null) => void
   setSidebarCollapsed: (collapsed: boolean) => void
   toggleSidebar: () => void
   setMobileSidebarOpen: (open: boolean) => void
   setTheme: (theme: 'dark' | 'light') => void
+  setUIScale: (scale: UIScale) => void
 }
 
 export const useUIStore = create<UIState>()(
@@ -22,6 +26,7 @@ export const useUIStore = create<UIState>()(
       sidebarCollapsed: false,
       mobileSidebarOpen: false,
       theme: 'dark',
+      uiScale: 100,
 
       setSelectedTenantId: (id) => set({ selectedTenantId: id }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
@@ -31,6 +36,10 @@ export const useUIStore = create<UIState>()(
         applyTheme(theme)
         set({ theme })
       },
+      setUIScale: (scale) => {
+        document.documentElement.style.zoom = `${scale}%`
+        set({ uiScale: scale })
+      },
     }),
     {
       name: 'tod-ui-state',
@@ -38,6 +47,7 @@ export const useUIStore = create<UIState>()(
         sidebarCollapsed: state.sidebarCollapsed,
         theme: state.theme,
         selectedTenantId: state.selectedTenantId,
+        uiScale: state.uiScale,
       }),
     },
   ),
