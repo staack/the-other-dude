@@ -197,6 +197,86 @@ class BulkAddResult(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Credential-profile bulk add
+# ---------------------------------------------------------------------------
+
+
+class BulkAddDeviceEntry(BaseModel):
+    """One device entry in the credential-profile bulk add."""
+
+    ip_address: str
+    hostname: Optional[str] = None  # defaults to IP if not provided
+
+    @field_validator("ip_address")
+    @classmethod
+    def validate_ip(cls, v: str) -> str:
+        import ipaddress
+
+        try:
+            ipaddress.ip_address(v.strip())
+        except ValueError as e:
+            raise ValueError(f"Invalid IP address: {e}") from e
+        return v.strip()
+
+
+class BulkAddDefaults(BaseModel):
+    """Default values applied to all devices in bulk add unless overridden."""
+
+    # RouterOS defaults
+    api_port: int = 8728
+    api_ssl_port: int = 8729
+    tls_mode: str = "auto"
+    # SNMP defaults
+    snmp_port: int = 161
+    snmp_version: Optional[str] = None  # "v1", "v2c", "v3"
+    snmp_profile_id: Optional[uuid.UUID] = None
+
+
+class BulkAddWithProfileRequest(BaseModel):
+    """Bulk-add devices using a credential profile."""
+
+    credential_profile_id: uuid.UUID
+    device_type: str = "routeros"  # "routeros" or "snmp"
+    defaults: Optional[BulkAddDefaults] = None
+    devices: list[BulkAddDeviceEntry]
+
+    @field_validator("device_type")
+    @classmethod
+    def validate_device_type(cls, v: str) -> str:
+        if v not in ("routeros", "snmp"):
+            raise ValueError("device_type must be 'routeros' or 'snmp'")
+        return v
+
+    @field_validator("devices")
+    @classmethod
+    def validate_devices_not_empty(cls, v: list) -> list:
+        if not v:
+            raise ValueError("devices list must not be empty")
+        if len(v) > 500:
+            raise ValueError("Maximum 500 devices per bulk add request")
+        return v
+
+
+class BulkAddDeviceResult(BaseModel):
+    """Result for a single device in bulk add."""
+
+    ip_address: str
+    hostname: Optional[str] = None
+    success: bool
+    device_id: Optional[uuid.UUID] = None
+    error: Optional[str] = None
+
+
+class BulkAddWithProfileResult(BaseModel):
+    """Result of a credential-profile bulk add operation."""
+
+    total: int
+    succeeded: int
+    failed: int
+    results: list[BulkAddDeviceResult]
+
+
+# ---------------------------------------------------------------------------
 # DeviceGroup schemas
 # ---------------------------------------------------------------------------
 
