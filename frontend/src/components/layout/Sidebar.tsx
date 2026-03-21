@@ -476,7 +476,7 @@ export function Sidebar() {
         data-testid="sidebar"
         data-sidebar
         className={cn(
-          'hidden lg:flex flex-col border-r border-border-default bg-sidebar transition-all duration-200',
+          'hidden lg:flex flex-col border-r border-border-default bg-sidebar transition-[width] duration-200',
           sidebarCollapsed ? 'w-14' : 'w-[172px]',
         )}
       >
