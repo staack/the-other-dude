@@ -10,8 +10,8 @@ function Badge({ className, color, children, ...props }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium border',
-        !color && 'border-border bg-elevated text-text-secondary',
+        'inline-flex items-center rounded-sm px-1.5 py-0.5 text-xs font-medium border',
+        !color && 'border-border-default bg-elevated text-text-secondary',
         className,
       )}
       style={style}
