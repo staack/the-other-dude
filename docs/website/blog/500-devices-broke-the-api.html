@@ -8,7 +8,7 @@
   <meta name="keywords" content="MikroTik, fleet management, scaling, Docker, OOM, The Other Dude">
   <meta name="author" content="The Other Dude">
   <meta name="robots" content="index, follow">
-  <meta name="theme-color" content="#111113">
+  <meta name="theme-color" content="#eae7de">
   <link rel="canonical" href="https://theotherdude.net/blog/500-devices-broke-the-api.html">
   <link rel="icon" href="../data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/></svg>">
 
@@ -44,6 +44,21 @@
   <!-- Fonts -->
 
   <link rel="stylesheet" href="../style.css?v=3">
+  <style>
+    /* Warm Precision overrides */
+    :root {
+      --background: #eae7de;
+      --surface: #f6f4ec;
+      --elevated: #f0ede4;
+      --border: rgba(40,36,28,0.12);
+      --text-primary: #1a1810;
+      --text-secondary: #5e5a4e;
+      --text-muted: #8a8578;
+      --accent: #8a7a48;
+    }
+    body { background-color: #eae7de; color: #1a1810; }
+    .dark { /* prevent dark mode */ }
+  </style>
   <style>
     .blog-post {
       max-width: 720px;
@@ -148,11 +163,9 @@
         <span>The Other Dude</span>
       </a>
       <div class="nav-links">
-        <a href="../index.html#what-it-does" class="nav-link">Features</a>
         <a href="../docs.html" class="nav-link">Docs</a>
         <a href="index.html" class="nav-link">Blog</a>
         <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
-        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
       </div>
     </div>
   </nav>
@@ -237,11 +250,13 @@
   </main>
 
   <footer class="site-footer">
-    <div class="container">
+    <div class="footer-inner container">
       <div class="footer-brand">
-        <span style="display:flex;align-items:center;gap:8px;">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" style="flex-shrink:0">
+        <span class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
             <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
             <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
             <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
             <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
@@ -258,8 +273,8 @@
         <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
         <a href="mailto:license@theotherdude.net">Licensing</a>
       </nav>
+      <p style="margin-top:12px;font-size:0.75em;color:#8a8578;text-align:center;">This site uses self-hosted, cookie-free analytics to measure page views and engagement. No personal data is collected or shared with third parties.</p>
     </div>
-    <p style="margin-top:12px;font-size:0.75em;color:#62627F;text-align:center;">This site uses self-hosted, cookie-free analytics to measure page views and engagement. No personal data is collected or shared with third parties.</p>
   </footer>
 
 <script>
