@@ -8,7 +8,7 @@
   <meta name="keywords" content="MikroTik documentation, RouterOS fleet management guide, MSP network management setup, MikroTik API, RouterOS configuration management, open source MikroTik management, self-hosted MikroTik">
   <meta name="robots" content="index, follow">
   <meta name="google-site-verification" content="d2QVuWrLJlzOQPnA-SAJuvajEHGYbusvJ4eDdZbWSBU">
-  <meta name="theme-color" content="#111113">
+  <meta name="theme-color" content="#eae7de">
   <link rel="canonical" href="https://theotherdude.net/docs.html">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
 
@@ -29,6 +29,246 @@
 
   <link rel="stylesheet" href="style.css?v=3" />
   <script src="script.js" defer></script>
+
+  <style>
+    /* ================================================================
+       Warm Precision — Docs page overrides
+       Light mode only. Overrides the Deep Space base theme.
+       ================================================================ */
+
+    :root {
+      --bg-deep: #eae7de;
+      --bg-primary: #eae7de;
+      --bg-surface: #f6f4ec;
+      --bg-elevated: #f0ede4;
+      --text-primary: #1a1810;
+      --text-secondary: #5e5a4e;
+      --text-muted: #8a8578;
+      --accent: #8a7a48;
+      --accent-hover: #7a6a38;
+      --accent-glow: rgba(138, 122, 72, 0.10);
+      --accent-secondary: #8a7a48;
+      --border: rgba(40, 36, 28, 0.12);
+      --border-accent: rgba(40, 36, 28, 0.20);
+
+      /* Docs-specific overrides */
+      --docs-bg: #eae7de;
+      --docs-surface: #f6f4ec;
+      --docs-text: #1a1810;
+      --docs-text-secondary: #5e5a4e;
+      --docs-text-muted: #8a8578;
+      --docs-border: rgba(40, 36, 28, 0.12);
+      --docs-accent: #8a7a48;
+      --docs-sidebar-bg: #f0ede4;
+      --docs-code-bg: #f6f4ec;
+      --docs-code-border: rgba(40, 36, 28, 0.12);
+    }
+
+    /* Force light mode — prevent dark class from applying */
+    .dark, [data-theme="dark"] {
+      --bg-deep: #eae7de;
+      --bg-primary: #eae7de;
+      --bg-surface: #f6f4ec;
+      --bg-elevated: #f0ede4;
+      --text-primary: #1a1810;
+      --text-secondary: #5e5a4e;
+      --text-muted: #8a8578;
+      --accent: #8a7a48;
+      --accent-hover: #7a6a38;
+      --accent-glow: rgba(138, 122, 72, 0.10);
+      --accent-secondary: #8a7a48;
+      --border: rgba(40, 36, 28, 0.12);
+      --border-accent: rgba(40, 36, 28, 0.20);
+      --docs-bg: #eae7de;
+      --docs-surface: #f6f4ec;
+      --docs-text: #1a1810;
+      --docs-text-secondary: #5e5a4e;
+      --docs-text-muted: #8a8578;
+      --docs-border: rgba(40, 36, 28, 0.12);
+      --docs-accent: #8a7a48;
+      --docs-sidebar-bg: #f0ede4;
+      --docs-code-bg: #f6f4ec;
+      --docs-code-border: rgba(40, 36, 28, 0.12);
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #eae7de;
+      color: #1a1810;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: "Manrope", system-ui, sans-serif;
+      color: #1a1810;
+    }
+
+    ::selection {
+      background: rgba(138, 122, 72, 0.20);
+      color: #1a1810;
+    }
+
+    /* ---- Testing banner ---- */
+    .testing-banner {
+      background: #f0ede4;
+      border-bottom: 1px solid rgba(40, 36, 28, 0.12);
+      color: #5e5a4e;
+    }
+
+    .testing-banner strong {
+      color: #9a7a20;
+    }
+
+    /* ---- Nav overrides ---- */
+    .site-nav,
+    .site-nav--light {
+      background: rgba(234, 231, 222, 0.92);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border-bottom: 1px solid rgba(40, 36, 28, 0.12);
+    }
+
+    .nav-logo { color: #1a1810; }
+    .nav-link { color: #5e5a4e; opacity: 1; }
+    .nav-link:hover { color: #1a1810; }
+    .nav-link--active { color: #8a7a48; }
+
+    /* ---- Sidebar overrides ---- */
+    .sidebar-link:hover {
+      background: rgba(138, 122, 72, 0.08);
+      color: #1a1810;
+    }
+
+    .sidebar-link--active {
+      background: rgba(138, 122, 72, 0.10);
+      color: #8a7a48;
+    }
+
+    .sidebar-link--active:hover {
+      background: rgba(138, 122, 72, 0.14);
+      color: #8a7a48;
+    }
+
+    .docs-search input {
+      border-radius: 4px;
+    }
+
+    .docs-search input:focus {
+      border-color: #8a7a48;
+      box-shadow: 0 0 0 3px rgba(138, 122, 72, 0.15);
+      outline: 2px solid #8a7a48;
+      outline-offset: -2px;
+    }
+
+    /* ---- Content overrides ---- */
+    .docs-content a {
+      color: #8a7a48;
+      text-decoration-color: rgba(138, 122, 72, 0.3);
+    }
+
+    .docs-content a:hover {
+      text-decoration-color: #8a7a48;
+    }
+
+    /* Code blocks — keep dark for readability */
+    .docs-content pre {
+      background: #2a2820;
+      border: 1px solid rgba(40, 36, 28, 0.20);
+      border-radius: 2px;
+    }
+
+    .docs-content pre code {
+      color: #e8e4d8;
+    }
+
+    /* Inline code */
+    .docs-content code {
+      border-radius: 2px;
+    }
+
+    /* Tables */
+    .docs-content th {
+      background: #f0ede4;
+    }
+
+    /* List bullets */
+    .docs-content ul li::before {
+      background: #8a7a48;
+    }
+
+    /* Blockquote */
+    .docs-content blockquote {
+      border-left-color: #8a7a48;
+    }
+
+    /* ---- Border radius reductions ---- */
+    .sidebar-link { border-radius: 2px; }
+    .docs-content table { border-radius: 2px; }
+
+    /* ---- Back to top button ---- */
+    .back-to-top {
+      background: #8a7a48;
+      box-shadow: 0 4px 16px rgba(138, 122, 72, 0.3);
+      border-radius: 4px;
+    }
+
+    .back-to-top:hover {
+      box-shadow: 0 6px 24px rgba(138, 122, 72, 0.4);
+    }
+
+    /* ---- Focus styles ---- */
+    .docs-page :focus-visible {
+      outline-color: #8a7a48;
+    }
+
+    /* ---- Code syntax highlighting — warm palette ---- */
+    .docs-content pre .token-keyword  { color: #c4a24a; }
+    .docs-content pre .token-string   { color: #3a7a4a; }
+    .docs-content pre .token-comment  { color: #8a8578; font-style: italic; }
+    .docs-content pre .token-function { color: #c4a24a; }
+    .docs-content pre .token-number   { color: #9a7a20; }
+    .docs-content pre .token-operator { color: #b0a890; }
+    .docs-content pre .token-type     { color: #9a7a20; }
+    .docs-content pre .token-variable { color: #e8e4d8; }
+
+    /* ---- Footer overrides ---- */
+    .site-footer {
+      background: #f0ede4;
+      border-top: 1px solid rgba(40, 36, 28, 0.12);
+    }
+
+    .footer-brand { color: #1a1810; }
+    .footer-copy { color: #8a8578; }
+    .footer-links a { color: #5e5a4e; }
+    .footer-links a:hover { color: #1a1810; }
+
+    /* ---- Skip link ---- */
+    .skip-link {
+      color: #1a1810;
+      background: #f6f4ec;
+    }
+
+    /* ---- Scrollbar ---- */
+    .docs-page {
+      scrollbar-color: #8a8578 rgba(40, 36, 28, 0.12);
+    }
+
+    .docs-page::-webkit-scrollbar-track {
+      background: rgba(40, 36, 28, 0.06);
+    }
+
+    .docs-page::-webkit-scrollbar-thumb {
+      background: #8a8578;
+    }
+
+    .docs-page::-webkit-scrollbar-thumb:hover {
+      background: #5e5a4e;
+    }
+
+    /* ---- Mobile sidebar overlay ---- */
+    .docs-sidebar-overlay {
+      background: rgba(26, 24, 16, 0.4);
+    }
+  </style>
 </head>
 <body class="docs-page">
 
@@ -67,8 +307,6 @@
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <div class="nav-links">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="index.html#what-it-does" class="nav-link">Features</a>
         <a href="docs.html" class="nav-link nav-link--active">Docs</a>
         <a href="blog/" class="nav-link">Blog</a>
         <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
@@ -1538,7 +1776,7 @@ open http://localhost</code></pre>
         <a href="mailto:support@theotherdude.net">Support</a>
       </nav>
     </div>
-    <p style="margin-top:12px;font-size:0.75em;color:#62627F;text-align:center;">This site uses self-hosted, cookie-free analytics to measure page views and engagement. No personal data is collected or shared with third parties.</p>
+    <p style="margin-top:12px;font-size:0.75em;color:#8a8578;text-align:center;">This site uses self-hosted, cookie-free analytics to measure page views and engagement. No personal data is collected or shared with third parties.</p>
   </footer>
 
 <script>
