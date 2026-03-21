@@ -77,7 +77,7 @@ function formatRelativeTime(iso: string): string {
 /** Maps action string to a styled badge color. */
 function actionBadgeClasses(action: string): string {
   if (action.startsWith('config_')) return 'bg-accent/10 text-accent border-accent/20'
-  if (action.startsWith('device_')) return 'bg-accent/10 text-accent border-accent/20'
+  if (action.startsWith('device_')) return 'bg-info/10 text-info border-info/20'
   if (action.startsWith('alert_')) return 'bg-warning/10 text-warning border-warning/20'
   if (action === 'login' || action === 'logout') return 'bg-success/10 text-success border-success/20'
   if (action.startsWith('firmware')) return 'bg-warning/10 text-warning border-warning/20'
