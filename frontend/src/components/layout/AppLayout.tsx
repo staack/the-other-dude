@@ -1,6 +1,5 @@
 import { type ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
-import { ContextStrip } from './ContextStrip'
 import { ShortcutsDialog } from './ShortcutsDialog'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { Toaster } from '@/components/ui/toast'
@@ -20,7 +19,6 @@ export function AppLayout({ children }: AppLayoutProps) {
       </a>
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <ContextStrip />
         <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto p-5">
           {children}
         </main>
