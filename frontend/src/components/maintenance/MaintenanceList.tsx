@@ -99,13 +99,8 @@ export function MaintenanceList({ tenantId }: MaintenanceListProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="h-20 rounded-lg border border-border bg-surface animate-pulse"
-          />
-        ))}
+      <div className="py-8 text-center">
+        <span className="text-[9px] text-text-muted">Loading&hellip;</span>
       </div>
     )
   }
@@ -266,7 +261,7 @@ function WindowCard({
 
   return (
     <div
-      className={`rounded-lg border border-border bg-surface p-3 ${
+      className={`rounded-lg border border-border bg-panel p-3 ${
         isPast ? 'opacity-60' : ''
       }`}
     >

@@ -74,7 +74,7 @@ export function CertificatesPage() {
             Certificate Authority
           </h1>
         </div>
-        <TableSkeleton rows={3} />
+        <TableSkeleton />
       </div>
     )
   }

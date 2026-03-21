@@ -162,26 +162,26 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
   if (state === 'idle' || state === 'failed' || state === 'terminated') {
     return (
       <div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={handleOpen}
             disabled={createMutation.isPending}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-accent text-white hover:bg-accent/90 disabled:opacity-50"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-[var(--radius-control)] text-[10px] text-text-secondary border border-border-default hover:border-accent transition-[border-color,color] duration-[50ms] disabled:opacity-50"
+            title="Open Remote WinBox (browser)"
           >
             {createMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin" />
             ) : (
-              <Globe className="h-4 w-4" />
+              <Globe className="h-3 w-3" />
             )}
-            {createMutation.isPending ? 'Starting...' : 'Remote WinBox'}
+            {createMutation.isPending ? 'Starting' : 'Remote'}
           </button>
           <button
             onClick={handleReset}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-            title="Reset all remote WinBox sessions for this device"
+            className="inline-flex items-center px-1.5 py-1 rounded-[var(--radius-control)] text-text-muted border border-border-default hover:border-accent transition-[border-color] duration-[50ms]"
+            title="Reset remote sessions"
           >
-            <RefreshCw className="h-4 w-4" />
-            Reset
+            <RefreshCw className="h-3 w-3" />
           </button>
         </div>
         {state === 'failed' && error && (

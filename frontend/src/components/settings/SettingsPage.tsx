@@ -78,7 +78,7 @@ export function SettingsPage() {
       </div>
 
       {/* Account section */}
-      <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-1">
+      <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-1">
         <SectionHeader icon={User} title="Account" />
         <InfoRow label="Email" value={user?.email} />
         <InfoRow label="Role" value={
@@ -94,13 +94,13 @@ export function SettingsPage() {
       </div>
 
       {/* Password & Security section */}
-      <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-1">
+      <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-1">
         <SectionHeader icon={Lock} title="Password & Security" />
         <ChangePasswordForm />
       </div>
 
       {/* Permissions section */}
-      <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-1">
+      <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-1">
         <SectionHeader icon={Shield} title="Permissions" />
         <InfoRow label="Read devices" value="Yes" />
         <InfoRow
@@ -118,7 +118,7 @@ export function SettingsPage() {
       </div>
 
       {/* System info section */}
-      <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-1">
+      <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-1">
         <SectionHeader icon={Info} title="System" />
         <InfoRow label="API" value={
           <a
@@ -135,7 +135,7 @@ export function SettingsPage() {
 
       {/* Quick links */}
       {isTenantAdmin(user) && (
-        <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-1">
+        <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-1">
           <SectionHeader icon={Key} title="Integrations" />
           <Link
             to="/settings/api-keys"
@@ -152,7 +152,7 @@ export function SettingsPage() {
 
       {/* Maintenance — super_admin only */}
       {isSuperAdmin(user) && (
-        <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-1">
+        <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-1">
           <SectionHeader icon={Monitor} title="Maintenance" />
           <div className="flex items-center justify-between py-2">
             <div>
@@ -182,7 +182,7 @@ export function SettingsPage() {
       {isSuperAdmin(user) && <SMTPSettingsSection />}
 
       {/* Data & Privacy section */}
-      <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-3">
+      <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-3">
         <SectionHeader icon={Shield} title="Data & Privacy" />
 
         {/* Export Data */}
@@ -377,7 +377,7 @@ function SMTPSettingsSection() {
   if (isLoading) return null
 
   return (
-    <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-3">
+    <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-3">
       <div className="flex items-center justify-between">
         <SectionHeader icon={Mail} title="System Email (SMTP)" />
         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${

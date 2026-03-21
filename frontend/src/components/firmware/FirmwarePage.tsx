@@ -50,7 +50,7 @@ function StatCard({
   color: string
 }) {
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div className="rounded-lg border border-border bg-panel p-4">
       <div className={cn('text-2xl font-bold', color)}>{value}</div>
       <div className="text-xs text-text-muted mt-1">{label}</div>
     </div>
@@ -184,7 +184,7 @@ function UpgradeDialog({
               </div>
             )}
 
-            <div className="rounded border border-border bg-surface p-3 text-xs text-text-secondary">
+            <div className="rounded border border-border bg-panel p-3 text-xs text-text-secondary">
               A mandatory config backup will be taken before upgrading each device.
             </div>
 
@@ -254,10 +254,10 @@ function VersionGroupCard({
 
   return (
     <>
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-surface transition-colors"
+          className="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-panel transition-colors"
         >
           {expanded ? (
             <ChevronDown className="h-4 w-4 text-text-muted" />

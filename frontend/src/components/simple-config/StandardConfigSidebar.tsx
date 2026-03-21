@@ -133,17 +133,17 @@ export function StandardConfigSidebar({
   onSwitchToSimple,
 }: StandardConfigSidebarProps) {
   return (
-    <div className="w-48 flex-shrink-0 flex flex-col min-h-[400px]">
-      <nav className="space-y-3 overflow-y-auto flex-1">
+    <div className="w-44 flex-shrink-0 flex flex-col min-h-[400px]">
+      <nav className="space-y-2 overflow-y-auto flex-1">
         {STANDARD_GROUPS.map((group) => {
           const GroupIcon = group.icon
           return (
             <div key={group.label}>
-              <p className="flex items-center gap-1.5 text-xs font-medium text-text-muted uppercase tracking-wider mb-1 px-3">
+              <p className="flex items-center gap-1.5 text-[7px] text-text-label uppercase tracking-[2px] mb-1 pl-2">
                 <GroupIcon className="h-3 w-3" />
                 {group.label}
               </p>
-              <div className="space-y-0.5">
+              <div>
                 {group.items.map((item) => {
                   const isActive = activeTab === item.id
                   return (
@@ -152,10 +152,10 @@ export function StandardConfigSidebar({
                       onClick={() => onTabChange(item.id)}
                       data-testid={`tab-${item.id}`}
                       className={cn(
-                        'flex items-center w-full text-left pl-7 pr-3 py-1.5 rounded-r-lg text-sm transition-colors',
+                        'flex items-center w-full text-left pl-6 pr-2 py-[3px] text-xs border-l-2 transition-[border-color,color] duration-[50ms]',
                         isActive
-                          ? 'bg-accent/10 text-accent border-l-2 border-accent'
-                          : 'text-text-secondary hover:text-text-primary hover:bg-elevated/50 border-l-2 border-transparent',
+                          ? 'bg-accent-soft text-text-primary font-medium border-accent rounded-r-sm'
+                          : 'text-text-secondary hover:border-accent border-transparent',
                       )}
                     >
                       <span className="truncate">{item.label}</span>
@@ -169,13 +169,13 @@ export function StandardConfigSidebar({
       </nav>
 
       {onSwitchToSimple && (
-        <div className="mt-auto pt-4 border-t border-border/50">
+        <div className="mt-auto pt-2 border-t border-border-subtle">
           <button
             onClick={onSwitchToSimple}
-            className="flex items-center gap-2 w-full text-left px-3 py-2 text-xs text-text-muted hover:text-text-secondary transition-colors"
+            className="flex items-center gap-1.5 w-full text-left px-2 py-1.5 text-[10px] text-text-muted hover:text-text-secondary transition-[color] duration-[50ms]"
           >
-            <Sliders className="h-3.5 w-3.5" />
-            Switch to Simple mode
+            <Sliders className="h-3 w-3" />
+            Simple mode
           </button>
         </div>
       )}

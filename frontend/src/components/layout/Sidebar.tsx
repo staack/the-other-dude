@@ -1,59 +1,197 @@
 import { useEffect, useRef } from 'react'
 import { APP_VERSION } from '@/lib/version'
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useRouterState, useNavigate } from '@tanstack/react-router'
 import {
   Monitor,
   Building2,
   Users,
   Settings,
-  ChevronLeft,
-  ChevronRight,
-  Download,
+  LayoutDashboard,
+  Wifi,
+  MapPin,
+  Bell,
+  Map,
   Terminal,
   FileCode,
-  LayoutDashboard,
-  ClipboardList,
-  Wifi,
-  BarChart3,
-  MapPin,
-  ShieldCheck,
-  KeyRound,
-  Info,
-  Bell,
-  Network,
-  Map,
-  Layers,
+  Download,
   Wrench,
+  ClipboardList,
+  BellRing,
   Calendar,
   FileBarChart,
-  Eye,
-  BellRing,
+  ShieldCheck,
+  KeyRound,
+  Sun,
+  Moon,
+  LogOut,
+  ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth, isSuperAdmin, isTenantAdmin } from '@/lib/auth'
 import { useUIStore } from '@/lib/store'
+import { useEventStreamContext } from '@/contexts/EventStreamContext'
+import { alertEventsApi, tenantsApi } from '@/lib/api'
+import { useQuery } from '@tanstack/react-query'
 import { RugLogo } from '@/components/brand/RugLogo'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import type { ConnectionState } from '@/hooks/useEventStream'
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 interface NavItem {
   label: string
   href: string
   icon: React.FC<{ className?: string }>
   exact?: boolean
+  badge?: number
 }
 
-interface NavSection {
-  label: string
-  items: NavItem[]
-  visible: boolean
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const SYSTEM_TENANT_ID = '00000000-0000-0000-0000-000000000000'
+
+const CONNECTION_LABELS: Record<ConnectionState, string> = {
+  connected: 'Connected',
+  connecting: 'Connecting',
+  reconnecting: 'Reconnecting',
+  disconnected: 'Disconnected',
 }
+
+// ─── Styles ─────────────────────────────────────────────────────────────────
+
+const navItemBase =
+  'flex items-center gap-2 text-[13px] py-[5px] px-2 pl-[10px] border-l-2 border-transparent transition-[border-color,color] duration-[50ms] linear'
+
+const navItemInactive =
+  'text-text-secondary hover:border-accent'
+
+const navItemActive =
+  'text-text-primary font-medium border-accent bg-accent-soft rounded-r-sm'
+
+const lowFreqBase =
+  'flex items-center gap-2 text-[13px] text-text-muted py-[3px] px-2 pl-[10px] border-l-2 border-transparent transition-[border-color,color] duration-[50ms] linear hover:border-accent'
+
+const iconClass = 'h-4 w-4 text-text-muted flex-shrink-0'
+
+// ─── Component ──────────────────────────────────────────────────────────────
 
 export function Sidebar() {
-  const { user } = useAuth()
-  const { sidebarCollapsed, toggleSidebar, mobileSidebarOpen, setMobileSidebarOpen } = useUIStore()
+  const { user, logout } = useAuth()
+  const {
+    sidebarCollapsed,
+    toggleSidebar,
+    mobileSidebarOpen,
+    setMobileSidebarOpen,
+    selectedTenantId,
+    setSelectedTenantId,
+    theme,
+    setTheme,
+    uiScale,
+    setUIScale,
+  } = useUIStore()
+  const { connectionState } = useEventStreamContext()
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
+  const navigate = useNavigate()
+  const navRef = useRef<HTMLElement>(null)
 
-  // Mobile sidebar focus trap
+  const superAdmin = isSuperAdmin(user)
+  const tenantAdmin = isTenantAdmin(user)
+  const tenantId = superAdmin ? selectedTenantId : user?.tenant_id
+
+  // ─── Queries ────────────────────────────────────────────────────────────
+
+  const { data: tenants } = useQuery({
+    queryKey: ['tenants'],
+    queryFn: tenantsApi.list,
+    enabled: superAdmin,
+    select: (data) => data.filter((t) => t.id !== SYSTEM_TENANT_ID),
+  })
+
+  const selectedTenant = tenants?.find((t) => t.id === selectedTenantId)
+
+  // Auto-select when there's exactly one tenant and nothing selected
+  useEffect(() => {
+    if (superAdmin && tenants && tenants.length === 1 && !selectedTenantId) {
+      setSelectedTenantId(tenants[0].id)
+    }
+  }, [tenants, selectedTenantId, superAdmin, setSelectedTenantId])
+
+  const { data: alertCount } = useQuery({
+    queryKey: ['alert-active-count', tenantId],
+    queryFn: () => alertEventsApi.activeCount(tenantId!),
+    enabled: !!tenantId,
+    refetchInterval: 30_000,
+  })
+
+  // ─── Tenant display name ───────────────────────────────────────────────
+
+  const tenantName = superAdmin
+    ? (selectedTenant?.name ?? 'All Orgs')
+    : (user?.name ?? user?.email ?? 'Tenant')
+
+  // ─── Nav items ────────────────────────────────────────────────────────
+
+  const operateItems: NavItem[] = [
+    { label: 'Overview', href: '/', icon: LayoutDashboard, exact: true },
+    ...(!superAdmin && user?.tenant_id
+      ? [
+          { label: 'Devices', href: `/tenants/${user.tenant_id}/devices`, icon: Monitor },
+          { label: 'Sites', href: `/tenants/${user.tenant_id}/sites`, icon: MapPin },
+        ]
+      : []),
+    {
+      label: 'Alerts',
+      href: '/alerts',
+      icon: Bell,
+      badge: alertCount && alertCount > 0 ? alertCount : undefined,
+    },
+    ...(!superAdmin && user?.tenant_id
+      ? [{ label: 'Wireless', href: `/tenants/${user.tenant_id}/wireless-links`, icon: Wifi }]
+      : [{ label: 'Wireless', href: '/wireless', icon: Wifi }]
+    ),
+    { label: 'Map', href: '/map', icon: Map },
+  ]
+
+  const actItems: NavItem[] = [
+    { label: 'Config', href: '/config-editor', icon: Terminal },
+    { label: 'Templates', href: '/templates', icon: FileCode },
+    { label: 'Firmware', href: '/firmware', icon: Download },
+    { label: 'Commands', href: '/bulk-commands', icon: Wrench },
+  ]
+
+  const lowFreqItems: NavItem[] = [
+    ...(superAdmin || tenantAdmin
+      ? [{ label: 'Organizations', href: '/tenants', icon: Building2 }]
+      : []),
+    ...(tenantAdmin && user?.tenant_id
+      ? [{ label: 'Users', href: `/tenants/${user.tenant_id}/users`, icon: Users }]
+      : []),
+    { label: 'Certificates', href: '/certificates', icon: ShieldCheck },
+    { label: 'VPN', href: '/vpn', icon: KeyRound },
+    { label: 'Alert Rules', href: '/alert-rules', icon: BellRing },
+    { label: 'Maintenance', href: '/maintenance', icon: Calendar },
+    { label: 'Settings', href: '/settings', icon: Settings },
+    { label: 'Audit Log', href: '/audit', icon: ClipboardList },
+    { label: 'Reports', href: '/reports', icon: FileBarChart },
+  ]
+
+  // ─── Active state ─────────────────────────────────────────────────────
+
+  const isActive = (item: NavItem) => {
+    if (item.exact) return currentPath === item.href
+    if (item.href === '/settings')
+      return currentPath === '/settings' || currentPath.startsWith('/settings/')
+    return currentPath.startsWith(item.href) && item.href.length > 1
+  }
+
+  // ─── Focus trap for mobile ───────────────────────────────────────────
+
   useEffect(() => {
     if (!mobileSidebarOpen) return
 
@@ -86,9 +224,8 @@ export function Sidebar() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [mobileSidebarOpen, setMobileSidebarOpen])
 
-  const navRef = useRef<HTMLElement>(null)
+  // ─── Keyboard shortcut: [ to toggle ───────────────────────────────────
 
-  // Keyboard toggle: [ key collapses/expands sidebar
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -105,262 +242,253 @@ export function Sidebar() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [toggleSidebar])
 
-  const sections: NavSection[] = [
-    {
-      label: 'Fleet',
-      visible: true,
-      items: [
-        {
-          label: 'Overview',
-          href: '/',
-          icon: LayoutDashboard,
-          exact: true,
-        },
-        // Only show Devices for non-super_admin with a tenant_id
-        ...(!isSuperAdmin(user) && user?.tenant_id
-          ? [
-              {
-                label: 'Devices',
-                href: `/tenants/${user.tenant_id}/devices`,
-                icon: Monitor,
-              },
-            ]
-          : []),
-        ...(!isSuperAdmin(user) && user?.tenant_id
-          ? [
-              {
-                label: 'Sites',
-                href: `/tenants/${user.tenant_id}/sites`,
-                icon: MapPin,
-              },
-            ]
-          : []),
-        ...(!isSuperAdmin(user) && user?.tenant_id
-          ? [{
-              label: 'Wireless Links',
-              href: `/tenants/${user.tenant_id}/wireless-links`,
-              icon: Wifi,
-            }]
-          : [{
-              label: 'Wireless Links',
-              href: '/wireless',
-              icon: Wifi,
-            }]
-        ),
-        {
-          label: 'Traffic',
-          href: '/traffic',
-          icon: BarChart3,
-        },
-        {
-          label: 'Alerts',
-          href: '/alerts',
-          icon: Bell,
-        },
-        {
-          label: 'Topology',
-          href: '/topology',
-          icon: Network,
-        },
-        {
-          label: 'Map',
-          href: '/map',
-          icon: Map,
-        },
-      ],
-    },
-    {
-      label: 'Config',
-      visible: true,
-      items: [
-        {
-          label: 'Editor',
-          href: '/config-editor',
-          icon: Terminal,
-        },
-        {
-          label: 'Templates',
-          href: '/templates',
-          icon: FileCode,
-        },
-        {
-          label: 'Firmware',
-          href: '/firmware',
-          icon: Download,
-        },
-        {
-          label: 'Certificates',
-          href: '/certificates',
-          icon: ShieldCheck,
-        },
-        {
-          label: 'VPN',
-          href: '/vpn',
-          icon: KeyRound,
-        },
-        {
-          label: 'Batch Config',
-          href: '/batch-config',
-          icon: Layers,
-        },
-        {
-          label: 'Bulk Commands',
-          href: '/bulk-commands',
-          icon: Wrench,
-        },
-      ],
-    },
-    {
-      label: 'Admin',
-      visible: isSuperAdmin(user) || isTenantAdmin(user),
-      items: [
-        ...(isTenantAdmin(user) && user?.tenant_id
-          ? [
-              {
-                label: 'Users',
-                href: `/tenants/${user.tenant_id}/users`,
-                icon: Users,
-              },
-            ]
-          : []),
-        ...(isSuperAdmin(user) || isTenantAdmin(user)
-          ? [
-              {
-                label: 'Organizations',
-                href: '/tenants',
-                icon: Building2,
-              },
-            ]
-          : []),
-        {
-          label: 'Audit Log',
-          href: '/audit',
-          icon: ClipboardList,
-        },
-        {
-          label: 'Settings',
-          href: '/settings',
-          icon: Settings,
-        },
-        {
-          label: 'Alert Rules',
-          href: '/alert-rules',
-          icon: BellRing,
-        },
-        {
-          label: 'Maintenance',
-          href: '/maintenance',
-          icon: Calendar,
-        },
-        {
-          label: 'Reports',
-          href: '/reports',
-          icon: FileBarChart,
-        },
-        {
-          label: 'Transparency',
-          href: '/transparency',
-          icon: Eye,
-        },
-        {
-          label: 'About',
-          href: '/about',
-          icon: Info,
-        },
-      ],
-    },
-  ]
+  // ─── Logout handler ───────────────────────────────────────────────────
 
-  const visibleSections = sections.filter((s) => s.visible)
-
-  const isActive = (item: NavItem) => {
-    if (item.exact) return currentPath === item.href
-    // Settings should only match exact to avoid catching everything
-    if (item.href === '/settings') return currentPath === '/settings' || currentPath.startsWith('/settings/')
-    return currentPath.startsWith(item.href) && item.href.length > 1
+  const handleLogout = async () => {
+    await logout()
+    void navigate({ to: '/login' })
   }
 
-  const sidebarContent = (showCollapsed: boolean) => (
+  // ─── Render helpers ───────────────────────────────────────────────────
+
+  const renderNavItem = (item: NavItem, collapsed: boolean) => {
+    const Icon = item.icon
+    const active = isActive(item)
+    return (
+      <Link
+        key={item.href}
+        to={item.href}
+        onClick={() => setMobileSidebarOpen(false)}
+        data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+        className={cn(
+          collapsed
+            ? 'flex items-center justify-center py-[5px] px-2 border-l-2 border-transparent transition-[border-color,color] duration-[50ms] linear hover:border-accent'
+            : navItemBase,
+          active
+            ? navItemActive
+            : collapsed
+              ? 'text-text-secondary'
+              : navItemInactive,
+        )}
+        title={collapsed ? item.label : undefined}
+        aria-label={collapsed ? item.label : undefined}
+        aria-current={active ? 'page' : undefined}
+      >
+        <Icon className={iconClass} aria-hidden="true" />
+        {!collapsed && (
+          <span className="truncate flex-1">{item.label}</span>
+        )}
+        {!collapsed && item.badge !== undefined && item.badge > 0 && (
+          <span className="text-[8px] font-semibold font-mono bg-alert-badge text-background px-1.5 rounded-sm leading-4">
+            {item.badge}
+          </span>
+        )}
+      </Link>
+    )
+  }
+
+  const renderLowFreqItem = (item: NavItem, collapsed: boolean) => {
+    const Icon = item.icon
+    const active = isActive(item)
+    return (
+      <Link
+        key={item.href}
+        to={item.href}
+        onClick={() => setMobileSidebarOpen(false)}
+        data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+        className={cn(
+          collapsed
+            ? 'flex items-center justify-center py-[3px] px-2 border-l-2 border-transparent transition-[border-color,color] duration-[50ms] linear hover:border-accent'
+            : lowFreqBase,
+          active && navItemActive,
+        )}
+        title={collapsed ? item.label : undefined}
+        aria-label={collapsed ? item.label : undefined}
+        aria-current={active ? 'page' : undefined}
+      >
+        <Icon className={iconClass} aria-hidden="true" />
+        {!collapsed && <span className="truncate">{item.label}</span>}
+      </Link>
+    )
+  }
+
+  // ─── Sidebar content ─────────────────────────────────────────────────
+
+  const sidebarContent = (collapsed: boolean) => (
     <>
-      {/* Logo */}
+      {/* Logo area */}
       <div
         className={cn(
-          'flex items-center h-12 px-3 border-b border-border',
-          showCollapsed ? 'justify-center' : 'gap-2',
+          'flex items-center border-b border-border-subtle px-3 py-2',
+          collapsed ? 'justify-center h-12' : 'gap-2 min-h-[48px]',
         )}
       >
-        <RugLogo size={showCollapsed ? 24 : 28} className="flex-shrink-0" />
-        {!showCollapsed && (
-          <span className="text-sm font-semibold text-text-primary truncate">
-            TOD
-          </span>
+        <RugLogo size={collapsed ? 24 : 28} className="flex-shrink-0" />
+        {!collapsed && (
+          <div className="min-w-0">
+            <span className="text-sm font-semibold text-text-primary">TOD</span>
+            <div className="text-[8px] text-text-muted truncate">{tenantName}</div>
+          </div>
         )}
       </div>
 
-      {/* Navigation */}
-      <nav ref={navRef} data-slot="fleet-nav" className="flex-1 py-2 overflow-y-auto">
-        {visibleSections.map((section, sectionIdx) => (
-          <div key={section.label}>
-            {showCollapsed && sectionIdx > 0 && (
-              <div className="mx-2 my-1 border-t border-border" />
-            )}
-            {!showCollapsed && (
-              <div className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-                {section.label}
-              </div>
-            )}
-            {section.items.map((item) => {
-              const Icon = item.icon
-              const active = isActive(item)
-              return (
-                <Link
-                  key={`${section.label}-${item.label}`}
-                  to={item.href}
-                  onClick={() => setMobileSidebarOpen(false)}
-                  data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                  className={cn(
-                    'flex items-center gap-2.5 px-3 py-2 mx-1 rounded-md text-sm transition-colors min-h-[44px]',
-                    active
-                      ? 'bg-[hsl(var(--accent-muted))] text-accent rounded-md'
-                      : 'text-text-muted hover:text-text-primary hover:bg-elevated/50 rounded-md',
-                    showCollapsed && 'justify-center px-0',
-                  )}
-                  title={showCollapsed ? item.label : undefined}
-                  aria-label={showCollapsed ? item.label : undefined}
-                  aria-current={active ? 'page' : undefined}
+      {/* Tenant selector (super_admin only) */}
+      {superAdmin && !collapsed && tenants && tenants.length > 0 && (
+        <div className="px-3 py-2 border-b border-border-subtle">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="flex items-center gap-1.5 w-full text-[11px] text-text-secondary hover:text-text-primary transition-[color] duration-[50ms] linear">
+              <span className="truncate flex-1 text-left">{tenantName}</span>
+              <ChevronDown className="h-3 w-3 flex-shrink-0 text-text-muted" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" sideOffset={4}>
+              <DropdownMenuItem
+                onClick={() => setSelectedTenantId(null)}
+                className="text-xs"
+              >
+                All Orgs
+              </DropdownMenuItem>
+              {tenants.map((tenant) => (
+                <DropdownMenuItem
+                  key={tenant.id}
+                  onClick={() => setSelectedTenantId(tenant.id)}
+                  className="text-xs"
                 >
-                  <Icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-                  {!showCollapsed && (
-                    <span className="truncate">{item.label}</span>
-                  )}
-                </Link>
-              )
-            })}
-          </div>
-        ))}
-      </nav>
-
-      {/* Version identifier */}
-      {!showCollapsed && (
-        <div className="px-3 py-1 text-center">
-          <span className="font-mono text-[9px] text-text-muted">TOD {APP_VERSION}</span>
+                  {tenant.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
+      {superAdmin && collapsed && (
+        <div className="border-b border-border-subtle" />
+      )}
 
-      {/* Collapse toggle (hidden on mobile) */}
-      <button
-        onClick={toggleSidebar}
-        className="hidden lg:flex items-center justify-center h-10 border-t border-border text-text-muted hover:text-text-secondary transition-colors"
-        title={showCollapsed ? 'Expand sidebar ([)' : 'Collapse sidebar ([)'}
-        aria-label={showCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        data-testid="sidebar-toggle"
-      >
-        {showCollapsed ? (
-          <ChevronRight className="h-4 w-4" />
-        ) : (
-          <ChevronLeft className="h-4 w-4" />
+      {/* Main navigation */}
+      <nav ref={navRef} data-slot="fleet-nav" className="flex-1 overflow-y-auto py-2">
+        {/* operate section */}
+        {!collapsed && (
+          <div className="text-[7px] uppercase tracking-[3px] text-text-label pl-[10px] mb-2">
+            operate
+          </div>
         )}
-      </button>
+        {operateItems.map((item) => renderNavItem(item, collapsed))}
+
+        {/* Hairline separator */}
+        <div className="mx-2 my-2 border-t border-border-subtle" />
+
+        {/* act section */}
+        {!collapsed && (
+          <div className="text-[7px] uppercase tracking-[3px] text-text-label pl-[10px] mb-2">
+            act
+          </div>
+        )}
+        {actItems.map((item) => renderNavItem(item, collapsed))}
+
+        {/* Low-frequency items separator */}
+        <div className="mx-2 my-2 border-t border-border-subtle" />
+
+        {/* Low-frequency items */}
+        {lowFreqItems.map((item) => renderLowFreqItem(item, collapsed))}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t border-border-subtle px-3 py-2">
+        {!collapsed ? (
+          <>
+            {/* User row: email + theme + logout */}
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-[8px] text-text-muted truncate flex-1">
+                {user?.email}
+              </span>
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-0.5 text-text-muted hover:text-text-secondary transition-[color] duration-[50ms] linear"
+                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-3 w-3" />
+                ) : (
+                  <Moon className="h-3 w-3" />
+                )}
+              </button>
+              <button
+                onClick={() => void handleLogout()}
+                className="p-0.5 text-text-muted hover:text-text-secondary transition-[color] duration-[50ms] linear"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-3 w-3" />
+              </button>
+            </div>
+            {/* Scale selector */}
+            <div className="flex items-center gap-px rounded-[var(--radius-control)] border border-border-subtle overflow-hidden mb-1">
+              {([100, 110, 125] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setUIScale(s)}
+                  className={cn(
+                    'flex-1 text-[8px] py-px text-center transition-[background-color,color] duration-[50ms]',
+                    uiScale === s
+                      ? 'bg-accent-soft text-text-primary font-medium'
+                      : 'text-text-muted hover:text-text-secondary',
+                  )}
+                >
+                  {s}%
+                </button>
+              ))}
+            </div>
+            {/* Connection + version row */}
+            <div className="flex items-center gap-1.5">
+              <span
+                className={cn(
+                  'w-[5px] h-[5px] rounded-full flex-shrink-0',
+                  connectionState === 'connected' ? 'bg-online' : 'bg-offline',
+                  (connectionState === 'connecting' || connectionState === 'reconnecting') && 'animate-pulse',
+                )}
+                role="status"
+                aria-label={`Connection: ${CONNECTION_LABELS[connectionState]}`}
+              />
+              <span className="text-[8px] text-text-muted">
+                {CONNECTION_LABELS[connectionState]}
+              </span>
+              <span className="text-[8px] text-text-muted font-mono ml-auto">
+                {APP_VERSION}
+              </span>
+            </div>
+          </>
+        ) : (
+          /* Collapsed footer: just connection dot and theme toggle */
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-0.5 text-text-muted hover:text-text-secondary transition-[color] duration-[50ms] linear"
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-3 w-3" />
+              ) : (
+                <Moon className="h-3 w-3" />
+              )}
+            </button>
+            <button
+              onClick={() => void handleLogout()}
+              className="p-0.5 text-text-muted hover:text-text-secondary transition-[color] duration-[50ms] linear"
+              aria-label="Sign out"
+            >
+              <LogOut className="h-3 w-3" />
+            </button>
+            <span
+              className={cn(
+                'w-[5px] h-[5px] rounded-full',
+                connectionState === 'connected' ? 'bg-online' : 'bg-offline',
+                (connectionState === 'connecting' || connectionState === 'reconnecting') && 'animate-pulse',
+              )}
+              role="status"
+              aria-label={`Connection: ${CONNECTION_LABELS[connectionState]}`}
+            />
+          </div>
+        )}
+      </div>
     </>
   )
 
@@ -371,12 +499,14 @@ export function Sidebar() {
         data-testid="sidebar"
         data-sidebar
         className={cn(
-          'hidden lg:flex flex-col border-r border-border bg-sidebar transition-all duration-200',
-          sidebarCollapsed ? 'w-14' : 'w-[180px]',
+          'hidden lg:flex flex-col border-r border-border-default bg-sidebar transition-[width] duration-200',
+          sidebarCollapsed ? 'w-14' : 'w-[172px]',
         )}
       >
         {sidebarContent(sidebarCollapsed)}
       </aside>
+
+      {/* Mobile hamburger (rendered outside sidebar for AppLayout) */}
 
       {/* Mobile overlay */}
       {mobileSidebarOpen && (
@@ -390,7 +520,7 @@ export function Sidebar() {
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="lg:hidden fixed inset-y-0 left-0 z-50 w-[180px] flex flex-col bg-sidebar border-r border-border"
+            className="lg:hidden fixed inset-y-0 left-0 z-50 w-[172px] flex flex-col bg-sidebar border-r border-border-default"
           >
             {sidebarContent(false)}
           </aside>

@@ -30,7 +30,7 @@ function BatchConfigPage() {
           <Wrench className="h-5 w-5 text-text-muted" />
           Batch Configuration
         </h1>
-        <div className="rounded-lg border border-border bg-surface p-8 text-center">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center">
           <p className="text-sm text-text-muted">
             You need at least operator permissions to use batch configuration.
           </p>
@@ -58,7 +58,7 @@ function BatchConfigPage() {
       {tenantId ? (
         <BatchConfigPanel tenantId={tenantId} />
       ) : (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center space-y-2">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center space-y-2">
           <Building2 className="h-6 w-6 mx-auto text-text-muted" />
           <p className="text-sm text-text-muted">
             Select an organization from the header to get started.

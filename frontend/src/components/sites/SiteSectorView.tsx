@@ -145,7 +145,7 @@ export function SiteSectorView({ tenantId, siteId }: SiteSectorViewProps) {
   }, [linksData])
 
   if (sectorsLoading || devicesLoading) {
-    return <TableSkeleton rows={6} />
+    return <TableSkeleton />
   }
 
   const sectors = sectorData?.items ?? []
@@ -153,7 +153,7 @@ export function SiteSectorView({ tenantId, siteId }: SiteSectorViewProps) {
 
   if (sectors.length === 0 && unassignedDevices.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-surface p-8 text-center space-y-3">
+      <div className="rounded-lg border border-border bg-panel p-8 text-center space-y-3">
         <p className="text-sm text-text-muted">
           No sectors defined. Create sectors to organize APs by direction.
         </p>
@@ -315,7 +315,7 @@ function SectorSection({
   const isUnassigned = !sector
 
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+    <div className="rounded-lg border border-border bg-panel overflow-hidden">
       {/* Section header */}
       <button
         className="w-full flex items-center gap-2 px-4 py-3 hover:bg-elevated/50 transition-colors text-left"

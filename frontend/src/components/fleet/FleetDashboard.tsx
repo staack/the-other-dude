@@ -1,17 +1,17 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { useAuth } from '@/lib/auth'
-import { metricsApi, tenantsApi } from '@/lib/api'
+import { metricsApi, tenantsApi, type FleetDevice } from '@/lib/api'
 import { useUIStore } from '@/lib/store'
 import { alertsApi } from '@/lib/alertsApi'
 import { useEventStreamContext } from '@/contexts/EventStreamContext'
-import { LayoutDashboard } from 'lucide-react'
+import { LayoutDashboard, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 
 // ─── Dashboard Widgets ───────────────────────────────────────────────────────
-import { KpiCards } from '@/components/dashboard/KpiCards'
 import { HealthScore } from '@/components/dashboard/HealthScore'
 import { EventsTimeline } from '@/components/dashboard/EventsTimeline'
 import { BandwidthChart, type BandwidthDevice } from '@/components/dashboard/BandwidthChart'
@@ -30,39 +30,122 @@ const REFRESH_OPTIONS: { label: string; value: RefreshInterval }[] = [
   { label: 'Off', value: false },
 ]
 
-// ─── Dashboard Skeleton ──────────────────────────────────────────────────────
+// ─── Dashboard Loading ───────────────────────────────────────────────────────
 
-function DashboardSkeleton() {
+function DashboardLoading() {
   return (
-    <div className="space-y-4">
-      {/* KPI cards skeleton */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-lg border border-border p-4">
-            <Skeleton className="h-3 w-24 mb-2" />
-            <Skeleton className="h-8 w-16" />
-          </div>
-        ))}
+    <div className="py-8 text-center">
+      <LoadingText />
+    </div>
+  )
+}
+
+// ─── Needs Attention (inline component) ─────────────────────────────────────
+
+interface AttentionItem {
+  id: string
+  deviceId: string
+  tenantId: string
+  hostname: string
+  model: string | null
+  severity: 'error' | 'warning'
+  reason: string
+  hasCoords: boolean
+}
+
+function NeedsAttention({ devices }: { devices: FleetDevice[] }) {
+  const items = useMemo<AttentionItem[]>(() => {
+    const result: AttentionItem[] = []
+
+    for (const d of devices) {
+      const base = {
+        deviceId: d.id,
+        tenantId: d.tenant_id,
+        hostname: d.hostname,
+        model: d.model,
+        hasCoords: d.latitude != null && d.longitude != null,
+      }
+
+      if (d.status === 'offline') {
+        result.push({ ...base, id: `${d.id}-offline`, severity: 'error', reason: 'Offline' })
+      } else if (d.status === 'degraded') {
+        result.push({ ...base, id: `${d.id}-degraded`, severity: 'warning', reason: 'Degraded' })
+      }
+
+      if (d.last_cpu_load != null && d.last_cpu_load > 80) {
+        result.push({ ...base, id: `${d.id}-cpu`, severity: 'warning', reason: `CPU ${d.last_cpu_load}%` })
+      }
+    }
+
+    result.sort((a, b) => {
+      if (a.severity === b.severity) return 0
+      return a.severity === 'error' ? -1 : 1
+    })
+
+    return result.slice(0, 10)
+  }, [devices])
+
+  const count = items.length
+
+  return (
+    <div className="bg-panel border border-border-default rounded-sm mb-3.5">
+      <div className="px-3 py-2 border-b border-border-default bg-elevated">
+        <span className="text-[7px] font-medium text-text-muted uppercase tracking-[1.5px]">
+          Needs Attention
+        </span>
+        <span className="text-[7px] text-[hsl(var(--text-label))]"> · </span>
+        <span className="text-[7px] text-text-secondary font-mono">{count}</span>
       </div>
-      {/* Widget grid skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 rounded-lg border border-border p-4 space-y-3">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-48 w-full" />
+      {count > 0 ? (
+        <div className="divide-y divide-border-subtle">
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center justify-between px-3 py-1.5 border-l-2"
+              style={{
+                borderLeftColor:
+                  item.severity === 'error'
+                    ? 'hsl(var(--error))'
+                    : 'hsl(var(--warning))',
+              }}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Link
+                  to="/tenants/$tenantId/devices/$deviceId"
+                  params={{ tenantId: item.tenantId, deviceId: item.deviceId }}
+                  className="text-xs text-text-primary font-medium truncate hover:text-accent transition-[color] duration-[50ms]"
+                >
+                  {item.hostname}
+                </Link>
+                <span className="text-[10px] text-text-secondary flex-shrink-0">
+                  {item.model}
+                </span>
+                {item.hasCoords && (
+                  <Link
+                    to="/map"
+                    className="text-text-muted hover:text-accent transition-[color] duration-[50ms] flex-shrink-0"
+                    title="View on map"
+                  >
+                    <MapPin className="h-3 w-3" />
+                  </Link>
+                )}
+              </div>
+              <span
+                className={cn(
+                  'text-[10px] font-mono font-medium flex-shrink-0 ml-2',
+                  item.severity === 'error' ? 'text-error' : 'text-warning',
+                )}
+              >
+                {item.reason}
+              </span>
+            </div>
+          ))}
         </div>
-        <div className="rounded-lg border border-border p-4 space-y-3">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-32 w-full" />
+      ) : (
+        <div className="py-5 text-center">
+          <span className="text-[9px] text-text-muted">No issues detected</span>
         </div>
-        <div className="lg:col-span-2 rounded-lg border border-border p-4 space-y-3">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-48 w-full" />
-        </div>
-        <div className="rounded-lg border border-border p-4 space-y-3">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-32 w-full" />
-        </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -96,9 +179,9 @@ export function FleetDashboard() {
     isFetching: fleetFetching,
     dataUpdatedAt,
   } = useQuery({
-    queryKey: ['fleet-summary', isSuperAdmin ? 'all' : tenantId],
+    queryKey: ['fleet-summary', isSuperAdmin && !selectedTenantId ? 'all' : tenantId],
     queryFn: () =>
-      isSuperAdmin
+      isSuperAdmin && !selectedTenantId
         ? metricsApi.fleetSummaryAll()
         : metricsApi.fleetSummary(tenantId),
     // Disable polling when SSE is connected (events update cache directly)
@@ -127,6 +210,15 @@ export function FleetDashboard() {
   )
   const onlinePercent =
     totalDevices > 0 ? (onlineDevices.length / totalDevices) * 100 : 0
+
+  const degradedCount = useMemo(
+    () => fleetDevices?.filter((d) => d.status === 'degraded').length ?? 0,
+    [fleetDevices],
+  )
+  const offlineCount = useMemo(
+    () => fleetDevices?.filter((d) => d.status === 'offline').length ?? 0,
+    [fleetDevices],
+  )
 
   // Alert counts
   const alerts = alertsData?.items ?? []
@@ -183,10 +275,10 @@ export function FleetDashboard() {
   return (
     <div className="space-y-6" data-testid="dashboard">
       {/* ── Page Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 pb-2.5 mb-3.5 border-b border-border-default">
         <div>
-          <h1 className="text-xl font-semibold">Dashboard</h1>
-          <p className="text-sm text-text-muted mt-0.5">
+          <h1 className="text-sm font-semibold text-text-primary">Overview</h1>
+          <p className="text-[9px] text-text-muted mt-0.5">
             Fleet overview across{' '}
             {isSuperAdmin
               ? selectedTenantId && selectedTenantName
@@ -213,7 +305,7 @@ export function FleetDashboard() {
             </span>
           )}
           {/* Refresh interval selector */}
-          <div className="flex items-center rounded-md border border-border bg-surface">
+          <div className="flex items-center rounded-md border border-border bg-panel">
             {REFRESH_OPTIONS.map((opt) => (
               <button
                 key={opt.label}
@@ -223,7 +315,7 @@ export function FleetDashboard() {
                   'px-2.5 py-1 text-xs font-medium transition-colors',
                   'first:rounded-l-md last:rounded-r-md',
                   refreshInterval === opt.value
-                    ? 'bg-accent/15 text-accent'
+                    ? 'bg-accent-soft text-accent'
                     : 'text-text-muted hover:text-text-secondary hover:bg-elevated/50',
                 )}
               >
@@ -236,7 +328,7 @@ export function FleetDashboard() {
 
       {/* ── Dashboard Content ───────────────────────────────────────────── */}
       {fleetLoading ? (
-        <DashboardSkeleton />
+        <DashboardLoading />
       ) : totalDevices === 0 ? (
         <EmptyState
           icon={LayoutDashboard}
@@ -245,13 +337,54 @@ export function FleetDashboard() {
         />
       ) : (
         <>
-          {/* KPI Cards — full width, 4 columns */}
-          <KpiCards
-            totalDevices={totalDevices}
-            onlinePercent={onlinePercent}
-            activeAlerts={totalAlerts}
-            totalBandwidthBps={totalBandwidthBps}
-          />
+          {/* Metrics Strip — joined 4-column bar */}
+          <div className="flex gap-px mb-3.5 bg-border-default rounded-sm overflow-hidden">
+            <div className="flex-1 bg-panel px-3 py-2">
+              <div className="text-lg font-medium font-mono text-text-primary">
+                {totalDevices}
+              </div>
+              <div className="text-[7px] text-text-muted uppercase tracking-[1.5px] font-medium mt-0.5">
+                Devices
+              </div>
+            </div>
+            <div className="flex-1 bg-panel px-3 py-2">
+              <div className="text-lg font-medium font-mono text-success">
+                {onlineDevices.length}
+              </div>
+              <div className="text-[7px] text-text-muted uppercase tracking-[1.5px] font-medium mt-0.5">
+                Online
+              </div>
+            </div>
+            <div className="flex-1 bg-panel px-3 py-2">
+              <div
+                className={cn(
+                  'text-lg font-medium font-mono',
+                  degradedCount > 0 ? 'text-warning' : 'text-text-primary',
+                )}
+              >
+                {degradedCount}
+              </div>
+              <div className="text-[7px] text-text-muted uppercase tracking-[1.5px] font-medium mt-0.5">
+                Degraded
+              </div>
+            </div>
+            <div className="flex-1 bg-panel px-3 py-2">
+              <div
+                className={cn(
+                  'text-lg font-medium font-mono',
+                  offlineCount > 0 ? 'text-error' : 'text-text-primary',
+                )}
+              >
+                {offlineCount}
+              </div>
+              <div className="text-[7px] text-text-muted uppercase tracking-[1.5px] font-medium mt-0.5">
+                Offline
+              </div>
+            </div>
+          </div>
+
+          {/* Needs Attention — full width */}
+          <NeedsAttention devices={fleetDevices ?? []} />
 
           {/* Widget Grid — responsive 3 columns */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

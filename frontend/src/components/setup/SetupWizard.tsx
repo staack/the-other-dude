@@ -484,7 +484,7 @@ export function SetupWizard() {
         <StepIndicator currentStep={step} />
 
         {/* Card */}
-        <div className="bg-surface border border-border rounded-lg p-8">
+        <div className="bg-panel border border-border rounded-lg p-8">
           {step === 1 && (
             <CreateTenantStep
               onComplete={(tenant) => {

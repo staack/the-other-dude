@@ -10,10 +10,10 @@ interface DiffViewerProps {
 }
 
 function classifyLine(line: string): string {
-  if (line.startsWith('@@')) return 'bg-blue-900/20 text-blue-300'
+  if (line.startsWith('@@')) return 'bg-info/10 text-info'
   if (line.startsWith('+++') || line.startsWith('---')) return 'text-text-muted'
-  if (line.startsWith('+')) return 'bg-green-900/30 text-green-300'
-  if (line.startsWith('-')) return 'bg-red-900/30 text-red-300'
+  if (line.startsWith('+')) return 'bg-success/10 text-success'
+  if (line.startsWith('-')) return 'bg-error/10 text-error'
   return 'text-text-primary'
 }
 
@@ -24,7 +24,7 @@ export function DiffViewer({ tenantId, deviceId, snapshotId, onClose }: DiffView
   })
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div className="rounded-lg border border-border bg-panel p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
@@ -47,10 +47,8 @@ export function DiffViewer({ tenantId, deviceId, snapshotId, onClose }: DiffView
 
       {/* Content */}
       {isLoading ? (
-        <div className="space-y-2">
-          {[75, 90, 65, 85, 70, 80].map((w, i) => (
-            <div key={i} className="h-4 bg-elevated rounded animate-pulse" style={{ width: `${w}%` }} />
-          ))}
+        <div className="py-8 text-center">
+          <span className="text-[9px] text-text-muted">Loading&hellip;</span>
         </div>
       ) : isError || !diff ? (
         <div className="flex items-center justify-center py-6">

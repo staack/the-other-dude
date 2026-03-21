@@ -87,13 +87,11 @@ export function InterfacesTab({ tenantId, deviceId, active = true }: InterfacesT
 
       {/* Charts */}
       {isLoading ? (
-        <div className="space-y-4">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="rounded-lg border border-border bg-surface p-4 h-56 animate-pulse" />
-          ))}
+        <div className="py-8 text-center">
+          <span className="text-[9px] text-text-muted">Loading&hellip;</span>
         </div>
       ) : !trafficData || trafficData.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-text-muted">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center text-sm text-text-muted">
           {interfaces && interfaces.length === 0
             ? 'No interfaces discovered for this device.'
             : 'No traffic data available for the selected time range.'}
@@ -103,7 +101,7 @@ export function InterfacesTab({ tenantId, deviceId, active = true }: InterfacesT
           {interfaceNames.map((ifaceName) => {
             const ifaceData = byInterface.get(ifaceName) ?? []
             return (
-              <div key={ifaceName} className="rounded-lg border border-border bg-surface p-4">
+              <div key={ifaceName} className="rounded-lg border border-border bg-panel p-4">
                 <TrafficChart data={ifaceData} interfaceName={ifaceName} />
               </div>
             )

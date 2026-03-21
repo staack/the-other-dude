@@ -158,16 +158,11 @@ export function ConfigTab({
         {/* Timeline panel */}
         <div className="w-72 flex-shrink-0">
           {isLoading ? (
-            <div className="space-y-2">
-              {[0, 1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="h-14 rounded-lg border border-border bg-surface animate-pulse"
-                />
-              ))}
+            <div className="py-8 text-center">
+              <span className="text-[9px] text-text-muted">Loading&hellip;</span>
             </div>
           ) : !backups || backups.length === 0 ? (
-            <div className="rounded-lg border border-border bg-surface p-6 text-center text-sm text-text-muted">
+            <div className="rounded-lg border border-border bg-panel p-6 text-center text-sm text-text-muted">
               No backups yet. Click &lsquo;Backup Now&rsquo; to create the first backup.
             </div>
           ) : (
@@ -201,7 +196,7 @@ export function ConfigTab({
               }
             />
           ) : (
-            <div className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-text-muted h-full flex items-center justify-center min-h-32">
+            <div className="rounded-lg border border-border bg-panel p-8 text-center text-sm text-text-muted h-full flex items-center justify-center min-h-32">
               {selectedShas.length < 2
                 ? 'Select two backups from the timeline to compare'
                 : 'Click "Compare selected" to view the diff'}

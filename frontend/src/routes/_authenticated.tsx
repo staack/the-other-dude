@@ -12,7 +12,7 @@ import { EventStreamProvider } from '@/contexts/EventStreamContext'
 import type { FleetDevice } from '@/lib/api'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { PageTransition } from '@/components/layout/PageTransition'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 export const Route = createFileRoute('/_authenticated')({
@@ -164,11 +164,7 @@ function AuthenticatedLayout() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="space-y-4 w-64">
-          <Skeleton className="h-8 w-48 mx-auto" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
+        <LoadingText />
       </div>
     )
   }

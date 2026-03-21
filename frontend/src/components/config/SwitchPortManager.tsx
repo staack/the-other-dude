@@ -10,7 +10,7 @@
 import { useMemo } from 'react'
 import { Zap, Network } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useConfigBrowse } from '@/hooks/useConfigPanel'
 import type { ConfigPanelProps } from '@/lib/configPanelTypes'
@@ -134,19 +134,15 @@ export function SwitchPortManager({ tenantId, deviceId, active }: ConfigPanelPro
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-border bg-surface p-4">
-        <div className="flex flex-wrap gap-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-16 rounded-md" />
-          ))}
-        </div>
+      <div className="py-8 text-center">
+        <LoadingText />
       </div>
     )
   }
 
   if (etherPorts.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-surface p-8 text-center text-text-secondary text-sm">
+      <div className="rounded-lg border border-border bg-panel p-8 text-center text-text-secondary text-sm">
         <Network className="h-8 w-8 mx-auto mb-2 opacity-40" />
         No ethernet ports detected on this device.
       </div>
@@ -156,7 +152,7 @@ export function SwitchPortManager({ tenantId, deviceId, active }: ConfigPanelPro
   return (
     <div className="space-y-4">
       {/* Port grid */}
-      <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-panel p-4">
         <h3 className="text-sm font-medium text-text-primary mb-3">Switch Ports</h3>
         <div className="flex flex-wrap gap-2">
           {etherPorts.map((port) => {
@@ -177,7 +173,7 @@ export function SwitchPortManager({ tenantId, deviceId, active }: ConfigPanelPro
       </div>
 
       {/* VLAN Legend */}
-      <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-panel p-4">
         <h3 className="text-sm font-medium text-text-primary mb-2">VLAN Legend</h3>
         <div className="flex flex-wrap gap-3">
           <LegendItem color={UNASSIGNED_COLOR} label="Unassigned" />

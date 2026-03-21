@@ -121,11 +121,11 @@ function LoginPage() {
             <RugLogo size={56} />
           </div>
           <h1 className="text-lg font-semibold text-text-primary">TOD - The Other Dude</h1>
-          <p className="text-xs text-text-muted mt-1">MSP Fleet Management</p>
+          <p className="text-xs text-text-muted mt-1">MikroTik Fleet Management</p>
         </div>
 
         {/* Login card */}
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="rounded-lg border border-border bg-panel p-6">
           <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>

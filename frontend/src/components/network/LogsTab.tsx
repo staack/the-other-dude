@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Search, RefreshCw } from 'lucide-react'
 import { networkApi, type LogEntry } from '@/lib/networkApi'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 
 interface LogsTabProps {
   tenantId: string
@@ -62,16 +62,10 @@ function TopicBadge({ topics }: { topics: string }) {
   )
 }
 
-function TableSkeleton() {
+function TableLoading() {
   return (
-    <div className="space-y-1">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex gap-3 py-2 px-3">
-          <Skeleton className="h-4 w-32 shrink-0" />
-          <Skeleton className="h-4 w-20 shrink-0" />
-          <Skeleton className="h-4 flex-1" />
-        </div>
-      ))}
+    <div className="py-8 text-center">
+      <LoadingText />
     </div>
   )
 }
@@ -187,9 +181,9 @@ export function LogsTab({ tenantId, deviceId, active }: LogsTabProps) {
       </div>
 
       {/* Log table */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         {isLoading ? (
-          <TableSkeleton />
+          <TableLoading />
         ) : error ? (
           <div className="p-6 text-center text-sm text-error">
             Failed to fetch device logs. The device may be offline or unreachable.

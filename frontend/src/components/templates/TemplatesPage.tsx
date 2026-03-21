@@ -229,7 +229,7 @@ export function TemplatesPage() {
             {templates.map((template) => (
               <div
                 key={template.id}
-                className="rounded-lg border border-border bg-surface/50 p-4 hover:bg-surface transition-colors"
+                className="rounded-lg border border-border bg-panel/50 p-4 hover:bg-panel transition-colors"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
@@ -313,7 +313,7 @@ export function TemplatesPage() {
         open={!!deleteConfirmId}
         onOpenChange={(o) => !o && setDeleteConfirmId(null)}
       >
-        <DialogContent className="max-w-sm bg-surface border-border text-text-primary">
+        <DialogContent className="max-w-sm bg-panel border-border text-text-primary">
           <DialogHeader>
             <DialogTitle className="text-sm">Delete Template</DialogTitle>
           </DialogHeader>

@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import {
   Select,
   SelectContent,
@@ -71,14 +71,14 @@ const SUB_TABS: { key: SubTab; label: string; icon: React.ElementType }[] = [
 // ---------------------------------------------------------------------------
 
 const TYPE_COLORS: Record<string, string> = {
-  ether: '#3B82F6',
-  bridge: '#8B5CF6',
-  vlan: '#F59E0B',
-  bonding: '#10B981',
-  pppoe: '#EF4444',
-  l2tp: '#EC4899',
-  ovpn: '#06B6D4',
-  wlan: '#84CC16',
+  ether: 'hsl(var(--accent))',
+  bridge: 'hsl(var(--info))',
+  vlan: 'hsl(var(--warning))',
+  bonding: 'hsl(var(--success))',
+  pppoe: 'hsl(var(--error))',
+  l2tp: 'hsl(var(--error))',
+  ovpn: 'hsl(var(--info))',
+  wlan: 'hsl(var(--success))',
 }
 
 // ---------------------------------------------------------------------------
@@ -228,23 +228,13 @@ export function InterfacesPanel({ tenantId, deviceId, active }: ConfigPanelProps
 }
 
 // ---------------------------------------------------------------------------
-// Loading skeleton
+// Loading state
 // ---------------------------------------------------------------------------
 
-function TableSkeleton({ rows = 5 }: { rows?: number }) {
+function TableLoading() {
   return (
-    <div className="rounded-lg border border-border bg-surface">
-      <div className="p-3 border-b border-border">
-        <Skeleton className="h-4 w-32" />
-      </div>
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 p-3 border-b border-border last:border-0">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-16" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-12" />
-        </div>
-      ))}
+    <div className="py-8 text-center">
+      <LoadingText />
     </div>
   )
 }
@@ -260,18 +250,18 @@ function InterfacesTable({
   entries: Record<string, string>[]
   isLoading: boolean
 }) {
-  if (isLoading) return <TableSkeleton />
+  if (isLoading) return <TableLoading />
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-surface p-8 text-center text-text-secondary text-sm">
+      <div className="rounded-lg border border-border bg-panel p-8 text-center text-text-secondary text-sm">
         No interfaces found on this device.
       </div>
     )
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+    <div className="rounded-lg border border-border bg-panel overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border bg-elevated/30">
@@ -362,7 +352,7 @@ function IpAddressesTab({ entries, isLoading, interfaceNames, addChange }: IpAdd
     })
   }
 
-  if (isLoading) return <TableSkeleton />
+  if (isLoading) return <TableLoading />
 
   return (
     <div className="space-y-3">
@@ -374,11 +364,11 @@ function IpAddressesTab({ entries, isLoading, interfaceNames, addChange }: IpAdd
       </div>
 
       {entries.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center text-text-secondary text-sm">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center text-text-secondary text-sm">
           No IP addresses configured.
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-elevated/30">
@@ -621,7 +611,7 @@ function VlansTab({ entries, isLoading, interfaceNames, addChange }: VlansTabPro
     })
   }
 
-  if (isLoading) return <TableSkeleton />
+  if (isLoading) return <TableLoading />
 
   return (
     <div className="space-y-3">
@@ -633,11 +623,11 @@ function VlansTab({ entries, isLoading, interfaceNames, addChange }: VlansTabPro
       </div>
 
       {entries.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center text-text-secondary text-sm">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center text-text-secondary text-sm">
           No VLANs configured.
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-elevated/30">
@@ -926,7 +916,7 @@ function BridgesTab({
     })
   }
 
-  if (isLoading) return <TableSkeleton />
+  if (isLoading) return <TableLoading />
 
   return (
     <div className="space-y-6">
@@ -941,11 +931,11 @@ function BridgesTab({
         </div>
 
         {bridges.length === 0 ? (
-          <div className="rounded-lg border border-border bg-surface p-6 text-center text-text-secondary text-sm">
+          <div className="rounded-lg border border-border bg-panel p-6 text-center text-text-secondary text-sm">
             No bridges configured.
           </div>
         ) : (
-          <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="rounded-lg border border-border bg-panel overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-elevated/30">
@@ -1015,11 +1005,11 @@ function BridgesTab({
         </div>
 
         {bridgePorts.length === 0 ? (
-          <div className="rounded-lg border border-border bg-surface p-6 text-center text-text-secondary text-sm">
+          <div className="rounded-lg border border-border bg-panel p-6 text-center text-text-secondary text-sm">
             No bridge ports configured.
           </div>
         ) : (
-          <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="rounded-lg border border-border bg-panel overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-elevated/30">

@@ -88,7 +88,7 @@ export function WirelessLinksTable({ tenantId, siteId }: WirelessLinksTableProps
   }, [data])
 
   if (isLoading) {
-    return <TableSkeleton rows={8} />
+    return <TableSkeleton />
   }
 
   if (!data || data.items.length === 0) {

@@ -87,7 +87,7 @@ export function IpsecPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
         {SUB_TABS.map((tab) => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
             className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
-              activeTab === tab.key ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-surface/50')}>
+              activeTab === tab.key ? 'bg-panel text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-panel/50')}>
             {tab.icon}{tab.label}
           </button>
         ))}
@@ -147,11 +147,11 @@ function PeersTab({ entries, panel }: { entries: PeerEntry[]; panel: PanelHook }
           <div className="space-y-1"><Label className="text-xs text-text-secondary">Address</Label><Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} placeholder="0.0.0.0/0" className="h-8 text-sm font-mono" /></div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label className="text-xs text-text-secondary">Auth Method</Label>
-              <select value={form['auth-method']} onChange={(e) => setForm((f) => ({ ...f, 'auth-method': e.target.value }))} className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary">
+              <select value={form['auth-method']} onChange={(e) => setForm((f) => ({ ...f, 'auth-method': e.target.value }))} className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary">
                 <option value="pre-shared-key">Pre-Shared Key</option><option value="rsa-key">RSA Key</option><option value="rsa-signature">RSA Signature</option>
               </select></div>
             <div className="space-y-1"><Label className="text-xs text-text-secondary">Exchange Mode</Label>
-              <select value={form['exchange-mode']} onChange={(e) => setForm((f) => ({ ...f, 'exchange-mode': e.target.value }))} className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary">
+              <select value={form['exchange-mode']} onChange={(e) => setForm((f) => ({ ...f, 'exchange-mode': e.target.value }))} className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary">
                 <option value="main">Main</option><option value="aggressive">Aggressive</option><option value="ike2">IKEv2</option>
               </select></div>
           </div>
@@ -208,8 +208,8 @@ function PoliciesTab({ entries, panel }: { entries: PolicyEntry[]; panel: PanelH
             <div className="space-y-1"><Label className="text-xs text-text-secondary">Dst Address</Label><Input value={form['dst-address']} onChange={(e) => setForm((f) => ({ ...f, 'dst-address': e.target.value }))} placeholder="10.0.0.0/24" className="h-8 text-sm font-mono" /></div>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1"><Label className="text-xs text-text-secondary">Tunnel</Label><select value={form.tunnel} onChange={(e) => setForm((f) => ({ ...f, tunnel: e.target.value }))} className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"><option value="yes">Yes</option><option value="no">No</option></select></div>
-            <div className="space-y-1"><Label className="text-xs text-text-secondary">Action</Label><select value={form.action} onChange={(e) => setForm((f) => ({ ...f, action: e.target.value }))} className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"><option value="encrypt">Encrypt</option><option value="none">None</option></select></div>
+            <div className="space-y-1"><Label className="text-xs text-text-secondary">Tunnel</Label><select value={form.tunnel} onChange={(e) => setForm((f) => ({ ...f, tunnel: e.target.value }))} className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"><option value="yes">Yes</option><option value="no">No</option></select></div>
+            <div className="space-y-1"><Label className="text-xs text-text-secondary">Action</Label><select value={form.action} onChange={(e) => setForm((f) => ({ ...f, action: e.target.value }))} className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"><option value="encrypt">Encrypt</option><option value="none">None</option></select></div>
             <div className="space-y-1"><Label className="text-xs text-text-secondary">Proposal</Label><Input value={form.proposal} onChange={(e) => setForm((f) => ({ ...f, proposal: e.target.value }))} className="h-8 text-sm" /></div>
           </div>
         </div>
@@ -275,7 +275,7 @@ function ProposalsTab({ entries, panel }: { entries: ProposalEntry[]; panel: Pan
 
 function SasTab({ entries }: { entries: SaEntry[] }) {
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+    <div className="rounded-lg border border-border bg-panel overflow-hidden">
       <div className="px-4 py-2 border-b border-border/50"><span className="text-sm font-medium text-text-secondary">Installed SAs ({entries.length})</span></div>
       {entries.length === 0 ? <div className="px-4 py-8 text-center text-sm text-text-muted">No active security associations.</div> : (
         <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border/50 text-text-secondary text-xs">
@@ -301,7 +301,7 @@ function SasTab({ entries }: { entries: SaEntry[] }) {
 
 function TableWrapper({ title, count, onAdd, children }: { title: string; count: number; onAdd: () => void; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+    <div className="rounded-lg border border-border bg-panel overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
         <span className="text-sm font-medium text-text-secondary">{title} ({count})</span>
         <Button size="sm" variant="outline" className="gap-1" onClick={onAdd}><Plus className="h-3.5 w-3.5" />Add</Button>

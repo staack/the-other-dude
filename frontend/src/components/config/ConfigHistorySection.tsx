@@ -65,7 +65,7 @@ export function ConfigHistorySection({ tenantId, deviceId, deviceName }: ConfigH
   })
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div className="rounded-lg border border-border bg-panel p-4">
       <div className="flex items-center gap-2 mb-3">
         <History className="h-4 w-4 text-text-muted" />
         <h3 className="text-sm font-medium text-text-muted">Configuration History</h3>
@@ -83,7 +83,7 @@ export function ConfigHistorySection({ tenantId, deviceId, deviceName }: ConfigH
       )}
 
       {isLoading ? (
-        <TableSkeleton rows={3} />
+        <TableSkeleton />
       ) : !changes || changes.length === 0 ? (
         <div className="flex items-center justify-center py-6">
           <span className="text-xs text-text-muted">No configuration changes recorded yet.</span>

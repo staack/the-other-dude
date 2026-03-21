@@ -76,7 +76,7 @@ export function CAStatusCard({ ca, canWrite: writable, tenantId }: CAStatusCardP
   if (!ca) {
     return (
       <div className="max-w-lg mx-auto">
-        <div className="rounded-lg border border-border bg-surface p-8 text-center space-y-6">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center space-y-6">
           <div className="mx-auto w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center">
             <Shield className="h-8 w-8 text-accent" />
           </div>
@@ -118,7 +118,7 @@ export function CAStatusCard({ ca, canWrite: writable, tenantId }: CAStatusCardP
   return (
     <div
       className={cn(
-        'rounded-lg border bg-surface p-6 space-y-4',
+        'rounded-lg border bg-panel p-6 space-y-4',
         isExpired ? 'border-error/40' : 'border-success/30',
       )}
     >

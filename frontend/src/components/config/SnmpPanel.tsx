@@ -158,7 +158,7 @@ export function SnmpPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
       </div>
 
       {/* SNMP Status + Settings */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <div className="flex items-center gap-2">
             <Radio className="h-4 w-4 text-accent" />
@@ -192,7 +192,7 @@ export function SnmpPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
       </div>
 
       {/* Communities */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <span className="text-sm font-medium text-text-secondary">SNMP Communities</span>
           <Button size="sm" variant="outline" className="gap-1" onClick={handleAddCommunity}>
@@ -279,7 +279,7 @@ export function SnmpPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
             <div className="space-y-1">
               <Label className="text-xs text-text-secondary">Trap Version</Label>
               <select value={settingsForm['trap-version'] || '1'} onChange={(e) => setSettingsForm((f) => ({ ...f, 'trap-version': e.target.value }))}
-                className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary">
+                className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary">
                 <option value="1">v1</option>
                 <option value="2">v2c</option>
                 <option value="3">v3</option>
@@ -313,7 +313,7 @@ export function SnmpPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
               <div className="space-y-1">
                 <Label className="text-xs text-text-secondary">Read Access</Label>
                 <select value={communityForm['read-access'] || 'yes'} onChange={(e) => setCommunityForm((f) => ({ ...f, 'read-access': e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary">
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary">
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
                 </select>
@@ -321,7 +321,7 @@ export function SnmpPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
               <div className="space-y-1">
                 <Label className="text-xs text-text-secondary">Write Access</Label>
                 <select value={communityForm['write-access'] || 'no'} onChange={(e) => setCommunityForm((f) => ({ ...f, 'write-access': e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary">
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary">
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
                 </select>
@@ -329,7 +329,7 @@ export function SnmpPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
               <div className="space-y-1">
                 <Label className="text-xs text-text-secondary">Security</Label>
                 <select value={communityForm['security'] || 'none'} onChange={(e) => setCommunityForm((f) => ({ ...f, security: e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary">
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary">
                   <option value="none">None</option>
                   <option value="authorized">Authorized</option>
                   <option value="private">Private</option>

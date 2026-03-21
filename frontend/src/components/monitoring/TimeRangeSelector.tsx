@@ -101,7 +101,7 @@ export function TimeRangeSelector({
             className={cn(
               'px-2.5 py-1 text-xs rounded border transition-colors',
               value === preset
-                ? 'bg-elevated border-border-bright text-text-primary'
+                ? 'bg-elevated border-border-default text-text-primary'
                 : 'bg-transparent border-border/50 text-text-primary/40 hover:text-text-primary/60 hover:border-border',
             )}
           >
@@ -113,7 +113,7 @@ export function TimeRangeSelector({
           className={cn(
             'px-2.5 py-1 text-xs rounded border transition-colors',
             value === 'custom'
-              ? 'bg-elevated border-border-bright text-text-primary'
+              ? 'bg-elevated border-border-default text-text-primary'
               : 'bg-transparent border-border/50 text-text-primary/40 hover:text-text-primary/60 hover:border-border',
           )}
         >

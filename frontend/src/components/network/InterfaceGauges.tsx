@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { metricsApi, type InterfaceMetricPoint } from '@/lib/api'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 
 interface InterfaceGaugesProps {
   tenantId: string
@@ -101,21 +101,15 @@ export function InterfaceGauges({ tenantId, deviceId, active }: InterfaceGaugesP
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="rounded-lg border border-border bg-surface p-3">
-            <Skeleton className="h-4 w-24 mb-2" />
-            <Skeleton className="h-3 w-full mb-1" />
-            <Skeleton className="h-3 w-full" />
-          </div>
-        ))}
+      <div className="py-8 text-center">
+        <LoadingText />
       </div>
     )
   }
 
   if (!interfaces || interfaces.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-surface p-6 text-center text-sm text-text-muted">
+      <div className="rounded-lg border border-border bg-panel p-6 text-center text-sm text-text-muted">
         No interface data available.
       </div>
     )
@@ -149,7 +143,7 @@ export function InterfaceGauges({ tenantId, deviceId, active }: InterfaceGaugesP
         const values = latestByIface.get(ifaceName) ?? { rx: 0, tx: 0 }
 
         return (
-          <div key={ifaceName} className="rounded-lg border border-border bg-surface p-3">
+          <div key={ifaceName} className="rounded-lg border border-border bg-panel p-3">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-sm font-medium text-text-primary">{ifaceName}</span>
               <span className="text-[10px] text-text-muted">

@@ -148,7 +148,7 @@ export function UsersPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
 
       {/* Groups overview */}
       {groups.length > 0 && (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <div className="px-4 py-2 border-b border-border/50 flex items-center gap-2">
             <Shield className="h-4 w-4 text-text-muted" />
             <span className="text-sm font-medium text-text-secondary">User Groups</span>
@@ -266,7 +266,7 @@ function UsersTable({
 
   return (
     <>
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
             <Users className="h-4 w-4" />

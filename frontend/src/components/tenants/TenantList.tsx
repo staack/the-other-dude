@@ -60,7 +60,7 @@ export function TenantList() {
       <div className="rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-surface">
+            <tr className="border-b border-border bg-panel">
               <th className="text-left px-3 py-2 text-xs font-medium text-text-muted">Name</th>
               <th className="text-right px-3 py-2 text-xs font-medium text-text-muted">Users</th>
               <th className="text-right px-3 py-2 text-xs font-medium text-text-muted">Devices</th>
@@ -74,7 +74,7 @@ export function TenantList() {
             {isLoading ? (
               <tr>
                 <td colSpan={5} className="px-3 py-4">
-                  <TableSkeleton rows={5} />
+                  <TableSkeleton />
                 </td>
               </tr>
             ) : tenants?.length === 0 ? (
@@ -87,7 +87,7 @@ export function TenantList() {
               tenants?.map((tenant) => (
                 <tr
                   key={tenant.id}
-                  className="border-b border-border/50 hover:bg-surface transition-colors"
+                  className="border-b border-border/50 hover:bg-panel transition-colors"
                 >
                   <td className="px-3 py-2.5">
                     <Link

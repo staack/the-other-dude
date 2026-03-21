@@ -2,12 +2,10 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  ChevronRight,
   Eye,
   EyeOff,
   Pencil,
   Trash2,
-  Circle,
   Tag,
   FolderOpen,
   BellOff,
@@ -189,50 +187,18 @@ function EditDeviceDialog({
   )
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    online: { label: 'Online', className: 'text-success border-success/50 bg-success/10' },
-    offline: { label: 'Offline', className: 'text-error border-error/50 bg-error/10' },
-    unknown: { label: 'Unknown', className: 'text-text-muted border-border bg-elevated/50' },
-  }
-  const c = config[status] ?? config.unknown
-  return (
-    <span className={cn('inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded border', c.className)}>
-      <Circle className="h-2 w-2 fill-current" />
-      {c.label}
-    </span>
-  )
-}
-
 function TlsSecurityBadge({ tlsMode }: { tlsMode: string }) {
-  const config: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-    portal_ca: {
-      label: 'CA Verified',
-      icon: ShieldCheck,
-      className: 'text-success border-success/50 bg-success/10',
-    },
-    auto: {
-      label: 'Self-Signed TLS',
-      icon: Shield,
-      className: 'text-warning border-warning/50 bg-warning/10',
-    },
-    insecure: {
-      label: 'Insecure TLS',
-      icon: ShieldAlert,
-      className: 'text-orange-400 border-orange-400/50 bg-orange-400/10',
-    },
-    plain: {
-      label: 'Plain-Text (Insecure)',
-      icon: ShieldOff,
-      className: 'text-error border-error/50 bg-error/10',
-    },
+  const config: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+    portal_ca: { label: 'CA Verified', icon: ShieldCheck, color: 'text-success' },
+    auto: { label: 'Self-Signed TLS', icon: Shield, color: 'text-warning' },
+    insecure: { label: 'Insecure TLS', icon: ShieldAlert, color: 'text-warning' },
+    plain: { label: 'Plain-Text', icon: ShieldOff, color: 'text-error' },
   }
   const c = config[tlsMode] ?? config.auto
   const Icon = c.icon
   return (
-    <span className={cn('inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded border', c.className)}>
+    <span className={cn('flex-shrink-0', c.color)} title={c.label}>
       <Icon className="h-3 w-3" />
-      {c.label}
     </span>
   )
 }
@@ -323,9 +289,9 @@ function TlsModeSelector({
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-4 py-2 border-b border-border/50 last:border-0">
-      <span className="text-xs text-text-muted w-32 flex-shrink-0 pt-0.5">{label}</span>
-      <span className="text-sm text-text-primary flex-1">{value ?? '—'}</span>
+    <div className="flex items-center gap-3 py-1 border-b border-border-subtle last:border-0">
+      <span className="text-[10px] text-text-muted w-24 flex-shrink-0">{label}</span>
+      <span className="text-xs text-text-primary flex-1">{value ?? '—'}</span>
     </div>
   )
 }
@@ -336,7 +302,11 @@ function DeviceDetailPage() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const [showCreds, setShowCreds] = useState(false)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTabRaw] = useState('overview')
+  const setActiveTab = (tab: string) => {
+    setActiveTabRaw(tab)
+    document.getElementById('main-content')?.scrollTo(0, 0)
+  }
   const [editOpen, setEditOpen] = useState(false)
   const { mode, toggleMode } = useSimpleConfigMode(deviceId)
 
@@ -465,57 +435,67 @@ function DeviceDetailPage() {
 
   return (
     <div className={cn('space-y-4', mode === 'simple' ? 'max-w-5xl' : 'max-w-3xl')} data-testid="device-detail">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1 text-xs text-text-muted">
-        <Link to="/tenants" className="hover:text-text-secondary transition-colors">
-          Tenants
-        </Link>
-        <ChevronRight className="h-3 w-3" />
-        <Link
-          to="/tenants/$tenantId/devices"
-          params={{ tenantId }}
-          className="hover:text-text-secondary transition-colors"
-        >
-          {tenant?.name ?? tenantId}
-        </Link>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-text-secondary">{device.hostname}</span>
-      </div>
-
-      {/* Device header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold" data-testid="device-hostname">{device.hostname}</h1>
-            <StatusBadge status={device.status} />
-            <TlsSecurityBadge tlsMode={device.tls_mode} />
-          </div>
-          <p className="font-mono text-sm text-text-secondary">{device.ip_address}</p>
+      {/* Device workspace header */}
+      <div className="bg-sidebar border border-border-default rounded-sm px-3 py-1.5">
+        {/* Top row: device identity */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Link
+            to="/tenants/$tenantId/devices"
+            params={{ tenantId }}
+            className="text-[8px] text-text-muted hover:text-text-secondary transition-[color] duration-[50ms] flex-shrink-0"
+          >
+            Devices
+          </Link>
+          <span className="text-[8px] text-text-muted flex-shrink-0">&rsaquo;</span>
+          <div className={cn(
+            'w-1.5 h-1.5 rounded-full flex-shrink-0',
+            device.status === 'online' ? 'bg-online' :
+            device.status === 'degraded' ? 'bg-warning' : 'bg-offline'
+          )} />
+          <h1 className="text-[13px] font-semibold text-text-primary truncate" data-testid="device-hostname">
+            {device.hostname}
+          </h1>
+          <span className={cn(
+            'text-[9px] flex-shrink-0',
+            device.status === 'online' ? 'text-online' :
+            device.status === 'degraded' ? 'text-warning' : 'text-offline'
+          )}>
+            {device.status}
+          </span>
+          <TlsSecurityBadge tlsMode={device.tls_mode} />
         </div>
-        <div className="flex items-center gap-3">
-          <SimpleModeToggle mode={mode} onModeChange={toggleMode} />
-          {user?.role !== 'viewer' && (
-            <div className="flex gap-2">
-              {device.routeros_version !== null && (
-                <>
-                  <WinBoxButton tenantId={tenantId} deviceId={deviceId} />
-                  <RemoteWinBoxButton tenantId={tenantId} deviceId={deviceId} />
-                </>
-              )}
+        {/* Metadata + actions row */}
+        <div className="flex items-center justify-between mt-0.5 gap-2">
+          <div className="text-[9px] text-text-secondary truncate pl-[9px]">
+            {device.model ?? device.board_name ?? '\u2014'}
+            {' \u00b7 '}
+            <span className="font-mono text-[8px]">{device.ip_address}</span>
+            {device.routeros_version && (
+              <>
+                {' \u00b7 '}
+                <span className="font-mono text-[8px]">v{device.routeros_version}</span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <SimpleModeToggle mode={mode} onModeChange={toggleMode} />
+            {user?.role !== 'viewer' && device.routeros_version !== null && (
+              <>
+                <WinBoxButton tenantId={tenantId} deviceId={deviceId} />
+                <RemoteWinBoxButton tenantId={tenantId} deviceId={deviceId} />
+              </>
+            )}
+            {user?.role !== 'viewer' && (
               <SSHTerminal tenantId={tenantId} deviceId={deviceId} deviceName={device.hostname} />
-            </div>
-          )}
-          <div className="flex gap-2">
+            )}
             {canWrite(user) && (
-              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} data-testid="button-edit-device">
-                <Pencil className="h-3.5 w-3.5" />
-                Edit
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-text-muted" onClick={() => setEditOpen(true)} data-testid="button-edit-device">
+                <Pencil className="h-3 w-3" />
               </Button>
             )}
             {canDelete(user) && (
-              <Button variant="destructive" size="sm" onClick={handleDelete} data-testid="button-delete-device">
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-text-muted" onClick={handleDelete} data-testid="button-delete-device">
+                <Trash2 className="h-3 w-3" />
               </Button>
             )}
           </div>
@@ -542,7 +522,7 @@ function DeviceDetailPage() {
         overviewContent={
           <>
             {/* Device info */}
-            <div className="rounded-lg border border-border bg-surface px-4 py-2">
+            <div className="rounded-sm border border-border-default bg-panel px-3 py-1.5">
               <InfoRow label="Model" value={device.model} />
               <InfoRow label="RouterOS" value={device.routeros_version} />
               <InfoRow label="Firmware" value={device.firmware_version || 'N/A'} />
@@ -595,7 +575,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Credentials (masked) */}
-            <div className="rounded-lg border border-border bg-surface px-4 py-3">
+            <div className="rounded-sm border border-border-default bg-panel px-3 py-2">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-text-secondary">Credentials</h3>
                 <Button
@@ -632,7 +612,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Groups */}
-            <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-3">
+            <div className="rounded-sm border border-border-default bg-panel px-3 py-2 space-y-3">
               <div className="flex items-center gap-2">
                 <FolderOpen className="h-4 w-4 text-text-muted" />
                 <h3 className="text-sm font-medium text-text-secondary">Groups</h3>
@@ -641,7 +621,7 @@ function DeviceDetailPage() {
                 {device.groups.map((group) => (
                   <div
                     key={group.id}
-                    className="flex items-center gap-1 text-xs border border-border-bright rounded px-2 py-1"
+                    className="flex items-center gap-1 text-xs border border-border-default rounded px-2 py-1"
                   >
                     {group.name}
                     {canWrite(user) && (
@@ -678,7 +658,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Tags */}
-            <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-3">
+            <div className="rounded-sm border border-border-default bg-panel px-3 py-2 space-y-3">
               <div className="flex items-center gap-2">
                 <Tag className="h-4 w-4 text-text-muted" />
                 <h3 className="text-sm font-medium text-text-secondary">Tags</h3>
@@ -721,7 +701,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Interface Utilization */}
-            <div className="rounded-lg border border-border bg-surface p-4">
+            <div className="rounded-lg border border-border bg-panel p-4">
               <h3 className="text-sm font-medium text-text-muted mb-3">Interface Utilization</h3>
               <InterfaceGauges tenantId={tenantId} deviceId={deviceId} active={activeTab === 'overview'} />
             </div>
@@ -824,7 +804,7 @@ function DeviceAlertsSection({
   const resolvedAlerts = alerts.filter((a) => a.status === 'resolved').slice(0, 5)
 
   if (isLoading) {
-    return <TableSkeleton rows={3} />
+    return <TableSkeleton />
   }
 
   return (
@@ -842,12 +822,12 @@ function DeviceAlertsSection({
         </h3>
 
         {firingAlerts.length === 0 ? (
-          <div className="rounded-lg border border-border bg-surface p-6 text-center">
+          <div className="rounded-lg border border-border bg-panel p-6 text-center">
             <CheckCircle className="h-6 w-6 text-success/50 mx-auto mb-1" />
             <p className="text-xs text-text-muted">No active alerts for this device.</p>
           </div>
         ) : (
-          <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="rounded-lg border border-border bg-panel overflow-hidden">
             {firingAlerts.map((alert) => {
               const isSilenced =
                 alert.silenced_until && new Date(alert.silenced_until) > new Date()
@@ -940,7 +920,7 @@ function DeviceAlertsSection({
           </button>
 
           {showResolved && (
-            <div className="rounded-lg border border-border bg-surface overflow-hidden">
+            <div className="rounded-lg border border-border bg-panel overflow-hidden">
               {resolvedAlerts.map((alert) => (
                 <div
                   key={alert.id}

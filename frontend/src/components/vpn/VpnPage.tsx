@@ -190,7 +190,7 @@ export function VpnPage() {
     return (
       <div className="p-6 space-y-6">
         <h1 className="text-2xl font-bold text-text-primary">VPN</h1>
-        <TableSkeleton rows={3} />
+        <TableSkeleton />
       </div>
     )
   }
@@ -202,7 +202,7 @@ export function VpnPage() {
       <div className="p-6 space-y-6">
         <h1 className="text-2xl font-bold text-text-primary">VPN</h1>
         <div className="max-w-lg mx-auto mt-12">
-          <div className="rounded-lg border border-border bg-surface p-8 text-center space-y-6">
+          <div className="rounded-lg border border-border bg-panel p-8 text-center space-y-6">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center">
               <Shield className="h-8 w-8 text-accent" />
             </div>
@@ -309,7 +309,7 @@ export function VpnPage() {
 
       {/* Peer list */}
       {peersLoading ? (
-        <TableSkeleton rows={3} />
+        <TableSkeleton />
       ) : peers.length === 0 ? (
         <div className="rounded-lg border border-dashed border-accent/30 bg-accent/5 p-8 text-center space-y-3">
           <ShieldCheck className="h-10 w-10 text-accent mx-auto" />
@@ -496,7 +496,7 @@ function InfoCard({
   muted?: boolean
 }) {
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div className="rounded-lg border border-border bg-panel p-4">
       <div className="flex items-center gap-2 mb-1">
         <Icon className="h-4 w-4 text-text-muted" />
         <span className="text-xs text-text-muted uppercase tracking-wider">{label}</span>

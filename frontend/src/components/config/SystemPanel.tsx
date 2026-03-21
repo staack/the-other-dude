@@ -104,8 +104,8 @@ export function SystemPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
               activeTab === tab.key
-                ? 'bg-surface text-text-primary shadow-sm'
-                : 'text-text-secondary hover:text-text-primary hover:bg-surface/50',
+                ? 'bg-panel text-text-primary shadow-sm'
+                : 'text-text-secondary hover:text-text-primary hover:bg-panel/50',
             )}
           >
             {tab.icon}
@@ -179,7 +179,7 @@ function IdentityTab({
 
   return (
     <>
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <span className="text-sm font-medium text-text-secondary">System Identity</span>
           <Button size="sm" variant="outline" className="gap-1" onClick={handleEdit}>
@@ -283,7 +283,7 @@ function ClockTab({
   return (
     <div className="space-y-4">
       {/* Clock info */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <span className="text-sm font-medium text-text-secondary">Clock Settings</span>
           <Button size="sm" variant="outline" className="gap-1" onClick={handleEditClock}>
@@ -300,7 +300,7 @@ function ClockTab({
       </div>
 
       {/* NTP info */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <span className="text-sm font-medium text-text-secondary">NTP Client</span>
           <Button size="sm" variant="outline" className="gap-1" onClick={handleEditNtp}>
@@ -351,7 +351,7 @@ function ClockTab({
               <select
                 value={ntpEnabled}
                 onChange={(e) => setNtpEnabled(e.target.value)}
-                className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
+                className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"
               >
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
@@ -394,7 +394,7 @@ function ResourcesTab({ data }: { data: Record<string, string> }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="px-4 py-2 border-b border-border/50">
           <span className="text-sm font-medium text-text-secondary">System Resources</span>
         </div>

@@ -193,8 +193,8 @@ export function ArpPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
                 filterTab === tab.key
-                  ? 'bg-surface text-text-primary shadow-sm'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-surface/50',
+                  ? 'bg-panel text-text-primary shadow-sm'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-panel/50',
               )}
             >
               {tab.label}
@@ -290,7 +290,7 @@ function ArpTable({
   return (
     <>
       {/* Table */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
             <Network className="h-4 w-4" />

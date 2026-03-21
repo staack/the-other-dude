@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Shield, Lock, Globe } from 'lucide-react'
 import { networkApi, type VpnTunnel } from '@/lib/networkApi'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 
 interface VpnTabProps {
@@ -26,17 +26,17 @@ const VPN_TYPE_CONFIG = {
   wireguard: {
     icon: Shield,
     label: 'WireGuard',
-    color: '#a855f7', // purple
+    color: 'hsl(var(--accent))',
   },
   ipsec: {
     icon: Lock,
     label: 'IPsec',
-    color: '#3b82f6', // blue
+    color: 'hsl(var(--info))',
   },
   l2tp: {
     icon: Globe,
     label: 'L2TP',
-    color: '#22c55e', // green
+    color: 'hsl(var(--success))',
   },
 } as const
 
@@ -102,17 +102,15 @@ export function VpnTab({ tenantId, deviceId, active }: VpnTabProps) {
 
   if (isLoading) {
     return (
-      <div className="mt-4 space-y-2">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+      <div className="mt-4 py-8 text-center">
+        <LoadingText />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="mt-4 rounded-lg border border-border bg-surface p-6 text-center text-sm text-error">
+      <div className="mt-4 rounded-lg border border-border bg-panel p-6 text-center text-sm text-error">
         Failed to load VPN tunnels. The device may not support this feature.
       </div>
     )
@@ -120,7 +118,7 @@ export function VpnTab({ tenantId, deviceId, active }: VpnTabProps) {
 
   if (!data || data.tunnels.length === 0) {
     return (
-      <div className="mt-4 rounded-lg border border-border bg-surface p-8 text-center">
+      <div className="mt-4 rounded-lg border border-border bg-panel p-8 text-center">
         <Shield className="w-10 h-10 mx-auto mb-3 text-text-muted opacity-40" />
         <p className="text-sm font-medium text-text-primary mb-1">
           No active VPN tunnels
@@ -134,7 +132,7 @@ export function VpnTab({ tenantId, deviceId, active }: VpnTabProps) {
   }
 
   return (
-    <div className="mt-4 rounded-lg border border-border bg-surface overflow-hidden">
+    <div className="mt-4 rounded-lg border border-border bg-panel overflow-hidden">
       <table className="w-full text-left">
         <thead>
           <tr className="border-b border-border bg-elevated/50">

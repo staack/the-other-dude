@@ -256,7 +256,7 @@ function MassUpgradeProgress({
       )}
 
       {/* Device list */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden max-h-48 overflow-y-auto">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden max-h-48 overflow-y-auto">
         {rollout.jobs.map((job) => {
           const config = STATUS_CONFIG[job.status] ?? STATUS_CONFIG.pending
           const Icon = config.icon

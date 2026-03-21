@@ -189,7 +189,7 @@ export function DeviceCertTable({
   }
 
   if (loading) {
-    return <TableSkeleton rows={4} />
+    return <TableSkeleton />
   }
 
   return (

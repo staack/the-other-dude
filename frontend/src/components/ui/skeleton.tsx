@@ -1,15 +1,11 @@
 import { cn } from '@/lib/utils'
 
-type SkeletonProps = React.HTMLAttributes<HTMLDivElement>
+// Compatibility shim — returns null. Remove once all imports are cleaned up.
+export function Skeleton({ className: _className }: { className?: string }) {
+  return null
+}
 
-export function Skeleton({ className, ...props }: SkeletonProps) {
-  return (
-    <div
-      className={cn(
-        'animate-shimmer rounded-md bg-elevated bg-shimmer bg-shimmer relative overflow-hidden',
-        className,
-      )}
-      {...props}
-    />
-  )
+// Use this for panels where loading delay is noticeable
+export function LoadingText({ text = 'Loading\u2026' }: { text?: string }) {
+  return <span className="text-[9px] text-text-muted">{text}</span>
 }

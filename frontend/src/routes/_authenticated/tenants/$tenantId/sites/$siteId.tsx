@@ -26,9 +26,8 @@ function SiteDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-6 w-48 bg-elevated rounded" />
-        <div className="h-4 w-64 bg-elevated rounded" />
+      <div className="py-8 text-center">
+        <span className="text-[9px] text-text-muted">Loading&hellip;</span>
       </div>
     )
   }
@@ -49,7 +48,7 @@ function SiteDetailPage() {
       </div>
 
       {/* Site info card */}
-      <div className="rounded-lg border border-border bg-surface p-6 space-y-4">
+      <div className="rounded-lg border border-border bg-panel p-6 space-y-4">
         <div className="flex items-center gap-3">
           <MapPin className="h-6 w-6 text-text-muted" />
           <h1 className="text-xl font-semibold">{site.name}</h1>
@@ -87,15 +86,15 @@ function SiteDetailPage() {
 
       {/* Health stats summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border border-border bg-surface p-4 text-center">
+        <div className="rounded-lg border border-border bg-panel p-4 text-center">
           <p className="text-2xl font-semibold">{site.device_count}</p>
           <p className="text-xs text-text-muted">Devices</p>
         </div>
-        <div className="rounded-lg border border-border bg-surface p-4 text-center">
+        <div className="rounded-lg border border-border bg-panel p-4 text-center">
           <p className="text-2xl font-semibold">{site.online_count}</p>
           <p className="text-xs text-text-muted">Online</p>
         </div>
-        <div className="rounded-lg border border-border bg-surface p-4 text-center">
+        <div className="rounded-lg border border-border bg-panel p-4 text-center">
           <p
             className={cn(
               'text-2xl font-semibold',
@@ -110,7 +109,7 @@ function SiteDetailPage() {
           </p>
           <p className="text-xs text-text-muted">Online %</p>
         </div>
-        <div className="rounded-lg border border-border bg-surface p-4 text-center">
+        <div className="rounded-lg border border-border bg-panel p-4 text-center">
           <p className={cn('text-2xl font-semibold', site.alert_count > 0 && 'text-red-500')}>
             {site.alert_count}
           </p>

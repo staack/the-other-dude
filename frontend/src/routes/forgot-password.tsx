@@ -46,7 +46,7 @@ function ForgotPasswordPage() {
           </p>
         </div>
 
-        <div className="rounded-lg border border-border bg-surface/50 p-6">
+        <div className="rounded-lg border border-border bg-panel/50 p-6">
           {sent ? (
             <div className="space-y-4">
               <div className="rounded-md bg-success/10 border border-success/30 px-3 py-3">

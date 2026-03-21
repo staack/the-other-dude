@@ -275,7 +275,7 @@ export function BulkDeployDialog({
                     'rounded-lg border p-4 text-center',
                     result.failed > 0
                       ? 'border-error/30 bg-error/5'
-                      : 'border-border bg-surface',
+                      : 'border-border bg-panel',
                   )}
                 >
                   <XCircle

@@ -106,14 +106,14 @@ export function TorchTool({ tenantId, deviceId, active }: ConfigPanelProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-panel p-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <div className="space-y-1">
             <Label className="text-xs text-text-secondary">Interface</Label>
             <select
               value={iface}
               onChange={(e) => setIface(e.target.value)}
-              className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary font-mono"
+              className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary font-mono"
             >
               {ifaceNames.length > 0
                 ? ifaceNames.map((name) => (
@@ -190,7 +190,7 @@ export function TorchTool({ tenantId, deviceId, active }: ConfigPanelProps) {
       )}
 
       {entries.length > 0 && (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <div className="px-4 py-2 border-b border-border/50 flex items-center gap-2">
             <Flame className="h-4 w-4 text-accent" />
             <span className="text-sm font-medium text-text-secondary">
@@ -229,7 +229,7 @@ export function TorchTool({ tenantId, deviceId, active }: ConfigPanelProps) {
       )}
 
       {entries.length === 0 && !torchMutation.isPending && !torchMutation.isIdle && (
-        <div className="rounded-lg border border-border bg-surface p-6 text-center text-sm text-text-muted">
+        <div className="rounded-lg border border-border bg-panel p-6 text-center text-sm text-text-muted">
           No traffic captured. Try a different interface or remove filters.
         </div>
       )}

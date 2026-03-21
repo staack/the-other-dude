@@ -42,7 +42,7 @@ export function EntryTable({
         className={cn(
           'rounded-lg border p-4 text-sm',
           isContainerPath
-            ? 'border-border bg-surface text-text-secondary'
+            ? 'border-border bg-panel text-text-secondary'
             : 'border-error/30 bg-error/10 text-error',
         )}
       >
@@ -64,14 +64,8 @@ export function EntryTable({
 
   if (isLoading) {
     return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between mb-3">
-          <div className="h-5 w-48 bg-elevated/50 rounded animate-pulse" />
-          <div className="h-8 w-24 bg-elevated/50 rounded animate-pulse" />
-        </div>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-10 bg-surface rounded animate-pulse" />
-        ))}
+      <div className="py-8 text-center">
+        <span className="text-[9px] text-text-muted">Loading&hellip;</span>
       </div>
     )
   }
@@ -128,7 +122,7 @@ export function EntryTable({
                 <tr
                   key={entry['.id'] || i}
                   className={cn(
-                    'border-b border-border/50 hover:bg-surface transition-colors',
+                    'border-b border-border/50 hover:bg-panel transition-colors',
                     entry['dynamic'] === 'true' && 'text-text-muted',
                   )}
                 >

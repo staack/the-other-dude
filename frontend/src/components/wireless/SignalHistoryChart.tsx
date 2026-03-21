@@ -129,7 +129,7 @@ export function SignalHistoryChart({ tenantId, deviceId, macAddress }: SignalHis
             <Line
               type="monotone"
               dataKey="signal_avg"
-              stroke="#3b82f6"
+              stroke="hsl(var(--accent))"
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 3 }}

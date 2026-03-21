@@ -19,7 +19,7 @@ export function SimpleFormSection({
   children,
 }: SimpleFormSectionProps) {
   return (
-    <div className="rounded-lg border border-border bg-surface p-4 space-y-4">
+    <div className="rounded-lg border border-border bg-panel p-4 space-y-4">
       <div className="flex items-center gap-2.5">
         <Icon className="h-4.5 w-4.5 text-accent flex-shrink-0" />
         <div>

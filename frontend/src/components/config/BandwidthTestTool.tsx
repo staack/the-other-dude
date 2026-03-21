@@ -82,7 +82,7 @@ export function BandwidthTestTool({ tenantId, deviceId }: ConfigPanelProps) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-panel p-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div className="space-y-1 col-span-2 sm:col-span-1">
             <Label className="text-xs text-text-secondary">Target Address</Label>
@@ -99,7 +99,7 @@ export function BandwidthTestTool({ tenantId, deviceId }: ConfigPanelProps) {
             <select
               value={direction}
               onChange={(e) => setDirection(e.target.value)}
-              className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
+              className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"
             >
               <option value="both">Both</option>
               <option value="send">Send</option>
@@ -111,7 +111,7 @@ export function BandwidthTestTool({ tenantId, deviceId }: ConfigPanelProps) {
             <select
               value={protocol}
               onChange={(e) => setProtocol(e.target.value)}
-              className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
+              className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"
             >
               <option value="tcp">TCP</option>
               <option value="udp">UDP</option>
@@ -170,7 +170,7 @@ export function BandwidthTestTool({ tenantId, deviceId }: ConfigPanelProps) {
       )}
 
       {results.length > 0 && (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <div className="px-4 py-2 border-b border-border/50 flex items-center gap-2">
             <Gauge className="h-4 w-4 text-accent" />
             <span className="text-sm font-medium text-text-secondary">Bandwidth Test Results</span>

@@ -38,7 +38,7 @@ function ClientCountMiniChart({ data }: { data: WirelessMetricPoint[] }) {
             <stop offset="100%" stopColor="#A78BFA" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border-default))" />
         <XAxis dataKey="bucket" hide />
         <Area
           type="monotone"
@@ -57,7 +57,7 @@ function WirelessInterfaceCard({ section }: { section: WirelessInterfaceSection 
   const { interfaceName, latest, history } = section
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-panel p-4 space-y-3">
       {/* Interface name header */}
       <h3 className="text-sm font-medium text-text-primary">{interfaceName}</h3>
 
@@ -159,13 +159,11 @@ export function WirelessTab({ tenantId, deviceId, active = true }: WirelessTabPr
       />
 
       {isLoading ? (
-        <div className="space-y-4">
-          {[0, 1].map((i) => (
-            <div key={i} className="rounded-lg border border-border bg-surface p-4 h-48 animate-pulse" />
-          ))}
+        <div className="py-8 text-center">
+          <span className="text-[9px] text-text-muted">Loading&hellip;</span>
         </div>
       ) : hasNoWireless ? (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-text-muted">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center text-sm text-text-muted">
           No wireless interfaces detected on this device.
         </div>
       ) : (

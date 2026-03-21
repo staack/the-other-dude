@@ -89,7 +89,7 @@ function AlertRow({
     alert.silenced_until && new Date(alert.silenced_until) > new Date()
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50 hover:bg-surface transition-colors">
+    <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50 hover:bg-panel transition-colors">
       <StatusIcon status={alert.status} />
       <SeverityBadge severity={alert.severity} />
 
@@ -271,7 +271,7 @@ export function AlertsPage() {
               description="All clear! No alerts have been triggered."
             />
           ) : (
-            <div className="rounded-lg border border-border bg-surface overflow-hidden">
+            <div className="rounded-lg border border-border bg-panel overflow-hidden">
               {alerts.map((alert) => (
                 <AlertRow
                   key={alert.id}
@@ -302,7 +302,7 @@ export function AlertsPage() {
               description="Alert events will appear here as they are triggered and resolved."
             />
           ) : (
-            <div className="rounded-lg border border-border bg-surface overflow-hidden">
+            <div className="rounded-lg border border-border bg-panel overflow-hidden">
               {/* Table header */}
               <div className="flex items-center gap-3 px-4 py-2 border-b border-border text-[10px] uppercase tracking-wider text-text-muted font-semibold">
                 <span className="w-5" />
@@ -315,7 +315,7 @@ export function AlertsPage() {
               {alerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 hover:bg-surface text-sm"
+                  className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 hover:bg-panel text-sm"
                 >
                   <StatusIcon status={alert.status} />
                   <span className="w-16">

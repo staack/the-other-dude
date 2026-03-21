@@ -44,45 +44,31 @@ function KpiCard({
   const animatedValue = useAnimatedCounter(value, 800, decimals)
 
   return (
-    <Card
+    <div
       className={cn(
-        'bg-gradient-to-br from-[#f8f8ff] to-elevated dark:from-elevated dark:to-[#16162a] border-border transition-colors',
-        highlight && 'border-warning/30',
+        'bg-panel border border-border px-3 py-2.5 rounded-sm',
+        highlight && 'border-l-2 border-l-warning',
       )}
     >
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
-              {label}
-            </span>
-            <div className="flex items-baseline gap-1">
-              <span
-                className={cn(
-                  'text-2xl font-medium tabular-nums font-mono',
-                  colorClass,
-                )}
-              >
-                {decimals > 0 ? animatedValue.toFixed(decimals) : animatedValue}
-              </span>
-              {suffix && (
-                <span className="text-sm font-medium text-text-muted">
-                  {suffix}
-                </span>
-              )}
-            </div>
-          </div>
-          <div
-            className={cn(
-              'flex h-10 w-10 items-center justify-center rounded-lg bg-elevated/50',
-              colorClass,
-            )}
-          >
-            {icon}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="text-[7px] font-medium text-text-muted uppercase tracking-[1.5px] mb-1">
+        {label}
+      </div>
+      <div className="flex items-baseline gap-1">
+        <span
+          className={cn(
+            'text-lg font-medium tabular-nums font-mono',
+            colorClass,
+          )}
+        >
+          {decimals > 0 ? animatedValue.toFixed(decimals) : animatedValue}
+        </span>
+        {suffix && (
+          <span className="text-xs text-text-muted">
+            {suffix}
+          </span>
+        )}
+      </div>
+    </div>
   )
 }
 

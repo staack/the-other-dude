@@ -104,7 +104,7 @@ export function ScanResultsList({ tenantId, results, onDone }: Props) {
           <div className="rounded-lg border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-surface">
+                <tr className="border-b border-border bg-panel">
                   <th className="px-3 py-2 w-8">
                     <Checkbox
                       checked={allSelected}
@@ -121,7 +121,7 @@ export function ScanResultsList({ tenantId, results, onDone }: Props) {
                 {results.discovered.map((device) => (
                   <tr
                     key={device.ip_address}
-                    className="border-b border-border/50 hover:bg-surface cursor-pointer"
+                    className="border-b border-border/50 hover:bg-panel cursor-pointer"
                     onClick={() => toggleSelect(device.ip_address)}
                   >
                     <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
@@ -154,7 +154,7 @@ export function ScanResultsList({ tenantId, results, onDone }: Props) {
 
           {/* Credentials */}
           {selected.size > 0 && (
-            <div className="rounded-lg border border-border bg-surface p-4 space-y-3">
+            <div className="rounded-lg border border-border bg-panel p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-medium">
                   Credentials for {selected.size} selected device{selected.size !== 1 ? 's' : ''}

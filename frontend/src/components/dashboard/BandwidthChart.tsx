@@ -45,7 +45,7 @@ function BwTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) return null
   const item = payload[0]
   return (
-    <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs">
+    <div className="rounded-md border border-border bg-panel px-3 py-2 text-xs">
       <p className="font-medium text-text-primary">{item.payload.hostname}</p>
       <p className="text-text-secondary">{formatBw(item.value)}</p>
     </div>
@@ -56,7 +56,7 @@ export function BandwidthChart({ devices }: BandwidthChartProps) {
   const chartHeight = Math.max(200, devices.length * 36)
 
   return (
-    <Card className="bg-surface border-border">
+    <Card className="bg-panel border-border">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-text-secondary">
           Top Bandwidth Consumers
@@ -78,7 +78,7 @@ export function BandwidthChart({ devices }: BandwidthChartProps) {
                 <XAxis
                   type="number"
                   tickFormatter={formatAxisTick}
-                  tick={{ fontSize: 11, fill: '#94a3b8' }}
+                  tick={{ fontSize: 10, fill: 'hsl(var(--text-muted))' }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -86,19 +86,19 @@ export function BandwidthChart({ devices }: BandwidthChartProps) {
                   type="category"
                   dataKey="hostname"
                   width={120}
-                  tick={{ fontSize: 11, fill: '#cbd5e1' }}
+                  tick={{ fontSize: 10, fill: 'hsl(var(--text-secondary))' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
                   content={<BwTooltip />}
-                  cursor={{ fill: '#334155', opacity: 0.5 }}
+                  cursor={{ fill: 'hsl(var(--elevated))', opacity: 0.5 }}
                 />
                 <Bar
                   dataKey="bandwidthBps"
-                  fill="#38BDF8"
-                  radius={[0, 4, 4, 0]}
-                  maxBarSize={24}
+                  fill="hsl(var(--accent))"
+                  radius={[0, 2, 2, 0]}
+                  maxBarSize={20}
                 />
               </BarChart>
             </ResponsiveContainer>

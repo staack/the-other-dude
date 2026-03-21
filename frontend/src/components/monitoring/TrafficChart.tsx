@@ -36,7 +36,7 @@ function formatBucket(bucket: string, useDate: boolean): string {
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value?: number; dataKey?: string; name?: string; color?: string }>; label?: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded border border-border bg-surface px-2 py-1.5 text-xs text-text-primary">
+    <div className="rounded border border-border bg-panel px-2 py-1.5 text-xs text-text-primary">
       <div className="mb-1 text-text-muted">{label}</div>
       {payload.map((entry) => (
         <div key={entry.dataKey} className="flex items-center gap-2">
@@ -70,25 +70,25 @@ export function TrafficChart({ data, interfaceName }: TrafficChartProps) {
         <AreaChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id={`rx-grad-${interfaceName}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#38BDF8" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#38BDF8" stopOpacity={0} />
+              <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.3} />
+              <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
             </linearGradient>
             <linearGradient id={`tx-grad-${interfaceName}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#4ADE80" stopOpacity={0.3} />
               <stop offset="100%" stopColor="#4ADE80" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border-default))" />
           <XAxis
             dataKey="bucket"
-            tick={{ fontSize: 10, fill: '#94a3b8' }}
+            tick={{ fontSize: 10, fill: 'hsl(var(--text-muted))' }}
             axisLine={false}
             tickLine={false}
             interval="preserveStartEnd"
           />
           <YAxis
             tickFormatter={formatBps}
-            tick={{ fontSize: 10, fill: '#94a3b8' }}
+            tick={{ fontSize: 10, fill: 'hsl(var(--text-muted))' }}
             axisLine={false}
             tickLine={false}
             width={60}
@@ -98,7 +98,7 @@ export function TrafficChart({ data, interfaceName }: TrafficChartProps) {
             type="monotone"
             dataKey="avg_rx_bps"
             name="avg_rx_bps"
-            stroke="#38BDF8"
+            stroke="hsl(var(--accent))"
             strokeWidth={1.5}
             fill={`url(#rx-grad-${interfaceName})`}
           />

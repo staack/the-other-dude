@@ -240,8 +240,8 @@ export function DhcpPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
             className={cn(
               'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
               activeTab === tab.key
-                ? 'bg-surface text-text-primary shadow-sm'
-                : 'text-text-secondary hover:text-text-primary hover:bg-surface/50',
+                ? 'bg-panel text-text-primary shadow-sm'
+                : 'text-text-secondary hover:text-text-primary hover:bg-panel/50',
             )}
           >
             {tab.icon}
@@ -400,7 +400,7 @@ function ServersTab({
   }, [form, editing, panel])
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-panel p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-text-primary">DHCP Servers</h3>
         <Button variant="outline" size="sm" onClick={handleAdd} className="gap-1.5">
@@ -651,7 +651,7 @@ function PoolsTab({
   }, [form, editing, panel])
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-panel p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-text-primary">Address Pools</h3>
         <Button variant="outline" size="sm" onClick={handleAdd} className="gap-1.5">
@@ -860,7 +860,7 @@ function LeasesTab({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-panel p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-text-primary">DHCP Leases</h3>
         <Button variant="outline" size="sm" onClick={handleAddStatic} className="gap-1.5">
@@ -1112,7 +1112,7 @@ function NetworksTab({
   }, [form, editing, panel])
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4 space-y-3">
+    <div className="rounded-lg border border-border bg-panel p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-text-primary">DHCP Networks</h3>
         <Button variant="outline" size="sm" onClick={handleAdd} className="gap-1.5">

@@ -143,7 +143,7 @@ export function EntryForm({ open, onClose, mode, entry, columns, onSubmit }: Ent
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-surface border-border text-text-primary">
+      <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto bg-panel border-border text-text-primary">
         <DialogHeader>
           <DialogTitle className="text-sm">
             {mode === 'add' ? 'Add New Entry' : 'Edit Entry'}

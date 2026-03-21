@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { MapPin } from 'lucide-react'
 import { metricsApi, tenantsApi } from '@/lib/api'
 import { useAuth, isSuperAdmin } from '@/lib/auth'
-import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingText } from '@/components/ui/skeleton'
 import { FleetMap } from './FleetMap'
 
 export function MapPage() {
@@ -55,7 +55,11 @@ export function MapPage() {
   }, [superAdmin, selectedTenant, user])
 
   if (devicesLoading) {
-    return <Skeleton className="h-[calc(100vh-8rem)] w-full rounded-lg" />
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+        <LoadingText />
+      </div>
+    )
   }
 
   if (devicesError) {
@@ -88,7 +92,7 @@ export function MapPage() {
           <select
             value={selectedTenant}
             onChange={(e) => setSelectedTenant(e.target.value)}
-            className="text-xs bg-elevated/50 border border-border text-text-primary rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-border-bright"
+            className="text-xs bg-elevated/50 border border-border text-text-primary rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-border-default"
           >
             <option value="all">All Organizations</option>
             {tenants.map((t) => (

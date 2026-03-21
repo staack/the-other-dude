@@ -220,7 +220,7 @@ export function EmergencyKitDialog({
         <div className="flex gap-2">
           <button
             onClick={handleCopy}
-            className="flex flex-1 items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-surface-hover"
+            className="flex flex-1 items-center justify-center gap-2 rounded-md border border-border bg-panel px-4 py-2.5 text-sm font-medium text-text-primary transition-colors hover:bg-panel-hover"
           >
             {copied ? (
               <>
@@ -245,7 +245,7 @@ export function EmergencyKitDialog({
         </div>
 
         {/* Instructions */}
-        <div className="mt-3 rounded-md bg-surface-secondary p-3 text-xs text-text-secondary leading-relaxed">
+        <div className="mt-3 rounded-md bg-panel-secondary p-3 text-xs text-text-secondary leading-relaxed">
           The PDF includes your Secret Key. Print it or save it securely.
           You can also store the key in your password manager. Do NOT store it alongside your password.
         </div>

@@ -76,7 +76,7 @@ export function UserList({ tenantId }: Props) {
       <div className="rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-surface">
+            <tr className="border-b border-border bg-panel">
               <th scope="col" className="text-left px-3 py-2 text-xs font-medium text-text-muted">Name</th>
               <th scope="col" className="text-left px-3 py-2 text-xs font-medium text-text-muted">Email</th>
               <th scope="col" className="text-left px-3 py-2 text-xs font-medium text-text-muted">Role</th>
@@ -91,7 +91,7 @@ export function UserList({ tenantId }: Props) {
             {isLoading ? (
               <tr>
                 <td colSpan={6} className="px-3 py-4">
-                  <TableSkeleton rows={5} />
+                  <TableSkeleton />
                 </td>
               </tr>
             ) : users?.length === 0 ? (
@@ -104,7 +104,7 @@ export function UserList({ tenantId }: Props) {
               users?.map((u) => (
                 <tr
                   key={u.id}
-                  className="border-b border-border/50 hover:bg-surface transition-colors"
+                  className="border-b border-border/50 hover:bg-panel transition-colors"
                 >
                   <td className="px-3 py-2.5 font-medium">{u.name}</td>
                   <td className="px-3 py-2.5 text-text-secondary">{u.email}</td>
