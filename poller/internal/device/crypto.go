@@ -14,6 +14,38 @@ type credentialsJSON struct {
 	Password string `json:"password"`
 }
 
+// DecryptRaw decrypts AES-256-GCM encrypted data and returns the raw plaintext bytes.
+// Used by GetRawCredentials to obtain credential JSON before type-specific parsing.
+// The ciphertext layout is the same as described in DecryptCredentials.
+func DecryptRaw(ciphertext []byte, key []byte) ([]byte, error) {
+	if len(key) != 32 {
+		return nil, fmt.Errorf("encryption key must be 32 bytes, got %d", len(key))
+	}
+	if len(ciphertext) < 12+16 {
+		return nil, fmt.Errorf("ciphertext too short: need at least 28 bytes (12 nonce + 16 tag), got %d", len(ciphertext))
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, fmt.Errorf("creating AES cipher: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("creating GCM cipher: %w", err)
+	}
+
+	nonce := ciphertext[:12]
+	encryptedData := ciphertext[12:]
+
+	plaintext, err := gcm.Open(nil, nonce, encryptedData, nil)
+	if err != nil {
+		return nil, fmt.Errorf("decrypting credentials (wrong key or tampered data): %w", err)
+	}
+
+	return plaintext, nil
+}
+
 // DecryptCredentials decrypts AES-256-GCM encrypted credentials and returns the
 // username and password stored within.
 //
