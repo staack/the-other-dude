@@ -26,121 +26,118 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
 @layer base {
   :root {
-    /* ── Deep Space Light Mode ── */
-    --background: 240 20% 99%;
-    --surface: 0 0% 100%;
-    --elevated: 240 33% 96%;
-    --border: 0 0% 0% / 0.08;
-    --border-bright: 240 14% 88%;
+    /* ── Warm Precision Light Mode ── */
+    --background: 39 21% 89%;      /* #eae7de */
+    --sidebar: 36 16% 85%;          /* #e0dcd2 */
+    --panel: 40 24% 95%;            /* #f6f4ec */
+    --elevated: 39 22% 92%;         /* #f0ede4 */
 
-    --text-primary: 240 7% 7%;
-    --text-secondary: 249 14% 37%;
-    --text-muted: 249 11% 57%;
+    --border-subtle: 30 18% 13% / 0.06;
+    --border-default: 30 18% 13% / 0.12;
 
-    --accent: 239 76% 62%;
-    --accent-hover: 244 75% 58%;
-    --accent-muted: 239 76% 62% / 0.1;
-    --ring: 239 76% 62%;
+    --text-primary: 43 27% 8%;      /* #1a1810 */
+    --text-secondary: 40 10% 33%;   /* #5e5a4e */
+    --text-muted: 36 7% 50%;        /* #8a8578 */
 
-    --success: 142 71% 35%;
-    --warning: 32 95% 44%;
-    --error: 0 72% 51%;
+    --accent: 43 32% 40%;           /* #8a7a48 */
+    --accent-soft: 43 32% 40% / 0.10;
+    --ring: 43 32% 40%;
+
+    --text-label: 36 7% 50%;        /* same as text-muted in light */
+
+    --success: 140 35% 35%;         /* #3a7a4a */
+    --warning: 43 66% 36%;          /* #9a7a20 */
+    --error: 11 48% 44%;            /* #a85040 */
     --info: 217 91% 50%;
 
-    --online: 142 71% 35%;
-    --offline: 0 72% 51%;
-    --unknown: 249 11% 57%;
+    --online: 140 35% 35%;
+    --offline: 11 48% 44%;
+    --unknown: 36 7% 50%;
 
-    --chart-1: 239 76% 62%;
-    --chart-2: 142 71% 35%;
-    --chart-3: 32 95% 44%;
-    --chart-4: 0 72% 51%;
-    --chart-5: 280 68% 50%;
-    --chart-6: 217 91% 50%;
+    --alert-badge: 43 78% 30%;      /* #8a6a10 */
 
-    /* Sidebar */
-    --sidebar: 210 40% 98%;
+    --chart-1: 43 32% 40%;
+    --chart-2: 140 35% 35%;
+    --chart-3: 43 66% 36%;
+    --chart-4: 11 48% 44%;
+    --chart-5: 280 30% 45%;
+    --chart-6: 217 50% 45%;
 
-    /* Functional tokens mapped to Tailwind names */
+    /* Functional mappings */
     --foreground: var(--text-primary);
-    --card: var(--surface);
+    --card: var(--panel);
     --card-foreground: var(--text-primary);
-    --popover: var(--surface);
+    --popover: var(--panel);
     --popover-foreground: var(--text-primary);
     --primary: var(--accent);
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 40 24% 95%;
     --secondary: var(--elevated);
     --secondary-foreground: var(--text-primary);
     --muted: var(--elevated);
     --muted-foreground: var(--text-secondary);
-    --input: var(--border);
+    --input: var(--border-default);
     --destructive: var(--error);
+    --border: var(--border-default);
 
-    /* Border radius */
-    --radius: 0.5rem;
-
-    /* Content width */
+    --radius: 0.125rem;
+    --radius-control: 0.25rem;
     --content-max: 1312px;
-    --sidebar-width: 13.5rem;
+    --sidebar-width: 172px;
   }
 
   .dark {
-    /* ── Deep Space Dark Mode ── */
-    --background: 240 7% 7%;
-    --surface: 240 22% 10%;
-    --elevated: 240 28% 14%;
-    --border: 0 0% 100% / 0.06;
-    --border-bright: 240 24% 19%;
+    /* ── Warm Precision Dark Mode ── */
+    --background: 40 14% 4%;        /* #0c0b09 */
+    --sidebar: 40 10% 7%;           /* #141310 */
+    --panel: 40 8% 9%;              /* #1a1916 */
+    --elevated: 40 7% 11%;          /* #1e1d1a */
 
-    --text-primary: 240 14% 91%;
-    --text-secondary: 249 9% 59%;
-    --text-muted: 249 13% 44%;
+    --border-subtle: 36 10% 65% / 0.06;
+    --border-default: 36 10% 65% / 0.10;
 
-    --accent: 235 91% 74%;
-    --accent-hover: 239 84% 67%;
-    --accent-muted: 239 84% 67% / 0.15;
-    --ring: 235 91% 74%;
+    --text-primary: 39 16% 78%;     /* #d4ccb8 */
+    --text-secondary: 36 7% 54%;    /* #948e80 */
+    --text-muted: 40 8% 33%;        /* #5e5a50 */
 
-    --success: 142 69% 58%;
-    --warning: 38 92% 50%;
-    --error: 0 84% 60%;
-    --info: 217 91% 60%;
+    --accent: 43 28% 47%;           /* #9a8a58 */
+    --accent-soft: 43 28% 47% / 0.10;
+    --ring: 43 28% 47%;
 
-    --online: 142 69% 58%;
-    --offline: 0 84% 60%;
-    --unknown: 249 9% 59%;
+    --text-label: 40 8% 27%;        /* #4a4840 — section labels only */
 
-    --chart-1: 235 91% 74%;
-    --chart-2: 142 69% 58%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 0 84% 60%;
-    --chart-5: 280 68% 68%;
-    --chart-6: 217 91% 60%;
+    --success: 133 22% 45%;         /* #5a8a62 */
+    --warning: 38 54% 50%;          /* #c49a3a */
+    --error: 8 42% 53%;             /* #c06050 */
+    --info: 217 60% 60%;
+
+    --online: 133 22% 45%;
+    --offline: 8 42% 53%;
+    --unknown: 36 7% 54%;
+
+    --alert-badge: 43 56% 53%;      /* #d4a43a */
+
+    --chart-1: 43 28% 47%;
+    --chart-2: 133 22% 45%;
+    --chart-3: 38 54% 50%;
+    --chart-4: 8 42% 53%;
+    --chart-5: 280 30% 55%;
+    --chart-6: 217 50% 55%;
 
     --foreground: var(--text-primary);
-    --card: var(--surface);
+    --card: var(--panel);
     --card-foreground: var(--text-primary);
-    --popover: var(--surface);
+    --popover: var(--panel);
     --popover-foreground: var(--text-primary);
     --primary: var(--accent);
-    --primary-foreground: 222 47% 11%;
+    --primary-foreground: 40 14% 4%;
     --secondary: var(--elevated);
     --secondary-foreground: var(--text-primary);
-    --muted: 217 33% 17% / 0.5;
+    --muted: var(--elevated);
     --muted-foreground: var(--text-secondary);
-    --input: var(--border);
-    --sidebar: 222 47% 11%;
+    --input: var(--border-default);
+    --border: var(--border-default);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -184,12 +181,15 @@
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: hsl(var(--elevated)); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--border-bright)); }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--text-muted)); }
 
-  /* ── Deep Space transitions ── */
+  :root {
+    transition: background-color 100ms linear, color 100ms linear;
+  }
+
   button, a, input, select, textarea,
   [role="button"], [role="tab"], [role="menuitem"] {
-    transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+    transition: background-color 50ms linear, border-color 50ms linear, color 50ms linear;
   }
 
   [data-sidebar] {
@@ -197,10 +197,10 @@
   }
 
   [data-radix-dialog-overlay] {
-    transition: opacity 150ms ease;
+    transition: none;
   }
   [data-radix-dialog-content] {
-    transition: opacity 150ms ease, transform 150ms ease;
+    transition: none;
   }
 
   .font-mono, [class*="font-mono"] {
