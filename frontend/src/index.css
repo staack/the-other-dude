@@ -222,4 +222,20 @@
   .list-item-interactive:active {
     background-color: hsl(var(--elevated));
   }
+
+  /* Panel empty state — centered muted text */
+  .panel-empty {
+    text-align: center;
+    padding: 1.25rem 0.625rem;
+    color: hsl(var(--text-muted));
+    font-size: 0.5625rem; /* 9px */
+  }
+
+  /* Panel error state — centered error text */
+  .panel-error {
+    text-align: center;
+    padding: 1.25rem 0.625rem;
+    color: hsl(var(--error));
+    font-size: 0.5625rem;
+  }
 }

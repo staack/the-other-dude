@@ -8,11 +8,10 @@ export function Toaster() {
     <SonnerToaster
       position="bottom-right"
       toastOptions={{
-        className: 'bg-panel border-border text-text-primary',
+        className: 'bg-elevated border border-border-default text-text-primary rounded-[var(--radius-control)]',
         descriptionClassName: 'text-text-secondary',
       }}
       theme={theme}
-      richColors
     />
   )
 }
