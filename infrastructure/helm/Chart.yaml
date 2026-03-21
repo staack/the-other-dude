@@ -3,7 +3,7 @@ name: tod
 description: The Other Dude — MikroTik fleet management platform
 type: application
 version: 1.0.0
-appVersion: "9.7.1"
+appVersion: "9.7.2"
 kubeVersion: ">=1.28.0-0"
 keywords:
   - mikrotik
