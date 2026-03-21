@@ -50,7 +50,7 @@
     --success: 140 35% 35%;         /* #3a7a4a */
     --warning: 43 66% 36%;          /* #9a7a20 */
     --error: 11 48% 44%;            /* #a85040 */
-    --info: 217 91% 50%;
+    --info: 180 20% 40%;              /* #528080 — desaturated warm teal */
 
     --online: 140 35% 35%;
     --offline: 11 48% 44%;
@@ -110,7 +110,7 @@
     --success: 133 22% 45%;         /* #5a8a62 */
     --warning: 38 54% 50%;          /* #c49a3a */
     --error: 8 42% 53%;             /* #c06050 */
-    --info: 217 60% 60%;
+    --info: 180 20% 50%;              /* #668f8f — desaturated warm teal */
 
     --online: 133 22% 45%;
     --offline: 8 42% 53%;
