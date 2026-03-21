@@ -188,34 +188,17 @@ function EditDeviceDialog({
 }
 
 function TlsSecurityBadge({ tlsMode }: { tlsMode: string }) {
-  const config: Record<string, { label: string; icon: React.ElementType; className: string }> = {
-    portal_ca: {
-      label: 'CA Verified',
-      icon: ShieldCheck,
-      className: 'text-success border-success/50 bg-success/10',
-    },
-    auto: {
-      label: 'Self-Signed TLS',
-      icon: Shield,
-      className: 'text-warning border-warning/50 bg-warning/10',
-    },
-    insecure: {
-      label: 'Insecure TLS',
-      icon: ShieldAlert,
-      className: 'text-orange-400 border-orange-400/50 bg-orange-400/10',
-    },
-    plain: {
-      label: 'Plain-Text (Insecure)',
-      icon: ShieldOff,
-      className: 'text-error border-error/50 bg-error/10',
-    },
+  const config: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+    portal_ca: { label: 'CA Verified', icon: ShieldCheck, color: 'text-success' },
+    auto: { label: 'Self-Signed TLS', icon: Shield, color: 'text-warning' },
+    insecure: { label: 'Insecure TLS', icon: ShieldAlert, color: 'text-warning' },
+    plain: { label: 'Plain-Text', icon: ShieldOff, color: 'text-error' },
   }
   const c = config[tlsMode] ?? config.auto
   const Icon = c.icon
   return (
-    <span className={cn('inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded border', c.className)}>
+    <span className={cn('flex-shrink-0', c.color)} title={c.label}>
       <Icon className="h-3 w-3" />
-      {c.label}
     </span>
   )
 }
