@@ -463,6 +463,7 @@ def create_app() -> FastAPI:
     from app.routers.remote_access import router as remote_access_router
     from app.routers.winbox_remote import router as winbox_remote_router
     from app.routers.snmp_profiles import router as snmp_profiles_router
+    from app.routers.credential_profiles import router as credential_profiles_router
     from app.routers.sites import router as sites_router
     from app.routers.links import router as links_router
     from app.routers.sectors import router as sectors_router
@@ -498,6 +499,7 @@ def create_app() -> FastAPI:
     app.include_router(remote_access_router, prefix="/api")
     app.include_router(winbox_remote_router, prefix="/api")
     app.include_router(snmp_profiles_router, prefix="/api")
+    app.include_router(credential_profiles_router, prefix="/api")
     app.include_router(sites_router, prefix="/api")
     app.include_router(links_router, prefix="/api")
     app.include_router(sectors_router, prefix="/api")

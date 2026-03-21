@@ -35,6 +35,7 @@ class DeviceUpdate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     tls_mode: Optional[str] = None
+    credential_profile_id: Optional[uuid.UUID] = None
 
     @field_validator("tls_mode")
     @classmethod

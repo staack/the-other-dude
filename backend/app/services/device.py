@@ -318,6 +318,23 @@ async def update_device(
     if data.tls_mode is not None:
         device.tls_mode = data.tls_mode
 
+    # Assign credential profile if provided
+    if data.credential_profile_id is not None:
+        from app.models.credential_profile import CredentialProfile
+
+        cp_result = await db.execute(
+            select(CredentialProfile).where(
+                CredentialProfile.id == data.credential_profile_id,
+                CredentialProfile.tenant_id == tenant_id,
+            )
+        )
+        if not cp_result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Credential profile not found",
+            )
+        device.credential_profile_id = data.credential_profile_id
+
     # Re-encrypt credentials if new ones are provided
     credentials_changed = False
     if data.password is not None:
