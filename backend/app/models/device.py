@@ -117,6 +117,17 @@ class Device(Base):
     sector: Mapped["Sector"] = relationship(  # type: ignore[name-defined]
         "Sector", back_populates="devices", foreign_keys=[sector_id]
     )
+    credential_profile_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("credential_profiles.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    credential_profile: Mapped["CredentialProfile"] = relationship(  # type: ignore[name-defined]
+        "CredentialProfile",
+        back_populates="devices",
+        foreign_keys=[credential_profile_id],
+    )
 
     def __repr__(self) -> str:
         return f"<Device id={self.id} hostname={self.hostname!r} tenant_id={self.tenant_id}>"
