@@ -14,31 +14,31 @@ interface SimpleModeToggleProps {
 
 export function SimpleModeToggle({ mode, onModeChange }: SimpleModeToggleProps) {
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-border bg-elevated/50 p-1">
-      <Button
-        variant="ghost"
-        size="sm"
+    <div className="flex items-center gap-px rounded-[var(--radius-control)] border border-border-default overflow-hidden">
+      <button
         onClick={() => onModeChange('simple')}
         className={cn(
-          'gap-1.5 h-7 px-2.5 text-xs',
-          mode === 'simple' && 'bg-accent/20 text-accent',
+          'flex items-center gap-1 px-1.5 py-0.5 text-[10px] transition-[background-color,color] duration-[50ms]',
+          mode === 'simple'
+            ? 'bg-accent-soft text-text-primary font-medium'
+            : 'text-text-muted hover:text-text-secondary',
         )}
       >
-        <LayoutGrid className="h-3.5 w-3.5" />
+        <LayoutGrid className="h-2.5 w-2.5" />
         Simple
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
+      </button>
+      <button
         onClick={() => onModeChange('standard')}
         className={cn(
-          'gap-1.5 h-7 px-2.5 text-xs',
-          mode === 'standard' && 'bg-accent/20 text-accent',
+          'flex items-center gap-1 px-1.5 py-0.5 text-[10px] transition-[background-color,color] duration-[50ms]',
+          mode === 'standard'
+            ? 'bg-accent-soft text-text-primary font-medium'
+            : 'text-text-muted hover:text-text-secondary',
         )}
       >
-        <Sliders className="h-3.5 w-3.5" />
+        <Sliders className="h-2.5 w-2.5" />
         Standard
-      </Button>
+      </button>
     </div>
   )
 }

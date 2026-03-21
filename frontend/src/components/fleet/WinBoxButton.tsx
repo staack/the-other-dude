@@ -78,14 +78,15 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
                         openMutation.mutate()
                     }}
                     disabled={openMutation.isPending}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-accent text-white hover:bg-accent/90 disabled:opacity-50"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-[var(--radius-control)] text-[10px] text-text-secondary border border-border-default hover:border-accent transition-[border-color,color] duration-[50ms] disabled:opacity-50"
+                    title="Open WinBox tunnel"
                 >
                     {openMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-3 w-3 animate-spin" />
                     ) : (
-                        <Monitor className="h-4 w-4" />
+                        <Monitor className="h-3 w-3" />
                     )}
-                    {openMutation.isPending ? 'Connecting...' : 'Open WinBox'}
+                    {openMutation.isPending ? 'Connecting' : 'WinBox'}
                 </button>
                 {error && <p className="mt-2 text-sm text-error">{error}</p>}
             </div>
@@ -94,18 +95,17 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
 
     if (state === 'ready' && tunnelInfo) {
         return (
-            <div className="rounded-md border p-4 space-y-3">
-                <p className="font-medium text-sm">WinBox tunnel ready</p>
-                <p className="text-sm text-text-muted">
-                    Connect to: <code className="font-mono">{tunnelInfo.host}:{tunnelInfo.port}</code>
+            <div className="rounded-sm border border-border-default bg-panel p-2.5 space-y-2">
+                <p className="text-xs text-text-primary">
+                    Tunnel ready: <code className="font-mono text-[10px] text-text-secondary">{tunnelInfo.host}:{tunnelInfo.port}</code>
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                     <button
                         onClick={copyAddress}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border hover:bg-accent"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-[var(--radius-control)] border border-border-default text-text-secondary hover:border-accent transition-[border-color] duration-[50ms]"
                     >
-                        <Copy className="h-3 w-3" />
-                        {copied ? 'Copied!' : 'Copy Address'}
+                        <Copy className="h-2.5 w-2.5" />
+                        {copied ? 'Copied' : 'Copy'}
                     </button>
                     <button
                         onClick={() => {
@@ -113,15 +113,13 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
                             closeMutation.mutate()
                         }}
                         disabled={closeMutation.isPending}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 text-sm rounded-md border hover:bg-accent disabled:opacity-50"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-[var(--radius-control)] border border-border-default text-text-muted hover:border-accent disabled:opacity-50 transition-[border-color] duration-[50ms]"
                     >
-                        <X className="h-3 w-3" />
-                        Close Tunnel
+                        <X className="h-2.5 w-2.5" />
+                        Close
                     </button>
                 </div>
-                <p className="text-xs text-text-muted">
-                    Tunnel closes after 5 min of inactivity
-                </p>
+                <p className="text-[9px] text-text-muted">Closes after 5 min idle</p>
             </div>
         )
     }

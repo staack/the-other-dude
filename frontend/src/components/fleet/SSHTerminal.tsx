@@ -162,10 +162,11 @@ export function SSHTerminal({ tenantId, deviceId, deviceName }: SSHTerminalProps
         return (
             <button
                 onClick={handleOpen}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-accent text-white hover:bg-accent/90"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-[var(--radius-control)] text-[10px] text-text-secondary border border-border-default hover:border-accent transition-[border-color,color] duration-[50ms]"
+                title="Open SSH Terminal"
             >
-                <TerminalIcon className="h-4 w-4" />
-                SSH Terminal
+                <TerminalIcon className="h-3 w-3" />
+                SSH
             </button>
         )
     }
