@@ -172,20 +172,20 @@ export function SSHTerminal({ tenantId, deviceId, deviceName }: SSHTerminalProps
     }
 
     return (
-        <div className={`rounded-md border overflow-hidden ${expanded ? 'fixed inset-4 z-50 bg-background' : ''}`}>
-            <div className="flex items-center justify-between px-3 py-2 bg-elevated/50 border-b">
-                <span className="text-sm font-medium">SSH: {deviceName}</span>
+        <div className={`rounded-sm border border-border-default overflow-hidden ${expanded ? 'fixed top-0 right-0 bottom-0 z-50 bg-background' : ''}`} style={expanded ? { left: 'var(--sidebar-width, 172px)' } : {}}>
+            <div className="flex items-center justify-between px-3 py-1.5 bg-elevated border-b border-border-default">
+                <span className="text-xs font-medium text-text-primary">SSH: {deviceName}</span>
                 <div className="flex gap-1">
-                    <button onClick={() => setExpanded(!expanded)} className="p-1 hover:bg-accent rounded">
-                        {expanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                    <button onClick={() => setExpanded(!expanded)} className="p-0.5 text-text-muted hover:text-text-secondary transition-[color] duration-[50ms]">
+                        {expanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
                     </button>
                     {state === 'disconnected' ? (
-                        <button onClick={handleReconnect} className="px-2 py-1 text-xs rounded bg-accent text-white">
+                        <button onClick={handleReconnect} className="px-2 py-0.5 text-[10px] rounded-[var(--radius-control)] border border-border-default text-text-secondary hover:border-accent transition-[border-color] duration-[50ms]">
                             Reconnect
                         </button>
                     ) : (
-                        <button onClick={handleDisconnect} className="p-1 hover:bg-accent rounded">
-                            <X className="h-4 w-4" />
+                        <button onClick={handleDisconnect} className="p-0.5 text-text-muted hover:text-text-secondary transition-[color] duration-[50ms]">
+                            <X className="h-3.5 w-3.5" />
                         </button>
                     )}
                 </div>
