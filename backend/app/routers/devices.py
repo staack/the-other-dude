@@ -31,6 +31,8 @@ from app.middleware.tenant_context import CurrentUser, get_current_user
 from app.schemas.device import (
     BulkAddRequest,
     BulkAddResult,
+    BulkAddWithProfileRequest,
+    BulkAddWithProfileResult,
     DeviceCreate,
     DeviceListResponse,
     DeviceResponse,
@@ -392,6 +394,54 @@ async def bulk_add_devices(
             failed.append({"ip_address": dev_data.ip_address, "error": str(exc)})
 
     return BulkAddResult(added=added, failed=failed)
+
+
+@router.post(
+    "/tenants/{tenant_id}/devices/bulk",
+    response_model=BulkAddWithProfileResult,
+    summary="Bulk add devices using a credential profile",
+    dependencies=[Depends(require_operator_or_above), require_scope("devices:write")],
+)
+@limiter.limit("5/minute")
+async def bulk_add_with_profile(
+    request: Request,
+    tenant_id: uuid.UUID,
+    data: BulkAddWithProfileRequest,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> BulkAddWithProfileResult:
+    """Add multiple devices using a credential profile.
+
+    Supports partial success -- individual devices can fail without blocking others.
+    Returns per-device results with success/failure reasons.
+    """
+    await _check_tenant_access(current_user, tenant_id, db)
+    result = await device_service.bulk_add_with_profile(
+        db=db,
+        tenant_id=tenant_id,
+        data=data,
+        user_id=current_user.user_id,
+    )
+    # Audit log the bulk add (fire-and-forget)
+    try:
+        await log_action(
+            db,
+            tenant_id,
+            current_user.user_id,
+            "device_bulk_add",
+            resource_type="device",
+            details={
+                "total": result.total,
+                "succeeded": result.succeeded,
+                "failed": result.failed,
+                "device_type": data.device_type,
+                "credential_profile_id": str(data.credential_profile_id),
+            },
+            ip_address=request.client.host if request.client else None,
+        )
+    except Exception:
+        pass
+    return result
 
 
 # ---------------------------------------------------------------------------

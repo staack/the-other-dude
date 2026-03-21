@@ -29,6 +29,10 @@ from app.models.device import (
     DeviceTagAssignment,
 )
 from app.schemas.device import (
+    BulkAddDefaults,
+    BulkAddDeviceResult,
+    BulkAddWithProfileRequest,
+    BulkAddWithProfileResult,
     DeviceCreate,
     DeviceGroupCreate,
     DeviceGroupResponse,
@@ -423,6 +427,158 @@ async def delete_device(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     await db.delete(device)
     await db.flush()
+
+
+# ---------------------------------------------------------------------------
+# Bulk add with credential profile
+# ---------------------------------------------------------------------------
+
+
+async def bulk_add_with_profile(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    data: BulkAddWithProfileRequest,
+    user_id: uuid.UUID,
+) -> BulkAddWithProfileResult:
+    """Add multiple devices using a credential profile. Partial success allowed."""
+    from fastapi import HTTPException, status
+    from sqlalchemy import text
+
+    from app.models.credential_profile import CredentialProfile
+
+    # 1. Validate credential profile exists and belongs to tenant
+    profile_row = await db.execute(
+        select(CredentialProfile).where(
+            CredentialProfile.id == data.credential_profile_id,
+            CredentialProfile.tenant_id == tenant_id,
+        )
+    )
+    profile = profile_row.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Credential profile not found or does not belong to this tenant",
+        )
+
+    # 2. Validate credential_type matches device_type
+    valid_types_for_device = {
+        "routeros": ["routeros"],
+        "snmp": ["snmp_v1", "snmp_v2c", "snmp_v3"],
+    }
+    if profile.credential_type not in valid_types_for_device.get(data.device_type, []):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Credential profile type '{profile.credential_type}' "
+                f"is not compatible with device_type '{data.device_type}'"
+            ),
+        )
+
+    # 3. If SNMP and snmp_profile_id provided in defaults, validate it exists
+    snmp_profile_id = None
+    if data.device_type == "snmp" and data.defaults and data.defaults.snmp_profile_id:
+        snmp_check = await db.execute(
+            text(
+                "SELECT id FROM snmp_profiles"
+                " WHERE id = :id AND (tenant_id = :tenant_id OR tenant_id IS NULL)"
+            ),
+            {"id": str(data.defaults.snmp_profile_id), "tenant_id": str(tenant_id)},
+        )
+        if not snmp_check.scalar_one_or_none():
+            raise HTTPException(status_code=404, detail="SNMP profile not found")
+        snmp_profile_id = data.defaults.snmp_profile_id
+
+    # 4. Process each device
+    results: list[BulkAddDeviceResult] = []
+    defaults = data.defaults or BulkAddDefaults()
+
+    for entry in data.devices:
+        try:
+            hostname = entry.hostname or entry.ip_address
+
+            # Check for duplicate IP in tenant
+            dup_check = await db.execute(
+                text("SELECT id FROM devices WHERE ip_address = :ip AND tenant_id = :tid"),
+                {"ip": entry.ip_address, "tid": str(tenant_id)},
+            )
+            if dup_check.scalar_one_or_none():
+                results.append(
+                    BulkAddDeviceResult(
+                        ip_address=entry.ip_address,
+                        hostname=hostname,
+                        success=False,
+                        error="Device with this IP already exists",
+                    )
+                )
+                continue
+
+            # TCP reachability check for RouterOS devices
+            if data.device_type == "routeros":
+                reachable = await _tcp_reachable(entry.ip_address, defaults.api_ssl_port)
+                if not reachable:
+                    reachable = await _tcp_reachable(entry.ip_address, defaults.api_port)
+                if not reachable:
+                    results.append(
+                        BulkAddDeviceResult(
+                            ip_address=entry.ip_address,
+                            hostname=hostname,
+                            success=False,
+                            error=(
+                                f"Device unreachable on ports "
+                                f"{defaults.api_port}/{defaults.api_ssl_port}"
+                            ),
+                        )
+                    )
+                    continue
+
+            # Create device with credential profile reference
+            device = Device(
+                tenant_id=tenant_id,
+                hostname=hostname,
+                ip_address=entry.ip_address,
+                device_type=data.device_type,
+                credential_profile_id=data.credential_profile_id,
+                # RouterOS fields
+                api_port=defaults.api_port if data.device_type == "routeros" else 8728,
+                api_ssl_port=defaults.api_ssl_port if data.device_type == "routeros" else 8729,
+                tls_mode=defaults.tls_mode if data.device_type == "routeros" else "auto",
+                # SNMP fields
+                snmp_port=defaults.snmp_port if data.device_type == "snmp" else 161,
+                snmp_version=defaults.snmp_version if data.device_type == "snmp" else None,
+                snmp_profile_id=snmp_profile_id,
+                status="unknown",
+            )
+            db.add(device)
+            await db.flush()
+
+            results.append(
+                BulkAddDeviceResult(
+                    ip_address=entry.ip_address,
+                    hostname=hostname,
+                    success=True,
+                    device_id=device.id,
+                )
+            )
+
+        except Exception as exc:
+            results.append(
+                BulkAddDeviceResult(
+                    ip_address=entry.ip_address,
+                    hostname=entry.hostname or entry.ip_address,
+                    success=False,
+                    error=str(exc),
+                )
+            )
+
+    await db.commit()
+
+    succeeded = sum(1 for r in results if r.success)
+    return BulkAddWithProfileResult(
+        total=len(results),
+        succeeded=succeeded,
+        failed=len(results) - succeeded,
+        results=results,
+    )
 
 
 # ---------------------------------------------------------------------------
