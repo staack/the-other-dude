@@ -306,9 +306,9 @@ function TlsModeSelector({
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-4 py-2 border-b border-border/50 last:border-0">
-      <span className="text-xs text-text-muted w-32 flex-shrink-0 pt-0.5">{label}</span>
-      <span className="text-sm text-text-primary flex-1">{value ?? '—'}</span>
+    <div className="flex items-center gap-3 py-1 border-b border-border-subtle last:border-0">
+      <span className="text-[10px] text-text-muted w-24 flex-shrink-0">{label}</span>
+      <span className="text-xs text-text-primary flex-1">{value ?? '—'}</span>
     </div>
   )
 }
@@ -449,11 +449,11 @@ function DeviceDetailPage() {
   return (
     <div className={cn('space-y-4', mode === 'simple' ? 'max-w-5xl' : 'max-w-3xl')} data-testid="device-detail">
       {/* Device workspace header */}
-      <div className="bg-sidebar border border-border-default rounded-sm p-2 px-3">
-        <div className="flex justify-between items-start">
-          <div>
+      <div className="bg-sidebar border border-border-default rounded-sm px-3 py-1.5">
+        <div className="flex justify-between items-center">
+          <div className="min-w-0">
             {/* Breadcrumb */}
-            <div className="mb-0.5">
+            <div className="mb-px">
               <Link
                 to="/tenants/$tenantId/devices"
                 params={{ tenantId }}
@@ -464,33 +464,40 @@ function DeviceDetailPage() {
               <span className="text-[8px] text-text-muted mx-1">&rsaquo;</span>
               <span className="text-[8px] text-text-secondary">{device.hostname}</span>
             </div>
-            {/* Device name + status */}
-            <div className="flex items-center gap-2">
+            {/* Device name + status dot + label */}
+            <div className="flex items-center gap-1.5">
               <div className={cn(
-                'w-1.5 h-1.5 rounded-full',
+                'w-1.5 h-1.5 rounded-full flex-shrink-0',
                 device.status === 'online' ? 'bg-online' :
                 device.status === 'degraded' ? 'bg-warning' : 'bg-offline'
               )} />
-              <h1 className="text-sm font-semibold text-text-primary" data-testid="device-hostname">
+              <h1 className="text-[13px] font-semibold text-text-primary truncate" data-testid="device-hostname">
                 {device.hostname}
               </h1>
+              <span className={cn(
+                'text-[9px] flex-shrink-0',
+                device.status === 'online' ? 'text-online' :
+                device.status === 'degraded' ? 'text-warning' : 'text-offline'
+              )}>
+                {device.status}
+              </span>
               <TlsSecurityBadge tlsMode={device.tls_mode} />
             </div>
-            {/* Metadata line */}
-            <div className="text-[9px] text-text-secondary mt-0.5 pl-3.5">
+            {/* Metadata */}
+            <div className="text-[9px] text-text-secondary mt-px pl-[9px]">
               {device.model ?? device.board_name ?? '\u2014'}
               {' \u00b7 '}
               <span className="font-mono text-[8px]">{device.ip_address}</span>
               {device.routeros_version && (
                 <>
-                  {' \u00b7 RouterOS '}
-                  <span className="font-mono text-[8px]">{device.routeros_version}</span>
+                  {' \u00b7 '}
+                  <span className="font-mono text-[8px]">v{device.routeros_version}</span>
                 </>
               )}
             </div>
           </div>
-          {/* Actions: right side */}
-          <div className="flex items-center gap-1.5 mt-3">
+          {/* Actions */}
+          <div className="flex items-center gap-1 flex-shrink-0 ml-3">
             <SimpleModeToggle mode={mode} onModeChange={toggleMode} />
             {user?.role !== 'viewer' && device.routeros_version !== null && (
               <>
@@ -502,13 +509,13 @@ function DeviceDetailPage() {
               <SSHTerminal tenantId={tenantId} deviceId={deviceId} deviceName={device.hostname} />
             )}
             {canWrite(user) && (
-              <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} data-testid="button-edit-device">
-                <Pencil className="h-3.5 w-3.5" />
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-text-muted" onClick={() => setEditOpen(true)} data-testid="button-edit-device">
+                <Pencil className="h-3 w-3" />
               </Button>
             )}
             {canDelete(user) && (
-              <Button variant="destructive" size="sm" onClick={handleDelete} data-testid="button-delete-device">
-                <Trash2 className="h-3.5 w-3.5" />
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-text-muted" onClick={handleDelete} data-testid="button-delete-device">
+                <Trash2 className="h-3 w-3" />
               </Button>
             )}
           </div>
@@ -535,7 +542,7 @@ function DeviceDetailPage() {
         overviewContent={
           <>
             {/* Device info */}
-            <div className="rounded-lg border border-border bg-panel px-4 py-2">
+            <div className="rounded-sm border border-border-default bg-panel px-3 py-1.5">
               <InfoRow label="Model" value={device.model} />
               <InfoRow label="RouterOS" value={device.routeros_version} />
               <InfoRow label="Firmware" value={device.firmware_version || 'N/A'} />
@@ -588,7 +595,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Credentials (masked) */}
-            <div className="rounded-lg border border-border bg-panel px-4 py-3">
+            <div className="rounded-sm border border-border-default bg-panel px-3 py-2">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-text-secondary">Credentials</h3>
                 <Button
@@ -625,7 +632,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Groups */}
-            <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-3">
+            <div className="rounded-sm border border-border-default bg-panel px-3 py-2 space-y-3">
               <div className="flex items-center gap-2">
                 <FolderOpen className="h-4 w-4 text-text-muted" />
                 <h3 className="text-sm font-medium text-text-secondary">Groups</h3>
@@ -671,7 +678,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Tags */}
-            <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-3">
+            <div className="rounded-sm border border-border-default bg-panel px-3 py-2 space-y-3">
               <div className="flex items-center gap-2">
                 <Tag className="h-4 w-4 text-text-muted" />
                 <h3 className="text-sm font-medium text-text-secondary">Tags</h3>
