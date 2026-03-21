@@ -512,7 +512,7 @@ function AboutPage() {
         <RugLogo size={64} />
         <h1 className="text-2xl font-bold text-text-primary">TOD - The Other Dude</h1>
         <p className="text-text-secondary">
-          MSP fleet management platform for RouterOS devices
+          MikroTik fleet management platform
         </p>
         <span className="inline-block px-3 py-1 text-xs font-mono font-medium text-accent bg-accent-soft rounded-full">
           {APP_VERSION}

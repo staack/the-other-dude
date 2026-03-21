@@ -121,7 +121,7 @@ function LoginPage() {
             <RugLogo size={56} />
           </div>
           <h1 className="text-lg font-semibold text-text-primary">TOD - The Other Dude</h1>
-          <p className="text-xs text-text-muted mt-1">MSP Fleet Management</p>
+          <p className="text-xs text-text-muted mt-1">MikroTik Fleet Management</p>
         </div>
 
         {/* Login card */}
