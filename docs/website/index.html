@@ -239,10 +239,22 @@
       border: 1px solid rgba(40, 36, 28, 0.12);
       border-radius: 2px;
       overflow: hidden;
+      position: relative;
+      cursor: pointer;
     }
-    .wp-screenshot-card img {
+    .wp-screenshot-card .ss-light,
+    .wp-screenshot-card .ss-dark {
       width: 100%;
       display: block;
+    }
+    .wp-screenshot-card .ss-dark {
+      position: absolute;
+      top: 0; left: 0;
+      opacity: 0;
+      transition: opacity 150ms linear;
+    }
+    .wp-screenshot-card:hover .ss-dark {
+      opacity: 1;
     }
     .wp-screenshot-caption {
       padding: 8px 14px;
@@ -250,6 +262,34 @@
       color: #8a8578;
       font-weight: 500;
     }
+    .wp-screenshot-expanded {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(14,13,11,0.85);
+      padding: 40px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .wp-screenshot-expanded.active { display: flex; }
+    .wp-screenshot-expanded img {
+      max-width: 48%;
+      max-height: 90vh;
+      border-radius: 2px;
+      border: 1px solid rgba(180,170,150,0.15);
+    }
+    .wp-screenshot-expanded .ss-label {
+      position: absolute;
+      bottom: 16px;
+      font-size: 11px;
+      color: #948e80;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .wp-screenshot-expanded .ss-label-left { left: 40px; }
+    .wp-screenshot-expanded .ss-label-right { right: 40px; }
 
     /* ---- Caveats / what-it-is-not ---- */
     .wp-caveats {
@@ -302,7 +342,7 @@
       border: 1px solid rgba(40, 36, 28, 0.12);
       border-radius: 2px;
       padding: 20px 24px;
-      max-width: 480px;
+      max-width: 640px;
       margin-top: 16px;
       overflow-x: auto;
     }
@@ -451,45 +491,38 @@
         <h2>Screenshots</h2>
         <div class="wp-screenshot-grid">
 
-          <figure class="wp-screenshot-card">
-            <img src="assets/01-overview-light.png" alt="Fleet overview — light" loading="lazy" width="1440" height="900">
-            <figcaption class="wp-screenshot-caption">Fleet overview — light</figcaption>
+          <figure class="wp-screenshot-card" data-light="assets/01-overview-light.png" data-dark="assets/01-overview-dark.png" onclick="expandScreenshot(this)">
+            <img class="ss-light" src="assets/01-overview-light.png" alt="Fleet overview" loading="lazy" width="1440" height="900">
+            <img class="ss-dark" src="assets/01-overview-dark.png" alt="Fleet overview — dark" loading="lazy" width="1440" height="900">
+            <figcaption class="wp-screenshot-caption">Fleet overview</figcaption>
           </figure>
 
-          <figure class="wp-screenshot-card">
-            <img src="assets/01-overview-dark.png" alt="Fleet overview — dark" loading="lazy" width="1440" height="900">
-            <figcaption class="wp-screenshot-caption">Fleet overview — dark</figcaption>
+          <figure class="wp-screenshot-card" data-light="assets/02-device-detail-light.png" data-dark="assets/02-device-detail-dark.png" onclick="expandScreenshot(this)">
+            <img class="ss-light" src="assets/02-device-detail-light.png" alt="Device management" loading="lazy" width="1440" height="900">
+            <img class="ss-dark" src="assets/02-device-detail-dark.png" alt="Device management — dark" loading="lazy" width="1440" height="900">
+            <figcaption class="wp-screenshot-caption">Device management</figcaption>
           </figure>
 
-          <figure class="wp-screenshot-card">
-            <img src="assets/02-device-detail-light.png" alt="Device management — light" loading="lazy" width="1440" height="900">
-            <figcaption class="wp-screenshot-caption">Device management — light</figcaption>
+          <figure class="wp-screenshot-card" data-light="assets/03-interfaces-light.png" data-dark="assets/03-interfaces-dark.png" onclick="expandScreenshot(this)">
+            <img class="ss-light" src="assets/03-interfaces-light.png" alt="Interface configuration" loading="lazy" width="1440" height="900">
+            <img class="ss-dark" src="assets/03-interfaces-dark.png" alt="Interface configuration — dark" loading="lazy" width="1440" height="900">
+            <figcaption class="wp-screenshot-caption">Interface configuration</figcaption>
           </figure>
 
-          <figure class="wp-screenshot-card">
-            <img src="assets/02-device-detail-dark.png" alt="Device management — dark" loading="lazy" width="1440" height="900">
-            <figcaption class="wp-screenshot-caption">Device management — dark</figcaption>
+          <figure class="wp-screenshot-card" data-light="assets/04-firmware-light.png" data-dark="assets/04-firmware-dark.png" onclick="expandScreenshot(this)">
+            <img class="ss-light" src="assets/04-firmware-light.png" alt="Firmware management" loading="lazy" width="1440" height="900">
+            <img class="ss-dark" src="assets/04-firmware-dark.png" alt="Firmware management — dark" loading="lazy" width="1440" height="900">
+            <figcaption class="wp-screenshot-caption">Firmware management</figcaption>
           </figure>
 
-          <figure class="wp-screenshot-card">
-            <img src="assets/03-interfaces-light.png" alt="Interface configuration — light" loading="lazy" width="1440" height="900">
-            <figcaption class="wp-screenshot-caption">Interface configuration — light</figcaption>
-          </figure>
+        </div>
 
-          <figure class="wp-screenshot-card">
-            <img src="assets/03-interfaces-dark.png" alt="Interface configuration — dark" loading="lazy" width="1440" height="900">
-            <figcaption class="wp-screenshot-caption">Interface configuration — dark</figcaption>
-          </figure>
-
-          <figure class="wp-screenshot-card">
-            <img src="assets/04-firmware-light.png" alt="Firmware management — light" loading="lazy" width="1440" height="900">
-            <figcaption class="wp-screenshot-caption">Firmware management — light</figcaption>
-          </figure>
-
-          <figure class="wp-screenshot-card">
-            <img src="assets/04-firmware-dark.png" alt="Firmware management — dark" loading="lazy" width="1440" height="900">
-            <figcaption class="wp-screenshot-caption">Firmware management — dark</figcaption>
-          </figure>
+        <div class="wp-screenshot-expanded" id="ss-expanded" onclick="this.classList.remove('active')">
+          <img id="ss-exp-light" src="" alt="Light mode">
+          <img id="ss-exp-dark" src="" alt="Dark mode">
+          <span class="ss-label ss-label-left">light</span>
+          <span class="ss-label ss-label-right">dark</span>
+        </div>
 
         </div>
       </div>
@@ -616,9 +649,19 @@ python3 setup.py</code>
     lb.addEventListener('click', closeLightbox);
 
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'Escape') {
+        closeLightbox();
+        document.getElementById('ss-expanded').classList.remove('active');
+      }
     });
   })();
+
+  function expandScreenshot(card) {
+    var overlay = document.getElementById('ss-expanded');
+    document.getElementById('ss-exp-light').src = card.dataset.light;
+    document.getElementById('ss-exp-dark').src = card.dataset.dark;
+    overlay.classList.add('active');
+  }
   </script>
 <script>
 (function() {
