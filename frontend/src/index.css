@@ -35,10 +35,10 @@
     --elevated: 39 22% 92%;         /* #f0ede4 */
 
     --border-subtle: 30 18% 13% / 0.06;
-    --border-default: 30 18% 13% / 0.12;
+    --border-default: 30 18% 13% / 0.14;
 
     --text-primary: 43 27% 8%;      /* #1a1810 */
-    --text-secondary: 40 10% 33%;   /* #5e5a4e */
+    --text-secondary: 40 12% 30%;   /* #564e42 — slightly darker for dense readability */
     --text-muted: 36 7% 50%;        /* #8a8578 */
 
     --accent: 43 32% 40%;           /* #8a7a48 */

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Bell, Server, HardDrive } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { eventsApi, type DashboardEvent, type EventsParams } from '@/lib/eventsApi'
 import { DeviceLink } from '@/components/ui/device-link'
@@ -83,22 +82,6 @@ function EventIcon({ event }: { event: DashboardEvent }) {
   }
 }
 
-function TimelineSkeleton() {
-  return (
-    <div className="space-y-3">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex items-start gap-3 pl-3">
-          <Skeleton className="h-4 w-4 rounded-full shrink-0 mt-0.5" />
-          <div className="flex-1 space-y-1.5">
-            <Skeleton className="h-3.5 w-3/4" />
-            <Skeleton className="h-3 w-1/2" />
-          </div>
-          <Skeleton className="h-3 w-12 shrink-0" />
-        </div>
-      ))}
-    </div>
-  )
-}
 
 export function EventsTimeline({ tenantId, isSuperAdmin }: EventsTimelineProps) {
   const [filterType, setFilterType] = useState<EventFilter>(undefined)
@@ -115,86 +98,79 @@ export function EventsTimeline({ tenantId, isSuperAdmin }: EventsTimelineProps) 
   })
 
   return (
-    <Card className="bg-panel border-border">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm font-medium text-text-secondary">
-            Recent Events
-          </CardTitle>
-          <div className="flex gap-1">
-            {FILTERS.map((f) => (
-              <button
-                key={f.label}
-                onClick={() => setFilterType(f.value)}
-                className={cn(
-                  'px-2 py-0.5 rounded text-xs font-medium transition-colors',
-                  filterType === f.value
-                    ? 'bg-accent/15 text-accent'
-                    : 'text-text-muted hover:text-text-secondary hover:bg-elevated/50',
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+    <div className="bg-panel border border-border rounded-sm">
+      <div className="px-3 py-2 border-b border-border-subtle bg-elevated flex items-center justify-between">
+        <span className="text-[7px] font-medium text-text-muted uppercase tracking-[1.5px]">
+          Recent Events
+        </span>
+        <div className="flex gap-0.5">
+          {FILTERS.map((f) => (
+            <button
+              key={f.label}
+              onClick={() => setFilterType(f.value)}
+              className={cn(
+                'px-1.5 py-0.5 rounded-sm text-[10px] font-medium transition-[background-color,color] duration-[50ms]',
+                filterType === f.value
+                  ? 'bg-accent-soft text-accent'
+                  : 'text-text-muted hover:text-text-secondary',
+              )}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div>
         {isSuperAdmin && !tenantId ? (
-          <div className="flex items-center justify-center py-8 text-sm text-text-muted">
+          <div className="py-5 text-center text-[9px] text-text-muted">
             Select a tenant to view events
           </div>
         ) : isLoading ? (
-          <TimelineSkeleton />
+          <div className="py-5 text-center text-[9px] text-text-muted">
+            Loading…
+          </div>
         ) : !events || events.length === 0 ? (
-          <div className="flex items-center justify-center py-8 text-sm text-text-muted">
+          <div className="py-5 text-center text-[9px] text-text-muted">
             No recent events
           </div>
         ) : (
-          <div className="max-h-[400px] overflow-y-auto pr-1">
-            <div className="relative border-l-2 border-border ml-2">
-              {events.map((event) => (
-                <div
-                  key={event.id}
-                  className="relative flex items-start gap-3 pb-3 pl-4 last:pb-0"
-                >
-                  {/* Icon positioned over the timeline line */}
-                  <div className="absolute -left-[9px] top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-panel">
-                    <EventIcon event={event} />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0 ml-1">
-                    <p className="text-sm font-medium text-text-primary truncate">
-                      {event.title}
-                    </p>
-                    <p className="text-xs text-text-muted truncate">
-                      {event.description}
-                      {event.device_hostname && (
-                        <span className="ml-1 text-text-secondary">
-                          &mdash;{' '}
-                          {event.device_id ? (
-                            <DeviceLink tenantId={tenantId} deviceId={event.device_id}>
-                              {event.device_hostname}
-                            </DeviceLink>
-                          ) : (
-                            event.device_hostname
-                          )}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Timestamp */}
-                  <span className="text-xs text-text-muted whitespace-nowrap shrink-0 mt-0.5">
-                    {formatRelativeTime(event.timestamp)}
+          <div className="max-h-[400px] overflow-y-auto divide-y divide-border-subtle">
+            {events.map((event) => (
+              <div
+                key={event.id}
+                className="flex items-center gap-2.5 px-3 py-1.5"
+              >
+                <div className="shrink-0">
+                  <EventIcon event={event} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs text-text-primary truncate block">
+                    {event.title}
+                  </span>
+                  <span className="text-[10px] text-text-muted truncate block">
+                    {event.description}
+                    {event.device_hostname && (
+                      <span className="ml-1 text-text-secondary">
+                        &mdash;{' '}
+                        {event.device_id ? (
+                          <DeviceLink tenantId={tenantId} deviceId={event.device_id}>
+                            {event.device_hostname}
+                          </DeviceLink>
+                        ) : (
+                          event.device_hostname
+                        )}
+                      </span>
+                    )}
                   </span>
                 </div>
-              ))}
-            </div>
+                <span className="text-[10px] font-mono text-text-muted whitespace-nowrap shrink-0">
+                  {formatRelativeTime(event.timestamp)}
+                </span>
+              </div>
+            ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

@@ -78,7 +78,7 @@ export function BandwidthChart({ devices }: BandwidthChartProps) {
                 <XAxis
                   type="number"
                   tickFormatter={formatAxisTick}
-                  tick={{ fontSize: 11, fill: '#94a3b8' }}
+                  tick={{ fontSize: 10, fill: 'hsl(var(--text-muted))' }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -86,19 +86,19 @@ export function BandwidthChart({ devices }: BandwidthChartProps) {
                   type="category"
                   dataKey="hostname"
                   width={120}
-                  tick={{ fontSize: 11, fill: '#cbd5e1' }}
+                  tick={{ fontSize: 10, fill: 'hsl(var(--text-secondary))' }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
                   content={<BwTooltip />}
-                  cursor={{ fill: '#334155', opacity: 0.5 }}
+                  cursor={{ fill: 'hsl(var(--elevated))', opacity: 0.5 }}
                 />
                 <Bar
                   dataKey="bandwidthBps"
-                  fill="#38BDF8"
-                  radius={[0, 4, 4, 0]}
-                  maxBarSize={24}
+                  fill="hsl(var(--accent))"
+                  radius={[0, 2, 2, 0]}
+                  maxBarSize={20}
                 />
               </BarChart>
             </ResponsiveContainer>

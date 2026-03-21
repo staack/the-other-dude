@@ -72,34 +72,38 @@ export function QuickActions({ tenantId, isSuperAdmin }: QuickActionsProps) {
   const actions = getActions(tenantId, isSuperAdmin)
 
   return (
-    <Card className="bg-panel border-border">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-text-secondary">
+    <div className="bg-panel border border-border rounded-sm">
+      <div className="px-3 py-2 border-b border-border-subtle bg-elevated">
+        <span className="text-[7px] font-medium text-text-muted uppercase tracking-[1.5px]">
           Quick Actions
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-2">
-          {actions.map((action) => (
-            <Link
-              key={action.label}
-              to={action.to}
-              className={cn(
-                'flex flex-col items-center gap-1.5 rounded-lg px-3 py-3',
-                'text-text-secondary hover:bg-elevated/50 hover:text-text-primary',
-                'transition-colors text-center',
-              )}
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-elevated/50">
-                {action.icon}
-              </div>
-              <span className="text-xs font-medium leading-tight">
+        </span>
+      </div>
+      <div className="divide-y divide-border-subtle">
+        {actions.map((action) => (
+          <Link
+            key={action.label}
+            to={action.to}
+            className={cn(
+              'flex items-center gap-2.5 px-3 py-2',
+              'text-text-secondary hover:text-text-primary',
+              'border-l-2 border-transparent hover:border-accent',
+              'transition-[border-color,color] duration-[50ms]',
+            )}
+          >
+            <div className="text-text-muted">
+              {action.icon}
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-medium block">
                 {action.label}
               </span>
-            </Link>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+              <span className="text-[10px] text-text-muted block">
+                {action.description}
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
   )
 }
