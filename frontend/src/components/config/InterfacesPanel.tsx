@@ -233,7 +233,7 @@ export function InterfacesPanel({ tenantId, deviceId, active }: ConfigPanelProps
 
 function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="rounded-lg border border-border bg-surface">
+    <div className="rounded-lg border border-border bg-panel">
       <div className="p-3 border-b border-border">
         <Skeleton className="h-4 w-32" />
       </div>
@@ -264,14 +264,14 @@ function InterfacesTable({
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-surface p-8 text-center text-text-secondary text-sm">
+      <div className="rounded-lg border border-border bg-panel p-8 text-center text-text-secondary text-sm">
         No interfaces found on this device.
       </div>
     )
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+    <div className="rounded-lg border border-border bg-panel overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border bg-elevated/30">
@@ -374,11 +374,11 @@ function IpAddressesTab({ entries, isLoading, interfaceNames, addChange }: IpAdd
       </div>
 
       {entries.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center text-text-secondary text-sm">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center text-text-secondary text-sm">
           No IP addresses configured.
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-elevated/30">
@@ -633,11 +633,11 @@ function VlansTab({ entries, isLoading, interfaceNames, addChange }: VlansTabPro
       </div>
 
       {entries.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center text-text-secondary text-sm">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center text-text-secondary text-sm">
           No VLANs configured.
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-elevated/30">
@@ -941,11 +941,11 @@ function BridgesTab({
         </div>
 
         {bridges.length === 0 ? (
-          <div className="rounded-lg border border-border bg-surface p-6 text-center text-text-secondary text-sm">
+          <div className="rounded-lg border border-border bg-panel p-6 text-center text-text-secondary text-sm">
             No bridges configured.
           </div>
         ) : (
-          <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="rounded-lg border border-border bg-panel overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-elevated/30">
@@ -1015,11 +1015,11 @@ function BridgesTab({
         </div>
 
         {bridgePorts.length === 0 ? (
-          <div className="rounded-lg border border-border bg-surface p-6 text-center text-text-secondary text-sm">
+          <div className="rounded-lg border border-border bg-panel p-6 text-center text-text-secondary text-sm">
             No bridge ports configured.
           </div>
         ) : (
-          <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="rounded-lg border border-border bg-panel overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-elevated/30">

@@ -321,7 +321,7 @@ export function Sidebar() {
                   className={cn(
                     'flex items-center gap-2.5 px-3 py-2 mx-1 rounded-md text-sm transition-colors min-h-[44px]',
                     active
-                      ? 'bg-[hsl(var(--accent-muted))] text-accent rounded-md'
+                      ? 'bg-[hsl(var(--accent-soft))] text-accent rounded-md'
                       : 'text-text-muted hover:text-text-primary hover:bg-elevated/50 rounded-md',
                     showCollapsed && 'justify-center px-0',
                   )}

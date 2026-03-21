@@ -325,7 +325,7 @@ export function ConfigEditorPage() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={(o) => !o && setDeleteConfirmOpen(false)}>
-        <DialogContent className="max-w-sm bg-surface border-border text-text-primary">
+        <DialogContent className="max-w-sm bg-panel border-border text-text-primary">
           <DialogHeader>
             <DialogTitle className="text-sm">Confirm Delete</DialogTitle>
           </DialogHeader>

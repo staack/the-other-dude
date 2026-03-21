@@ -59,7 +59,7 @@ export function SiteHealthGrid({ tenantId, siteId }: SiteHealthGridProps) {
     return (
       <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="rounded-lg border border-border bg-surface p-4 space-y-3 animate-pulse">
+          <div key={i} className="rounded-lg border border-border bg-panel p-4 space-y-3 animate-pulse">
             <div className="h-4 w-24 bg-elevated rounded" />
             <div className="h-1.5 w-full bg-elevated rounded-full" />
             <div className="h-1.5 w-full bg-elevated rounded-full" />
@@ -74,7 +74,7 @@ export function SiteHealthGrid({ tenantId, siteId }: SiteHealthGridProps) {
 
   if (devices.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-surface p-8 text-center">
+      <div className="rounded-lg border border-border bg-panel p-8 text-center">
         <p className="text-sm text-text-muted">
           No devices assigned to this site. Assign devices from the fleet page.
         </p>
@@ -103,7 +103,7 @@ export function SiteHealthGrid({ tenantId, siteId }: SiteHealthGridProps) {
             to="/tenants/$tenantId/devices/$deviceId"
             params={{ tenantId, deviceId: device.id }}
             className={cn(
-              'rounded-lg border bg-surface p-4 space-y-2 hover:bg-elevated/50 transition-colors block',
+              'rounded-lg border bg-panel p-4 space-y-2 hover:bg-elevated/50 transition-colors block',
               borderColor(device.status),
             )}
           >

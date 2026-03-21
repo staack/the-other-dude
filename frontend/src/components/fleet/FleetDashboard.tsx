@@ -213,7 +213,7 @@ export function FleetDashboard() {
             </span>
           )}
           {/* Refresh interval selector */}
-          <div className="flex items-center rounded-md border border-border bg-surface">
+          <div className="flex items-center rounded-md border border-border bg-panel">
             {REFRESH_OPTIONS.map((opt) => (
               <button
                 key={opt.label}

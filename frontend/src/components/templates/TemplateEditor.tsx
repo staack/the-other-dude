@@ -164,7 +164,7 @@ export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorPro
             onChange={(e) => setDescription(e.target.value)}
             placeholder="What does this template configure?"
             rows={2}
-            className="w-full px-3 py-2 text-sm rounded-md bg-elevated/50 border border-border text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-1 focus:ring-border-bright"
+            className="w-full px-3 py-2 text-sm rounded-md bg-elevated/50 border border-border text-text-primary placeholder:text-text-muted resize-none focus:outline-none focus:ring-1 focus:ring-border-default"
           />
         </div>
 
@@ -176,7 +176,7 @@ export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorPro
             onChange={(e) => setContent(e.target.value)}
             placeholder={`# Example: Set system identity\n/system identity set name={{ device.hostname }}-{{ site_name }}\n\n# Add IP address\n/ip address add address={{ mgmt_ip }}/24 interface=ether1`}
             rows={16}
-            className="w-full px-3 py-2 text-sm rounded-md bg-background border border-border text-success placeholder:text-text-muted font-mono resize-y focus:outline-none focus:ring-1 focus:ring-border-bright leading-relaxed"
+            className="w-full px-3 py-2 text-sm rounded-md bg-background border border-border text-success placeholder:text-text-muted font-mono resize-y focus:outline-none focus:ring-1 focus:ring-border-default leading-relaxed"
           />
         </div>
 
@@ -247,7 +247,7 @@ export function TemplateEditor({ template, onSave, onCancel }: TemplateEditorPro
             <div className="rounded-lg border border-border overflow-hidden">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-surface border-b border-border">
+                  <tr className="bg-panel border-b border-border">
                     <th className="text-left px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Name</th>
                     <th className="text-left px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted w-28">Type</th>
                     <th className="text-left px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold text-text-muted">Default</th>

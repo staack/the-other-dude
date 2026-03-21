@@ -46,7 +46,7 @@ function ResetPasswordPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="w-full max-w-sm text-center">
-          <div className="rounded-lg border border-border bg-surface/50 p-6 space-y-4">
+          <div className="rounded-lg border border-border bg-panel/50 p-6 space-y-4">
             <p className="text-sm text-error">Invalid reset link. No token provided.</p>
             <Link to="/login" className="block text-sm text-accent hover:underline">
               Back to Sign In
@@ -69,7 +69,7 @@ function ResetPasswordPage() {
           <p className="text-xs text-text-muted mt-1">Choose a strong password</p>
         </div>
 
-        <div className="rounded-lg border border-border bg-surface/50 p-6">
+        <div className="rounded-lg border border-border bg-panel/50 p-6">
           {success ? (
             <div className="space-y-4">
               <div className="rounded-md bg-success/10 border border-success/30 px-3 py-3">

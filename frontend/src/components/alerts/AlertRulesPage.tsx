@@ -698,7 +698,7 @@ export function AlertRulesPage() {
             No alert rules configured.
           </p>
         ) : (
-          <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="rounded-lg border border-border bg-panel overflow-hidden">
             {/* Header */}
             <div className="flex items-center gap-3 px-4 py-2 border-b border-border text-xs text-text-muted font-medium">
               <span className="flex-1">Name</span>
@@ -710,7 +710,7 @@ export function AlertRulesPage() {
             {rules.map((rule) => (
               <div
                 key={rule.id}
-                className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 hover:bg-surface text-sm"
+                className="flex items-center gap-3 px-4 py-2.5 border-b border-border/50 hover:bg-panel text-sm"
               >
                 <div className="flex-1 min-w-0">
                   <span className="text-text-primary truncate block">
@@ -809,7 +809,7 @@ export function AlertRulesPage() {
             {channels.map((ch) => (
               <div
                 key={ch.id}
-                className="rounded-lg border border-border bg-surface p-4 space-y-2"
+                className="rounded-lg border border-border bg-panel p-4 space-y-2"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">

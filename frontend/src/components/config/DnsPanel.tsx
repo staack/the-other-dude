@@ -302,7 +302,7 @@ export function DnsPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
       </div>
 
       {/* Section 1: Resolver Settings */}
-      <div className="rounded-lg border border-border bg-surface p-4 space-y-4">
+      <div className="rounded-lg border border-border bg-panel p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Server className="h-4 w-4 text-accent" />
@@ -393,7 +393,7 @@ export function DnsPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
       </div>
 
       {/* Section 2: Static DNS Entries */}
-      <div className="rounded-lg border border-border bg-surface p-4 space-y-3">
+      <div className="rounded-lg border border-border bg-panel p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Globe className="h-4 w-4 text-accent" />

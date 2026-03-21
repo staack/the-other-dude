@@ -24,7 +24,7 @@ export function DiffViewer({ tenantId, deviceId, snapshotId, onClose }: DiffView
   })
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div className="rounded-lg border border-border bg-panel p-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">

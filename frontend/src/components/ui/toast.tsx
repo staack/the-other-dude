@@ -8,7 +8,7 @@ export function Toaster() {
     <SonnerToaster
       position="bottom-right"
       toastOptions={{
-        className: 'bg-surface border-border text-text-primary',
+        className: 'bg-panel border-border text-text-primary',
         descriptionClassName: 'text-text-secondary',
       }}
       theme={theme}

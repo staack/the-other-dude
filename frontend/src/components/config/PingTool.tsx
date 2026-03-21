@@ -90,7 +90,7 @@ export function PingTool({ tenantId, deviceId }: ConfigPanelProps) {
   return (
     <div className="space-y-4">
       {/* Input form */}
-      <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-panel p-4">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="space-y-1 col-span-2">
             <Label className="text-xs text-text-secondary">Target IP / Hostname</Label>
@@ -166,7 +166,7 @@ export function PingTool({ tenantId, deviceId }: ConfigPanelProps) {
       )}
 
       {results.length > 0 && (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <div className="px-4 py-2 border-b border-border/50 flex items-center gap-2">
             <Activity className="h-4 w-4 text-accent" />
             <span className="text-sm font-medium text-text-secondary">Ping Results</span>
@@ -189,7 +189,7 @@ export function PingTool({ tenantId, deviceId }: ConfigPanelProps) {
 
       {/* Stats summary */}
       {stats && (
-        <div className="rounded-lg border border-border bg-surface p-4">
+        <div className="rounded-lg border border-border bg-panel p-4">
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 text-center">
             <StatBox label="Sent" value={String(stats.sent)} />
             <StatBox label="Received" value={String(stats.received)} />

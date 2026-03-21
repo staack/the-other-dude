@@ -99,7 +99,7 @@ function DeviceNode({ data }: NodeProps<DeviceNodeData>) {
   return (
     <div
       className={cn(
-        'rounded-lg border bg-surface px-3 py-2 min-w-[180px]',
+        'rounded-lg border bg-panel px-3 py-2 min-w-[180px]',
         'transition-colors',
         isOnline ? 'border-border' : 'border-error/30',
       )}
@@ -339,7 +339,7 @@ export function TopologyMap({ tenantId }: TopologyMapProps) {
       >
         <Background color="hsl(var(--muted))" gap={20} size={1} />
         <Controls
-          className="!bg-surface !border-border [&>button]:!bg-surface [&>button]:!border-border [&>button]:!text-text-secondary [&>button:hover]:!bg-elevated"
+          className="!bg-panel !border-border [&>button]:!bg-panel [&>button]:!border-border [&>button]:!text-text-secondary [&>button:hover]:!bg-elevated"
         />
         <MiniMap
           nodeColor={(node) => {
@@ -349,7 +349,7 @@ export function TopologyMap({ tenantId }: TopologyMapProps) {
               : 'hsl(var(--error))'
           }}
           maskColor="hsl(var(--background) / 0.7)"
-          className="!bg-surface !border-border"
+          className="!bg-panel !border-border"
         />
       </ReactFlow>
 
@@ -357,7 +357,7 @@ export function TopologyMap({ tenantId }: TopologyMapProps) {
       {tooltip && <NodeTooltip data={tooltip} onClose={() => setTooltip(null)} />}
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 rounded-lg border border-border bg-surface/90 backdrop-blur-sm px-3 py-2 text-xs text-text-muted">
+      <div className="absolute bottom-4 left-4 rounded-lg border border-border bg-panel/90 backdrop-blur-sm px-3 py-2 text-xs text-text-muted">
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-success" /> Online

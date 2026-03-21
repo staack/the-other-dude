@@ -125,7 +125,7 @@ function LoginPage() {
         </div>
 
         {/* Login card */}
-        <div className="rounded-lg border border-border bg-surface p-6">
+        <div className="rounded-lg border border-border bg-panel p-6">
           <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>

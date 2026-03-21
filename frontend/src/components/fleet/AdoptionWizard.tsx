@@ -231,7 +231,7 @@ export function AdoptionWizard({ tenantId }: AdoptionWizardProps) {
 
       {/* Step 3: Configure Credentials */}
       {step === 3 && (
-        <div className="rounded-lg border border-border bg-surface p-6 space-y-4">
+        <div className="rounded-lg border border-border bg-panel p-6 space-y-4">
           <div>
             <h3 className="text-sm font-semibold">Configure Credentials</h3>
             <p className="text-xs text-text-muted mt-0.5">
@@ -253,7 +253,7 @@ export function AdoptionWizard({ tenantId }: AdoptionWizardProps) {
                 className={cn(
                   'flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors',
                   credMode === opt.value
-                    ? 'bg-surface text-text-primary shadow-sm'
+                    ? 'bg-panel text-text-primary shadow-sm'
                     : 'text-text-muted hover:text-text-secondary',
                 )}
               >
@@ -389,7 +389,7 @@ export function AdoptionWizard({ tenantId }: AdoptionWizardProps) {
 
       {/* Step 4: Assign Groups & Tags */}
       {step === 4 && (
-        <div className="rounded-lg border border-border bg-surface p-6 space-y-4">
+        <div className="rounded-lg border border-border bg-panel p-6 space-y-4">
           <div>
             <h3 className="text-sm font-semibold">Assign Groups & Tags</h3>
             <p className="text-xs text-text-muted mt-0.5">
@@ -584,7 +584,7 @@ function SubnetStep({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-6 space-y-4">
+    <div className="rounded-lg border border-border bg-panel p-6 space-y-4">
       <div>
         <h3 className="text-sm font-semibold">Enter Subnet</h3>
         <p className="text-xs text-text-muted mt-0.5">
@@ -682,7 +682,7 @@ function ScanResultsStep({
   ).length
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-6 space-y-4">
+    <div className="rounded-lg border border-border bg-panel p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold">Scan Results</h3>
@@ -703,7 +703,7 @@ function ScanResultsStep({
       <div className="rounded-md border border-border/50 overflow-hidden max-h-72 overflow-y-auto">
         <table className="w-full text-sm">
           <thead className="sticky top-0">
-            <tr className="border-b border-border bg-surface">
+            <tr className="border-b border-border bg-panel">
               <th className="px-3 py-2 w-8">
                 <Checkbox
                   checked={allNewSelected}
@@ -959,7 +959,7 @@ function ImportVerifyStep({
   ])
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-6 space-y-4">
+    <div className="rounded-lg border border-border bg-panel p-6 space-y-4">
       <div>
         <h3 className="text-sm font-semibold">Import & Verify</h3>
         <p className="text-xs text-text-muted mt-0.5">
@@ -1013,7 +1013,7 @@ function ImportVerifyStep({
             <div className="rounded-md border border-border/50 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border bg-surface">
+                  <tr className="border-b border-border bg-panel">
                     <th className="text-left px-3 py-2 text-xs font-medium text-text-muted">
                       Device
                     </th>

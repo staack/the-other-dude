@@ -230,7 +230,7 @@ function ServiceTable({
 
   return (
     <>
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
             <Shield className="h-4 w-4" />
@@ -337,7 +337,7 @@ function ServiceTable({
               <select
                 value={form.disabled}
                 onChange={(e) => setForm((f) => ({ ...f, disabled: e.target.value }))}
-                className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
+                className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"
               >
                 <option value="false">Enabled</option>
                 <option value="true">Disabled</option>

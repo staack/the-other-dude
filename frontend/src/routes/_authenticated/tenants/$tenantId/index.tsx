@@ -49,7 +49,7 @@ function TenantDetailPage() {
         <Link
           to="/tenants/$tenantId/users"
           params={{ tenantId }}
-          className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4 hover:bg-elevated/50 transition-colors group"
+          className="flex items-center gap-3 rounded-lg border border-border bg-panel p-4 hover:bg-elevated/50 transition-colors group"
         >
           <Users className="h-8 w-8 text-text-muted group-hover:text-text-muted transition-colors" />
           <div>
@@ -61,7 +61,7 @@ function TenantDetailPage() {
         <Link
           to="/tenants/$tenantId/sites"
           params={{ tenantId }}
-          className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4 hover:bg-elevated/50 transition-colors group"
+          className="flex items-center gap-3 rounded-lg border border-border bg-panel p-4 hover:bg-elevated/50 transition-colors group"
         >
           <MapPin className="h-8 w-8 text-text-muted group-hover:text-text-muted transition-colors" />
           <div>
@@ -73,7 +73,7 @@ function TenantDetailPage() {
         <Link
           to="/tenants/$tenantId/devices"
           params={{ tenantId }}
-          className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4 hover:bg-elevated/50 transition-colors group"
+          className="flex items-center gap-3 rounded-lg border border-border bg-panel p-4 hover:bg-elevated/50 transition-colors group"
         >
           <Monitor className="h-8 w-8 text-text-muted group-hover:text-text-muted transition-colors" />
           <div>

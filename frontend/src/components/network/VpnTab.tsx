@@ -112,7 +112,7 @@ export function VpnTab({ tenantId, deviceId, active }: VpnTabProps) {
 
   if (error) {
     return (
-      <div className="mt-4 rounded-lg border border-border bg-surface p-6 text-center text-sm text-error">
+      <div className="mt-4 rounded-lg border border-border bg-panel p-6 text-center text-sm text-error">
         Failed to load VPN tunnels. The device may not support this feature.
       </div>
     )
@@ -120,7 +120,7 @@ export function VpnTab({ tenantId, deviceId, active }: VpnTabProps) {
 
   if (!data || data.tunnels.length === 0) {
     return (
-      <div className="mt-4 rounded-lg border border-border bg-surface p-8 text-center">
+      <div className="mt-4 rounded-lg border border-border bg-panel p-8 text-center">
         <Shield className="w-10 h-10 mx-auto mb-3 text-text-muted opacity-40" />
         <p className="text-sm font-medium text-text-primary mb-1">
           No active VPN tunnels
@@ -134,7 +134,7 @@ export function VpnTab({ tenantId, deviceId, active }: VpnTabProps) {
   }
 
   return (
-    <div className="mt-4 rounded-lg border border-border bg-surface overflow-hidden">
+    <div className="mt-4 rounded-lg border border-border bg-panel overflow-hidden">
       <table className="w-full text-left">
         <thead>
           <tr className="border-b border-border bg-elevated/50">

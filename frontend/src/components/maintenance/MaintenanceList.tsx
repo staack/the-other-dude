@@ -103,7 +103,7 @@ export function MaintenanceList({ tenantId }: MaintenanceListProps) {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-20 rounded-lg border border-border bg-surface animate-pulse"
+            className="h-20 rounded-lg border border-border bg-panel animate-pulse"
           />
         ))}
       </div>
@@ -266,7 +266,7 @@ function WindowCard({
 
   return (
     <div
-      className={`rounded-lg border border-border bg-surface p-3 ${
+      className={`rounded-lg border border-border bg-panel p-3 ${
         isPast ? 'opacity-60' : ''
       }`}
     >

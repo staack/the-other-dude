@@ -187,7 +187,7 @@ export function LogsTab({ tenantId, deviceId, active }: LogsTabProps) {
       </div>
 
       {/* Log table */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         {isLoading ? (
           <TableSkeleton />
         ) : error ? (

@@ -57,7 +57,7 @@ function WirelessPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-panel">
           <CardContent className="p-4">
             <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">
               APs with Issues
@@ -68,7 +68,7 @@ function WirelessPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-panel">
           <CardContent className="p-4">
             <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">
               Worst Signal
@@ -84,7 +84,7 @@ function WirelessPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-panel">
           <CardContent className="p-4">
             <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">
               Total Clients
@@ -98,13 +98,13 @@ function WirelessPage() {
 
       {/* Issues Table or All Clear */}
       {isLoading ? (
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-panel">
           <CardContent className="p-6">
             <p className="text-sm text-text-muted">Loading wireless data...</p>
           </CardContent>
         </Card>
       ) : issues.length === 0 ? (
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-panel">
           <CardContent className="flex flex-col items-center justify-center gap-3 p-12">
             <CheckCircle2 className="h-10 w-10 text-success" />
             <p className="text-sm font-medium text-text-secondary">
@@ -113,7 +113,7 @@ function WirelessPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-border bg-surface overflow-hidden">
+        <Card className="border-border bg-panel overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
@@ -150,7 +150,7 @@ function WirelessPage() {
                 {issues.map((issue, idx) => (
                   <tr
                     key={`${issue.device_id}-${issue.interface}-${idx}`}
-                    className="border-b border-border/50 hover:bg-surface-hover transition-colors"
+                    className="border-b border-border/50 hover:bg-panel-hover transition-colors"
                   >
                     <td className="px-4 py-3 text-sm text-text-secondary">
                       <div className="flex items-center gap-2">

@@ -49,7 +49,7 @@ export function RFStatsCard({ tenantId, deviceId, active }: RFStatsCardProps) {
         {data.items.map((stat: RFStatsResponse) => (
           <div
             key={stat.interface}
-            className="rounded-lg border border-border bg-surface p-3"
+            className="rounded-lg border border-border bg-panel p-3"
           >
             <div className="flex items-center gap-2 mb-3">
               <Radio className="h-4 w-4 text-text-muted" />

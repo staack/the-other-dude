@@ -98,7 +98,7 @@ export function PppPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
         {SUB_TABS.map((tab) => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
             className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
-              activeTab === tab.key ? 'bg-surface text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-surface/50')}>
+              activeTab === tab.key ? 'bg-panel text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary hover:bg-panel/50')}>
             {tab.icon}{tab.label}
             {tab.key === 'active' && activeConns.entries.length > 0 && (
               <span className="text-xs bg-accent/20 text-accent px-1 rounded">{activeConns.entries.length}</span>
@@ -146,7 +146,7 @@ function ProfilesTab({ entries, panel }: { entries: ProfileEntry[]; panel: Panel
 
   return (
     <>
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <span className="text-sm font-medium text-text-secondary">PPP Profiles ({entries.length})</span>
           <Button size="sm" variant="outline" className="gap-1" onClick={handleAdd}><Plus className="h-3.5 w-3.5" />Add Profile</Button>
@@ -219,7 +219,7 @@ function SecretsTab({ entries, panel, profileNames }: { entries: SecretEntry[]; 
 
   return (
     <>
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <span className="text-sm font-medium text-text-secondary">PPP Secrets ({entries.length})</span>
           <Button size="sm" variant="outline" className="gap-1" onClick={handleAdd}><Plus className="h-3.5 w-3.5" />Add Secret</Button>
@@ -252,7 +252,7 @@ function SecretsTab({ entries, panel, profileNames }: { entries: SecretEntry[]; 
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1"><Label className="text-xs text-text-secondary">Service</Label>
-              <select value={form.service} onChange={(e) => setForm((f) => ({ ...f, service: e.target.value }))} className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary">
+              <select value={form.service} onChange={(e) => setForm((f) => ({ ...f, service: e.target.value }))} className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary">
                 {PPP_SERVICES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select></div>
             <div className="space-y-1"><Label className="text-xs text-text-secondary">Profile</Label><Input value={form.profile} onChange={(e) => setForm((f) => ({ ...f, profile: e.target.value }))} placeholder="default" className="h-8 text-sm" list="profile-names" />
@@ -281,7 +281,7 @@ function ActiveTab({ entries, tenantId, deviceId, refetch }: { entries: ActiveEn
   })
 
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+    <div className="rounded-lg border border-border bg-panel overflow-hidden">
       <div className="px-4 py-2 border-b border-border/50">
         <span className="text-sm font-medium text-text-secondary">Active Connections ({entries.length})</span>
       </div>

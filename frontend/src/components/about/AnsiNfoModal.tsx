@@ -146,7 +146,7 @@ export function AnsiNfoModal({ open, onOpenChange }: AnsiNfoModalProps) {
         }}
       >
         {/* Retro title bar */}
-        <div className="flex items-center justify-between px-3 pr-10 py-1.5 bg-surface border-b border-border font-mono text-xs">
+        <div className="flex items-center justify-between px-3 pr-10 py-1.5 bg-panel border-b border-border font-mono text-xs">
           <DialogTitle id="ansi-nfo-title" className="text-text-muted text-xs font-normal font-mono">
             TOD.NFO — ACiD View v1.0
           </DialogTitle>

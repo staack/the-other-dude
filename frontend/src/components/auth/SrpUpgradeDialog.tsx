@@ -134,7 +134,7 @@ export function SrpUpgradeDialog({
             </div>
           ) : (
             <>
-              <div className="rounded-md bg-surface-secondary p-4 text-sm text-text-secondary leading-relaxed space-y-3">
+              <div className="rounded-md bg-panel-secondary p-4 text-sm text-text-secondary leading-relaxed space-y-3">
                 <p>
                   <strong>What happens:</strong>
                 </p>

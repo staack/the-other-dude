@@ -115,7 +115,7 @@ export function EventsTimeline({ tenantId, isSuperAdmin }: EventsTimelineProps) 
   })
 
   return (
-    <Card className="bg-surface border-border">
+    <Card className="bg-panel border-border">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-sm font-medium text-text-secondary">
@@ -159,7 +159,7 @@ export function EventsTimeline({ tenantId, isSuperAdmin }: EventsTimelineProps) 
                   className="relative flex items-start gap-3 pb-3 pl-4 last:pb-0"
                 >
                   {/* Icon positioned over the timeline line */}
-                  <div className="absolute -left-[9px] top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-surface">
+                  <div className="absolute -left-[9px] top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-panel">
                     <EventIcon event={event} />
                   </div>
 

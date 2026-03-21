@@ -88,7 +88,7 @@ export function MapPage() {
           <select
             value={selectedTenant}
             onChange={(e) => setSelectedTenant(e.target.value)}
-            className="text-xs bg-elevated/50 border border-border text-text-primary rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-border-bright"
+            className="text-xs bg-elevated/50 border border-border text-text-primary rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-border-default"
           >
             <option value="all">All Organizations</option>
             {tenants.map((t) => (

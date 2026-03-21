@@ -265,7 +265,7 @@ function TreeItem({
         className={cn(
           'flex items-center gap-1.5 w-full px-2 py-1 text-xs rounded transition-colors',
           isActive
-            ? 'bg-[hsl(var(--accent-muted))] text-accent'
+            ? 'bg-[hsl(var(--accent-soft))] text-accent'
             : 'text-text-secondary hover:text-text-primary hover:bg-elevated/50',
         )}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}

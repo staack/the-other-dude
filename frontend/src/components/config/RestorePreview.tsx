@@ -100,7 +100,7 @@ export function RestorePreview({
       )}
 
       {/* Summary bar */}
-      <div className="rounded-lg border border-border bg-surface-raised p-3 flex items-center justify-between">
+      <div className="rounded-lg border border-border bg-panel-raised p-3 flex items-center justify-between">
         <div className="flex items-center gap-4 text-sm">
           <span className="text-success font-mono">+{diff.added}</span>
           <span className="text-error font-mono">-{diff.removed}</span>
@@ -125,7 +125,7 @@ export function RestorePreview({
           {changedCategories.map((cat) => (
             <button
               key={cat.path}
-              className="w-full px-3 py-2 flex items-center justify-between hover:bg-surface-raised/50 transition-colors"
+              className="w-full px-3 py-2 flex items-center justify-between hover:bg-panel-raised/50 transition-colors"
               onClick={() => togglePath(cat.path)}
             >
               <div className="flex items-center gap-2 text-sm">

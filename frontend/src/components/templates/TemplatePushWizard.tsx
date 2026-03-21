@@ -150,7 +150,7 @@ export function TemplatePushWizard({ open, onClose, tenantId, template }: Templa
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-surface border-border text-text-primary">
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto bg-panel border-border text-text-primary">
         <DialogHeader>
           <DialogTitle className="text-sm flex items-center gap-2">
             Push Template: {template.name}
@@ -193,7 +193,7 @@ export function TemplatePushWizard({ open, onClose, tenantId, template }: Templa
                 {devices?.map((device) => (
                   <label
                     key={device.id}
-                    className="flex items-center gap-3 px-3 py-2 hover:bg-surface cursor-pointer"
+                    className="flex items-center gap-3 px-3 py-2 hover:bg-panel cursor-pointer"
                   >
                     <Checkbox
                       checked={selectedDeviceIds.has(device.id)}
@@ -237,7 +237,7 @@ export function TemplatePushWizard({ open, onClose, tenantId, template }: Templa
               Provide values for template variables. Built-in device variables are auto-populated per device.
             </div>
 
-            <div className="text-[10px] text-text-muted bg-surface rounded px-3 py-2">
+            <div className="text-[10px] text-text-muted bg-panel rounded px-3 py-2">
               Auto-populated: {'{{ device.hostname }}'}, {'{{ device.ip }}'}, {'{{ device.model }}'}
             </div>
 
@@ -321,7 +321,7 @@ export function TemplatePushWizard({ open, onClose, tenantId, template }: Templa
                     'text-xs px-2 py-1 rounded transition-colors',
                     previewDevice === d.id
                       ? 'bg-elevated text-text-primary'
-                      : 'bg-surface text-text-secondary hover:text-text-secondary',
+                      : 'bg-panel text-text-secondary hover:text-text-secondary',
                   )}
                 >
                   {d.hostname}

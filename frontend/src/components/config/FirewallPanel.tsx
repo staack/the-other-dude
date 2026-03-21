@@ -643,7 +643,7 @@ function FilterRulesTable({
         </Button>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -836,7 +836,7 @@ function NatRulesTable({
         </Button>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

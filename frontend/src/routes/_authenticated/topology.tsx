@@ -42,7 +42,7 @@ function TopologyPage() {
       </div>
 
       {/* Topology map (full remaining height) */}
-      <div className="flex-1 min-h-0 mx-4 mb-4 rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="flex-1 min-h-0 mx-4 mb-4 rounded-lg border border-border bg-panel overflow-hidden">
         {tenantId ? (
           <TopologyMap tenantId={tenantId} />
         ) : (

@@ -136,7 +136,7 @@ export function CommandExecutor({ tenantId, deviceId, currentPath }: CommandExec
           {results.length > 0 && (
             <div className="max-h-48 overflow-y-auto space-y-2">
               {results.map((r, i) => (
-                <div key={i} className="bg-surface border-border rounded-md font-mono text-xs p-2 border">
+                <div key={i} className="bg-panel border-border rounded-md font-mono text-xs p-2 border">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[10px] text-text-muted">{r.timestamp}</span>
                     <span className="text-xs font-mono text-text-secondary">{r.command}</span>

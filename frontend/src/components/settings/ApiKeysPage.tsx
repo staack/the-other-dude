@@ -166,7 +166,7 @@ export function ApiKeysPage({ tenantId }: ApiKeysPageProps) {
           action={{ label: 'Create API Key', onClick: () => setShowCreateDialog(true) }}
         />
       ) : (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-elevated/30">
@@ -264,7 +264,7 @@ export function ApiKeysPage({ tenantId }: ApiKeysPageProps) {
               </label>
               <input
                 type="text"
-                className="w-full rounded-md border border-border-bright bg-elevated/50 px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                className="w-full rounded-md border border-border-default bg-elevated/50 px-3 py-2 text-sm focus:border-accent focus:outline-none"
                 placeholder="e.g. Monitoring Integration"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -300,7 +300,7 @@ export function ApiKeysPage({ tenantId }: ApiKeysPageProps) {
               </label>
               <input
                 type="date"
-                className="w-full rounded-md border border-border-bright bg-elevated/50 px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                className="w-full rounded-md border border-border-default bg-elevated/50 px-3 py-2 text-sm focus:border-accent focus:outline-none"
                 value={expiresAt}
                 onChange={(e) => setExpiresAt(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}

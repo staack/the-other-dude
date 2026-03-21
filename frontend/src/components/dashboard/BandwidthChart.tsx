@@ -45,7 +45,7 @@ function BwTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) return null
   const item = payload[0]
   return (
-    <div className="rounded-md border border-border bg-surface px-3 py-2 text-xs">
+    <div className="rounded-md border border-border bg-panel px-3 py-2 text-xs">
       <p className="font-medium text-text-primary">{item.payload.hostname}</p>
       <p className="text-text-secondary">{formatBw(item.value)}</p>
     </div>
@@ -56,7 +56,7 @@ export function BandwidthChart({ devices }: BandwidthChartProps) {
   const chartHeight = Math.max(200, devices.length * 36)
 
   return (
-    <Card className="bg-surface border-border">
+    <Card className="bg-panel border-border">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium text-text-secondary">
           Top Bandwidth Consumers

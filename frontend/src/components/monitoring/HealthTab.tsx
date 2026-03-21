@@ -43,16 +43,16 @@ export function HealthTab({ tenantId, deviceId, active = true }: HealthTabProps)
       {isLoading ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="rounded-lg border border-border bg-surface p-4 h-44 animate-pulse" />
+            <div key={i} className="rounded-lg border border-border bg-panel p-4 h-44 animate-pulse" />
           ))}
         </div>
       ) : !data || data.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center text-sm text-text-muted">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center text-sm text-text-muted">
           No health metrics data available for the selected time range.
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="rounded-lg border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-panel p-4">
             <HealthChart
               data={data}
               metric="avg_cpu"
@@ -62,7 +62,7 @@ export function HealthTab({ tenantId, deviceId, active = true }: HealthTabProps)
               maxY={100}
             />
           </div>
-          <div className="rounded-lg border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-panel p-4">
             <HealthChart
               data={data}
               metric="avg_mem_pct"
@@ -72,7 +72,7 @@ export function HealthTab({ tenantId, deviceId, active = true }: HealthTabProps)
               maxY={100}
             />
           </div>
-          <div className="rounded-lg border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-panel p-4">
             <HealthChart
               data={data}
               metric="avg_disk_pct"
@@ -82,7 +82,7 @@ export function HealthTab({ tenantId, deviceId, active = true }: HealthTabProps)
               maxY={100}
             />
           </div>
-          <div className="rounded-lg border border-border bg-surface p-4">
+          <div className="rounded-lg border border-border bg-panel p-4">
             <HealthChart
               data={data}
               metric="avg_temp"

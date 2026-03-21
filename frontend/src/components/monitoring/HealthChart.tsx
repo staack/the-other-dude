@@ -33,7 +33,7 @@ function CustomTooltip({
 }: { active?: boolean; payload?: Array<{ value?: number }>; label?: string; unit: string }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded border border-border bg-surface px-2 py-1.5 text-xs text-text-primary">
+    <div className="rounded border border-border bg-panel px-2 py-1.5 text-xs text-text-primary">
       <div className="mb-1 text-text-muted">{label}</div>
       <div>
         {(payload[0].value ?? 0).toFixed(1)}

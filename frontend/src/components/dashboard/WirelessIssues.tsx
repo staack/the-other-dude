@@ -25,7 +25,7 @@ export function WirelessIssues({ tenantId }: WirelessIssuesProps) {
   })
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-5">
+    <div className="rounded-lg border border-border bg-panel p-5">
       <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
         <Wifi className="h-4 w-4 text-text-muted" />
         APs Needing Attention

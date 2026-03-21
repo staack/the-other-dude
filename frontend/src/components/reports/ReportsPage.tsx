@@ -122,8 +122,8 @@ export function ReportsPage({ tenantId }: ReportsPageProps) {
                 className={cn(
                   'flex items-start gap-3 p-4 rounded-lg border text-left transition-all',
                   isSelected
-                    ? 'border-accent bg-accent-muted/30 ring-1 ring-accent'
-                    : 'border-border bg-surface hover:border-text-muted',
+                    ? 'border-accent bg-accent-soft/30 ring-1 ring-accent'
+                    : 'border-border bg-panel hover:border-text-muted',
                 )}
               >
                 <div
@@ -172,7 +172,7 @@ export function ReportsPage({ tenantId }: ReportsPageProps) {
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="w-full h-9 rounded-md border border-border bg-surface px-3 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                className="w-full h-9 rounded-md border border-border bg-panel px-3 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
             <div className="flex-1">
@@ -187,7 +187,7 @@ export function ReportsPage({ tenantId }: ReportsPageProps) {
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="w-full h-9 rounded-md border border-border bg-surface px-3 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+                className="w-full h-9 rounded-md border border-border bg-panel px-3 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
               />
             </div>
           </div>

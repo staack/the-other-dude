@@ -101,7 +101,7 @@ export function PushProgressPanel({ tenantId, rolloutId, onClose }: PushProgress
           return (
             <div
               key={job.device_id}
-              className="flex items-center gap-3 rounded-lg border border-border/50 bg-surface/50 px-3 py-2"
+              className="flex items-center gap-3 rounded-lg border border-border/50 bg-panel/50 px-3 py-2"
             >
               <Icon
                 className={cn(

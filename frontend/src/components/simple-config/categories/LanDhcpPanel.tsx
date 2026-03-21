@@ -180,7 +180,7 @@ export function LanDhcpPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
         {activeLeases.length === 0 ? (
           <p className="text-xs text-text-muted">No active DHCP leases</p>
         ) : (
-          <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="rounded-lg border border-border bg-panel overflow-hidden">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border bg-elevated/30">

@@ -81,9 +81,9 @@ export function ConfigDiffViewer({
   const isLoading = loadingOld || loadingNew
 
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+    <div className="rounded-lg border border-border bg-panel overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-panel">
         <div className="flex items-center gap-2 text-xs text-text-muted">
           {isEncrypted && (
             <span className="inline-flex items-center gap-1 text-info" title="Decrypted from encrypted backup">

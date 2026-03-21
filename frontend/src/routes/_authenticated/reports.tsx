@@ -33,7 +33,7 @@ function ReportsPageRoute() {
           <FileText className="h-5 w-5 text-text-muted" />
           Reports
         </h1>
-        <div className="rounded-lg border border-border bg-surface p-8 text-center">
+        <div className="rounded-lg border border-border bg-panel p-8 text-center">
           <p className="text-sm text-text-muted">
             You need at least operator permissions to generate reports.
           </p>
@@ -61,7 +61,7 @@ function ReportsPageRoute() {
       {tenantId ? (
         <ReportsPage tenantId={tenantId} />
       ) : (
-        <div className="rounded-lg border border-border bg-surface p-12 text-center">
+        <div className="rounded-lg border border-border bg-panel p-12 text-center">
           <Building2 className="h-8 w-8 text-text-muted mx-auto mb-3" />
           <p className="text-sm text-text-muted">
             Select an organization from the header to view reports.

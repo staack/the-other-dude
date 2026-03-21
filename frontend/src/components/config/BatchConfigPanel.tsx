@@ -184,7 +184,7 @@ function DeviceSelector({
 
   if (devices.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-surface p-8 text-center">
+      <div className="rounded-lg border border-border bg-panel p-8 text-center">
         <p className="text-text-muted text-sm">No devices found for this tenant.</p>
       </div>
     )
@@ -208,7 +208,7 @@ function DeviceSelector({
         </div>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-elevated/50">
@@ -327,7 +327,7 @@ function ChangeDefiner({
       </div>
 
       {operationType && (
-        <div className="rounded-lg border border-border bg-surface p-4 space-y-3">
+        <div className="rounded-lg border border-border bg-panel p-4 space-y-3">
           {operationType === 'add-firewall-rule' && (
             <>
               <h4 className="text-sm font-medium text-text-secondary">Firewall Rule</h4>
@@ -605,7 +605,7 @@ function ExecutionPanel({
   return (
     <div className="space-y-4">
       {/* Change description */}
-      <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-panel p-4">
         <h4 className="text-sm font-medium text-text-secondary mb-1">Change to Apply</h4>
         <p className="text-sm text-text-primary">{change.description}</p>
         <p className="text-xs text-text-muted mt-1 font-mono">
@@ -626,7 +626,7 @@ function ExecutionPanel({
 
       {/* Summary */}
       {isComplete && (
-        <div className="rounded-lg border border-border bg-surface p-4 flex items-center gap-4">
+        <div className="rounded-lg border border-border bg-panel p-4 flex items-center gap-4">
           <div className="flex items-center gap-2 text-success">
             <CheckCircle className="h-5 w-5" />
             <span className="text-sm font-medium">{successCount} succeeded</span>
@@ -641,7 +641,7 @@ function ExecutionPanel({
       )}
 
       {/* Device status table */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-elevated/50">

@@ -145,7 +145,7 @@ export function AddressListPanel({ tenantId, deviceId, active }: ConfigPanelProp
         </Button>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <div className="flex items-center gap-2 text-sm font-medium text-text-secondary">
             <List className="h-4 w-4" />

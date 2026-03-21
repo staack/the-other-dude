@@ -542,7 +542,7 @@ function DeviceDetailPage() {
         overviewContent={
           <>
             {/* Device info */}
-            <div className="rounded-lg border border-border bg-surface px-4 py-2">
+            <div className="rounded-lg border border-border bg-panel px-4 py-2">
               <InfoRow label="Model" value={device.model} />
               <InfoRow label="RouterOS" value={device.routeros_version} />
               <InfoRow label="Firmware" value={device.firmware_version || 'N/A'} />
@@ -595,7 +595,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Credentials (masked) */}
-            <div className="rounded-lg border border-border bg-surface px-4 py-3">
+            <div className="rounded-lg border border-border bg-panel px-4 py-3">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-text-secondary">Credentials</h3>
                 <Button
@@ -632,7 +632,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Groups */}
-            <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-3">
+            <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-3">
               <div className="flex items-center gap-2">
                 <FolderOpen className="h-4 w-4 text-text-muted" />
                 <h3 className="text-sm font-medium text-text-secondary">Groups</h3>
@@ -641,7 +641,7 @@ function DeviceDetailPage() {
                 {device.groups.map((group) => (
                   <div
                     key={group.id}
-                    className="flex items-center gap-1 text-xs border border-border-bright rounded px-2 py-1"
+                    className="flex items-center gap-1 text-xs border border-border-default rounded px-2 py-1"
                   >
                     {group.name}
                     {canWrite(user) && (
@@ -678,7 +678,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Tags */}
-            <div className="rounded-lg border border-border bg-surface px-4 py-3 space-y-3">
+            <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-3">
               <div className="flex items-center gap-2">
                 <Tag className="h-4 w-4 text-text-muted" />
                 <h3 className="text-sm font-medium text-text-secondary">Tags</h3>
@@ -721,7 +721,7 @@ function DeviceDetailPage() {
             </div>
 
             {/* Interface Utilization */}
-            <div className="rounded-lg border border-border bg-surface p-4">
+            <div className="rounded-lg border border-border bg-panel p-4">
               <h3 className="text-sm font-medium text-text-muted mb-3">Interface Utilization</h3>
               <InterfaceGauges tenantId={tenantId} deviceId={deviceId} active={activeTab === 'overview'} />
             </div>
@@ -842,12 +842,12 @@ function DeviceAlertsSection({
         </h3>
 
         {firingAlerts.length === 0 ? (
-          <div className="rounded-lg border border-border bg-surface p-6 text-center">
+          <div className="rounded-lg border border-border bg-panel p-6 text-center">
             <CheckCircle className="h-6 w-6 text-success/50 mx-auto mb-1" />
             <p className="text-xs text-text-muted">No active alerts for this device.</p>
           </div>
         ) : (
-          <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="rounded-lg border border-border bg-panel overflow-hidden">
             {firingAlerts.map((alert) => {
               const isSilenced =
                 alert.silenced_until && new Date(alert.silenced_until) > new Date()
@@ -940,7 +940,7 @@ function DeviceAlertsSection({
           </button>
 
           {showResolved && (
-            <div className="rounded-lg border border-border bg-surface overflow-hidden">
+            <div className="rounded-lg border border-border bg-panel overflow-hidden">
               {resolvedAlerts.map((alert) => (
                 <div
                   key={alert.id}

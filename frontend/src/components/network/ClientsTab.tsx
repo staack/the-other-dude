@@ -246,7 +246,7 @@ export function ClientsTab({ tenantId, deviceId, active }: ClientsTabProps) {
         <div className="overflow-x-auto rounded-lg border border-border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-surface text-text-secondary text-left">
+              <tr className="bg-panel text-text-secondary text-left">
                 {/* Expand chevron column */}
                 <th className="w-8 px-3 py-2.5" />
 

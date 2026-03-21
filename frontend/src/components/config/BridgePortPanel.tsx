@@ -138,11 +138,11 @@ export function BridgePortPanel({ tenantId, deviceId, active }: ConfigPanelProps
       </div>
 
       {ports.entries.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-6 text-center text-sm text-text-muted">
+        <div className="rounded-lg border border-border bg-panel p-6 text-center text-sm text-text-muted">
           No bridge ports configured.
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
@@ -212,7 +212,7 @@ export function BridgePortPanel({ tenantId, deviceId, active }: ConfigPanelProps
                 <select
                   value={formData['interface'] || ''}
                   onChange={(e) => setFormData((f) => ({ ...f, interface: e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary font-mono"
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary font-mono"
                 >
                   <option value="">Select...</option>
                   {ifaceNames.map((name) => <option key={name} value={name}>{name}</option>)}
@@ -223,7 +223,7 @@ export function BridgePortPanel({ tenantId, deviceId, active }: ConfigPanelProps
                 <select
                   value={formData['bridge'] || ''}
                   onChange={(e) => setFormData((f) => ({ ...f, bridge: e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary font-mono"
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary font-mono"
                 >
                   {bridgeNames.map((name) => <option key={name} value={name}>{name}</option>)}
                 </select>
@@ -243,7 +243,7 @@ export function BridgePortPanel({ tenantId, deviceId, active }: ConfigPanelProps
                 <select
                   value={formData['frame-types'] || 'admit-all'}
                   onChange={(e) => setFormData((f) => ({ ...f, 'frame-types': e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"
                 >
                   {FRAME_TYPES.map((ft) => <option key={ft} value={ft}>{ft}</option>)}
                 </select>
@@ -253,7 +253,7 @@ export function BridgePortPanel({ tenantId, deviceId, active }: ConfigPanelProps
                 <select
                   value={formData['ingress-filtering'] || 'no'}
                   onChange={(e) => setFormData((f) => ({ ...f, 'ingress-filtering': e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"
                 >
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
@@ -264,7 +264,7 @@ export function BridgePortPanel({ tenantId, deviceId, active }: ConfigPanelProps
                 <select
                   value={formData['hw'] || 'yes'}
                   onChange={(e) => setFormData((f) => ({ ...f, hw: e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"
                 >
                   <option value="yes">Yes</option>
                   <option value="no">No</option>
@@ -297,7 +297,7 @@ export function BridgePortPanel({ tenantId, deviceId, active }: ConfigPanelProps
                 <select
                   value={formData['edge'] || 'auto'}
                   onChange={(e) => setFormData((f) => ({ ...f, edge: e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"
                 >
                   <option value="auto">Auto</option>
                   <option value="yes">Yes</option>

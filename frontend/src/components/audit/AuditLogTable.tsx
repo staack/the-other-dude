@@ -143,7 +143,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
           value={actionFilter}
           onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
           aria-label="Filter by action"
-          className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+          className="h-8 rounded-md border border-border bg-panel px-2 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
         >
           {ACTION_TYPES.map((a) => (
             <option key={a.value} value={a.value}>
@@ -160,7 +160,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
             value={dateFrom}
             onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
             aria-label="Filter from date"
-            className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+            className="h-8 rounded-md border border-border bg-panel px-2 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>
 
@@ -172,7 +172,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
             value={dateTo}
             onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
             aria-label="Filter to date"
-            className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+            className="h-8 rounded-md border border-border bg-panel px-2 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
           />
         </div>
 
@@ -185,7 +185,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
             value={userSearch}
             onChange={(e) => setUserSearch(e.target.value)}
             aria-label="Filter by user"
-            className="h-8 rounded-md border border-border bg-surface pl-7 pr-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent w-40"
+            className="h-8 rounded-md border border-border bg-panel pl-7 pr-2 text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent w-40"
           />
         </div>
 
@@ -196,7 +196,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
         <button
           onClick={handleExport}
           disabled={exporting || !data?.total}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-elevated hover:text-text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-panel px-3 py-1.5 text-xs font-medium text-text-secondary hover:bg-elevated hover:text-text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Download className="h-3.5 w-3.5" />
           {exporting ? 'Exporting...' : 'Export CSV'}
@@ -204,7 +204,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">
             <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
@@ -278,7 +278,7 @@ export function AuditLogTable({ tenantId }: AuditLogTableProps) {
                 setPage(1)
               }}
               aria-label="Rows per page"
-              className="h-7 rounded border border-border bg-surface px-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
+              className="h-7 rounded border border-border bg-panel px-1.5 text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-accent"
             >
               {PER_PAGE_OPTIONS.map((n) => (
                 <option key={n} value={n}>

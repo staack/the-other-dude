@@ -104,7 +104,7 @@ export function ConnTrackPanel({ tenantId, deviceId, active }: ConfigPanelProps)
       </div>
 
       {/* Active connections count */}
-      <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="rounded-lg border border-border bg-panel p-4">
         <div className="flex items-center gap-3">
           <Activity className="h-5 w-5 text-accent" />
           <div>
@@ -120,7 +120,7 @@ export function ConnTrackPanel({ tenantId, deviceId, active }: ConfigPanelProps)
       </div>
 
       {/* Tracking settings */}
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2 border-b border-border/50">
           <span className="text-sm font-medium text-text-secondary">Connection Tracking Settings</span>
           <Button size="sm" variant="outline" className="gap-1" onClick={handleEdit}>
@@ -154,7 +154,7 @@ export function ConnTrackPanel({ tenantId, deviceId, active }: ConfigPanelProps)
                 <select
                   value={formData['enabled'] || 'auto'}
                   onChange={(e) => setFormData((f) => ({ ...f, enabled: e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary"
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary"
                 >
                   <option value="auto">Auto</option>
                   <option value="yes">Yes</option>

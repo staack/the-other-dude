@@ -514,14 +514,14 @@ function AboutPage() {
         <p className="text-text-secondary">
           MSP fleet management platform for RouterOS devices
         </p>
-        <span className="inline-block px-3 py-1 text-xs font-mono font-medium text-accent bg-accent-muted rounded-full">
+        <span className="inline-block px-3 py-1 text-xs font-mono font-medium text-accent bg-accent-soft rounded-full">
           {APP_VERSION}
         </span>
       </div>
 
       {/* License */}
       {license && (
-        <div className="rounded-lg border border-border bg-surface p-5 space-y-2">
+        <div className="rounded-lg border border-border bg-panel p-5 space-y-2">
           <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
             License
           </h2>
@@ -542,7 +542,7 @@ function AboutPage() {
       )}
 
       {/* Features summary */}
-      <div className="rounded-lg border border-border bg-surface p-5 space-y-3">
+      <div className="rounded-lg border border-border bg-panel p-5 space-y-3">
         <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
           Platform
         </h2>
@@ -575,7 +575,7 @@ function AboutPage() {
       </div>
 
       {/* Support Development */}
-      <div className="rounded-lg border border-border bg-surface p-5 space-y-4">
+      <div className="rounded-lg border border-border bg-panel p-5 space-y-4">
         <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wider">
           Support Development
         </h2>

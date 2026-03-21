@@ -140,7 +140,7 @@ export function BridgeVlanPanel({ tenantId, deviceId, active }: ConfigPanelProps
 
       {/* VLAN Filtering status per bridge */}
       {bridges.entries.length > 0 && (
-        <div className="rounded-lg border border-border bg-surface p-3">
+        <div className="rounded-lg border border-border bg-panel p-3">
           <div className="flex items-center gap-2 mb-2">
             <Network className="h-4 w-4 text-accent" />
             <span className="text-sm font-medium text-text-secondary">Bridge VLAN Filtering</span>
@@ -170,11 +170,11 @@ export function BridgeVlanPanel({ tenantId, deviceId, active }: ConfigPanelProps
 
       {/* VLAN Table */}
       {vlans.entries.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-6 text-center text-sm text-text-muted">
+        <div className="rounded-lg border border-border bg-panel p-6 text-center text-sm text-text-muted">
           No bridge VLAN entries configured.
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+        <div className="rounded-lg border border-border bg-panel overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
@@ -247,7 +247,7 @@ export function BridgeVlanPanel({ tenantId, deviceId, active }: ConfigPanelProps
                 <select
                   value={formData['bridge'] || ''}
                   onChange={(e) => setFormData((f) => ({ ...f, bridge: e.target.value }))}
-                  className="h-8 w-full rounded-md border border-border bg-surface px-3 text-sm text-text-primary font-mono"
+                  className="h-8 w-full rounded-md border border-border bg-panel px-3 text-sm text-text-primary font-mono"
                 >
                   {bridgeNames.map((name) => <option key={name} value={name}>{name}</option>)}
                 </select>

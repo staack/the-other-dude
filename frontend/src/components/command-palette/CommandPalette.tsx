@@ -204,7 +204,7 @@ export function CommandPalette() {
   const visiblePages = pageCommands.filter((p) => p.visible)
 
   const itemClass =
-    'flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-text-secondary cursor-pointer data-[selected=true]:bg-accent-muted data-[selected=true]:text-accent'
+    'flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-text-secondary cursor-pointer data-[selected=true]:bg-accent-soft data-[selected=true]:text-accent'
   const groupHeadingClass =
     '[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:text-text-muted [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider'
 
@@ -216,7 +216,7 @@ export function CommandPalette() {
       overlayClassName="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
       contentClassName="fixed left-1/2 top-[20%] -translate-x-1/2 z-50 w-full max-w-lg"
     >
-      <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-border bg-panel overflow-hidden">
         <div className="flex items-center gap-2 px-4 border-b border-border">
           <Search className="h-4 w-4 text-text-muted flex-shrink-0" />
           <Command.Input

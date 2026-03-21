@@ -16,7 +16,7 @@ export function SimpleStatusBanner({ items, isLoading }: SimpleStatusBannerProps
           <div key={i} className="flex flex-col">
             <span className="text-xs text-text-muted">{item.label}</span>
             {isLoading ? (
-              <div className="h-5 w-24 mt-0.5 rounded bg-elevated animate-shimmer" />
+              <div className="h-5 w-24 mt-0.5 rounded bg-elevated animate-pulse" />
             ) : (
               <span className="text-sm font-medium text-text-primary">
                 {item.value || '\u2014'}

@@ -126,7 +126,7 @@ export function WifiSimplePanel({ tenantId, deviceId, active, routerosVersion }:
   // No wireless hardware
   if (wireless.entries.length === 0) {
     return (
-      <div className="rounded-lg border border-border bg-surface p-12 text-center">
+      <div className="rounded-lg border border-border bg-panel p-12 text-center">
         <Wifi className="h-8 w-8 text-text-muted/50 mx-auto mb-3" />
         <p className="text-sm font-medium text-text-secondary">
           This device does not have wireless hardware

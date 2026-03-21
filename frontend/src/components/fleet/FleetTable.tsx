@@ -92,7 +92,7 @@ function SortHeader({ column, label, currentSort, currentDir, onSort, className 
 function DeviceCard({ device, tenantId }: { device: DeviceResponse; tenantId: string }) {
   return (
     <div
-      className="w-full text-left rounded-lg border border-border bg-surface p-3 hover:bg-elevated/50 transition-colors min-h-[44px]"
+      className="w-full text-left rounded-lg border border-border bg-panel p-3 hover:bg-elevated/50 transition-colors min-h-[44px]"
       data-testid={`device-card-${device.hostname}`}
     >
       <div className="flex items-start justify-between gap-2">

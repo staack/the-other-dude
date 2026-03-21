@@ -84,7 +84,7 @@ function TrafficPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-panel">
           <CardContent className="p-4">
             <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">
               Fleet Avg CPU
@@ -100,7 +100,7 @@ function TrafficPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-panel">
           <CardContent className="p-4">
             <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">
               Fleet Avg Memory
@@ -116,7 +116,7 @@ function TrafficPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-panel">
           <CardContent className="p-4">
             <p className="text-[10px] uppercase tracking-wider font-semibold text-text-muted">
               Devices Online
@@ -130,13 +130,13 @@ function TrafficPage() {
 
       {/* Top Resource Consumers */}
       {isLoading ? (
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-panel">
           <CardContent className="p-6">
             <p className="text-sm text-text-muted">Loading fleet data...</p>
           </CardContent>
         </Card>
       ) : devices.length === 0 ? (
-        <Card className="border-border bg-surface">
+        <Card className="border-border bg-panel">
           <CardContent className="flex flex-col items-center justify-center gap-3 p-12">
             <Inbox className="h-10 w-10 text-text-muted" />
             <p className="text-sm font-medium text-text-secondary">
@@ -149,7 +149,7 @@ function TrafficPage() {
           <h2 className="text-sm font-semibold text-text-primary">
             Top Resource Consumers
           </h2>
-          <Card className="border-border bg-surface overflow-hidden">
+          <Card className="border-border bg-panel overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
@@ -180,7 +180,7 @@ function TrafficPage() {
                   {top10.map((device) => (
                     <tr
                       key={device.id}
-                      className="border-b border-border/50 hover:bg-surface-hover transition-colors"
+                      className="border-b border-border/50 hover:bg-panel-hover transition-colors"
                     >
                       <td className="px-4 py-3 text-sm text-text-secondary">
                         {tenantId ? (
