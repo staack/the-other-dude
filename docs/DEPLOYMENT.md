@@ -25,6 +25,32 @@ TOD (The Other Dude) is a containerized fleet management platform for RouterOS d
 
 ## Quick Start
 
+### Automated Setup (Recommended)
+
+The setup wizard handles all configuration interactively:
+
+```bash
+git clone https://github.com/staack/the-other-dude.git tod
+cd tod
+python3 setup.py
+```
+
+For CI/CD pipelines or headless servers, the wizard supports non-interactive mode:
+
+```bash
+python3 setup.py --non-interactive \
+    --postgres-password 'MyP@ss!' \
+    --domain tod.example.com \
+    --admin-email admin@example.com \
+    --no-telemetry --yes
+```
+
+Available flags: `--non-interactive`, `--postgres-password`, `--admin-email`, `--admin-password`, `--domain`, `--smtp-host`, `--smtp-port`, `--smtp-user`, `--smtp-password`, `--smtp-from`, `--smtp-tls`, `--no-smtp-tls`, `--proxy caddy|nginx|apache|haproxy|traefik|skip`, `--telemetry`, `--no-telemetry`, `--yes`/`-y`. The wizard also handles EOFError gracefully when stdin is not a TTY.
+
+### Manual Setup
+
+If you prefer manual configuration, follow the steps below.
+
 ### 1. Clone and Configure
 
 ```bash

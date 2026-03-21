@@ -1,6 +1,6 @@
 # The Other Dude
 
-**Self-hosted MikroTik fleet management for MSPs.**
+**Self-hosted MikroTik fleet management.**
 
 > **Warning**
 > This software is in active development and testing. It is **not yet ready for production use**. APIs, database schemas, and features may change without notice. Use at your own risk.
@@ -81,6 +81,16 @@ The setup wizard handles everything interactively:
 - Docker image builds
 - Stack startup and health checks
 
+For CI/CD or headless servers, pass `--non-interactive` with the required flags:
+
+```bash
+python3 setup.py --non-interactive \
+    --postgres-password 'MyP@ss!' \
+    --domain tod.example.com \
+    --admin-email admin@example.com \
+    --no-telemetry --yes
+```
+
 On first launch, the web UI walks you through enrolling your Secret Key, adding your
 first organization, and onboarding your first device.
 
@@ -111,6 +121,6 @@ For support: [support@theotherdude.net](mailto:support@theotherdude.net) — sup
 
 ## The Name
 
-"The Other Dude" -- because every MSP needs one. When the network is down at 2 AM
+"The Other Dude" -- because every network team needs one. When the network is down at 2 AM
 and someone has to fix it, TOD is the other dude on the job. The Big Lebowski inspired,
 the rug really ties the room together.

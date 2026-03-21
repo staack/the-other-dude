@@ -9,7 +9,7 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `APP_NAME` | `TOD - The Other Dude` | Application display name |
-| `APP_VERSION` | `9.7.0` | Semantic version string (see VERSION file at project root) |
+| `APP_VERSION` | `9.7.2` | Semantic version string (see VERSION file at project root) |
 | `ENVIRONMENT` | `dev` | Runtime environment: `dev`, `staging`, or `production` |
 | `DEBUG` | `false` | Enable debug mode |
 | `CORS_ORIGINS` | `http://localhost:3000,http://localhost:5173,http://localhost:8080` | Comma-separated list of allowed CORS origins |

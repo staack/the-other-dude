@@ -2,7 +2,7 @@
 
 **Fleet management platform for MikroTik RouterOS.**
 
-Monitor routers, detect configuration drift, manage backups, and safely push configuration changes across hundreds of devices. Built for MSPs (Managed Service Providers) and network engineers managing MikroTik fleets.
+Monitor routers, detect configuration drift, manage backups, and safely push configuration changes across hundreds of devices. Built for network engineers and service providers managing MikroTik fleets.
 
 The Other Dude is a self-hosted, multi-tenant platform (one installation serves multiple organizations, each with fully isolated data) that gives you centralized visibility, configuration management, real-time monitoring, and zero-knowledge security across your entire MikroTik fleet -- from a single pane of glass.
 
@@ -68,7 +68,7 @@ The Other Dude is a self-hosted, multi-tenant platform (one installation serves 
 - **API Keys** -- Generate API keys (prefixed `mktp_`) for automation and integrations. Keys are shown only once at creation.
 - **Firmware Management** -- Track RouterOS versions across your fleet, plan upgrades, and push firmware updates.
 - **Maintenance Windows** -- Schedule maintenance periods with automatic alert suppression.
-- **Setup Wizard** -- Guided 3-step onboarding for first-time deployment.
+- **Setup Wizard** -- Guided 3-step onboarding for first-time deployment. Supports `--non-interactive` mode for headless and CI/CD environments.
 
 ### UX
 
@@ -155,6 +155,18 @@ python3 setup.py
 ```
 
 The setup wizard configures your database, generates encryption keys, initializes the secret management service (OpenBao), sets up your reverse proxy, builds the Docker images, and starts everything. No manual `.env` editing required.
+
+For CI/CD pipelines or headless servers, the wizard supports non-interactive mode:
+
+```bash
+python3 setup.py --non-interactive \
+    --postgres-password 'MyP@ss!' \
+    --domain tod.example.com \
+    --admin-email admin@example.com \
+    --no-telemetry --yes
+```
+
+Available flags: `--non-interactive`, `--postgres-password`, `--admin-email`, `--admin-password`, `--domain`, `--smtp-host`, `--smtp-port`, `--smtp-user`, `--smtp-password`, `--smtp-from`, `--smtp-tls`, `--no-smtp-tls`, `--proxy caddy|nginx|apache|haproxy|traefik|skip`, `--telemetry`, `--no-telemetry`, `--yes`/`-y`. The wizard also handles EOFError gracefully when stdin is not a TTY.
 
 Three environment profiles are available:
 
