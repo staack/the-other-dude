@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { useAuth } from '@/lib/auth'
 import { metricsApi, tenantsApi, type FleetDevice } from '@/lib/api'
 import { useUIStore } from '@/lib/store'
 import { alertsApi } from '@/lib/alertsApi'
 import { useEventStreamContext } from '@/contexts/EventStreamContext'
-import { LayoutDashboard } from 'lucide-react'
+import { LayoutDashboard, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LoadingText } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -43,10 +44,13 @@ function DashboardLoading() {
 
 interface AttentionItem {
   id: string
+  deviceId: string
+  tenantId: string
   hostname: string
   model: string | null
   severity: 'error' | 'warning'
   reason: string
+  hasCoords: boolean
 }
 
 function NeedsAttention({ devices }: { devices: FleetDevice[] }) {
@@ -54,36 +58,25 @@ function NeedsAttention({ devices }: { devices: FleetDevice[] }) {
     const result: AttentionItem[] = []
 
     for (const d of devices) {
+      const base = {
+        deviceId: d.id,
+        tenantId: d.tenant_id,
+        hostname: d.hostname,
+        model: d.model,
+        hasCoords: d.latitude != null && d.longitude != null,
+      }
+
       if (d.status === 'offline') {
-        result.push({
-          id: `${d.id}-offline`,
-          hostname: d.hostname,
-          model: d.model,
-          severity: 'error',
-          reason: 'Offline',
-        })
+        result.push({ ...base, id: `${d.id}-offline`, severity: 'error', reason: 'Offline' })
       } else if (d.status === 'degraded') {
-        result.push({
-          id: `${d.id}-degraded`,
-          hostname: d.hostname,
-          model: d.model,
-          severity: 'warning',
-          reason: 'Degraded',
-        })
+        result.push({ ...base, id: `${d.id}-degraded`, severity: 'warning', reason: 'Degraded' })
       }
 
       if (d.last_cpu_load != null && d.last_cpu_load > 80) {
-        result.push({
-          id: `${d.id}-cpu`,
-          hostname: d.hostname,
-          model: d.model,
-          severity: 'warning',
-          reason: `CPU ${d.last_cpu_load}%`,
-        })
+        result.push({ ...base, id: `${d.id}-cpu`, severity: 'warning', reason: `CPU ${d.last_cpu_load}%` })
       }
     }
 
-    // Sort: errors first, then warnings
     result.sort((a, b) => {
       if (a.severity === b.severity) return 0
       return a.severity === 'error' ? -1 : 1
@@ -96,7 +89,6 @@ function NeedsAttention({ devices }: { devices: FleetDevice[] }) {
 
   return (
     <div className="bg-panel border border-border-default rounded-sm mb-3.5">
-      {/* Header */}
       <div className="px-3 py-2 border-b border-border-default bg-elevated">
         <span className="text-[7px] font-medium text-text-muted uppercase tracking-[1.5px]">
           Needs Attention
@@ -104,7 +96,6 @@ function NeedsAttention({ devices }: { devices: FleetDevice[] }) {
         <span className="text-[7px] text-[hsl(var(--text-label))]"> · </span>
         <span className="text-[7px] text-text-secondary font-mono">{count}</span>
       </div>
-      {/* Rows */}
       {count > 0 ? (
         <div className="divide-y divide-border-subtle">
           {items.map((item) => (
@@ -119,16 +110,29 @@ function NeedsAttention({ devices }: { devices: FleetDevice[] }) {
               }}
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xs text-text-primary font-medium truncate">
+                <Link
+                  to="/tenants/$tenantId/devices/$deviceId"
+                  params={{ tenantId: item.tenantId, deviceId: item.deviceId }}
+                  className="text-xs text-text-primary font-medium truncate hover:text-accent transition-[color] duration-[50ms]"
+                >
                   {item.hostname}
-                </span>
-                <span className="text-[10px] text-text-secondary">
+                </Link>
+                <span className="text-[10px] text-text-secondary flex-shrink-0">
                   {item.model}
                 </span>
+                {item.hasCoords && (
+                  <Link
+                    to="/map"
+                    className="text-text-muted hover:text-accent transition-[color] duration-[50ms] flex-shrink-0"
+                    title="View on map"
+                  >
+                    <MapPin className="h-3 w-3" />
+                  </Link>
+                )}
               </div>
               <span
                 className={cn(
-                  'text-[10px] font-mono font-medium flex-shrink-0',
+                  'text-[10px] font-mono font-medium flex-shrink-0 ml-2',
                   item.severity === 'error' ? 'text-error' : 'text-warning',
                 )}
               >
