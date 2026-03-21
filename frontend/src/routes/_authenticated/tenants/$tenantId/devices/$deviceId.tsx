@@ -433,54 +433,47 @@ function DeviceDetailPage() {
     <div className={cn('space-y-4', mode === 'simple' ? 'max-w-5xl' : 'max-w-3xl')} data-testid="device-detail">
       {/* Device workspace header */}
       <div className="bg-sidebar border border-border-default rounded-sm px-3 py-1.5">
-        <div className="flex justify-between items-center">
-          <div className="min-w-0">
-            {/* Breadcrumb */}
-            <div className="mb-px">
-              <Link
-                to="/tenants/$tenantId/devices"
-                params={{ tenantId }}
-                className="text-[8px] text-text-muted hover:text-text-secondary transition-[color] duration-[50ms]"
-              >
-                Devices
-              </Link>
-              <span className="text-[8px] text-text-muted mx-1">&rsaquo;</span>
-              <span className="text-[8px] text-text-secondary">{device.hostname}</span>
-            </div>
-            {/* Device name + status dot + label */}
-            <div className="flex items-center gap-1.5">
-              <div className={cn(
-                'w-1.5 h-1.5 rounded-full flex-shrink-0',
-                device.status === 'online' ? 'bg-online' :
-                device.status === 'degraded' ? 'bg-warning' : 'bg-offline'
-              )} />
-              <h1 className="text-[13px] font-semibold text-text-primary truncate" data-testid="device-hostname">
-                {device.hostname}
-              </h1>
-              <span className={cn(
-                'text-[9px] flex-shrink-0',
-                device.status === 'online' ? 'text-online' :
-                device.status === 'degraded' ? 'text-warning' : 'text-offline'
-              )}>
-                {device.status}
-              </span>
-              <TlsSecurityBadge tlsMode={device.tls_mode} />
-            </div>
-            {/* Metadata */}
-            <div className="text-[9px] text-text-secondary mt-px pl-[9px]">
-              {device.model ?? device.board_name ?? '\u2014'}
-              {' \u00b7 '}
-              <span className="font-mono text-[8px]">{device.ip_address}</span>
-              {device.routeros_version && (
-                <>
-                  {' \u00b7 '}
-                  <span className="font-mono text-[8px]">v{device.routeros_version}</span>
-                </>
-              )}
-            </div>
+        {/* Top row: device identity */}
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Link
+            to="/tenants/$tenantId/devices"
+            params={{ tenantId }}
+            className="text-[8px] text-text-muted hover:text-text-secondary transition-[color] duration-[50ms] flex-shrink-0"
+          >
+            Devices
+          </Link>
+          <span className="text-[8px] text-text-muted flex-shrink-0">&rsaquo;</span>
+          <div className={cn(
+            'w-1.5 h-1.5 rounded-full flex-shrink-0',
+            device.status === 'online' ? 'bg-online' :
+            device.status === 'degraded' ? 'bg-warning' : 'bg-offline'
+          )} />
+          <h1 className="text-[13px] font-semibold text-text-primary truncate" data-testid="device-hostname">
+            {device.hostname}
+          </h1>
+          <span className={cn(
+            'text-[9px] flex-shrink-0',
+            device.status === 'online' ? 'text-online' :
+            device.status === 'degraded' ? 'text-warning' : 'text-offline'
+          )}>
+            {device.status}
+          </span>
+          <TlsSecurityBadge tlsMode={device.tls_mode} />
+        </div>
+        {/* Metadata + actions row */}
+        <div className="flex items-center justify-between mt-0.5 gap-2">
+          <div className="text-[9px] text-text-secondary truncate pl-[9px]">
+            {device.model ?? device.board_name ?? '\u2014'}
+            {' \u00b7 '}
+            <span className="font-mono text-[8px]">{device.ip_address}</span>
+            {device.routeros_version && (
+              <>
+                {' \u00b7 '}
+                <span className="font-mono text-[8px]">v{device.routeros_version}</span>
+              </>
+            )}
           </div>
-          {/* Actions */}
-          <div className="flex items-center gap-1 flex-shrink-0 ml-3">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <SimpleModeToggle mode={mode} onModeChange={toggleMode} />
             {user?.role !== 'viewer' && device.routeros_version !== null && (
               <>
