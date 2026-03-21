@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Other Dude — Open Source Fleet Management for MikroTik RouterOS</title>
-  <meta name="description" content="Open source MikroTik fleet management. Manage hundreds of routers from one dashboard with secure configuration management, monitoring, and backups. Self-hosted.">
-  <meta name="keywords" content="MikroTik, RouterOS, fleet management, MSP, network management, WinBox alternative, WinBox in browser, WinBox browser, MikroTik monitoring, MikroTik configuration, router management, network monitoring tool, MikroTik dashboard, multi-tenant network management, MikroTik VPN, WireGuard MikroTik, MikroTik certificate authority, MikroTik PDF reports, SRP-6a authentication, zero-knowledge security, open source MikroTik, open source fleet management, open source RouterOS management, self-hosted MikroTik, free MikroTik management">
+  <title>The Other Dude — MikroTik Fleet Management</title>
+  <meta name="description" content="MikroTik fleet management. Self-hosted. Source-available. Monitor devices, push configuration, track changes in git.">
+  <meta name="keywords" content="MikroTik, RouterOS, fleet management, network management, WinBox browser, MikroTik monitoring, MikroTik configuration, router management, self-hosted, open source, source-available">
   <meta name="author" content="The Other Dude">
   <meta name="robots" content="index, follow">
   <meta name="google-site-verification" content="d2QVuWrLJlzOQPnA-SAJuvajEHGYbusvJ4eDdZbWSBU">
-  <meta name="theme-color" content="#111113">
+  <meta name="theme-color" content="#eae7de">
   <link rel="canonical" href="https://theotherdude.net/">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><rect x='6' y='6' width='52' height='52' rx='5' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><rect x='8' y='8' width='48' height='48' rx='4' fill='%238B1A1A' opacity='0.15'/><path d='M32 8 L56 32 L32 56 L8 32 Z' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 13 L51 32 L32 51 L13 32 Z' fill='none' stroke='%23F5E6C8' stroke-width='1.5'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><path d='M19 32 L32 26 L45 32 L32 38 Z' fill='%23F5E6C8'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/><path d='M10 10 L16 10 L10 16 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 10 L54 16 L48 10 Z' fill='%232A9D8F' opacity='0.7'/><path d='M10 54 L16 54 L10 48 Z' fill='%232A9D8F' opacity='0.7'/><path d='M54 54 L48 54 L54 48 Z' fill='%232A9D8F' opacity='0.7'/></svg>">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="The Other Dude — Open Source Fleet Management for MikroTik RouterOS">
-  <meta property="og:description" content="Open source MikroTik fleet management. Manage hundreds of routers from one dashboard with secure configuration management, monitoring, and backups. Self-hosted.">
+  <meta property="og:title" content="The Other Dude — MikroTik Fleet Management">
+  <meta property="og:description" content="MikroTik fleet management. Self-hosted. Source-available.">
   <meta property="og:url" content="https://theotherdude.net/">
   <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
   <meta property="og:site_name" content="The Other Dude">
@@ -24,8 +24,8 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="The Other Dude — MikroTik Fleet Management for MSPs">
-  <meta name="twitter:description" content="Manage hundreds of MikroTik routers from a single pane of glass. Zero-knowledge security, real-time monitoring, and configuration management.">
+  <meta name="twitter:title" content="The Other Dude — MikroTik Fleet Management">
+  <meta name="twitter:description" content="MikroTik fleet management. Self-hosted. Source-available.">
   <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
 
   <!-- Structured Data -->
@@ -36,7 +36,7 @@
     "name": "The Other Dude",
     "applicationCategory": "NetworkApplication",
     "operatingSystem": "Linux, Docker",
-    "description": "Open-source MikroTik RouterOS fleet management platform for MSPs. Real-time monitoring, zero-knowledge security, configuration management, and multi-tenant support.",
+    "description": "MikroTik RouterOS fleet management. Self-hosted. Source-available under BSL 1.1.",
     "url": "https://theotherdude.net",
     "offers": {
       "@type": "Offer",
@@ -44,19 +44,18 @@
       "priceCurrency": "USD"
     },
     "featureList": [
-      "MikroTik RouterOS fleet management",
-      "Real-time device monitoring via SSE",
-      "Zero-knowledge SRP-6a authentication",
-      "Per-tenant envelope encryption with OpenBao",
-      "Two-phase configuration push with panic-revert",
-      "Multi-tenant PostgreSQL Row-Level Security",
-      "Internal Certificate Authority",
-      "Firmware management and audit trail",
-      "Browser-based WinBox and SSH terminal",
-      "WireGuard VPN onboarding for NAT traversal",
-      "PDF reports for fleet, security, and performance"
+      "Monitor device state across fleet",
+      "Push configuration with automatic rollback",
+      "Track config changes in git",
+      "Manage firmware versions",
+      "WinBox in the browser",
+      "VPN overlay for NAT traversal",
+      "Multi-tenant with row-level security",
+      "Zero-knowledge authentication (SRP-6a)"
     ],
-    "softwareRequirements": "Docker, PostgreSQL 17, Redis, NATS"
+    "softwareRequirements": "Docker, PostgreSQL 17, Redis, NATS",
+    "softwareVersion": "9.7.1",
+    "license": "https://mariadb.com/bsl11/"
   }
   </script>
 
@@ -74,19 +73,325 @@
   }
   </script>
 
-  <!-- Fonts -->
-
-  <!-- Styles -->
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="style.css?v=3">
+
+  <style>
+    /* ================================================================
+       Warm Precision — Homepage overrides
+       Light mode only. Overrides the Deep Space base theme.
+       ================================================================ */
+
+    :root {
+      --bg-deep: #eae7de;
+      --bg-primary: #eae7de;
+      --bg-surface: #f6f4ec;
+      --bg-elevated: #f0ede4;
+      --text-primary: #1a1810;
+      --text-secondary: #5e5a4e;
+      --text-muted: #8a8578;
+      --accent: #8a7a48;
+      --accent-hover: #7a6a38;
+      --accent-glow: rgba(138, 122, 72, 0.10);
+      --accent-secondary: #8a7a48;
+      --border: rgba(40, 36, 28, 0.12);
+      --border-accent: rgba(40, 36, 28, 0.20);
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      background: #eae7de;
+      color: #1a1810;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: "Manrope", system-ui, sans-serif;
+      color: #1a1810;
+    }
+
+    ::selection {
+      background: rgba(138, 122, 72, 0.20);
+      color: #1a1810;
+    }
+
+    /* ---- Nav overrides ---- */
+    .site-nav--dark {
+      background: rgba(234, 231, 222, 0.92);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border-bottom: 1px solid rgba(40, 36, 28, 0.12);
+    }
+
+    .nav-logo { color: #1a1810; }
+    .nav-link { color: #5e5a4e; opacity: 1; }
+    .nav-link:hover { color: #1a1810; }
+
+    /* ---- Header section ---- */
+    .wp-header {
+      padding: 80px 0 48px;
+      text-align: left;
+    }
+
+    .wp-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      color: #1a1810;
+    }
+
+    .wp-header .wp-tagline {
+      font-size: 1.05rem;
+      color: #5e5a4e;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .wp-header-links {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .wp-header-links a {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #8a7a48;
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.15s ease;
+    }
+
+    .wp-header-links a:hover {
+      border-bottom-color: #8a7a48;
+    }
+
+    /* ---- Sections ---- */
+    .wp-section {
+      padding: 48px 0;
+      border-top: 1px solid rgba(40, 36, 28, 0.10);
+    }
+
+    .wp-section h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 20px;
+      color: #1a1810;
+    }
+
+    .wp-section p {
+      color: #5e5a4e;
+      line-height: 1.7;
+      max-width: 640px;
+    }
+
+    /* ---- Capability list ---- */
+    .wp-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-width: 520px;
+    }
+
+    .wp-list li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 10px;
+      color: #5e5a4e;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .wp-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #8a7a48;
+    }
+
+    /* ---- Screenshots ---- */
+    .wp-screenshots {
+      padding: 48px 0;
+      border-top: 1px solid rgba(40, 36, 28, 0.10);
+    }
+
+    .wp-screenshots h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #1a1810;
+    }
+
+    .wp-screenshot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .wp-screenshot-card {
+      background: #f6f4ec;
+      border: 1px solid rgba(40, 36, 28, 0.12);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .wp-screenshot-card img {
+      width: 100%;
+      display: block;
+      cursor: zoom-in;
+      transition: opacity 0.2s ease;
+    }
+
+    .wp-screenshot-card img:hover {
+      opacity: 0.92;
+    }
+
+    .wp-screenshot-caption {
+      padding: 10px 14px;
+      font-size: 0.8rem;
+      color: #8a8578;
+      font-weight: 500;
+    }
+
+    /* ---- Caveats / what-it-is-not ---- */
+    .wp-caveats {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .wp-caveats li {
+      color: #5e5a4e;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 8px;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .wp-caveats li::before {
+      content: "\2014";
+      position: absolute;
+      left: 0;
+      color: #8a8578;
+    }
+
+    /* ---- Status table ---- */
+    .wp-status-table {
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      max-width: 400px;
+    }
+
+    .wp-status-table td {
+      padding: 6px 0;
+      vertical-align: top;
+    }
+
+    .wp-status-table td:first-child {
+      color: #8a8578;
+      padding-right: 24px;
+      white-space: nowrap;
+    }
+
+    .wp-status-table td:last-child {
+      color: #1a1810;
+    }
+
+    /* ---- Quick start ---- */
+    .wp-quickstart {
+      background: #f6f4ec;
+      border: 1px solid rgba(40, 36, 28, 0.12);
+      border-radius: 8px;
+      padding: 20px 24px;
+      max-width: 480px;
+      margin-top: 16px;
+    }
+
+    .wp-quickstart code {
+      font-family: "IBM Plex Mono", "SF Mono", monospace;
+      font-size: 0.85rem;
+      color: #1a1810;
+      display: block;
+      line-height: 1.8;
+    }
+
+    .wp-quickstart .wp-comment {
+      color: #8a8578;
+    }
+
+    .wp-requirements {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #8a8578;
+    }
+
+    /* ---- Footer overrides ---- */
+    .site-footer {
+      background: #f0ede4;
+      border-top: 1px solid rgba(40, 36, 28, 0.12);
+    }
+
+    .footer-brand { color: #1a1810; }
+    .footer-copy { color: #8a8578; }
+    .footer-links a { color: #5e5a4e; }
+    .footer-links a:hover { color: #1a1810; }
+
+    /* ---- Lightbox ---- */
+    .lightbox {
+      background: rgba(26, 24, 16, 0.92);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 768px) {
+      .wp-screenshot-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .wp-header {
+        padding: 48px 0 32px;
+      }
+
+      .wp-header h1 {
+        font-size: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .wp-header-links {
+        gap: 16px;
+      }
+
+      .wp-section {
+        padding: 32px 0;
+      }
+    }
+
+    /* ---- Kill inherited dark-theme artifacts ---- */
+    .hero, .hero-bg, .hero-bg::before, .hero-bg::after,
+    .testing-banner, .features-section, .cta-section,
+    .quickstart-section, .screenshots-section {
+      display: none !important;
+    }
+
+    /* Skip link */
+    .skip-link {
+      color: #1a1810;
+      background: #f6f4ec;
+    }
+  </style>
 </head>
 <body>
 
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- Navigation                                  -->
-  <!-- ═══════════════════════════════════════════ -->
+  <!-- Navigation -->
   <nav class="site-nav site-nav--dark" aria-label="Main navigation">
     <div class="nav-inner container">
       <a href="index.html" class="nav-logo">
@@ -109,305 +414,115 @@
         <span>The Other Dude</span>
       </a>
       <div class="nav-links">
-        <a href="#what-it-does" class="nav-link">Features</a>
-        <a href="#architecture" class="nav-link">Architecture</a>
-        <a href="#screenshots" class="nav-link">Screenshots</a>
         <a href="docs.html" class="nav-link">Docs</a>
         <a href="blog/" class="nav-link">Blog</a>
         <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
-        <a href="docs.html#quickstart" class="nav-cta">Get Started</a>
       </div>
     </div>
   </nav>
 
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- Testing Banner                               -->
-  <!-- ═══════════════════════════════════════════ -->
-  <div class="testing-banner">
-    <div class="container">
-      <strong>Early Access</strong> &mdash; This software is in active development and testing. It is not yet ready for production use.
-    </div>
-  </div>
-
   <main id="main-content">
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- Hero                                        -->
-  <!-- ═══════════════════════════════════════════ -->
-  <section class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-content container">
-      <div class="hero-rosette">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="96" height="96" aria-hidden="true">
-          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
-          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
-          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
-          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
-          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
-          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
-          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
-          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
-          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
-          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
-          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
-          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
-          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
-          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
-        </svg>
-      </div>
-      <h1 class="hero-title"><span class="gradient-text">Open Source Fleet Management for MikroTik Networks</span></h1>
-      <p class="hero-subtitle">Managing MikroTik routers shouldn&rsquo;t require dozens of WinBox tabs, SSH scripts, and crossed fingers.</p>
-      <p class="hero-subtitle">The Other Dude is a self-hosted, open source platform that gives you centralized visibility and control over your entire MikroTik fleet.</p>
-      <p class="hero-subtitle hero-subtitle--muted">Monitor devices, push configuration safely, and operate your network from a single interface.</p>
-      <div class="hero-actions">
-        <a href="docs.html#quickstart" class="btn btn-primary">Get Started Managing MikroTik Routers</a>
-        <a href="https://github.com/staack/the-other-dude" class="btn btn-secondary" rel="noopener">View on GitHub</a>
-      </div>
-    </div>
-  </section>
 
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- MikroTik SEO summary                        -->
-  <!-- ═══════════════════════════════════════════ -->
-  <section class="features-section">
+    <!-- 1. Header -->
     <div class="container">
-      <h2 class="section-title">MikroTik Router Fleet Management</h2>
-      <p class="section-desc">The Other Dude is a centralized management platform designed for MikroTik RouterOS deployments. It allows MSPs and network teams to monitor router health, push configuration safely, manage backups, and maintain visibility across hundreds of devices from a single dashboard.</p>
-      <p class="section-desc">Instead of logging into routers individually with WinBox or SSH, The Other Dude provides a fleet-level view of your MikroTik infrastructure with real-time status, configuration tracking, and automated management tools.</p>
+      <header class="wp-header">
+        <h1>The Other Dude</h1>
+        <p class="wp-tagline">MikroTik fleet management. Self-hosted. Source-available.</p>
+        <div class="wp-header-links">
+          <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+          <a href="docs.html">Documentation</a>
+          <a href="blog/">Blog</a>
+        </div>
+      </header>
+
+      <!-- 2. What it does -->
+      <section class="wp-section" id="what-it-does">
+        <h2>What it does</h2>
+        <ul class="wp-list">
+          <li>Monitor device state across your fleet</li>
+          <li>Push configuration with automatic rollback</li>
+          <li>Track config changes in git</li>
+          <li>Manage firmware versions</li>
+          <li>WinBox in the browser</li>
+          <li>VPN overlay for NAT traversal</li>
+          <li>Multi-tenant with row-level security</li>
+          <li>Zero-knowledge authentication (SRP-6a)</li>
+        </ul>
+      </section>
     </div>
-  </section>
 
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- Features                                    -->
-  <!-- ═══════════════════════════════════════════ -->
-  <section id="what-it-does" class="features-section">
-    <div class="container">
-      <span class="section-label">WHAT THE OTHER DUDE DOES</span>
-      <h2 class="section-title">Everything you need to manage MikroTik routers at scale</h2>
+    <!-- 3. Screenshots -->
+    <section class="wp-screenshots">
+      <div class="container">
+        <h2>Screenshots</h2>
+        <div class="wp-screenshot-grid">
 
-      <div class="features-grid">
+          <figure class="wp-screenshot-card screenshot-card">
+            <img src="assets/01-overview-dark.png" alt="Fleet overview showing device list, status, and health metrics" loading="lazy" width="1440" height="900">
+            <figcaption class="wp-screenshot-caption">Fleet overview</figcaption>
+          </figure>
 
-        <div class="feature-card" id="feature-fleet">
-          <div class="feature-icon">&#x1F4CA;</div>
-          <h3 class="feature-title">Fleet Management</h3>
-          <p class="feature-desc">Dashboard with device health, uptime sparklines, virtual-scrolled fleet table, geographic map, and subnet discovery. Monitor your entire MikroTik fleet from a single view.</p>
+          <figure class="wp-screenshot-card screenshot-card">
+            <img src="assets/02-device-detail-dark.png" alt="Device detail view with interfaces, system info, and actions" loading="lazy" width="1440" height="900">
+            <figcaption class="wp-screenshot-caption">Device detail</figcaption>
+          </figure>
+
+          <figure class="wp-screenshot-card screenshot-card">
+            <img src="assets/03-interfaces-dark.png" alt="Interface utilization showing per-interface traffic" loading="lazy" width="1440" height="900">
+            <figcaption class="wp-screenshot-caption">Interface traffic</figcaption>
+          </figure>
+
+          <figure class="wp-screenshot-card screenshot-card">
+            <img src="assets/04-firmware-dark.png" alt="Firmware management showing version groups and upgrade tracking" loading="lazy" width="1440" height="900">
+            <figcaption class="wp-screenshot-caption">Firmware management</figcaption>
+          </figure>
+
         </div>
-
-        <div class="feature-card" id="feature-config">
-          <div class="feature-icon">&#x2699;</div>
-          <h3 class="feature-title">Configuration Management</h3>
-          <p class="feature-desc">Two-phase config push with automatic panic-revert protection. Templates, diff and history, git-backed backups, and one-click restore. Push changes across your fleet with confidence.</p>
-        </div>
-
-        <div class="feature-card" id="feature-monitoring">
-          <div class="feature-icon">&#x1F4C8;</div>
-          <h3 class="feature-title">Real-Time Monitoring</h3>
-          <p class="feature-desc">Live CPU, memory, disk, interface traffic, and wireless metrics (signal, CCQ, client count) via Server-Sent Events. Configurable alert rules with email, webhook, and Slack notifications. Dashboard highlights APs needing attention.</p>
-        </div>
-
-        <div class="feature-card" id="feature-security">
-          <div class="feature-icon">&#x1F512;</div>
-          <h3 class="feature-title">Zero-Knowledge Security</h3>
-          <p class="feature-desc">SRP-6a authentication means the server never sees your password. Per-tenant envelope encryption via Transit KMS. Emergency Kit export for account recovery.</p>
-        </div>
-
-        <div class="feature-card" id="feature-winbox">
-          <div class="feature-icon">&#x1F5A5;</div>
-          <h3 class="feature-title">WinBox in the Browser</h3>
-          <p class="feature-desc">Launch WinBox sessions directly from the web interface without installing the desktop app. Browser-based SSH terminal. WireGuard VPN overlay for one-click access to devices behind NAT.</p>
-        </div>
-
-        <div class="feature-card" id="feature-certs">
-          <div class="feature-icon">&#x1F6E1;</div>
-          <h3 class="feature-title">Certificate Authority</h3>
-          <p class="feature-desc">Issue and deploy TLS certificates to RouterOS devices via SFTP. Three-tier TLS fallback for maximum compatibility across firmware versions.</p>
-        </div>
-
-        <div class="feature-card" id="feature-reports">
-          <div class="feature-icon">&#x1F4C4;</div>
-          <h3 class="feature-title">PDF Reports</h3>
-          <p class="feature-desc">Fleet summary, device detail, security audit, and performance reports generated server-side. Export and share operational data without screenshots.</p>
-        </div>
-
-        <div class="feature-card" id="feature-tenants">
-          <div class="feature-icon">&#x1F3E2;</div>
-          <h3 class="feature-title">Multi-Tenant Isolation</h3>
-          <p class="feature-desc">PostgreSQL Row-Level Security enforces full data separation at the database layer. Four roles: super_admin, admin, operator, viewer.</p>
-        </div>
-
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- Who This Is For                             -->
-  <!-- ═══════════════════════════════════════════ -->
-  <section class="features-section">
     <div class="container">
-      <span class="section-label">WHO THIS IS FOR</span>
-      <h2 class="section-title">Built for real operators</h2>
-      <p class="section-desc">The Other Dude is designed for people who operate MikroTik networks in the real world:</p>
 
-      <ul class="content-list">
-        <li>Managed Service Providers managing many client networks</li>
-        <li>Wireless ISPs running large router fleets</li>
-        <li>Network engineers operating distributed infrastructure</li>
-        <li>Homelab operators managing larger environments</li>
-      </ul>
+      <!-- 4. What it is not -->
+      <section class="wp-section">
+        <h2>What it is not</h2>
+        <ul class="wp-caveats">
+          <li>Not finished</li>
+          <li>Not stable</li>
+          <li>Not for everyone</li>
+          <li>Things break, APIs change. That is intentional before v11.</li>
+        </ul>
+      </section>
+
+      <!-- 5. Status -->
+      <section class="wp-section">
+        <h2>Status</h2>
+        <table class="wp-status-table">
+          <tr><td>Version</td><td>9.7.1</td></tr>
+          <tr><td>License</td><td>BSL 1.1 (converts to Apache 2.0 in 2030)</td></tr>
+          <tr><td>Free tier</td><td>250 devices</td></tr>
+          <tr><td>Stability</td><td>Breaking changes expected before v11</td></tr>
+        </table>
+      </section>
+
+      <!-- 6. Setup -->
+      <section class="wp-section">
+        <h2>Setup</h2>
+        <p>Requires Docker and PostgreSQL. See the <a href="docs.html#quickstart" style="color:#8a7a48;text-decoration:underline;text-underline-offset:3px">documentation</a> for full setup instructions.</p>
+        <div class="wp-quickstart">
+          <code><span class="wp-comment"># clone and run the setup wizard</span>
+git clone https://github.com/staack/the-other-dude.git
+cd the-other-dude
+python3 setup.py</code>
+        </div>
+        <p class="wp-requirements">The setup wizard handles database, cryptographic keys, OpenBao, reverse proxy, and Docker images.</p>
+      </section>
+
     </div>
-  </section>
 
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- Architecture                                -->
-  <!-- ═══════════════════════════════════════════ -->
-  <section id="architecture" class="features-section features-section--alt">
-    <div class="container">
-      <span class="section-label">ARCHITECTURE</span>
-      <h2 class="section-title">Event-driven, designed for reliability and horizontal scaling</h2>
-
-      <div class="arch-flow">
-        <div class="arch-flow-step">Routers</div>
-        <div class="arch-flow-arrow">↓</div>
-        <div class="arch-flow-step">Go Pollers</div>
-        <div class="arch-flow-arrow">↓</div>
-        <div class="arch-flow-step">NATS Event Bus</div>
-        <div class="arch-flow-arrow">↓</div>
-        <div class="arch-flow-step">FastAPI Backend</div>
-        <div class="arch-flow-arrow">↓</div>
-        <div class="arch-flow-step">PostgreSQL + TimescaleDB</div>
-        <div class="arch-flow-arrow">↓</div>
-        <div class="arch-flow-step">React Web Interface</div>
-      </div>
-
-      <p class="section-desc">This architecture allows the system to scale horizontally while keeping polling, processing, and the user interface separated.</p>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- Screenshots                                 -->
-  <!-- ═══════════════════════════════════════════ -->
-  <section id="screenshots" class="screenshots-section">
-    <div class="container">
-      <span class="section-label">IN ACTION</span>
-      <h2 class="section-title">See it in action</h2>
-    </div>
-    <div class="screenshots-scroll">
-      <div class="screenshots-track">
-
-        <div class="screenshot-card" style="background:#1A1A2E;border:1px solid #24243D;border-radius:8px;overflow:hidden">
-          <img src="assets/01-fleet-dashboard.png" alt="Fleet Dashboard showing 49 devices, 100% online with bandwidth charts and event feed" loading="lazy" width="1440" height="900">
-          <div style="padding:12px 16px">
-            <div style="color:#E4E4ED;font-weight:600">Fleet Dashboard</div>
-            <div style="color:#62627F;font-size:13px">Real-time fleet overview with events, bandwidth, and health</div>
-          </div>
-        </div>
-
-        <div class="screenshot-card" style="background:#1A1A2E;border:1px solid #24243D;border-radius:8px;overflow:hidden">
-          <img src="assets/02-fleet-traffic.png" alt="Fleet traffic view showing CPU and memory stats with top resource consumers table" loading="lazy" width="1440" height="900">
-          <div style="padding:12px 16px">
-            <div style="color:#E4E4ED;font-weight:600">Fleet Traffic</div>
-            <div style="color:#62627F;font-size:13px">Top resource consumers with CPU and memory stats</div>
-          </div>
-        </div>
-
-        <div class="screenshot-card" style="background:#1A1A2E;border:1px solid #24243D;border-radius:8px;overflow:hidden">
-          <img src="assets/03-firmware-management.png" alt="Firmware management showing version groups and device list" loading="lazy" width="1440" height="900">
-          <div style="padding:12px 16px">
-            <div style="color:#E4E4ED;font-weight:600">Firmware Management</div>
-            <div style="color:#62627F;font-size:13px">Version groups, upgrade tracking, and device firmware list</div>
-          </div>
-        </div>
-
-        <div class="screenshot-card" style="background:#1A1A2E;border:1px solid #24243D;border-radius:8px;overflow:hidden">
-          <img src="assets/04-config-templates.png" alt="Configuration templates showing 6 reusable config templates" loading="lazy" width="1440" height="900">
-          <div style="padding:12px 16px">
-            <div style="color:#E4E4ED;font-weight:600">Config Templates</div>
-            <div style="color:#62627F;font-size:13px">Reusable configuration templates for fleet-wide deployment</div>
-          </div>
-        </div>
-
-        <div class="screenshot-card" style="background:#1A1A2E;border:1px solid #24243D;border-radius:8px;overflow:hidden">
-          <img src="assets/05-device-detail.png" alt="Device detail view for gw-bowling-alley showing interface traffic and session buttons" loading="lazy" width="1440" height="900">
-          <div style="padding:12px 16px">
-            <div style="color:#E4E4ED;font-weight:600">Device Detail</div>
-            <div style="color:#62627F;font-size:13px">Per-device overview with interfaces, sessions, and actions</div>
-          </div>
-        </div>
-
-        <div class="screenshot-card" style="background:#1A1A2E;border:1px solid #24243D;border-radius:8px;overflow:hidden">
-          <img src="assets/06-interface-utilization.png" alt="Interface utilization showing RX and TX bars per interface" loading="lazy" width="1440" height="900">
-          <div style="padding:12px 16px">
-            <div style="color:#E4E4ED;font-weight:600">Interface Utilization</div>
-            <div style="color:#62627F;font-size:13px">Per-interface RX/TX bandwidth utilization bars</div>
-          </div>
-        </div>
-
-        <div class="screenshot-card" style="background:#1A1A2E;border:1px solid #24243D;border-radius:8px;overflow:hidden">
-          <img src="assets/07-device-health.png" alt="Device health showing CPU, memory, disk, and temperature charts" loading="lazy" width="1440" height="900">
-          <div style="padding:12px 16px">
-            <div style="color:#E4E4ED;font-weight:600">Device Health</div>
-            <div style="color:#62627F;font-size:13px">CPU, memory, disk, and temperature monitoring charts</div>
-          </div>
-        </div>
-
-        <div class="screenshot-card" style="background:#1A1A2E;border:1px solid #24243D;border-radius:8px;overflow:hidden">
-          <img src="assets/08-traffic-analytics.png" alt="Traffic analytics showing per-interface time series charts" loading="lazy" width="1440" height="900">
-          <div style="padding:12px 16px">
-            <div style="color:#E4E4ED;font-weight:600">Traffic Analytics</div>
-            <div style="color:#62627F;font-size:13px">Per-interface traffic time series and historical analysis</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- Quick Start                                 -->
-  <!-- ═══════════════════════════════════════════ -->
-  <section class="quickstart-section">
-    <div class="container">
-      <span class="section-label">QUICK START</span>
-      <h2 class="section-title">Deploy The Other Dude with two commands</h2>
-
-      <div class="code-window">
-        <div class="code-window-header">
-          <span class="code-dot code-dot--red"></span>
-          <span class="code-dot code-dot--yellow"></span>
-          <span class="code-dot code-dot--green"></span>
-          <span class="code-window-title">Terminal</span>
-        </div>
-        <pre class="code-window-body"><code><span class="code-comment"># Clone and run the setup wizard</span>
-<span class="code-cmd">git clone https://github.com/staack/the-other-dude.git</span>
-<span class="code-cmd">cd the-other-dude</span>
-<span class="code-cmd">python3 setup.py</span></code></pre>
-      </div>
-      <p class="section-desc" style="margin-top: 24px;">The setup wizard configures your database, generates cryptographic keys, bootstraps OpenBao, sets up your reverse proxy, builds the Docker images, and starts everything. No manual .env editing required.</p>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- CTA                                         -->
-  <!-- ═══════════════════════════════════════════ -->
-  <section class="cta-section">
-    <div class="container">
-      <span class="section-label">OPEN SOURCE</span>
-      <h2 class="cta-title">The Other Dude is open source and self-hosted</h2>
-      <p class="cta-desc">Run it yourself, modify it, or contribute improvements.</p>
-      <div class="cta-actions">
-        <a href="https://github.com/staack/the-other-dude" class="btn btn-primary" rel="noopener">View on GitHub</a>
-      </div>
-      <div class="cta-closing">
-        <p class="cta-closing-title">Centralized management for MikroTik networks.</p>
-        <p class="cta-tagline">Less time juggling tools.<br>More time running your network.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════ -->
-  <!-- Footer                                      -->
-  <!-- ═══════════════════════════════════════════ -->
   </main>
 
+  <!-- Footer -->
   <footer class="site-footer">
     <div class="footer-inner container">
       <div class="footer-brand">
@@ -431,21 +546,17 @@
       <nav class="footer-links" aria-label="Footer navigation">
         <a href="docs.html">Docs</a>
         <a href="blog/">Blog</a>
-        <a href="#what-it-does">Features</a>
-        <a href="docs.html#security">Security</a>
-        <a href="docs.html#api">API Reference</a>
         <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
         <a href="mailto:license@theotherdude.net">Licensing</a>
-        <a href="mailto:support@theotherdude.net">Support</a>
       </nav>
-      <p style="margin-top:12px;font-size:0.75em;color:#62627F;text-align:center;">This site uses self-hosted, cookie-free analytics to measure page views and engagement. No personal data is collected or shared with third parties.</p>
+      <p style="margin-top:12px;font-size:0.75em;color:#8a8578;text-align:center;">This site uses self-hosted, cookie-free analytics to measure page views and engagement. No personal data is collected or shared with third parties.</p>
     </div>
   </footer>
 
   <!-- Lightbox -->
   <div class="lightbox" id="lightbox" role="dialog" aria-label="Image preview">
     <button class="lightbox-close" aria-label="Close image preview">&times;</button>
-    <img src="" alt="The Other Dude dashboard managing multiple MikroTik routers">
+    <img src="" alt="Screenshot preview">
     <div class="lightbox-caption"></div>
   </div>
 
