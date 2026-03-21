@@ -7,7 +7,7 @@ interface SparklineProps {
   height?: number
 }
 
-export function Sparkline({ data, color = '#38BDF8', width = 60, height = 24 }: SparklineProps) {
+export function Sparkline({ data, color = 'hsl(var(--accent))', width = 60, height = 24 }: SparklineProps) {
   const chartData = data.map((v, i) => ({ v, i }))
   return (
     <LineChart width={width} height={height} data={chartData}>

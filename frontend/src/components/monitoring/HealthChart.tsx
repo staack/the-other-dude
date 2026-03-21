@@ -64,10 +64,10 @@ export function HealthChart({ data, metric, label, color, unit, maxY }: HealthCh
               <stop offset="100%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border-default))" />
           <XAxis
             dataKey="bucket"
-            tick={{ fontSize: 9, fill: '#94a3b8' }}
+            tick={{ fontSize: 9, fill: 'hsl(var(--text-muted))' }}
             axisLine={false}
             tickLine={false}
             interval="preserveStartEnd"
@@ -75,7 +75,7 @@ export function HealthChart({ data, metric, label, color, unit, maxY }: HealthCh
           <YAxis
             domain={domain}
             tickFormatter={(v: number) => `${v}${unit}`}
-            tick={{ fontSize: 9, fill: '#94a3b8' }}
+            tick={{ fontSize: 9, fill: 'hsl(var(--text-muted))' }}
             axisLine={false}
             tickLine={false}
             width={40}

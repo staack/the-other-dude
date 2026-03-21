@@ -38,7 +38,7 @@ function ClientCountMiniChart({ data }: { data: WirelessMetricPoint[] }) {
             <stop offset="100%" stopColor="#A78BFA" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border-default))" />
         <XAxis dataKey="bucket" hide />
         <Area
           type="monotone"

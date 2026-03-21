@@ -55,7 +55,7 @@ export function HealthTab({ tenantId, deviceId, active = true }: HealthTabProps)
               data={data}
               metric="avg_cpu"
               label="CPU Load"
-              color="#38BDF8"
+              color="hsl(var(--accent))"
               unit="%"
               maxY={100}
             />
