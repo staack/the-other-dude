@@ -35,6 +35,9 @@
       --accent: #8a7a48;
     }
     body { background-color: #eae7de; color: #1a1810; }
+    .site-nav { background: #e0dcd2 !important; border-bottom: 1px solid rgba(40,36,28,0.12); }
+    .site-nav .nav-logo span, .site-nav .nav-link, .site-nav .nav-cta { color: #1a1810 !important; }
+    .site-nav .nav-link:hover { color: #8a7a48 !important; }
     .dark { /* prevent dark mode */ }
   </style>
   <style>
@@ -100,7 +103,7 @@
 </head>
 <body>
 
-  <nav class="site-nav site-nav--dark">
+  <nav class="site-nav">
     <div class="nav-inner container">
       <a href="../index.html" class="nav-logo">
         <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
