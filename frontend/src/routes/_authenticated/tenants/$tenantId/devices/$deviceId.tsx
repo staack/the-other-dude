@@ -2,12 +2,10 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
-  ChevronRight,
   Eye,
   EyeOff,
   Pencil,
   Trash2,
-  Circle,
   Tag,
   FolderOpen,
   BellOff,
@@ -186,21 +184,6 @@ function EditDeviceDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    online: { label: 'Online', className: 'text-success border-success/50 bg-success/10' },
-    offline: { label: 'Offline', className: 'text-error border-error/50 bg-error/10' },
-    unknown: { label: 'Unknown', className: 'text-text-muted border-border bg-elevated/50' },
-  }
-  const c = config[status] ?? config.unknown
-  return (
-    <span className={cn('inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded border', c.className)}>
-      <Circle className="h-2 w-2 fill-current" />
-      {c.label}
-    </span>
   )
 }
 
@@ -465,57 +448,67 @@ function DeviceDetailPage() {
 
   return (
     <div className={cn('space-y-4', mode === 'simple' ? 'max-w-5xl' : 'max-w-3xl')} data-testid="device-detail">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1 text-xs text-text-muted">
-        <Link to="/tenants" className="hover:text-text-secondary transition-colors">
-          Tenants
-        </Link>
-        <ChevronRight className="h-3 w-3" />
-        <Link
-          to="/tenants/$tenantId/devices"
-          params={{ tenantId }}
-          className="hover:text-text-secondary transition-colors"
-        >
-          {tenant?.name ?? tenantId}
-        </Link>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-text-secondary">{device.hostname}</span>
-      </div>
-
-      {/* Device header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold" data-testid="device-hostname">{device.hostname}</h1>
-            <StatusBadge status={device.status} />
-            <TlsSecurityBadge tlsMode={device.tls_mode} />
-          </div>
-          <p className="font-mono text-sm text-text-secondary">{device.ip_address}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <SimpleModeToggle mode={mode} onModeChange={toggleMode} />
-          {user?.role !== 'viewer' && (
-            <div className="flex gap-2">
-              {device.routeros_version !== null && (
+      {/* Device workspace header */}
+      <div className="bg-sidebar border border-border-default rounded-sm p-2 px-3">
+        <div className="flex justify-between items-start">
+          <div>
+            {/* Breadcrumb */}
+            <div className="mb-0.5">
+              <Link
+                to="/tenants/$tenantId/devices"
+                params={{ tenantId }}
+                className="text-[8px] text-text-muted hover:text-text-secondary transition-[color] duration-[50ms]"
+              >
+                Devices
+              </Link>
+              <span className="text-[8px] text-text-muted mx-1">&rsaquo;</span>
+              <span className="text-[8px] text-text-secondary">{device.hostname}</span>
+            </div>
+            {/* Device name + status */}
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                'w-1.5 h-1.5 rounded-full',
+                device.status === 'online' ? 'bg-online' :
+                device.status === 'degraded' ? 'bg-warning' : 'bg-offline'
+              )} />
+              <h1 className="text-sm font-semibold text-text-primary" data-testid="device-hostname">
+                {device.hostname}
+              </h1>
+              <TlsSecurityBadge tlsMode={device.tls_mode} />
+            </div>
+            {/* Metadata line */}
+            <div className="text-[9px] text-text-secondary mt-0.5 pl-3.5">
+              {device.model ?? device.board_name ?? '\u2014'}
+              {' \u00b7 '}
+              <span className="font-mono text-[8px]">{device.ip_address}</span>
+              {device.routeros_version && (
                 <>
-                  <WinBoxButton tenantId={tenantId} deviceId={deviceId} />
-                  <RemoteWinBoxButton tenantId={tenantId} deviceId={deviceId} />
+                  {' \u00b7 RouterOS '}
+                  <span className="font-mono text-[8px]">{device.routeros_version}</span>
                 </>
               )}
-              <SSHTerminal tenantId={tenantId} deviceId={deviceId} deviceName={device.hostname} />
             </div>
-          )}
-          <div className="flex gap-2">
+          </div>
+          {/* Actions: right side */}
+          <div className="flex items-center gap-1.5 mt-3">
+            <SimpleModeToggle mode={mode} onModeChange={toggleMode} />
+            {user?.role !== 'viewer' && device.routeros_version !== null && (
+              <>
+                <WinBoxButton tenantId={tenantId} deviceId={deviceId} />
+                <RemoteWinBoxButton tenantId={tenantId} deviceId={deviceId} />
+              </>
+            )}
+            {user?.role !== 'viewer' && (
+              <SSHTerminal tenantId={tenantId} deviceId={deviceId} deviceName={device.hostname} />
+            )}
             {canWrite(user) && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)} data-testid="button-edit-device">
                 <Pencil className="h-3.5 w-3.5" />
-                Edit
               </Button>
             )}
             {canDelete(user) && (
               <Button variant="destructive" size="sm" onClick={handleDelete} data-testid="button-delete-device">
                 <Trash2 className="h-3.5 w-3.5" />
-                Delete
               </Button>
             )}
           </div>
