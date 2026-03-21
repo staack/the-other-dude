@@ -207,3 +207,19 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* ── Interaction classes ── */
+@layer components {
+  .list-item-interactive {
+    border-left: 2px solid transparent;
+    transition: border-color 50ms linear, background-color 50ms linear;
+  }
+  .list-item-interactive:hover,
+  .list-item-interactive:focus-visible {
+    border-left-color: hsl(var(--accent));
+    outline: none;
+  }
+  .list-item-interactive:active {
+    background-color: hsl(var(--elevated));
+  }
+}

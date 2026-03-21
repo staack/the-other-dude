@@ -92,7 +92,7 @@ function SortHeader({ column, label, currentSort, currentDir, onSort, className 
 function DeviceCard({ device, tenantId }: { device: DeviceResponse; tenantId: string }) {
   return (
     <div
-      className="w-full text-left rounded-lg border border-border bg-panel p-3 hover:bg-elevated/50 transition-colors min-h-[44px]"
+      className="w-full text-left rounded-lg border border-border bg-panel p-3 hover:bg-elevated/30 transition-[background-color] duration-[50ms] min-h-[44px]"
       data-testid={`device-card-${device.hostname}`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -402,7 +402,7 @@ export function FleetTable({
                             data-index={virtualRow.index}
                             ref={virtualizer.measureElement}
                             className={cn(
-                              'border-b border-border/50 hover:bg-elevated/50 transition-colors',
+                              'border-b border-border/50 hover:bg-elevated/30 transition-[background-color] duration-[50ms]',
                               selectedIndex === virtualRow.index && 'bg-elevated/50',
                             )}
                             style={{
@@ -460,7 +460,7 @@ export function FleetTable({
                       key={device.id}
                       data-testid={`device-row-${device.hostname}`}
                       className={cn(
-                        'border-b border-border/50 hover:bg-elevated/50 transition-colors',
+                        'border-b border-border/50 hover:bg-elevated/30 transition-[background-color] duration-[50ms]',
                         selectedIndex === idx && 'bg-elevated/50',
                       )}
                     >
