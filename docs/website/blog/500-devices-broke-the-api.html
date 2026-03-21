@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>500 Devices Broke the API &mdash; The Other Dude Blog</title>
+  <meta name="description" content="The API container got OOM-killed under realistic load. Here's what happened, what was wrong, and how three config changes fixed it.">
+  <meta name="keywords" content="MikroTik, fleet management, scaling, Docker, OOM, The Other Dude">
+  <meta name="author" content="The Other Dude">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#111113">
+  <link rel="canonical" href="https://theotherdude.net/blog/500-devices-broke-the-api.html">
+  <link rel="icon" href="../data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="500 Devices Broke the API &mdash; The Other Dude">
+  <meta property="og:description" content="The API container got OOM-killed under realistic load. Here's what happened, what was wrong, and how three config changes fixed it.">
+  <meta property="og:url" content="https://theotherdude.net/blog/500-devices-broke-the-api.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="article:published_time" content="2026-03-21">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "500 Devices Broke the API",
+    "description": "The API container got OOM-killed under realistic load. Here's what happened, what was wrong, and how three config changes fixed it.",
+    "datePublished": "2026-03-21",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/blog/500-devices-broke-the-api.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+
+  <link rel="stylesheet" href="../style.css?v=3">
+  <style>
+    .blog-post {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+    .blog-post-meta {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .blog-post h1 {
+      font-family: "Manrope", sans-serif;
+      font-weight: 700;
+      font-size: 2.5rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 40px;
+    }
+    .blog-post h2 {
+      font-family: "Manrope", sans-serif;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--text-primary);
+      margin-top: 48px;
+      margin-bottom: 16px;
+    }
+    .blog-post p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .blog-post p strong {
+      color: var(--text-primary);
+    }
+    .blog-post a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .blog-post a:hover {
+      color: var(--text-primary);
+    }
+    .blog-post .back-link {
+      display: inline-block;
+      margin-bottom: 32px;
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--text-muted);
+    }
+    .blog-post .back-link:hover {
+      color: var(--accent);
+    }
+    .blog-post ul {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+      padding-left: 24px;
+    }
+    .blog-post ul li {
+      margin-bottom: 6px;
+    }
+    .blog-post .blog-footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .blog-post .blog-footer a {
+      color: var(--text-secondary);
+    }
+    @media (max-width: 480px) {
+      .blog-post h1 { font-size: 1.8rem; }
+      .blog-post { padding: 60px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav site-nav--dark">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../index.html#what-it-does" class="nav-link">Features</a>
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="index.html" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+        <a href="../docs.html#quickstart" class="nav-cta">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="blog-post">
+      <a href="index.html" class="back-link">&larr; Back to Blog</a>
+      <div class="blog-post-meta">March 21, 2026</div>
+      <h1>500 Devices Broke the API</h1>
+
+      <p>The API container fell over this morning.</p>
+
+      <p>500 simulated MikroTik devices. A 512MB container. Debug logging turned on. It got OOM-killed. I had to restart it manually.</p>
+
+      <p>This is not a dramatic story. It's a config problem that becomes obvious in hindsight, and it's exactly the kind of thing that bites you when you move from dev scale to real scale.</p>
+
+      <h2>What Was Happening</h2>
+
+      <p>The mock fleet had been scaled up to around 500 devices over the previous few days. The <a href="100-simulated-routers.html">mock server</a> generates realistic RouterOS responses &mdash; interfaces, traffic counters, wireless registration tables, the works. Every two minutes, the poller hits all 500 devices and pushes the results to the API.</p>
+
+      <p>Each poll cycle, the API processes:</p>
+
+      <ul>
+        <li>Interface metrics for every port on every device</li>
+        <li>Wireless registration tables from every AP</li>
+        <li>Wireless link discovery and state tracking</li>
+        <li>Device interface inventory updates</li>
+      </ul>
+
+      <p>That's thousands of database inserts and upserts per cycle. For a system designed to manage hundreds of routers, this is normal load. This is what the thing is supposed to handle.</p>
+
+      <h2>What Went Wrong</h2>
+
+      <p><strong>Debug logging was on.</strong> The dev environment had <code>LOG_LEVEL=debug</code>, which tells SQLAlchemy to echo every SQL statement to stdout. The application logger was also printing each query with ANSI formatting. So every single INSERT and UPSERT was being string-formatted, colorized, and written to stdout &mdash; twice. With 500 devices generating thousands of queries per cycle, that's an enormous amount of string allocation and I/O churn just for log output nobody was reading.</p>
+
+      <p><strong>Single Gunicorn worker.</strong> The dev config ran one worker process. All poll data processing was serialized through a single Python process &mdash; no distribution of load, no way to spread memory pressure across processes. One worker means one process accumulating everything.</p>
+
+      <p><strong>Container was too small.</strong> 512MB was fine when the system was handling 50 or 100 devices. At 500 devices with debug logging, it wasn't even close. The container would climb to 70%+ memory usage during normal operation and eventually hit the wall.</p>
+
+      <p>None of these are bugs. They're development-scale defaults that don't survive production-scale load. The kind of thing that works fine until it doesn't.</p>
+
+      <h2>What the Investigation Showed</h2>
+
+      <p><code>docker stats</code> told most of the story: 362MB out of 512MB used, CPU pegged at 112%. The container was spending more time formatting log strings than processing actual data. The logs themselves were wall-to-wall SQL &mdash; every INSERT, every UPSERT, every COMMIT and ROLLBACK, printed twice with full parameter lists.</p>
+
+      <p>The container's restart policy was <code>on-failure</code>, so after the OOM kill it came back up, loaded the same config, and started climbing toward the same ceiling. Rinse and repeat until someone noticed.</p>
+
+      <h2>The Fix</h2>
+
+      <p>Three changes in <code>docker-compose.override.yml</code>. Nothing clever.</p>
+
+      <p><strong>LOG_LEVEL: debug &rarr; info.</strong> This was the biggest impact. Stopped SQLAlchemy from echoing every query. Stopped the double-logging. Removed the single largest source of memory churn. If you're not actively debugging SQL, you don't need to see every INSERT scroll past.</p>
+
+      <p><strong>GUNICORN_WORKERS: 1 &rarr; 2.</strong> Spreads request processing across two worker processes. Each process handles a portion of the incoming poll data, reducing per-process memory accumulation. Not a radical change, but it matters when you're processing thousands of writes per cycle.</p>
+
+      <p><strong>Memory limit: 512MB &rarr; 1GB.</strong> Gives the API actual headroom for this workload. 512MB was a dev-era guess. 1GB reflects what the system actually needs when managing hundreds of devices.</p>
+
+      <h2>Before and After</h2>
+
+      <p><strong>Before:</strong> 362MB / 512MB &mdash; 71% memory usage, climbing toward OOM.</p>
+
+      <p><strong>After:</strong> 307MB / 1GB &mdash; 30% memory usage, stable under the same load.</p>
+
+      <p>Same 500 devices. Same poll interval. Same data volume. The system just stopped wasting resources on logging nobody was reading and got enough room to breathe.</p>
+
+      <h2>The Takeaway</h2>
+
+      <p>Development-scale configs don't survive production-scale load. This is not surprising. But it's easy to forget when the thing has been running fine for weeks at a smaller scale and you gradually crank it up.</p>
+
+      <p>Debug logging is expensive. Not just disk space &mdash; string formatting, memory allocation, I/O buffering. At scale, your logging layer can consume more resources than your actual application logic. Turn it off unless you're actively using it.</p>
+
+      <p>Container sizing matters. The number you picked when you had 50 devices is not the number you need at 500. Review your resource limits when your workload changes. <code>docker stats</code> is right there.</p>
+
+      <p><strong>If you're self-hosting this with more than a couple hundred devices, don't run the default dev config.</strong> Bump your memory limits. Set the log level to info. Give the API more than one worker. The defaults are tuned for a developer laptop, not a production deployment.</p>
+
+      <p>Better it dies in a test environment than at 2am managing real infrastructure.</p>
+
+      <div class="blog-footer">
+        <p>Read more: <a href="100-simulated-routers.html">100 Simulated Routers</a> &middot; <a href="not-stable-software.html">This Is Not Stable Software</a> &middot; <a href="what-you-can-do-today.html">What You Can Do With It Today</a></p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-brand">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" style="flex-shrink:0">
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          </svg>
+          The Other Dude
+        </span>
+        <span class="footer-copy">&copy; 2026 The Other Dude. All rights reserved.</span>
+      </div>
+      <nav class="footer-links">
+        <a href="../docs.html">Docs</a>
+        <a href="index.html">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
+        <a href="mailto:license@theotherdude.net">Licensing</a>
+      </nav>
+    </div>
+    <p style="margin-top:12px;font-size:0.75em;color:#62627F;text-align:center;">This site uses a self-hosted, cookie-free analytics pixel to count page views. No personal data is collected or shared with third parties.</p>
+  </footer>
+
+<script>
+(function(){
+  var d=document,i=new Image();
+  i.src="https://telemetry.theotherdude.net/px?p="+encodeURIComponent(location.pathname)
+    +"&t="+encodeURIComponent(d.title)
+    +"&r="+encodeURIComponent(d.referrer)
+    +"&sw="+screen.width;
+})();
+</script>
+</body>
+</html>

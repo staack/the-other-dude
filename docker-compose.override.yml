@@ -13,9 +13,9 @@ services:
     env_file: .env
     environment:
       ENVIRONMENT: dev
-      LOG_LEVEL: debug
+      LOG_LEVEL: info
       DEBUG: "true"
-      GUNICORN_WORKERS: "1"
+      GUNICORN_WORKERS: "2"
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/tod
       SYNC_DATABASE_URL: postgresql+psycopg2://postgres:postgres@postgres:5432/tod
       APP_USER_DATABASE_URL: postgresql+asyncpg://app_user:app_password@postgres:5432/tod
@@ -62,7 +62,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1G
     networks:
       - tod
       - tod_remote_worker
