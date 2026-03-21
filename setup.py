@@ -1094,7 +1094,7 @@ POSTGRES_PASSWORD={pg_pw}
 DATABASE_URL=postgresql+asyncpg://postgres:{pg_pw}@postgres:5432/{db}
 SYNC_DATABASE_URL=postgresql+psycopg2://postgres:{pg_pw}@postgres:5432/{db}
 APP_USER_DATABASE_URL=postgresql+asyncpg://app_user:{app_pw}@postgres:5432/{db}
-POLLER_DATABASE_URL=postgres://poller_user:{poll_pw}@postgres:5432/{db}
+POLLER_DATABASE_URL=postgres://poller_user:{poll_pw}@postgres:5432/{db}?sslmode=disable
 
 # --- Security ---
 JWT_SECRET_KEY={config['jwt_secret']}
