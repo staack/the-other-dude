@@ -233,7 +233,7 @@ jobs:
         run: docker build -f infrastructure/docker/Dockerfile.api -t tod-api:ci .
 
       - name: Scan API image
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
           image-ref: "tod-api:ci"
@@ -245,7 +245,7 @@ jobs:
         run: docker build -f poller/Dockerfile -t tod-poller:ci ./poller
 
       - name: Scan Poller image
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
           image-ref: "tod-poller:ci"
@@ -257,7 +257,7 @@ jobs:
         run: docker build -f infrastructure/docker/Dockerfile.frontend -t tod-frontend:ci .
 
       - name: Scan Frontend image
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
           image-ref: "tod-frontend:ci"
