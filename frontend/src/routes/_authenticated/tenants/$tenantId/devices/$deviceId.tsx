@@ -302,7 +302,11 @@ function DeviceDetailPage() {
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const [showCreds, setShowCreds] = useState(false)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTabRaw] = useState('overview')
+  const setActiveTab = (tab: string) => {
+    setActiveTabRaw(tab)
+    document.getElementById('main-content')?.scrollTo(0, 0)
+  }
   const [editOpen, setEditOpen] = useState(false)
   const { mode, toggleMode } = useSimpleConfigMode(deviceId)
 
