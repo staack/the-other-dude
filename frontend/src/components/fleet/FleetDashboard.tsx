@@ -175,9 +175,9 @@ export function FleetDashboard() {
     isFetching: fleetFetching,
     dataUpdatedAt,
   } = useQuery({
-    queryKey: ['fleet-summary', isSuperAdmin ? 'all' : tenantId],
+    queryKey: ['fleet-summary', isSuperAdmin && !selectedTenantId ? 'all' : tenantId],
     queryFn: () =>
-      isSuperAdmin
+      isSuperAdmin && !selectedTenantId
         ? metricsApi.fleetSummaryAll()
         : metricsApi.fleetSummary(tenantId),
     // Disable polling when SSE is connected (events update cache directly)

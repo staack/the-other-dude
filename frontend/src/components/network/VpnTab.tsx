@@ -26,17 +26,17 @@ const VPN_TYPE_CONFIG = {
   wireguard: {
     icon: Shield,
     label: 'WireGuard',
-    color: '#a855f7', // purple
+    color: 'hsl(var(--accent))',
   },
   ipsec: {
     icon: Lock,
     label: 'IPsec',
-    color: '#3b82f6', // blue
+    color: 'hsl(var(--info))',
   },
   l2tp: {
     icon: Globe,
     label: 'L2TP',
-    color: '#22c55e', // green
+    color: 'hsl(var(--success))',
   },
 } as const
 
