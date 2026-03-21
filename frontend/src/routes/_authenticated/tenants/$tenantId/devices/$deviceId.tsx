@@ -17,7 +17,7 @@ import {
   ShieldOff,
   Shield,
 } from 'lucide-react'
-import { devicesApi, deviceGroupsApi, deviceTagsApi, tenantsApi, configApi, sitesApi, type DeviceResponse, type DeviceUpdate } from '@/lib/api'
+import { devicesApi, deviceGroupsApi, deviceTagsApi, configApi, sitesApi, type DeviceResponse, type DeviceUpdate } from '@/lib/api'
 import { alertsApi } from '@/lib/alertsApi'
 import { useAuth, canWrite, canDelete } from '@/lib/auth'
 import { toast } from '@/components/ui/toast'
@@ -313,11 +313,6 @@ function DeviceDetailPage() {
   const { data: device, isLoading } = useQuery({
     queryKey: ['device', tenantId, deviceId],
     queryFn: () => devicesApi.get(tenantId, deviceId),
-  })
-
-  const { data: tenant } = useQuery({
-    queryKey: ['tenants', tenantId],
-    queryFn: () => tenantsApi.get(tenantId),
   })
 
   const { data: backups } = useQuery({

@@ -208,9 +208,6 @@ export function FleetDashboard() {
     () => fleetDevices?.filter((d) => d.status === 'online') ?? [],
     [fleetDevices],
   )
-  const onlinePercent =
-    totalDevices > 0 ? (onlineDevices.length / totalDevices) * 100 : 0
-
   const degradedCount = useMemo(
     () => fleetDevices?.filter((d) => d.status === 'degraded').length ?? 0,
     [fleetDevices],
@@ -254,12 +251,6 @@ export function FleetDashboard() {
         bandwidthBps: (d.last_cpu_load ?? 0) * 10_000_000, // Scale to make chart readable
       }))
   }, [fleetDevices])
-
-  // Total "bandwidth" (sum of CPU loads scaled)
-  const totalBandwidthBps = useMemo(
-    () => topConsumers.reduce((sum, d) => sum + d.bandwidthBps, 0),
-    [topConsumers],
-  )
 
   // Last updated timestamp
   const lastUpdated = dataUpdatedAt

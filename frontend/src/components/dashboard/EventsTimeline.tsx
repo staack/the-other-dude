@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Bell, Server, HardDrive } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { eventsApi, type DashboardEvent, type EventsParams } from '@/lib/eventsApi'
 import { DeviceLink } from '@/components/ui/device-link'

@@ -1,5 +1,3 @@
-import { Server, Wifi, AlertTriangle, Activity } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
 import { useAnimatedCounter } from '@/hooks/useAnimatedCounter'
 import { cn } from '@/lib/utils'
 
@@ -23,7 +21,6 @@ export function formatBandwidth(bps: number): { value: number; unit: string } {
 }
 
 interface KpiCardProps {
-  icon: React.ReactNode
   label: string
   value: number
   suffix?: string
@@ -33,7 +30,6 @@ interface KpiCardProps {
 }
 
 function KpiCard({
-  icon,
   label,
   value,
   suffix,
@@ -85,13 +81,11 @@ export function KpiCards({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <KpiCard
-        icon={<Server className="h-5 w-5" />}
         label="Total Devices"
         value={totalDevices}
         colorClass="text-accent"
       />
       <KpiCard
-        icon={<Wifi className="h-5 w-5" />}
         label="Online"
         value={onlinePercent}
         suffix="%"
@@ -99,14 +93,12 @@ export function KpiCards({
         colorClass="text-success"
       />
       <KpiCard
-        icon={<AlertTriangle className="h-5 w-5" />}
         label="Active Alerts"
         value={activeAlerts}
         colorClass={activeAlerts > 0 ? 'text-warning' : 'text-text-muted'}
         highlight={activeAlerts > 0}
       />
       <KpiCard
-        icon={<Activity className="h-5 w-5" />}
         label="Total Bandwidth"
         value={bandwidth.value}
         suffix={bandwidth.unit}

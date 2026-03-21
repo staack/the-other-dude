@@ -1,7 +1,5 @@
-import { cn } from '@/lib/utils'
-
 // Compatibility shim — returns null. Remove once all imports are cleaned up.
-export function Skeleton({ className: _className }: { className?: string }) {
+export function Skeleton() {
   return null
 }
 
