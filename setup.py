@@ -5,9 +5,15 @@ Interactive setup script that configures .env.prod, bootstraps OpenBao,
 builds Docker images, starts the stack, and verifies service health.
 
 Usage:
-    python3 setup.py
+    python3 setup.py                          # Interactive mode
+    python3 setup.py --non-interactive \\
+        --postgres-password 'MyP@ss!' \\
+        --domain tod.example.com \\
+        --admin-email admin@example.com \\
+        --no-telemetry --yes                  # Non-interactive mode
 """
 
+import argparse
 import base64
 import datetime
 import getpass
@@ -250,10 +256,17 @@ def ask(prompt: str, default: str = "", required: bool = False,
     full_prompt = f"  {prompt}{suffix}: "
 
     while True:
-        if secret:
-            value = getpass.getpass(full_prompt)
-        else:
-            value = input(full_prompt)
+        try:
+            if secret:
+                value = getpass.getpass(full_prompt)
+            else:
+                value = input(full_prompt)
+        except EOFError:
+            if default:
+                return default
+            if required:
+                raise SystemExit(f"EOF reached and no default for required field: {prompt}")
+            return ""
 
         value = value.strip()
         if not value and default:
@@ -276,7 +289,10 @@ def ask_yes_no(prompt: str, default: bool = False) -> bool:
     """Ask a yes/no question."""
     hint = "Y/n" if default else "y/N"
     while True:
-        answer = input(f"  {prompt} [{hint}]: ").strip().lower()
+        try:
+            answer = input(f"  {prompt} [{hint}]: ").strip().lower()
+        except EOFError:
+            return default
         if not answer:
             return default
         if answer in ("y", "yes"):
@@ -402,9 +418,16 @@ def check_ports() -> None:
             info(f"Could not check port {port} ({service})")
 
 
-def check_existing_env() -> str:
+def check_existing_env(args: argparse.Namespace) -> str:
     """Check for existing .env.prod. Returns 'overwrite', 'backup', or 'abort'."""
     if not ENV_PROD.exists():
+        return "overwrite"
+
+    if args.non_interactive:
+        ts = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
+        backup = ENV_PROD.with_name(f".env.prod.backup.{ts}")
+        shutil.copy2(ENV_PROD, backup)
+        ok(f"Backed up existing .env.prod to {backup.name}")
         return "overwrite"
 
     print()
@@ -432,7 +455,7 @@ def check_existing_env() -> str:
             warn("Please enter 1, 2, or 3.")
 
 
-def preflight() -> bool:
+def preflight(args: argparse.Namespace) -> bool:
     """Run all pre-flight checks. Returns True if OK to proceed."""
     banner("TOD Production Setup")
     print("  This wizard will configure your production environment,")
@@ -449,7 +472,7 @@ def preflight() -> bool:
     check_ram()
     check_ports()
 
-    action = check_existing_env()
+    action = check_existing_env(args)
     if action == "abort":
         print()
         info("Setup aborted.")
@@ -478,18 +501,24 @@ def generate_admin_password() -> str:
 
 # ── Wizard sections ─────────────────────────────────────────────────────────
 
-def wizard_database(config: dict) -> None:
+def wizard_database(config: dict, args: argparse.Namespace) -> None:
     section("Database")
     info("PostgreSQL superuser password — used for migrations and admin operations.")
     info("The app and poller service passwords will be auto-generated.")
     print()
 
-    config["postgres_password"] = ask(
-        "PostgreSQL superuser password",
-        required=True,
-        secret=True,
-        validate=validate_password_strength,
-    )
+    if args.non_interactive:
+        if not args.postgres_password:
+            fail("--postgres-password is required in non-interactive mode.")
+            raise SystemExit(1)
+        config["postgres_password"] = args.postgres_password
+    else:
+        config["postgres_password"] = ask(
+            "PostgreSQL superuser password",
+            required=True,
+            secret=True,
+            validate=validate_password_strength,
+        )
 
     config["app_user_password"] = generate_db_password()
     config["poller_user_password"] = generate_db_password()
@@ -516,42 +545,76 @@ def wizard_security(config: dict) -> None:
     info(f"CREDENTIAL_ENCRYPTION_KEY={mask_secret(config['encryption_key'])}")
 
 
-def wizard_admin(config: dict) -> None:
+def wizard_admin(config: dict, args: argparse.Namespace) -> None:
     section("Admin Account")
     info("The first admin account is created on initial startup.")
     print()
 
-    config["admin_email"] = ask(
-        "Admin email",
-        default="admin@the-other-dude.dev",
-        required=True,
-        validate=validate_email,
-    )
-
-    print()
-    info("Enter a password or press Enter to auto-generate one.")
-    password = ask("Admin password", secret=True)
-
-    if password:
-        error = validate_password_strength(password)
-        while error:
-            warn(error)
-            password = ask("Admin password", secret=True, required=True,
-                           validate=validate_password_strength)
-            error = None  # ask() already validated
-        config["admin_password"] = password
-        config["admin_password_generated"] = False
+    if args.non_interactive:
+        config["admin_email"] = args.admin_email or "admin@the-other-dude.dev"
     else:
-        config["admin_password"] = generate_admin_password()
-        config["admin_password_generated"] = True
-        ok(f"Generated password: {bold(config['admin_password'])}")
-        warn("Save this now — it will not be shown again after setup.")
+        config["admin_email"] = ask(
+            "Admin email",
+            default="admin@the-other-dude.dev",
+            required=True,
+            validate=validate_email,
+        )
+
+    if args.non_interactive:
+        if args.admin_password:
+            config["admin_password"] = args.admin_password
+            config["admin_password_generated"] = False
+        else:
+            config["admin_password"] = generate_admin_password()
+            config["admin_password_generated"] = True
+            ok(f"Generated password: {bold(config['admin_password'])}")
+            warn("Save this now — it will not be shown again after setup.")
+    else:
+        print()
+        info("Enter a password or press Enter to auto-generate one.")
+        password = ask("Admin password", secret=True)
+
+        if password:
+            error = validate_password_strength(password)
+            while error:
+                warn(error)
+                password = ask("Admin password", secret=True, required=True,
+                               validate=validate_password_strength)
+                error = None  # ask() already validated
+            config["admin_password"] = password
+            config["admin_password_generated"] = False
+        else:
+            config["admin_password"] = generate_admin_password()
+            config["admin_password_generated"] = True
+            ok(f"Generated password: {bold(config['admin_password'])}")
+            warn("Save this now — it will not be shown again after setup.")
 
 
-def wizard_email(config: dict) -> None:
+def wizard_email(config: dict, args: argparse.Namespace) -> None:
     section("Email (SMTP)")
     info("Email is used for password reset links.")
     print()
+
+    if args.non_interactive:
+        if not args.smtp_host:
+            config["smtp_configured"] = False
+            info("Skipped — no --smtp-host provided.")
+            return
+        config["smtp_configured"] = True
+        config["smtp_host"] = args.smtp_host
+        config["smtp_port"] = args.smtp_port or "587"
+        config["smtp_user"] = args.smtp_user or ""
+        config["smtp_password"] = args.smtp_password or ""
+        config["smtp_from"] = args.smtp_from or ""
+        if not config["smtp_from"]:
+            fail("--smtp-from is required when --smtp-host is provided.")
+            raise SystemExit(1)
+        # Determine TLS setting: --no-smtp-tls wins if set, otherwise default True
+        if args.no_smtp_tls:
+            config["smtp_tls"] = False
+        else:
+            config["smtp_tls"] = True
+        return
 
     if not ask_yes_no("Configure SMTP now?", default=False):
         config["smtp_configured"] = False
@@ -567,12 +630,19 @@ def wizard_email(config: dict) -> None:
     config["smtp_tls"] = ask_yes_no("Use TLS?", default=True)
 
 
-def wizard_domain(config: dict) -> None:
+def wizard_domain(config: dict, args: argparse.Namespace) -> None:
     section("Web / Domain")
     info("Your production domain, used for CORS and email links.")
     print()
 
-    raw = ask("Production domain (e.g. tod.example.com)", required=True, validate=validate_domain)
+    if args.non_interactive:
+        if not args.domain:
+            fail("--domain is required in non-interactive mode.")
+            raise SystemExit(1)
+        raw = args.domain
+    else:
+        raw = ask("Production domain (e.g. tod.example.com)", required=True, validate=validate_domain)
+
     domain = re.sub(r"^https?://", "", raw).rstrip("/")
     config["domain"] = domain
     config["app_base_url"] = f"https://{domain}"
@@ -723,56 +793,68 @@ def _write_system_file(path: pathlib.Path, content: str) -> bool:
         return False
 
 
-def wizard_reverse_proxy(config: dict) -> None:
+def wizard_reverse_proxy(config: dict, args: argparse.Namespace) -> None:
     section("Reverse Proxy")
     info("TOD needs a reverse proxy for HTTPS termination.")
     info("Example configs are included for Caddy, nginx, Apache, HAProxy, and Traefik.")
     print()
 
-    if not ask_yes_no("Configure a reverse proxy now?", default=True):
-        config["proxy_configured"] = False
-        info("Skipped. Example configs are in infrastructure/reverse-proxy-examples/")
-        return
-
-    # Detect installed proxies
-    detected = []
-    for name, cfg in PROXY_CONFIGS.items():
-        if _detect_proxy(name, cfg):
-            detected.append(name)
-
-    if detected:
-        print()
-        info(f"Detected: {', '.join(PROXY_CONFIGS[n]['label'] for n in detected)}")
-    else:
-        print()
-        info("No reverse proxy detected on this system.")
-
-    # Show menu
-    print()
-    print("  Which reverse proxy are you using?")
-    choices = list(PROXY_CONFIGS.keys())
-    for i, name in enumerate(choices, 1):
-        label = PROXY_CONFIGS[name]["label"]
-        tag = f" {green('(detected)')}" if name in detected else ""
-        print(f"    {bold(f'{i})')} {label}{tag}")
-    print(f"    {bold(f'{len(choices) + 1})')} Skip — I'll configure it myself")
-    print()
-
-    while True:
-        choice = input(f"  Choice [1-{len(choices) + 1}]: ").strip()
-        if not choice.isdigit():
-            warn("Please enter a number.")
-            continue
-        idx = int(choice) - 1
-        if idx == len(choices):
+    if args.non_interactive:
+        proxy_val = args.proxy or "skip"
+        if proxy_val == "skip":
             config["proxy_configured"] = False
             info("Skipped. Example configs are in infrastructure/reverse-proxy-examples/")
             return
-        if 0 <= idx < len(choices):
-            break
-        warn(f"Please enter 1-{len(choices) + 1}.")
+        valid_proxies = list(PROXY_CONFIGS.keys())
+        if proxy_val not in valid_proxies:
+            fail(f"--proxy must be one of: {', '.join(valid_proxies)}, skip")
+            raise SystemExit(1)
+        selected = proxy_val
+    else:
+        if not ask_yes_no("Configure a reverse proxy now?", default=True):
+            config["proxy_configured"] = False
+            info("Skipped. Example configs are in infrastructure/reverse-proxy-examples/")
+            return
 
-    selected = choices[idx]
+        # Detect installed proxies
+        detected = []
+        for name, cfg in PROXY_CONFIGS.items():
+            if _detect_proxy(name, cfg):
+                detected.append(name)
+
+        if detected:
+            print()
+            info(f"Detected: {', '.join(PROXY_CONFIGS[n]['label'] for n in detected)}")
+        else:
+            print()
+            info("No reverse proxy detected on this system.")
+
+        # Show menu
+        print()
+        print("  Which reverse proxy are you using?")
+        choices = list(PROXY_CONFIGS.keys())
+        for i, name in enumerate(choices, 1):
+            label = PROXY_CONFIGS[name]["label"]
+            tag = f" {green('(detected)')}" if name in detected else ""
+            print(f"    {bold(f'{i})')} {label}{tag}")
+        print(f"    {bold(f'{len(choices) + 1})')} Skip — I'll configure it myself")
+        print()
+
+        while True:
+            choice = input(f"  Choice [1-{len(choices) + 1}]: ").strip()
+            if not choice.isdigit():
+                warn("Please enter a number.")
+                continue
+            idx = int(choice) - 1
+            if idx == len(choices):
+                config["proxy_configured"] = False
+                info("Skipped. Example configs are in infrastructure/reverse-proxy-examples/")
+                return
+            if 0 <= idx < len(choices):
+                break
+            warn(f"Please enter 1-{len(choices) + 1}.")
+
+        selected = choices[idx]
     cfg = PROXY_CONFIGS[selected]
     domain = config["domain"]
     host_ip = _get_host_ip()
@@ -866,7 +948,7 @@ def wizard_reverse_proxy(config: dict) -> None:
         info("Traefik watches for file changes — no reload needed.")
 
 
-def wizard_telemetry(config: dict, telem: SetupTelemetry) -> None:
+def wizard_telemetry(config: dict, telem: SetupTelemetry, args: argparse.Namespace) -> None:
     section("Anonymous Diagnostics")
     info("TOD can send anonymous setup and runtime diagnostics to help")
     info("identify common failures. No personal data, IPs, hostnames,")
@@ -877,6 +959,16 @@ def wizard_telemetry(config: dict, telem: SetupTelemetry) -> None:
     info("You can disable this anytime by setting TELEMETRY_ENABLED=false")
     info("in .env.prod.")
     print()
+
+    if args.non_interactive:
+        if args.telemetry:
+            config["telemetry_enabled"] = True
+            telem.enable()
+            ok("Diagnostics enabled — thank you!")
+        else:
+            config["telemetry_enabled"] = False
+            info("No diagnostics will be sent.")
+        return
 
     if ask_yes_no("Send anonymous diagnostics?", default=False):
         config["telemetry_enabled"] = True
@@ -889,7 +981,7 @@ def wizard_telemetry(config: dict, telem: SetupTelemetry) -> None:
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 
-def show_summary(config: dict) -> bool:
+def show_summary(config: dict, args: argparse.Namespace) -> bool:
     banner("Configuration Summary")
 
     print(f"  {bold('Database')}")
@@ -942,6 +1034,10 @@ def show_summary(config: dict) -> bool:
     print(f"  {bold('OpenBao')}")
     print(f"    {dim('(will be captured automatically during bootstrap)')}")
     print()
+
+    if args.yes:
+        ok("Auto-confirmed (--yes)")
+        return True
 
     return ask_yes_no("Write .env.prod with these settings?", default=True)
 
@@ -1412,7 +1508,54 @@ def _timed(telem: SetupTelemetry, step_name: str, func, *args, **kwargs):
         raise
 
 
+def _build_parser() -> argparse.ArgumentParser:
+    """Build the CLI argument parser."""
+    parser = argparse.ArgumentParser(
+        description="TOD Production Setup Wizard",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--non-interactive", action="store_true",
+        help="Skip all prompts, use defaults + provided flags",
+    )
+    parser.add_argument("--postgres-password", type=str, default=None,
+                        help="PostgreSQL superuser password")
+    parser.add_argument("--admin-email", type=str, default=None,
+                        help="Admin email (default: admin@the-other-dude.dev)")
+    parser.add_argument("--admin-password", type=str, default=None,
+                        help="Admin password (auto-generated if not provided)")
+    parser.add_argument("--domain", type=str, default=None,
+                        help="Production domain (e.g. tod.example.com)")
+    parser.add_argument("--smtp-host", type=str, default=None,
+                        help="SMTP host (skip email config if not provided)")
+    parser.add_argument("--smtp-port", type=str, default=None,
+                        help="SMTP port (default: 587)")
+    parser.add_argument("--smtp-user", type=str, default=None,
+                        help="SMTP username")
+    parser.add_argument("--smtp-password", type=str, default=None,
+                        help="SMTP password")
+    parser.add_argument("--smtp-from", type=str, default=None,
+                        help="SMTP from address")
+    parser.add_argument("--smtp-tls", action="store_true", default=False,
+                        help="Use TLS for SMTP (default: true in non-interactive)")
+    parser.add_argument("--no-smtp-tls", action="store_true", default=False,
+                        help="Disable TLS for SMTP")
+    parser.add_argument("--proxy", type=str, default=None,
+                        help="Reverse proxy type: caddy, nginx, apache, haproxy, traefik, skip")
+    parser.add_argument("--telemetry", action="store_true", default=False,
+                        help="Enable anonymous diagnostics")
+    parser.add_argument("--no-telemetry", action="store_true", default=False,
+                        help="Disable anonymous diagnostics")
+    parser.add_argument("--yes", "-y", action="store_true", default=False,
+                        help="Auto-confirm summary (don't prompt for confirmation)")
+    return parser
+
+
 def main() -> int:
+    # Parse CLI arguments
+    parser = _build_parser()
+    args = parser.parse_args()
+
     # Graceful Ctrl+C
     env_written = False
     telem = SetupTelemetry()
@@ -1436,23 +1579,23 @@ def main() -> int:
     os.chdir(PROJECT_ROOT)
 
     # Phase 1: Pre-flight
-    if not preflight():
+    if not preflight(args):
         telem.step("preflight", "failure")
         return 1
     telem.step("preflight", "success")
 
     # Telemetry opt-in (right after preflight, before wizard)
     config: dict = {}
-    wizard_telemetry(config, telem)
+    wizard_telemetry(config, telem, args)
 
     # Phase 2: Wizard
     try:
-        wizard_database(config)
+        wizard_database(config, args)
         wizard_security(config)
-        wizard_admin(config)
-        wizard_email(config)
-        wizard_domain(config)
-        wizard_reverse_proxy(config)
+        wizard_admin(config, args)
+        wizard_email(config, args)
+        wizard_domain(config, args)
+        wizard_reverse_proxy(config, args)
         telem.step("wizard", "success")
     except Exception as e:
         telem.step("wizard", "failure",
@@ -1460,7 +1603,7 @@ def main() -> int:
         raise
 
     # Summary
-    if not show_summary(config):
+    if not show_summary(config, args):
         info("Setup cancelled.")
         telem.step("setup_total", "failure",
                    duration_ms=int((time.monotonic() - setup_start) * 1000),
