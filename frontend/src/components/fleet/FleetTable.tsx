@@ -2,7 +2,7 @@ import { useRef, useState, useCallback } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { ChevronUp, ChevronDown, ChevronsUpDown, Monitor, MapPin, Router, Network } from 'lucide-react'
+import { ChevronUp, ChevronDown, ChevronsUpDown, Monitor, MapPin, Router, Network, Trash2 } from 'lucide-react'
 import { devicesApi, sitesApi, type DeviceResponse } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { useShortcut } from '@/hooks/useShortcut'
@@ -165,6 +165,20 @@ export function FleetTable({
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (deviceId: string) => devicesApi.delete(tenantId, deviceId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['devices'] })
+    },
+  })
+
+  function handleDeleteDevice(e: React.MouseEvent, deviceId: string, hostname: string) {
+    e.stopPropagation()
+    if (confirm(`Delete ${hostname}? This cannot be undone.`)) {
+      deleteMutation.mutate(deviceId)
+    }
+  }
+
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['devices', tenantId, { search, status, deviceType, sortBy, sortDir, page, pageSize }],
     queryFn: () =>
@@ -322,6 +336,15 @@ export function FleetTable({
             ))}
           </div>
         </td>
+        <td className="px-2 py-1.5 w-8">
+          <button
+            className="opacity-0 group-hover/row:opacity-100 transition-opacity text-text-muted hover:text-error p-0.5"
+            onClick={(e) => handleDeleteDevice(e, device.id, device.hostname)}
+            title="Delete device"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </td>
       </>
     )
   }
@@ -348,6 +371,7 @@ export function FleetTable({
         <SortHeader column="uptime_seconds" label="Uptime" {...sortProps} className="text-right" />
         <SortHeader column="last_seen" label="Last Seen" {...sortProps} className="text-left" />
         <th scope="col" className="px-2 py-2 text-[10px] uppercase tracking-wider font-semibold text-text-muted text-left">Tags</th>
+        <th scope="col" className="px-2 py-2 w-8"><span className="sr-only">Actions</span></th>
       </tr>
     </thead>
   )
@@ -417,7 +441,7 @@ export function FleetTable({
                             data-index={virtualRow.index}
                             ref={virtualizer.measureElement}
                             className={cn(
-                              'border-b border-border/50 hover:bg-elevated/30 transition-[background-color] duration-[50ms]',
+                              'border-b border-border/50 hover:bg-elevated/30 transition-[background-color] duration-[50ms] group/row',
                               selectedIndex === virtualRow.index && 'bg-elevated/50',
                             )}
                             style={{
@@ -475,7 +499,7 @@ export function FleetTable({
                       key={device.id}
                       data-testid={`device-row-${device.hostname}`}
                       className={cn(
-                        'border-b border-border/50 hover:bg-elevated/30 transition-[background-color] duration-[50ms]',
+                        'border-b border-border/50 hover:bg-elevated/30 transition-[background-color] duration-[50ms] group/row',
                         selectedIndex === idx && 'bg-elevated/50',
                       )}
                     >
