@@ -14,7 +14,6 @@ IS NOT NULL), avoiding the need for a sentinel UUID.
 """
 
 import json
-import textwrap
 
 import sqlalchemy as sa
 from alembic import op
