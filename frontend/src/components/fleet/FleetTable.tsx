@@ -2,7 +2,7 @@ import { useRef, useState, useCallback } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import { ChevronUp, ChevronDown, ChevronsUpDown, Monitor, MapPin } from 'lucide-react'
+import { ChevronUp, ChevronDown, ChevronsUpDown, Monitor, MapPin, Router, Network } from 'lucide-react'
 import { devicesApi, sitesApi, type DeviceResponse } from '@/lib/api'
 import { Badge } from '@/components/ui/badge'
 import { useShortcut } from '@/hooks/useShortcut'
@@ -30,6 +30,7 @@ interface FleetTableProps {
   tenantId: string
   search?: string
   status?: string
+  deviceType?: string
   sortBy?: string
   sortDir?: 'asc' | 'desc'
   page?: number
@@ -50,6 +51,13 @@ function StatusDot({ status }: { status: string }) {
       title={status}
     />
   )
+}
+
+function DeviceTypeIcon({ deviceType }: { deviceType: string }) {
+  if (deviceType === 'snmp') {
+    return <Network className="h-3.5 w-3.5 text-text-muted" title="SNMP" />
+  }
+  return <Router className="h-3.5 w-3.5 text-text-muted" title="RouterOS" />
 }
 
 interface SortHeaderProps {
@@ -98,6 +106,7 @@ function DeviceCard({ device, tenantId }: { device: DeviceResponse; tenantId: st
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <StatusDot status={device.status} />
+          <DeviceTypeIcon deviceType={device.device_type ?? 'routeros'} />
           <DeviceLink tenantId={tenantId} deviceId={device.id} className="font-medium text-sm text-text-primary truncate">{device.hostname}</DeviceLink>
         </div>
         <span className="text-xs text-text-muted shrink-0">{formatUptime(device.uptime_seconds)}</span>
@@ -105,7 +114,7 @@ function DeviceCard({ device, tenantId }: { device: DeviceResponse; tenantId: st
       <div className="mt-1.5 flex items-center gap-3 text-xs text-text-secondary">
         <span className="font-mono">{device.ip_address}</span>
         {device.model && <span>{device.model}</span>}
-        {device.routeros_version && <span>v{device.routeros_version}</span>}
+        {device.device_type !== 'snmp' && device.routeros_version && <span>v{device.routeros_version}</span>}
       </div>
       {device.tags.length > 0 && (
         <div className="mt-1.5 flex flex-wrap gap-1">
@@ -126,6 +135,7 @@ export function FleetTable({
   tenantId,
   search,
   status,
+  deviceType,
   sortBy = 'hostname',
   sortDir = 'asc',
   page = 1,
@@ -156,11 +166,12 @@ export function FleetTable({
   })
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['devices', tenantId, { search, status, sortBy, sortDir, page, pageSize }],
+    queryKey: ['devices', tenantId, { search, status, deviceType, sortBy, sortDir, page, pageSize }],
     queryFn: () =>
       devicesApi.list(tenantId, {
         search,
         status,
+        device_type: deviceType,
         sort_by: sortBy,
         sort_dir: sortDir,
         page,
@@ -269,6 +280,9 @@ export function FleetTable({
         <td className="px-2 py-1.5 text-center">
           <StatusDot status={device.status} />
         </td>
+        <td className="px-2 py-1.5 text-center w-8">
+          <DeviceTypeIcon deviceType={device.device_type ?? 'routeros'} />
+        </td>
         <td className="px-2 py-1.5 font-medium text-text-primary"><DeviceLink tenantId={tenantId} deviceId={device.id}>{device.hostname}</DeviceLink></td>
         <td className="px-2 py-1.5 font-mono text-xs text-text-secondary">
           {device.ip_address}
@@ -288,7 +302,7 @@ export function FleetTable({
           )}
         </td>
         <td className="px-2 py-1.5 text-text-secondary">
-          {device.routeros_version ?? '—'}
+          {device.device_type === 'snmp' ? '—' : (device.routeros_version ?? '—')}
         </td>
         <td className="px-2 py-1.5 text-text-secondary">
           {device.firmware_version || '—'}
@@ -324,6 +338,7 @@ export function FleetTable({
           />
         </th>
         <th scope="col" className="px-2 py-2 text-[10px] uppercase tracking-wider font-semibold text-text-muted w-6"><span className="sr-only">Status</span></th>
+        <th scope="col" className="px-2 py-2 text-[10px] uppercase tracking-wider font-semibold text-text-muted w-8"><span className="sr-only">Type</span></th>
         <SortHeader column="hostname" label="Hostname" {...sortProps} className="text-left" />
         <SortHeader column="ip_address" label="IP" {...sortProps} className="text-left" />
         <SortHeader column="model" label="Model" {...sortProps} className="text-left" />
@@ -432,13 +447,13 @@ export function FleetTable({
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={11} className="px-3 py-4">
+                    <td colSpan={12} className="px-3 py-4">
                       <TableSkeleton />
                     </td>
                   </tr>
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={11}>
+                    <td colSpan={12}>
                       <EmptyState
                         icon={Monitor}
                         title="No devices yet"

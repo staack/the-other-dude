@@ -13,6 +13,7 @@ import { AddDeviceForm } from '@/components/fleet/AddDeviceForm'
 const searchSchema = z.object({
   search: z.string().optional(),
   status: z.string().optional(),
+  device_type: z.string().optional(),
   sort_by: z.string().optional(),
   sort_dir: z.enum(['asc', 'desc']).optional(),
   page: z.number().int().positive().optional(),
@@ -94,6 +95,7 @@ function DevicesPage() {
         tenantId={tenantId}
         search={search.search}
         status={search.status}
+        deviceType={search.device_type}
         sortBy={search.sort_by}
         sortDir={search.sort_dir}
         page={search.page}

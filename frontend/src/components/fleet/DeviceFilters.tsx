@@ -22,7 +22,7 @@ export function DeviceFilters({ tenantId }: DeviceFiltersProps) {
   // Use relative navigation for filter params
   const navigate = useNavigate()
   // Safely get search params
-  let searchObj: { search?: string; status?: string; page?: number; page_size?: number } = {}
+  let searchObj: { search?: string; status?: string; device_type?: string; page?: number; page_size?: number } = {}
   try {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     searchObj = useSearch({ from: '/_authenticated/tenants/$tenantId/devices/' }) as typeof searchObj
@@ -32,6 +32,7 @@ export function DeviceFilters({ tenantId }: DeviceFiltersProps) {
 
   const searchText = searchObj.search ?? ''
   const statusFilter = searchObj.status ?? ''
+  const deviceTypeFilter = searchObj.device_type ?? ''
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -65,11 +66,15 @@ export function DeviceFilters({ tenantId }: DeviceFiltersProps) {
     updateFilter({ status: value === 'all' ? undefined : value })
   }
 
-  const hasFilters = !!(searchText || statusFilter)
+  const handleDeviceType = (value: string) => {
+    updateFilter({ device_type: value === 'all' ? undefined : value })
+  }
+
+  const hasFilters = !!(searchText || statusFilter || deviceTypeFilter)
 
   const clearFilters = () => {
     if (inputRef.current) inputRef.current.value = ''
-    updateFilter({ search: undefined, status: undefined })
+    updateFilter({ search: undefined, status: undefined, device_type: undefined })
   }
 
   return (
@@ -97,6 +102,18 @@ export function DeviceFilters({ tenantId }: DeviceFiltersProps) {
           <SelectItem value="online">Online</SelectItem>
           <SelectItem value="offline">Offline</SelectItem>
           <SelectItem value="unknown">Not Yet Polled</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {/* Device type filter */}
+      <Select value={deviceTypeFilter || 'all'} onValueChange={handleDeviceType}>
+        <SelectTrigger className="w-32">
+          <SelectValue placeholder="All types" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All types</SelectItem>
+          <SelectItem value="routeros">RouterOS</SelectItem>
+          <SelectItem value="snmp">SNMP</SelectItem>
         </SelectContent>
       </Select>
 
