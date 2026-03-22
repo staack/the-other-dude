@@ -7,6 +7,7 @@ require (
 	github.com/bsm/redislock v0.9.4
 	github.com/go-routeros/routeros/v3 v3.0.0
 	github.com/google/uuid v1.6.0
+	github.com/gosnmp/gosnmp v1.43.2
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/nats-io/nats-server/v2 v2.12.5
