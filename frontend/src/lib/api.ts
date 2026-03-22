@@ -556,6 +556,50 @@ export interface SNMPProfileResponse {
   updated_at: string
 }
 
+export interface OIDNode {
+  oid: string
+  name: string
+  description?: string
+  type?: string
+  access?: string
+  status?: string
+  children?: OIDNode[]
+}
+
+export interface MIBParseResponse {
+  module_name: string
+  nodes: OIDNode[]
+  node_count: number
+}
+
+export interface ProfileTestRequest {
+  ip_address: string
+  snmp_port?: number
+  snmp_version: string
+  community?: string
+  security_level?: string
+  username?: string
+  auth_protocol?: string
+  auth_passphrase?: string
+  priv_protocol?: string
+  priv_passphrase?: string
+}
+
+export interface ProfileTestResponse {
+  success: boolean
+  device_info?: { sys_object_id?: string; sys_descr?: string; sys_name?: string }
+  error?: string
+}
+
+export interface SNMPProfileCreate {
+  name: string
+  description?: string
+  sys_object_id?: string
+  vendor?: string
+  category?: string
+  profile_data: Record<string, unknown>
+}
+
 export const snmpProfilesApi = {
   list: (tenantId: string) =>
     api
@@ -566,6 +610,46 @@ export const snmpProfilesApi = {
     api
       .get<SNMPProfileResponse>(
         `/api/tenants/${tenantId}/snmp-profiles/${profileId}`,
+      )
+      .then((r) => r.data),
+
+  create: (tenantId: string, data: SNMPProfileCreate) =>
+    api
+      .post<SNMPProfileResponse>(
+        `/api/tenants/${tenantId}/snmp-profiles`,
+        data,
+      )
+      .then((r) => r.data),
+
+  update: (tenantId: string, profileId: string, data: SNMPProfileCreate) =>
+    api
+      .put<SNMPProfileResponse>(
+        `/api/tenants/${tenantId}/snmp-profiles/${profileId}`,
+        data,
+      )
+      .then((r) => r.data),
+
+  delete: (tenantId: string, profileId: string) =>
+    api
+      .delete(`/api/tenants/${tenantId}/snmp-profiles/${profileId}`)
+      .then((r) => r.data),
+
+  parseMib: (tenantId: string, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api
+      .post<MIBParseResponse>(
+        `/api/tenants/${tenantId}/snmp-profiles/parse-mib`,
+        formData,
+      )
+      .then((r) => r.data)
+  },
+
+  testProfile: (tenantId: string, profileId: string, data: ProfileTestRequest) =>
+    api
+      .post<ProfileTestResponse>(
+        `/api/tenants/${tenantId}/snmp-profiles/${profileId}/test`,
+        data,
       )
       .then((r) => r.data),
 }
@@ -1788,73 +1872,4 @@ export const alertEventsApi = {
     )
     return data.count
   },
-}
-
-// ─── Credential Profiles ─────────────────────────────────────────────────────
-
-export interface CredentialProfileResponse {
-  id: string
-  name: string
-  description: string | null
-  credential_type: string // "routeros" | "snmp_v2c" | "snmp_v3"
-  device_count: number
-  created_at: string
-  updated_at: string
-}
-
-export interface CredentialProfileListResponse {
-  profiles: CredentialProfileResponse[]
-}
-
-export interface CredentialProfileCreate {
-  name: string
-  description?: string
-  credential_type: string
-  username?: string
-  password?: string
-  community?: string
-  security_level?: string
-  auth_protocol?: string
-  auth_passphrase?: string
-  privacy_protocol?: string
-  privacy_passphrase?: string
-  security_name?: string
-}
-
-export const credentialProfilesApi = {
-  list: (tenantId: string, credentialType?: string) =>
-    api
-      .get<CredentialProfileListResponse>(
-        `/api/tenants/${tenantId}/credential-profiles`,
-        { params: credentialType ? { credential_type: credentialType } : undefined },
-      )
-      .then((r) => r.data),
-
-  get: (tenantId: string, profileId: string) =>
-    api
-      .get<CredentialProfileResponse>(
-        `/api/tenants/${tenantId}/credential-profiles/${profileId}`,
-      )
-      .then((r) => r.data),
-
-  create: (tenantId: string, data: CredentialProfileCreate) =>
-    api
-      .post<CredentialProfileResponse>(
-        `/api/tenants/${tenantId}/credential-profiles`,
-        data,
-      )
-      .then((r) => r.data),
-
-  update: (tenantId: string, profileId: string, data: Partial<CredentialProfileCreate>) =>
-    api
-      .put<CredentialProfileResponse>(
-        `/api/tenants/${tenantId}/credential-profiles/${profileId}`,
-        data,
-      )
-      .then((r) => r.data),
-
-  delete: (tenantId: string, profileId: string) =>
-    api
-      .delete(`/api/tenants/${tenantId}/credential-profiles/${profileId}`)
-      .then((r) => r.data),
 }

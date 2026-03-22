@@ -37,6 +37,8 @@ import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAlertRulesRouteImport } from './routes/_authenticated/alert-rules'
 import { Route as AuthenticatedAboutRouteImport } from './routes/_authenticated/about'
 import { Route as AuthenticatedTenantsIndexRouteImport } from './routes/_authenticated/tenants/index'
+import { Route as AuthenticatedSettingsSnmpProfilesRouteImport } from './routes/_authenticated/settings.snmp-profiles'
+import { Route as AuthenticatedSettingsCredentialsRouteImport } from './routes/_authenticated/settings.credentials'
 import { Route as AuthenticatedSettingsApiKeysRouteImport } from './routes/_authenticated/settings.api-keys'
 import { Route as AuthenticatedTenantsTenantIdIndexRouteImport } from './routes/_authenticated/tenants/$tenantId/index'
 import { Route as AuthenticatedTenantsTenantIdWirelessLinksRouteImport } from './routes/_authenticated/tenants/$tenantId/wireless-links'
@@ -195,6 +197,18 @@ const AuthenticatedTenantsIndexRoute =
     path: '/tenants/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSettingsSnmpProfilesRoute =
+  AuthenticatedSettingsSnmpProfilesRouteImport.update({
+    id: '/snmp-profiles',
+    path: '/snmp-profiles',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsCredentialsRoute =
+  AuthenticatedSettingsCredentialsRouteImport.update({
+    id: '/credentials',
+    path: '/credentials',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedSettingsApiKeysRoute =
   AuthenticatedSettingsApiKeysRouteImport.update({
     id: '/api-keys',
@@ -290,6 +304,8 @@ export interface FileRoutesByFullPath {
   '/vpn': typeof AuthenticatedVpnRoute
   '/wireless': typeof AuthenticatedWirelessRoute
   '/settings/api-keys': typeof AuthenticatedSettingsApiKeysRoute
+  '/settings/credentials': typeof AuthenticatedSettingsCredentialsRoute
+  '/settings/snmp-profiles': typeof AuthenticatedSettingsSnmpProfilesRoute
   '/tenants/': typeof AuthenticatedTenantsIndexRoute
   '/tenants/$tenantId/users': typeof AuthenticatedTenantsTenantIdUsersRoute
   '/tenants/$tenantId/wireless-links': typeof AuthenticatedTenantsTenantIdWirelessLinksRoute
@@ -330,6 +346,8 @@ export interface FileRoutesByTo {
   '/wireless': typeof AuthenticatedWirelessRoute
   '/': typeof AuthenticatedIndexRoute
   '/settings/api-keys': typeof AuthenticatedSettingsApiKeysRoute
+  '/settings/credentials': typeof AuthenticatedSettingsCredentialsRoute
+  '/settings/snmp-profiles': typeof AuthenticatedSettingsSnmpProfilesRoute
   '/tenants': typeof AuthenticatedTenantsIndexRoute
   '/tenants/$tenantId/users': typeof AuthenticatedTenantsTenantIdUsersRoute
   '/tenants/$tenantId/wireless-links': typeof AuthenticatedTenantsTenantIdWirelessLinksRoute
@@ -372,6 +390,8 @@ export interface FileRoutesById {
   '/_authenticated/wireless': typeof AuthenticatedWirelessRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/settings/api-keys': typeof AuthenticatedSettingsApiKeysRoute
+  '/_authenticated/settings/credentials': typeof AuthenticatedSettingsCredentialsRoute
+  '/_authenticated/settings/snmp-profiles': typeof AuthenticatedSettingsSnmpProfilesRoute
   '/_authenticated/tenants/': typeof AuthenticatedTenantsIndexRoute
   '/_authenticated/tenants/$tenantId/users': typeof AuthenticatedTenantsTenantIdUsersRoute
   '/_authenticated/tenants/$tenantId/wireless-links': typeof AuthenticatedTenantsTenantIdWirelessLinksRoute
@@ -414,6 +434,8 @@ export interface FileRouteTypes {
     | '/vpn'
     | '/wireless'
     | '/settings/api-keys'
+    | '/settings/credentials'
+    | '/settings/snmp-profiles'
     | '/tenants/'
     | '/tenants/$tenantId/users'
     | '/tenants/$tenantId/wireless-links'
@@ -454,6 +476,8 @@ export interface FileRouteTypes {
     | '/wireless'
     | '/'
     | '/settings/api-keys'
+    | '/settings/credentials'
+    | '/settings/snmp-profiles'
     | '/tenants'
     | '/tenants/$tenantId/users'
     | '/tenants/$tenantId/wireless-links'
@@ -495,6 +519,8 @@ export interface FileRouteTypes {
     | '/_authenticated/wireless'
     | '/_authenticated/'
     | '/_authenticated/settings/api-keys'
+    | '/_authenticated/settings/credentials'
+    | '/_authenticated/settings/snmp-profiles'
     | '/_authenticated/tenants/'
     | '/_authenticated/tenants/$tenantId/users'
     | '/_authenticated/tenants/$tenantId/wireless-links'
@@ -715,6 +741,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTenantsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings/snmp-profiles': {
+      id: '/_authenticated/settings/snmp-profiles'
+      path: '/snmp-profiles'
+      fullPath: '/settings/snmp-profiles'
+      preLoaderRoute: typeof AuthenticatedSettingsSnmpProfilesRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/credentials': {
+      id: '/_authenticated/settings/credentials'
+      path: '/credentials'
+      fullPath: '/settings/credentials'
+      preLoaderRoute: typeof AuthenticatedSettingsCredentialsRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/settings/api-keys': {
       id: '/_authenticated/settings/api-keys'
       path: '/api-keys'
@@ -797,10 +837,15 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsApiKeysRoute: typeof AuthenticatedSettingsApiKeysRoute
+  AuthenticatedSettingsCredentialsRoute: typeof AuthenticatedSettingsCredentialsRoute
+  AuthenticatedSettingsSnmpProfilesRoute: typeof AuthenticatedSettingsSnmpProfilesRoute
 }
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
   AuthenticatedSettingsApiKeysRoute: AuthenticatedSettingsApiKeysRoute,
+  AuthenticatedSettingsCredentialsRoute: AuthenticatedSettingsCredentialsRoute,
+  AuthenticatedSettingsSnmpProfilesRoute:
+    AuthenticatedSettingsSnmpProfilesRoute,
 }
 
 const AuthenticatedSettingsRouteWithChildren =
