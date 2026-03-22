@@ -652,6 +652,9 @@ def upgrade() -> None:
     conn.execute(
         sa.text("GRANT SELECT ON snmp_profiles TO poller_user")
     )
+    conn.execute(
+        sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON snmp_profiles TO app_user")
+    )
 
     # -- Seed 6 system profiles --------------------------------------------
     for profile in SEED_PROFILES:

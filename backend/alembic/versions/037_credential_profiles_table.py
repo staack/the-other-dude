@@ -66,6 +66,9 @@ def upgrade() -> None:
     conn.execute(
         sa.text("GRANT SELECT ON credential_profiles TO poller_user")
     )
+    conn.execute(
+        sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON credential_profiles TO app_user")
+    )
 
 
 def downgrade() -> None:

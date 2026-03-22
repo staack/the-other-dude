@@ -75,6 +75,10 @@ def upgrade() -> None:
         """)
     )
 
+    conn.execute(
+        sa.text("GRANT SELECT, INSERT ON snmp_metrics TO app_user")
+    )
+
 
 def downgrade() -> None:
     op.drop_table("snmp_metrics")
