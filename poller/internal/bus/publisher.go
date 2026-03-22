@@ -20,6 +20,7 @@ type DeviceStatusEvent struct {
 	DeviceID        string `json:"device_id"`
 	TenantID        string `json:"tenant_id"`
 	Status          string `json:"status"` // "online" or "offline"
+	SoftwareVersion string `json:"software_version,omitempty"` // parsed from sysDescr for SNMP devices
 	RouterOSVersion string `json:"routeros_version,omitempty"`
 	MajorVersion    int    `json:"major_version,omitempty"`
 	BoardName       string `json:"board_name,omitempty"`
