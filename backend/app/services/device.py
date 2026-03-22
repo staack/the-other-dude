@@ -111,6 +111,11 @@ def _build_device_response(device: Device) -> DeviceResponse:
         longitude=device.longitude,
         status=device.status,
         tls_mode=device.tls_mode,
+        device_type=device.device_type,
+        snmp_port=device.snmp_port,
+        snmp_version=device.snmp_version,
+        snmp_profile_id=device.snmp_profile_id,
+        credential_profile_id=device.credential_profile_id,
         tags=tags,
         groups=groups,
         site_id=device.site_id,
@@ -144,39 +149,61 @@ async def create_device(
     encryption_key: bytes,
 ) -> DeviceResponse:
     """
-    Create a new device.
+    Create a new device (RouterOS or SNMP).
 
-    - Validates TCP connectivity (api_port or api_ssl_port must be reachable).
-    - Encrypts credentials before storage.
-    - Status set to "unknown" until the Go poller runs a full auth check (Phase 2).
+    - RouterOS: validates TCP connectivity, encrypts username/password.
+    - SNMP: skips TCP probe (UDP), encrypts community string if provided inline.
+    - Status set to "unknown" until the poller runs a full check.
     """
-    # Test connectivity before accepting the device
-    api_reachable = await _tcp_reachable(data.ip_address, data.api_port)
-    ssl_reachable = await _tcp_reachable(data.ip_address, data.api_ssl_port)
+    is_snmp = data.device_type == "snmp"
 
-    if not api_reachable and not ssl_reachable:
-        from fastapi import HTTPException, status
+    # TCP reachability check — only for RouterOS devices (SNMP uses UDP)
+    if not is_snmp:
+        api_reachable = await _tcp_reachable(data.ip_address, data.api_port)
+        ssl_reachable = await _tcp_reachable(data.ip_address, data.api_ssl_port)
 
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                f"Cannot reach {data.ip_address} on port {data.api_port} "
-                f"(RouterOS API) or {data.api_ssl_port} (RouterOS SSL API). "
-                "Verify the IP address and that the RouterOS API is enabled."
-            ),
-        )
+        if not api_reachable and not ssl_reachable:
+            from fastapi import HTTPException, status
 
-    # Encrypt credentials via OpenBao Transit (new writes go through Transit)
-    credentials_json = json.dumps({"username": data.username, "password": data.password})
-    transit_ciphertext = await encrypt_credentials_transit(credentials_json, str(tenant_id))
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    f"Cannot reach {data.ip_address} on port {data.api_port} "
+                    f"(RouterOS API) or {data.api_ssl_port} (RouterOS SSL API). "
+                    "Verify the IP address and that the RouterOS API is enabled."
+                ),
+            )
+
+    # Encrypt credentials via OpenBao Transit
+    transit_ciphertext = None
+    if data.username is not None and data.password is not None:
+        # RouterOS username/password or SNMP v3 with user/pass
+        credentials_json = json.dumps({"username": data.username, "password": data.password})
+        transit_ciphertext = await encrypt_credentials_transit(credentials_json, str(tenant_id))
+    elif data.community is not None:
+        # Inline SNMP v2c community string — store as encrypted credential
+        credentials_json = json.dumps({"community": data.community, "type": "snmp_v2c"})
+        transit_ciphertext = await encrypt_credentials_transit(credentials_json, str(tenant_id))
+
+    # Resolve credential_profile_id and snmp_profile_id (string -> UUID)
+    credential_profile_uuid = (
+        uuid.UUID(data.credential_profile_id) if data.credential_profile_id else None
+    )
+    snmp_profile_uuid = uuid.UUID(data.snmp_profile_id) if data.snmp_profile_id else None
 
     device = Device(
         tenant_id=tenant_id,
         hostname=data.hostname,
         ip_address=data.ip_address,
+        device_type=data.device_type,
         api_port=data.api_port,
         api_ssl_port=data.api_ssl_port,
         encrypted_credentials_transit=transit_ciphertext,
+        # SNMP fields
+        snmp_port=data.snmp_port if is_snmp else 161,
+        snmp_version=data.snmp_version if is_snmp else None,
+        snmp_profile_id=snmp_profile_uuid,
+        credential_profile_id=credential_profile_uuid,
         status="unknown",
     )
     db.add(device)
@@ -321,6 +348,13 @@ async def update_device(
         device.longitude = data.longitude
     if data.tls_mode is not None:
         device.tls_mode = data.tls_mode
+    # SNMP fields
+    if data.snmp_port is not None:
+        device.snmp_port = data.snmp_port
+    if data.snmp_version is not None:
+        device.snmp_version = data.snmp_version
+    if data.snmp_profile_id is not None:
+        device.snmp_profile_id = data.snmp_profile_id
 
     # Assign credential profile if provided
     if data.credential_profile_id is not None:

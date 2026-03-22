@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 
 # ---------------------------------------------------------------------------
@@ -13,14 +13,49 @@ from pydantic import BaseModel, field_validator
 
 
 class DeviceCreate(BaseModel):
-    """Schema for creating a new device."""
+    """Schema for creating a new device (RouterOS or SNMP)."""
 
     hostname: str
     ip_address: str
     api_port: int = 8728
     api_ssl_port: int = 8729
-    username: str
-    password: str
+    # RouterOS credentials — optional for SNMP devices
+    username: Optional[str] = None
+    password: Optional[str] = None
+    # SNMP / device-type fields
+    device_type: str = "routeros"
+    snmp_port: int = 161
+    snmp_version: Optional[str] = None  # "v1", "v2c", "v3"
+    snmp_profile_id: Optional[str] = None
+    credential_profile_id: Optional[str] = None
+    community: Optional[str] = None  # inline v2c community string
+
+    @field_validator("device_type")
+    @classmethod
+    def validate_device_type(cls, v: str) -> str:
+        if v not in ("routeros", "snmp"):
+            raise ValueError("device_type must be 'routeros' or 'snmp'")
+        return v
+
+    @field_validator("snmp_version")
+    @classmethod
+    def validate_snmp_version(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ("v1", "v2c", "v3"):
+            raise ValueError("snmp_version must be 'v1', 'v2c', or 'v3'")
+        return v
+
+    @model_validator(mode="after")
+    def validate_credentials(self) -> "DeviceCreate":
+        """Ensure some form of authentication is provided."""
+        has_user_pass = self.username is not None and self.password is not None
+        has_profile = self.credential_profile_id is not None
+        has_community = self.community is not None
+        if not has_user_pass and not has_profile and not has_community:
+            raise ValueError(
+                "Credentials required: provide (username + password), "
+                "credential_profile_id, or community string"
+            )
+        return self
 
 
 class DeviceUpdate(BaseModel):
@@ -36,6 +71,10 @@ class DeviceUpdate(BaseModel):
     longitude: Optional[float] = None
     tls_mode: Optional[str] = None
     credential_profile_id: Optional[uuid.UUID] = None
+    # SNMP fields
+    snmp_port: Optional[int] = None
+    snmp_version: Optional[str] = None
+    snmp_profile_id: Optional[uuid.UUID] = None
 
     @field_validator("tls_mode")
     @classmethod
@@ -46,6 +85,13 @@ class DeviceUpdate(BaseModel):
         allowed = {"auto", "insecure", "plain", "portal_ca"}
         if v not in allowed:
             raise ValueError(f"tls_mode must be one of: {', '.join(sorted(allowed))}")
+        return v
+
+    @field_validator("snmp_version")
+    @classmethod
+    def validate_snmp_version(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ("v1", "v2c", "v3"):
+            raise ValueError("snmp_version must be 'v1', 'v2c', or 'v3'")
         return v
 
 
@@ -87,6 +133,12 @@ class DeviceResponse(BaseModel):
     longitude: Optional[float] = None
     status: str
     tls_mode: str = "auto"
+    # SNMP / device-type fields
+    device_type: str = "routeros"
+    snmp_port: Optional[int] = None
+    snmp_version: Optional[str] = None
+    snmp_profile_id: Optional[uuid.UUID] = None
+    credential_profile_id: Optional[uuid.UUID] = None
     tags: list[DeviceTagRef] = []
     groups: list[DeviceGroupRef] = []
     site_id: Optional[uuid.UUID] = None
