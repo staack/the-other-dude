@@ -1,0 +1,28 @@
+# docker-compose.build.yml -- Build-from-source override
+#
+# Adds build contexts so Docker Compose builds images locally instead of
+# pulling pre-built images from GHCR.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#     -f docker-compose.build.yml --env-file .env.prod up -d --build
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+
+  poller:
+    build:
+      context: ./poller
+      dockerfile: ./Dockerfile
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.frontend
+
+  winbox-worker:
+    build:
+      context: ./winbox-worker

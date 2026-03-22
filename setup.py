@@ -40,6 +40,7 @@ INIT_SQL_TEMPLATE = PROJECT_ROOT / "scripts" / "init-postgres.sql"
 INIT_SQL_PROD = PROJECT_ROOT / "scripts" / "init-postgres-prod.sql"
 COMPOSE_BASE = "docker-compose.yml"
 COMPOSE_PROD = "docker-compose.prod.yml"
+COMPOSE_BUILD_OVERRIDE = "docker-compose.build.yml"
 COMPOSE_CMD = [
     "docker", "compose",
     "-f", COMPOSE_BASE,
@@ -459,8 +460,8 @@ def preflight(args: argparse.Namespace) -> bool:
     """Run all pre-flight checks. Returns True if OK to proceed."""
     banner("TOD Production Setup")
     print("  This wizard will configure your production environment,")
-    print("  generate secrets, bootstrap OpenBao, build images, and")
-    print("  start the stack.")
+    print("  generate secrets, bootstrap OpenBao, pull or build images,")
+    print("  and start the stack.")
     print()
 
     section("Pre-flight Checks")
@@ -989,6 +990,57 @@ def wizard_telemetry(config: dict, telem: SetupTelemetry, args: argparse.Namespa
         info("No diagnostics will be sent.")
 
 
+def _read_version() -> str:
+    """Read the version string from the VERSION file."""
+    version_file = PROJECT_ROOT / "VERSION"
+    if version_file.exists():
+        return version_file.read_text().strip()
+    return "latest"
+
+
+def wizard_build_mode(config: dict, args: argparse.Namespace) -> None:
+    """Ask whether to use pre-built images or build from source."""
+    section("Build Mode")
+
+    version = _read_version()
+    config["tod_version"] = version
+
+    if args.non_interactive:
+        mode = getattr(args, "build_mode", None) or "prebuilt"
+        config["build_mode"] = mode
+        if mode == "source":
+            COMPOSE_CMD.extend(["-f", COMPOSE_BUILD_OVERRIDE])
+            ok(f"Build from source (v{version})")
+        else:
+            ok(f"Pre-built images from GHCR (v{version})")
+        return
+
+    print(f"  TOD v{bold(version)} can be installed two ways:")
+    print()
+    print(f"    {bold('1.')} {green('Pre-built images')} {dim('(recommended)')}")
+    print("       Pull ready-to-run images from GitHub Container Registry.")
+    print("       Fast install, no compilation needed.")
+    print()
+    print(f"    {bold('2.')} Build from source")
+    print("       Compile Go, Python, and Node.js locally.")
+    print("       Requires 4+ GB RAM and takes 5-15 minutes.")
+    print()
+
+    while True:
+        choice = input("  Choice [1/2]: ").strip()
+        if choice in ("1", ""):
+            config["build_mode"] = "prebuilt"
+            ok("Pre-built images from GHCR")
+            break
+        elif choice == "2":
+            config["build_mode"] = "source"
+            COMPOSE_CMD.extend(["-f", COMPOSE_BUILD_OVERRIDE])
+            ok("Build from source")
+            break
+        else:
+            warn("Please enter 1 or 2.")
+
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 
 def show_summary(config: dict, args: argparse.Namespace) -> bool:
@@ -1039,6 +1091,14 @@ def show_summary(config: dict, args: argparse.Namespace) -> bool:
         print(f"    TELEMETRY_ENABLED    = {green('true')}")
     else:
         print(f"    TELEMETRY_ENABLED    = {dim('false')}")
+    print()
+
+    print(f"  {bold('Build Mode')}")
+    if config.get("build_mode") == "source":
+        print("    Mode                 = Build from source")
+    else:
+        print(f"    Mode                 = {green('Pre-built images')}")
+    print(f"    Version              = {config.get('tod_version', 'latest')}")
     print()
 
     print(f"  {bold('OpenBao')}")
@@ -1121,6 +1181,7 @@ ENVIRONMENT=production
 LOG_LEVEL=info
 DEBUG=false
 APP_NAME=TOD - The Other Dude
+TOD_VERSION={config.get('tod_version', 'latest')}
 
 # --- Storage ---
 GIT_STORE_PATH=/data/git-store
@@ -1388,6 +1449,36 @@ def bootstrap_openbao(config: dict) -> bool:
             return True
 
 
+def pull_images() -> bool:
+    """Pull pre-built images from GHCR."""
+    section("Pulling Images")
+    info("Downloading pre-built images from GitHub Container Registry...")
+    print()
+
+    services = ["api", "poller", "frontend", "winbox-worker"]
+
+    for i, service in enumerate(services, 1):
+        info(f"[{i}/{len(services)}] Pulling {service}...")
+        try:
+            run_compose("pull", service, timeout=600)
+            ok(f"{service} pulled successfully")
+        except subprocess.CalledProcessError:
+            fail(f"Failed to pull {service}")
+            print()
+            warn("Check your internet connection and that the image exists.")
+            warn("To retry:")
+            info(f"  docker compose -f {COMPOSE_BASE} -f {COMPOSE_PROD} "
+                 f"--env-file .env.prod pull {service}")
+            return False
+        except subprocess.TimeoutExpired:
+            fail(f"Pull of {service} timed out (10 min)")
+            return False
+
+    print()
+    ok("All images ready")
+    return True
+
+
 def build_images() -> bool:
     """Build Docker images one at a time to avoid OOM."""
     section("Building Images")
@@ -1405,7 +1496,8 @@ def build_images() -> bool:
             fail(f"Failed to build {service}")
             print()
             warn("To retry this build:")
-            info(f"  docker compose -f {COMPOSE_BASE} -f {COMPOSE_PROD} build {service}")
+            info(f"  docker compose -f {COMPOSE_BASE} -f {COMPOSE_PROD} "
+                 f"-f {COMPOSE_BUILD_OVERRIDE} build {service}")
             return False
         except subprocess.TimeoutExpired:
             fail(f"Build of {service} timed out (15 min)")
@@ -1558,6 +1650,9 @@ def _build_parser() -> argparse.ArgumentParser:
                         help="Enable anonymous diagnostics")
     parser.add_argument("--no-telemetry", action="store_true", default=False,
                         help="Disable anonymous diagnostics")
+    parser.add_argument("--build-mode", type=str, default=None,
+                        choices=["prebuilt", "source"],
+                        help="Image source: prebuilt (pull from GHCR) or source (compile locally)")
     parser.add_argument("--yes", "-y", action="store_true", default=False,
                         help="Auto-confirm summary (don't prompt for confirmation)")
     return parser
@@ -1602,6 +1697,7 @@ def main() -> int:
 
     # Phase 2: Wizard
     try:
+        wizard_build_mode(config, args)
         wizard_database(config, args)
         wizard_security(config)
         wizard_admin(config, args)
@@ -1651,18 +1747,29 @@ def main() -> int:
                        error_message="Aborted after OpenBao failure")
             return 1
 
-    # Phase 5: Build
+    # Phase 5: Build or Pull
     t0 = time.monotonic()
-    if not build_images():
+    if config.get("build_mode") == "source":
+        images_ok = build_images()
+        step_name = "build_images"
+        fail_msg = "Docker build failed"
+        retry_hint = "Fix the build error and re-run setup.py to continue."
+    else:
+        images_ok = pull_images()
+        step_name = "pull_images"
+        fail_msg = "Image pull failed"
+        retry_hint = "Check your connection and re-run setup.py to continue."
+
+    if not images_ok:
         duration_ms = int((time.monotonic() - t0) * 1000)
-        telem.step("build_images", "failure", duration_ms=duration_ms)
-        warn("Fix the build error and re-run setup.py to continue.")
+        telem.step(step_name, "failure", duration_ms=duration_ms)
+        warn(retry_hint)
         telem.step("setup_total", "failure",
                    duration_ms=int((time.monotonic() - setup_start) * 1000),
-                   error_message="Docker build failed")
+                   error_message=fail_msg)
         return 1
     duration_ms = int((time.monotonic() - t0) * 1000)
-    telem.step("build_images", "success", duration_ms=duration_ms)
+    telem.step(step_name, "success", duration_ms=duration_ms)
 
     # Phase 6: Start
     t0 = time.monotonic()

@@ -1,5 +1,10 @@
 # docker-compose.prod.yml -- Production environment override
-# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
+#
+# Pre-built images (recommended):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
+#
+# Build from source:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod up -d
 
 services:
   postgres:
@@ -13,9 +18,7 @@ services:
       retries: 5
 
   api:
-    build:
-      context: .
-      dockerfile: infrastructure/docker/Dockerfile.api
+    image: ghcr.io/staack/the-other-dude/api:${TOD_VERSION:-latest}
     container_name: tod_api
     env_file: .env.prod
     environment:
@@ -67,9 +70,7 @@ services:
       - tod_remote_worker
 
   poller:
-    build:
-      context: ./poller
-      dockerfile: ./Dockerfile
+    image: ghcr.io/staack/the-other-dude/poller:${TOD_VERSION:-latest}
     container_name: tod_poller
     env_file: .env.prod
     cap_add:
@@ -135,6 +136,7 @@ services:
         max-file: "3"
 
   winbox-worker:
+    image: ghcr.io/staack/the-other-dude/winbox-worker:${TOD_VERSION:-latest}
     environment:
       LOG_LEVEL: info
       MAX_CONCURRENT_SESSIONS: 10
@@ -146,9 +148,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build:
-      context: .
-      dockerfile: infrastructure/docker/Dockerfile.frontend
+    image: ghcr.io/staack/the-other-dude/frontend:${TOD_VERSION:-latest}
     container_name: tod_frontend
     ports:
       - "3000:80"
