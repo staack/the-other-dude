@@ -46,9 +46,7 @@ class CredentialProfileCreate(BaseModel):
     @classmethod
     def validate_credential_type(cls, v: str) -> str:
         if v not in VALID_CREDENTIAL_TYPES:
-            raise ValueError(
-                f"credential_type must be one of: {', '.join(VALID_CREDENTIAL_TYPES)}"
-            )
+            raise ValueError(f"credential_type must be one of: {', '.join(VALID_CREDENTIAL_TYPES)}")
         return v
 
     @model_validator(mode="after")
@@ -141,9 +139,7 @@ class CredentialProfileUpdate(BaseModel):
         if v is None:
             return v
         if v not in VALID_CREDENTIAL_TYPES:
-            raise ValueError(
-                f"credential_type must be one of: {', '.join(VALID_CREDENTIAL_TYPES)}"
-            )
+            raise ValueError(f"credential_type must be one of: {', '.join(VALID_CREDENTIAL_TYPES)}")
         return v
 
     @model_validator(mode="after")
@@ -151,9 +147,14 @@ class CredentialProfileUpdate(BaseModel):
         """Validate credential fields only when credential_type or credential fields change."""
         # Collect which credential fields were provided
         cred_fields = {
-            "username", "password", "community",
-            "security_level", "auth_protocol", "auth_passphrase",
-            "priv_protocol", "priv_passphrase",
+            "username",
+            "password",
+            "community",
+            "security_level",
+            "auth_protocol",
+            "auth_passphrase",
+            "priv_protocol",
+            "priv_passphrase",
         }
         has_cred_changes = any(getattr(self, f) is not None for f in cred_fields)
 

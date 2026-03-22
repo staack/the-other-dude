@@ -29,25 +29,12 @@ def upgrade() -> None:
     conn.execute(sa.text("SET lock_timeout = '3s'"))
 
     conn.execute(
-        sa.text(
-            "ALTER TABLE devices"
-            " ADD COLUMN device_type TEXT NOT NULL DEFAULT 'routeros'"
-        )
+        sa.text("ALTER TABLE devices ADD COLUMN device_type TEXT NOT NULL DEFAULT 'routeros'")
     )
 
-    conn.execute(
-        sa.text(
-            "ALTER TABLE devices"
-            " ADD COLUMN snmp_port INTEGER DEFAULT 161"
-        )
-    )
+    conn.execute(sa.text("ALTER TABLE devices ADD COLUMN snmp_port INTEGER DEFAULT 161"))
 
-    conn.execute(
-        sa.text(
-            "ALTER TABLE devices"
-            " ADD COLUMN snmp_version TEXT"
-        )
-    )
+    conn.execute(sa.text("ALTER TABLE devices ADD COLUMN snmp_version TEXT"))
 
     conn.execute(
         sa.text(
@@ -69,18 +56,8 @@ def upgrade() -> None:
 def downgrade() -> None:
     conn = op.get_bind()
 
-    conn.execute(
-        sa.text("ALTER TABLE devices DROP COLUMN IF EXISTS credential_profile_id")
-    )
-    conn.execute(
-        sa.text("ALTER TABLE devices DROP COLUMN IF EXISTS snmp_profile_id")
-    )
-    conn.execute(
-        sa.text("ALTER TABLE devices DROP COLUMN IF EXISTS snmp_version")
-    )
-    conn.execute(
-        sa.text("ALTER TABLE devices DROP COLUMN IF EXISTS snmp_port")
-    )
-    conn.execute(
-        sa.text("ALTER TABLE devices DROP COLUMN IF EXISTS device_type")
-    )
+    conn.execute(sa.text("ALTER TABLE devices DROP COLUMN IF EXISTS credential_profile_id"))
+    conn.execute(sa.text("ALTER TABLE devices DROP COLUMN IF EXISTS snmp_profile_id"))
+    conn.execute(sa.text("ALTER TABLE devices DROP COLUMN IF EXISTS snmp_version"))
+    conn.execute(sa.text("ALTER TABLE devices DROP COLUMN IF EXISTS snmp_port"))
+    conn.execute(sa.text("ALTER TABLE devices DROP COLUMN IF EXISTS device_type"))

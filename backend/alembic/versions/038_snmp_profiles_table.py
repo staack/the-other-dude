@@ -630,12 +630,8 @@ def upgrade() -> None:
     )
 
     # -- RLS: system profiles visible to all tenants -----------------------
-    conn.execute(
-        sa.text("ALTER TABLE snmp_profiles ENABLE ROW LEVEL SECURITY")
-    )
-    conn.execute(
-        sa.text("ALTER TABLE snmp_profiles FORCE ROW LEVEL SECURITY")
-    )
+    conn.execute(sa.text("ALTER TABLE snmp_profiles ENABLE ROW LEVEL SECURITY"))
+    conn.execute(sa.text("ALTER TABLE snmp_profiles FORCE ROW LEVEL SECURITY"))
     conn.execute(
         sa.text("""
             CREATE POLICY snmp_profiles_tenant_isolation
@@ -648,12 +644,8 @@ def upgrade() -> None:
         """)
     )
 
-    conn.execute(
-        sa.text("GRANT SELECT ON snmp_profiles TO poller_user")
-    )
-    conn.execute(
-        sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON snmp_profiles TO app_user")
-    )
+    conn.execute(sa.text("GRANT SELECT ON snmp_profiles TO poller_user"))
+    conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON snmp_profiles TO app_user"))
 
     # -- Seed 6 system profiles --------------------------------------------
     for profile in SEED_PROFILES:
@@ -679,10 +671,5 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     conn = op.get_bind()
-    conn.execute(
-        sa.text(
-            "DROP POLICY IF EXISTS snmp_profiles_tenant_isolation"
-            " ON snmp_profiles"
-        )
-    )
+    conn.execute(sa.text("DROP POLICY IF EXISTS snmp_profiles_tenant_isolation ON snmp_profiles"))
     op.drop_table("snmp_profiles")

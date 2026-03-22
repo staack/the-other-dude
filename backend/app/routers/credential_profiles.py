@@ -113,7 +113,10 @@ async def update_profile(
     """Update a credential profile. Requires operator role or above."""
     await _check_tenant_access(current_user, tenant_id, db)
     return await credential_profile_service.update_profile(
-        db=db, tenant_id=tenant_id, profile_id=profile_id, data=data,
+        db=db,
+        tenant_id=tenant_id,
+        profile_id=profile_id,
+        data=data,
         user_id=current_user.user_id,
     )
 
@@ -136,7 +139,9 @@ async def delete_profile(
     """
     await _check_tenant_access(current_user, tenant_id, db)
     await credential_profile_service.delete_profile(
-        db=db, tenant_id=tenant_id, profile_id=profile_id,
+        db=db,
+        tenant_id=tenant_id,
+        profile_id=profile_id,
         user_id=current_user.user_id,
     )
 

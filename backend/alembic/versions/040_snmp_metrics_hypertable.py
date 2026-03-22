@@ -44,11 +44,7 @@ def upgrade() -> None:
 
     conn.execute(sa.text("SELECT create_hypertable('snmp_metrics', 'time')"))
 
-    conn.execute(
-        sa.text(
-            "SELECT add_retention_policy('snmp_metrics', INTERVAL '90 days')"
-        )
-    )
+    conn.execute(sa.text("SELECT add_retention_policy('snmp_metrics', INTERVAL '90 days')"))
 
     conn.execute(
         sa.text("""
@@ -57,12 +53,8 @@ def upgrade() -> None:
         """)
     )
 
-    conn.execute(
-        sa.text("ALTER TABLE snmp_metrics ENABLE ROW LEVEL SECURITY")
-    )
-    conn.execute(
-        sa.text("ALTER TABLE snmp_metrics FORCE ROW LEVEL SECURITY")
-    )
+    conn.execute(sa.text("ALTER TABLE snmp_metrics ENABLE ROW LEVEL SECURITY"))
+    conn.execute(sa.text("ALTER TABLE snmp_metrics FORCE ROW LEVEL SECURITY"))
 
     conn.execute(
         sa.text("""
@@ -75,9 +67,7 @@ def upgrade() -> None:
         """)
     )
 
-    conn.execute(
-        sa.text("GRANT SELECT, INSERT ON snmp_metrics TO app_user")
-    )
+    conn.execute(sa.text("GRANT SELECT, INSERT ON snmp_metrics TO app_user"))
 
 
 def downgrade() -> None:

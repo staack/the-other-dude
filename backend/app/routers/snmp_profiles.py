@@ -31,7 +31,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
-from app.middleware.rbac import require_operator_or_above, require_scope, require_tenant_admin_or_above
+from app.middleware.rbac import (
+    require_operator_or_above,
+    require_scope,
+    require_tenant_admin_or_above,
+)
 from app.middleware.tenant_context import CurrentUser, get_current_user
 from app.routers.devices import _check_tenant_access
 from app.schemas.snmp_profile import (
@@ -252,7 +256,7 @@ async def update_profile(
 
     sql = f"""
         UPDATE snmp_profiles
-        SET {', '.join(set_clauses)}
+        SET {", ".join(set_clauses)}
         WHERE id = :profile_id AND tenant_id = :tenant_id
         RETURNING id, tenant_id, name, description, sys_object_id, vendor,
                   category, is_system, created_at, updated_at

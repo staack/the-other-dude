@@ -41,12 +41,8 @@ def upgrade() -> None:
         """)
     )
 
-    conn.execute(
-        sa.text("ALTER TABLE credential_profiles ENABLE ROW LEVEL SECURITY")
-    )
-    conn.execute(
-        sa.text("ALTER TABLE credential_profiles FORCE ROW LEVEL SECURITY")
-    )
+    conn.execute(sa.text("ALTER TABLE credential_profiles ENABLE ROW LEVEL SECURITY"))
+    conn.execute(sa.text("ALTER TABLE credential_profiles FORCE ROW LEVEL SECURITY"))
 
     conn.execute(
         sa.text("""
@@ -63,20 +59,13 @@ def upgrade() -> None:
         """)
     )
 
-    conn.execute(
-        sa.text("GRANT SELECT ON credential_profiles TO poller_user")
-    )
-    conn.execute(
-        sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON credential_profiles TO app_user")
-    )
+    conn.execute(sa.text("GRANT SELECT ON credential_profiles TO poller_user"))
+    conn.execute(sa.text("GRANT SELECT, INSERT, UPDATE, DELETE ON credential_profiles TO app_user"))
 
 
 def downgrade() -> None:
     conn = op.get_bind()
     conn.execute(
-        sa.text(
-            "DROP POLICY IF EXISTS credential_profiles_tenant_isolation"
-            " ON credential_profiles"
-        )
+        sa.text("DROP POLICY IF EXISTS credential_profiles_tenant_isolation ON credential_profiles")
     )
     op.drop_table("credential_profiles")

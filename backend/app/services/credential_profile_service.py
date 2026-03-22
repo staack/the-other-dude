@@ -65,7 +65,9 @@ def _build_credential_json(data: CredentialProfileCreate | CredentialProfileUpda
         raise ValueError(f"Unknown credential_type: {ct}")
 
 
-def _profile_response(profile: CredentialProfile, device_count: int = 0) -> CredentialProfileResponse:
+def _profile_response(
+    profile: CredentialProfile, device_count: int = 0
+) -> CredentialProfileResponse:
     """Build a CredentialProfileResponse from an ORM instance."""
     return CredentialProfileResponse(
         id=profile.id,
@@ -116,9 +118,11 @@ async def get_profiles(
     credential_type: str | None = None,
 ) -> CredentialProfileListResponse:
     """List all credential profiles for a tenant."""
-    query = select(CredentialProfile).where(
-        CredentialProfile.tenant_id == tenant_id
-    ).order_by(CredentialProfile.name)
+    query = (
+        select(CredentialProfile)
+        .where(CredentialProfile.tenant_id == tenant_id)
+        .order_by(CredentialProfile.name)
+    )
 
     if credential_type:
         query = query.where(CredentialProfile.credential_type == credential_type)
@@ -141,10 +145,7 @@ async def get_profiles(
         for row in count_result:
             device_counts[row.credential_profile_id] = row.cnt
 
-    responses = [
-        _profile_response(p, device_count=device_counts.get(p.id, 0))
-        for p in profiles
-    ]
+    responses = [_profile_response(p, device_count=device_counts.get(p.id, 0)) for p in profiles]
     return CredentialProfileListResponse(profiles=responses)
 
 
@@ -211,9 +212,14 @@ async def update_profile(
 
     # Determine if credential re-encryption is needed
     cred_fields = {
-        "username", "password", "community",
-        "security_level", "auth_protocol", "auth_passphrase",
-        "priv_protocol", "priv_passphrase",
+        "username",
+        "password",
+        "community",
+        "security_level",
+        "auth_protocol",
+        "auth_passphrase",
+        "priv_protocol",
+        "priv_passphrase",
     }
     has_cred_changes = any(getattr(data, f) is not None for f in cred_fields)
     type_changed = data.credential_type is not None
@@ -241,13 +247,18 @@ async def update_profile(
         action="credential_profile.update",
         resource_type="credential_profile",
         resource_id=str(profile.id),
-        details={"name": profile.name, "updated_fields": list(data.model_dump(exclude_unset=True).keys())},
+        details={
+            "name": profile.name,
+            "updated_fields": list(data.model_dump(exclude_unset=True).keys()),
+        },
     )
 
     return _profile_response(profile, device_count=dc)
 
 
-def _merge_update(data: CredentialProfileUpdate, profile: CredentialProfile) -> CredentialProfileUpdate:
+def _merge_update(
+    data: CredentialProfileUpdate, profile: CredentialProfile
+) -> CredentialProfileUpdate:
     """For partial credential updates, overlay data onto existing profile type.
 
     When credential_type is not changing but individual credential fields are,
