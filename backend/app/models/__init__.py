@@ -22,6 +22,7 @@ from app.models.config_backup import RouterConfigSnapshot, RouterConfigDiff, Rou
 from app.models.device_interface import DeviceInterface
 from app.models.wireless_link import WirelessLink, LinkState
 from app.models.site_alert import SiteAlertRule, SiteAlertEvent
+from app.models.credential_profile import CredentialProfile
 
 __all__ = [
     "Tenant",
@@ -55,4 +56,5 @@ __all__ = [
     "LinkState",
     "SiteAlertRule",
     "SiteAlertEvent",
+    "CredentialProfile",
 ]

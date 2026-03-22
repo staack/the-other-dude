@@ -42,9 +42,12 @@ COMPOSE_BASE = "docker-compose.yml"
 COMPOSE_PROD = "docker-compose.prod.yml"
 COMPOSE_BUILD_OVERRIDE = "docker-compose.build.yml"
 COMPOSE_CMD = [
-    "docker", "compose",
-    "-f", COMPOSE_BASE,
-    "-f", COMPOSE_PROD,
+    "docker",
+    "compose",
+    "-f",
+    COMPOSE_BASE,
+    "-f",
+    COMPOSE_PROD,
 ]
 
 REQUIRED_PORTS = {
@@ -59,20 +62,40 @@ REQUIRED_PORTS = {
 
 # ── Color helpers ────────────────────────────────────────────────────────────
 
+
 def _supports_color() -> bool:
     return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
+
 _COLOR = _supports_color()
+
 
 def _c(code: str, text: str) -> str:
     return f"\033[{code}m{text}\033[0m" if _COLOR else text
 
-def green(t: str) -> str: return _c("32", t)
-def yellow(t: str) -> str: return _c("33", t)
-def red(t: str) -> str: return _c("31", t)
-def cyan(t: str) -> str: return _c("36", t)
-def bold(t: str) -> str: return _c("1", t)
-def dim(t: str) -> str: return _c("2", t)
+
+def green(t: str) -> str:
+    return _c("32", t)
+
+
+def yellow(t: str) -> str:
+    return _c("33", t)
+
+
+def red(t: str) -> str:
+    return _c("31", t)
+
+
+def cyan(t: str) -> str:
+    return _c("36", t)
+
+
+def bold(t: str) -> str:
+    return _c("1", t)
+
+
+def dim(t: str) -> str:
+    return _c("2", t)
 
 
 def banner(text: str) -> None:
@@ -124,7 +147,9 @@ def _collect_environment() -> dict:
     try:
         r = subprocess.run(
             ["docker", "version", "--format", "{{.Server.Version}}"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if r.returncode == 0:
             env["docker"] = r.stdout.strip()
@@ -134,7 +159,9 @@ def _collect_environment() -> dict:
     try:
         r = subprocess.run(
             ["docker", "compose", "version", "--short"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if r.returncode == 0:
             env["compose"] = r.stdout.strip()
@@ -145,15 +172,17 @@ def _collect_environment() -> dict:
         if sys.platform == "darwin":
             r = subprocess.run(
                 ["sysctl", "-n", "hw.memsize"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if r.returncode == 0:
-                env["ram_gb"] = round(int(r.stdout.strip()) / (1024 ** 3))
+                env["ram_gb"] = round(int(r.stdout.strip()) / (1024**3))
         else:
             with open("/proc/meminfo") as f:
                 for line in f:
                     if line.startswith("MemTotal:"):
-                        env["ram_gb"] = round(int(line.split()[1]) * 1024 / (1024 ** 3))
+                        env["ram_gb"] = round(int(line.split()[1]) * 1024 / (1024**3))
                         break
     except Exception:
         pass
@@ -167,7 +196,10 @@ def _get_app_version() -> tuple[str, str]:
     try:
         r = subprocess.run(
             ["git", "describe", "--tags", "--always"],
-            capture_output=True, text=True, timeout=5, cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=PROJECT_ROOT,
         )
         if r.returncode == 0:
             version = r.stdout.strip()
@@ -176,7 +208,10 @@ def _get_app_version() -> tuple[str, str]:
     try:
         r = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, timeout=5, cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=PROJECT_ROOT,
         )
         if r.returncode == 0:
             build_id = r.stdout.strip()
@@ -203,9 +238,15 @@ class SetupTelemetry:
         self._environment = _collect_environment()
         self._app_version, self._build_id = _get_app_version()
 
-    def step(self, step_name: str, result: str, duration_ms: int | None = None,
-             error_message: str | None = None, error_code: str | None = None,
-             metrics: dict | None = None) -> None:
+    def step(
+        self,
+        step_name: str,
+        result: str,
+        duration_ms: int | None = None,
+        error_message: str | None = None,
+        error_code: str | None = None,
+        metrics: dict | None = None,
+    ) -> None:
         """Emit a single setup step event. No-op if disabled."""
         if not self.enabled:
             return
@@ -250,8 +291,14 @@ class SetupTelemetry:
 
 # ── Input helpers ────────────────────────────────────────────────────────────
 
-def ask(prompt: str, default: str = "", required: bool = False,
-        secret: bool = False, validate=None) -> str:
+
+def ask(
+    prompt: str,
+    default: str = "",
+    required: bool = False,
+    secret: bool = False,
+    validate=None,
+) -> str:
     """Prompt the user for input with optional default, validation, and secret mode."""
     suffix = f" [{default}]" if default else ""
     full_prompt = f"  {prompt}{suffix}: "
@@ -266,7 +313,9 @@ def ask(prompt: str, default: str = "", required: bool = False,
             if default:
                 return default
             if required:
-                raise SystemExit(f"EOF reached and no default for required field: {prompt}")
+                raise SystemExit(
+                    f"EOF reached and no default for required field: {prompt}"
+                )
             return ""
 
         value = value.strip()
@@ -312,6 +361,7 @@ def mask_secret(value: str) -> str:
 
 # ── Validators ───────────────────────────────────────────────────────────────
 
+
 def validate_password_strength(value: str) -> str | None:
     if len(value) < 12:
         return "Password must be at least 12 characters."
@@ -334,6 +384,7 @@ def validate_domain(value: str) -> str | None:
 
 # ── System checks ────────────────────────────────────────────────────────────
 
+
 def check_python_version() -> bool:
     if sys.version_info < (3, 10):
         fail(f"Python 3.10+ required, found {sys.version}")
@@ -346,7 +397,9 @@ def check_docker() -> bool:
     try:
         result = subprocess.run(
             ["docker", "info"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         if result.returncode != 0:
             fail("Docker is not running. Start Docker and try again.")
@@ -362,7 +415,9 @@ def check_docker() -> bool:
     try:
         result = subprocess.run(
             ["docker", "compose", "version"],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         if result.returncode != 0:
             fail("Docker Compose v2 is not available.")
@@ -382,7 +437,9 @@ def check_ram() -> None:
         if sys.platform == "darwin":
             result = subprocess.run(
                 ["sysctl", "-n", "hw.memsize"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             if result.returncode != 0:
                 return
@@ -396,7 +453,7 @@ def check_ram() -> None:
                 else:
                     return
 
-        ram_gb = ram_bytes / (1024 ** 3)
+        ram_gb = ram_bytes / (1024**3)
         if ram_gb < 4:
             warn(f"Only {ram_gb:.1f} GB RAM detected. 4 GB+ recommended for builds.")
         else:
@@ -484,6 +541,7 @@ def preflight(args: argparse.Namespace) -> bool:
 
 # ── Secret generation ────────────────────────────────────────────────────────
 
+
 def generate_jwt_secret() -> str:
     return secrets.token_urlsafe(64)
 
@@ -501,6 +559,7 @@ def generate_admin_password() -> str:
 
 
 # ── Wizard sections ─────────────────────────────────────────────────────────
+
 
 def wizard_database(config: dict, args: argparse.Namespace) -> None:
     section("Database")
@@ -579,8 +638,12 @@ def wizard_admin(config: dict, args: argparse.Namespace) -> None:
             error = validate_password_strength(password)
             while error:
                 warn(error)
-                password = ask("Admin password", secret=True, required=True,
-                               validate=validate_password_strength)
+                password = ask(
+                    "Admin password",
+                    secret=True,
+                    required=True,
+                    validate=validate_password_strength,
+                )
                 error = None  # ask() already validated
             config["admin_password"] = password
             config["admin_password_generated"] = False
@@ -626,7 +689,9 @@ def wizard_email(config: dict, args: argparse.Namespace) -> None:
     config["smtp_host"] = ask("SMTP host", required=True)
     config["smtp_port"] = ask("SMTP port", default="587")
     config["smtp_user"] = ask("SMTP username (optional)")
-    config["smtp_password"] = ask("SMTP password (optional)", secret=True) if config["smtp_user"] else ""
+    config["smtp_password"] = (
+        ask("SMTP password (optional)", secret=True) if config["smtp_user"] else ""
+    )
     config["smtp_from"] = ask("From address", required=True, validate=validate_email)
     config["smtp_tls"] = ask_yes_no("Use TLS?", default=True)
 
@@ -642,16 +707,22 @@ def wizard_domain(config: dict, args: argparse.Namespace) -> None:
             raise SystemExit(1)
         raw = args.domain
     else:
-        raw = ask("Production domain (e.g. tod.example.com)", required=True, validate=validate_domain)
+        raw = ask(
+            "Production domain (e.g. tod.example.com)",
+            required=True,
+            validate=validate_domain,
+        )
 
     domain = re.sub(r"^https?://", "", raw).rstrip("/")
     config["domain"] = domain
 
     # Determine protocol — default HTTPS for production, allow HTTP for LAN/dev
     if args.non_interactive:
-        use_https = not getattr(args, 'no_https', False)
+        use_https = not getattr(args, "no_https", False)
     else:
-        use_https = ask_yes_no("Use HTTPS? (disable for LAN/dev without TLS)", default=True)
+        use_https = ask_yes_no(
+            "Use HTTPS? (disable for LAN/dev without TLS)", default=True
+        )
 
     protocol = "https" if use_https else "http"
     config["app_base_url"] = f"{protocol}://{domain}"
@@ -660,7 +731,9 @@ def wizard_domain(config: dict, args: argparse.Namespace) -> None:
     ok(f"APP_BASE_URL={protocol}://{domain}")
     ok(f"CORS_ORIGINS={protocol}://{domain}")
     if not use_https:
-        warn("Running without HTTPS — cookies will not be Secure. Fine for LAN, not for public internet.")
+        warn(
+            "Running without HTTPS — cookies will not be Secure. Fine for LAN, not for public internet."
+        )
 
 
 # ── Reverse proxy ───────────────────────────────────────────────────────────
@@ -679,7 +752,7 @@ PROXY_CONFIGS = {
         "filename": None,  # derived from domain
         "placeholders": {
             "tod.example.com": None,  # replaced with domain
-            "YOUR_TOD_HOST": None,    # replaced with host IP
+            "YOUR_TOD_HOST": None,  # replaced with host IP
         },
     },
     "nginx": {
@@ -784,13 +857,16 @@ def _write_system_file(path: pathlib.Path, content: str) -> bool:
         # Ensure parent directory exists
         subprocess.run(
             ["sudo", "mkdir", "-p", str(path.parent)],
-            check=True, timeout=30,
+            check=True,
+            timeout=30,
         )
         # Write via sudo tee
         result = subprocess.run(
             ["sudo", "tee", str(path)],
-            input=content, text=True,
-            capture_output=True, timeout=30,
+            input=content,
+            text=True,
+            capture_output=True,
+            timeout=30,
         )
         if result.returncode != 0:
             fail(f"sudo tee failed: {result.stderr.strip()}")
@@ -814,7 +890,9 @@ def wizard_reverse_proxy(config: dict, args: argparse.Namespace) -> None:
         proxy_val = args.proxy or "skip"
         if proxy_val == "skip":
             config["proxy_configured"] = False
-            info("Skipped. Example configs are in infrastructure/reverse-proxy-examples/")
+            info(
+                "Skipped. Example configs are in infrastructure/reverse-proxy-examples/"
+            )
             return
         valid_proxies = list(PROXY_CONFIGS.keys())
         if proxy_val not in valid_proxies:
@@ -824,7 +902,9 @@ def wizard_reverse_proxy(config: dict, args: argparse.Namespace) -> None:
     else:
         if not ask_yes_no("Configure a reverse proxy now?", default=True):
             config["proxy_configured"] = False
-            info("Skipped. Example configs are in infrastructure/reverse-proxy-examples/")
+            info(
+                "Skipped. Example configs are in infrastructure/reverse-proxy-examples/"
+            )
             return
 
         # Detect installed proxies
@@ -859,7 +939,9 @@ def wizard_reverse_proxy(config: dict, args: argparse.Namespace) -> None:
             idx = int(choice) - 1
             if idx == len(choices):
                 config["proxy_configured"] = False
-                info("Skipped. Example configs are in infrastructure/reverse-proxy-examples/")
+                info(
+                    "Skipped. Example configs are in infrastructure/reverse-proxy-examples/"
+                )
                 return
             if 0 <= idx < len(choices):
                 break
@@ -917,7 +999,7 @@ def wizard_reverse_proxy(config: dict, args: argparse.Namespace) -> None:
     print(f"    {dim('...')}")
     print()
 
-    custom_path = ask(f"Write config to", default=str(out_path))
+    custom_path = ask("Write config to", default=str(out_path))
     out_path = pathlib.Path(custom_path)
 
     if out_path.exists():
@@ -959,7 +1041,9 @@ def wizard_reverse_proxy(config: dict, args: argparse.Namespace) -> None:
         info("Traefik watches for file changes — no reload needed.")
 
 
-def wizard_telemetry(config: dict, telem: SetupTelemetry, args: argparse.Namespace) -> None:
+def wizard_telemetry(
+    config: dict, telem: SetupTelemetry, args: argparse.Namespace
+) -> None:
     section("Anonymous Diagnostics")
     info("TOD can send anonymous setup and runtime diagnostics to help")
     info("identify common failures. No personal data, IPs, hostnames,")
@@ -1043,6 +1127,7 @@ def wizard_build_mode(config: dict, args: argparse.Namespace) -> None:
 
 # ── Summary ──────────────────────────────────────────────────────────────────
 
+
 def show_summary(config: dict, args: argparse.Namespace) -> bool:
     banner("Configuration Summary")
 
@@ -1060,7 +1145,9 @@ def show_summary(config: dict, args: argparse.Namespace) -> bool:
 
     print(f"  {bold('Admin Account')}")
     print(f"    Email                = {config['admin_email']}")
-    print(f"    Password             = {'(auto-generated)' if config.get('admin_password_generated') else mask_secret(config['admin_password'])}")
+    print(
+        f"    Password             = {'(auto-generated)' if config.get('admin_password_generated') else mask_secret(config['admin_password'])}"
+    )
     print()
 
     print(f"  {bold('Email')}")
@@ -1114,6 +1201,7 @@ def show_summary(config: dict, args: argparse.Namespace) -> bool:
 
 # ── File writers ─────────────────────────────────────────────────────────────
 
+
 def write_env_prod(config: dict) -> None:
     """Write the .env.prod file."""
     db = config["postgres_db"]
@@ -1125,12 +1213,12 @@ def write_env_prod(config: dict) -> None:
     smtp_block = ""
     if config.get("smtp_configured"):
         smtp_block = f"""\
-SMTP_HOST={config['smtp_host']}
-SMTP_PORT={config['smtp_port']}
-SMTP_USER={config.get('smtp_user', '')}
-SMTP_PASSWORD={config.get('smtp_password', '')}
-SMTP_USE_TLS={'true' if config.get('smtp_tls') else 'false'}
-SMTP_FROM_ADDRESS={config['smtp_from']}"""
+SMTP_HOST={config["smtp_host"]}
+SMTP_PORT={config["smtp_port"]}
+SMTP_USER={config.get("smtp_user", "")}
+SMTP_PASSWORD={config.get("smtp_password", "")}
+SMTP_USE_TLS={"true" if config.get("smtp_tls") else "false"}
+SMTP_FROM_ADDRESS={config["smtp_from"]}"""
     else:
         smtp_block = """\
 # Email not configured — re-run setup.py to add SMTP
@@ -1157,8 +1245,8 @@ APP_USER_DATABASE_URL=postgresql+asyncpg://app_user:{app_pw}@postgres:5432/{db}
 POLLER_DATABASE_URL=postgres://poller_user:{poll_pw}@postgres:5432/{db}?sslmode=disable
 
 # --- Security ---
-JWT_SECRET_KEY={config['jwt_secret']}
-CREDENTIAL_ENCRYPTION_KEY={config['encryption_key']}
+JWT_SECRET_KEY={config["jwt_secret"]}
+CREDENTIAL_ENCRYPTION_KEY={config["encryption_key"]}
 
 # --- OpenBao (KMS) ---
 OPENBAO_ADDR=http://openbao:8200
@@ -1166,22 +1254,22 @@ OPENBAO_TOKEN=PLACEHOLDER_RUN_SETUP
 BAO_UNSEAL_KEY=PLACEHOLDER_RUN_SETUP
 
 # --- Admin Bootstrap ---
-FIRST_ADMIN_EMAIL={config['admin_email']}
-FIRST_ADMIN_PASSWORD={config['admin_password']}
+FIRST_ADMIN_EMAIL={config["admin_email"]}
+FIRST_ADMIN_PASSWORD={config["admin_password"]}
 
 # --- Email ---
 {smtp_block}
 
 # --- Web ---
-APP_BASE_URL={config['app_base_url']}
-CORS_ORIGINS={config['cors_origins']}
+APP_BASE_URL={config["app_base_url"]}
+CORS_ORIGINS={config["cors_origins"]}
 
 # --- Application ---
 ENVIRONMENT=production
 LOG_LEVEL=info
 DEBUG=false
 APP_NAME=TOD - The Other Dude
-TOD_VERSION={config.get('tod_version', 'latest')}
+TOD_VERSION={config.get("tod_version", "latest")}
 
 # --- Storage ---
 GIT_STORE_PATH=/data/git-store
@@ -1212,7 +1300,7 @@ CONFIG_BACKUP_MAX_CONCURRENT=10
 
 # --- Telemetry ---
 # Opt-in anonymous diagnostics. Set to false to disable.
-TELEMETRY_ENABLED={'true' if config.get('telemetry_enabled') else 'false'}
+TELEMETRY_ENABLED={"true" if config.get("telemetry_enabled") else "false"}
 TELEMETRY_COLLECTOR_URL={_TELEMETRY_COLLECTOR}
 """
 
@@ -1306,7 +1394,8 @@ def prepare_data_dirs() -> None:
             try:
                 subprocess.run(
                     ["sudo", "chown", "-R", f"{APPUSER_UID}:{APPUSER_UID}", str(path)],
-                    check=True, timeout=10,
+                    check=True,
+                    timeout=10,
                 )
                 ok(f"{d} (owned by appuser via sudo)")
             except Exception:
@@ -1322,14 +1411,17 @@ def prepare_data_dirs() -> None:
             try:
                 subprocess.run(
                     ["sudo", "chmod", "-R", "777", str(path)],
-                    check=True, timeout=10,
+                    check=True,
+                    timeout=10,
                 )
                 ok(f"{d} (world-writable via sudo)")
             except Exception:
                 warn(f"{d} — could not set permissions, VPN config sync may fail")
 
     # Create/update WireGuard forwarding init script (always overwrite for isolation rules)
-    fwd_script = PROJECT_ROOT / "docker-data/wireguard/custom-cont-init.d/10-forwarding.sh"
+    fwd_script = (
+        PROJECT_ROOT / "docker-data/wireguard/custom-cont-init.d/10-forwarding.sh"
+    )
     fwd_script.write_text("""\
 #!/bin/sh
 # Enable forwarding between Docker network and WireGuard tunnel
@@ -1360,8 +1452,10 @@ echo "WireGuard forwarding and tenant isolation rules applied"
 
 # ── Docker operations ────────────────────────────────────────────────────────
 
-def run_compose(*args, check: bool = True, capture: bool = False,
-                timeout: int = 600) -> subprocess.CompletedProcess:
+
+def run_compose(
+    *args, check: bool = True, capture: bool = False, timeout: int = 600
+) -> subprocess.CompletedProcess:
     """Run a docker compose command with the prod overlay."""
     cmd = COMPOSE_CMD + ["--env-file", str(ENV_PROD)] + list(args)
     return subprocess.run(
@@ -1393,8 +1487,16 @@ def bootstrap_openbao(config: dict) -> bool:
     healthy = False
     while time.time() < deadline:
         result = subprocess.run(
-            ["docker", "inspect", "--format", "{{.State.Health.Status}}", "tod_openbao"],
-            capture_output=True, text=True, timeout=10,
+            [
+                "docker",
+                "inspect",
+                "--format",
+                "{{.State.Health.Status}}",
+                "tod_openbao",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         status = result.stdout.strip()
         if status == "healthy":
@@ -1426,10 +1528,12 @@ def bootstrap_openbao(config: dict) -> bool:
 
         # Update .env.prod
         env_content = ENV_PROD.read_text()
-        env_content = env_content.replace("OPENBAO_TOKEN=PLACEHOLDER_RUN_SETUP",
-                                          f"OPENBAO_TOKEN={root_token}")
-        env_content = env_content.replace("BAO_UNSEAL_KEY=PLACEHOLDER_RUN_SETUP",
-                                          f"BAO_UNSEAL_KEY={unseal_key}")
+        env_content = env_content.replace(
+            "OPENBAO_TOKEN=PLACEHOLDER_RUN_SETUP", f"OPENBAO_TOKEN={root_token}"
+        )
+        env_content = env_content.replace(
+            "BAO_UNSEAL_KEY=PLACEHOLDER_RUN_SETUP", f"BAO_UNSEAL_KEY={unseal_key}"
+        )
         ENV_PROD.write_text(env_content)
         ENV_PROD.chmod(0o600)
 
@@ -1441,7 +1545,9 @@ def bootstrap_openbao(config: dict) -> bool:
         # OpenBao was already initialized — check if .env.prod has real values
         env_content = ENV_PROD.read_text()
         if "PLACEHOLDER_RUN_SETUP" in env_content:
-            warn("Could not find credentials in logs (OpenBao may already be initialized).")
+            warn(
+                "Could not find credentials in logs (OpenBao may already be initialized)."
+            )
             warn("Check 'docker compose logs openbao' and update .env.prod manually.")
             return False
         else:
@@ -1467,8 +1573,10 @@ def pull_images() -> bool:
             print()
             warn("Check your internet connection and that the image exists.")
             warn("To retry:")
-            info(f"  docker compose -f {COMPOSE_BASE} -f {COMPOSE_PROD} "
-                 f"--env-file .env.prod pull {service}")
+            info(
+                f"  docker compose -f {COMPOSE_BASE} -f {COMPOSE_PROD} "
+                f"--env-file .env.prod pull {service}"
+            )
             return False
         except subprocess.TimeoutExpired:
             fail(f"Pull of {service} timed out (10 min)")
@@ -1496,8 +1604,10 @@ def build_images() -> bool:
             fail(f"Failed to build {service}")
             print()
             warn("To retry this build:")
-            info(f"  docker compose -f {COMPOSE_BASE} -f {COMPOSE_PROD} "
-                 f"-f {COMPOSE_BUILD_OVERRIDE} build {service}")
+            info(
+                f"  docker compose -f {COMPOSE_BASE} -f {COMPOSE_PROD} "
+                f"-f {COMPOSE_BUILD_OVERRIDE} build {service}"
+            )
             return False
         except subprocess.TimeoutExpired:
             fail(f"Build of {service} timed out (15 min)")
@@ -1548,10 +1658,16 @@ def health_check(config: dict) -> None:
         for container, label in list(pending.items()):
             try:
                 result = subprocess.run(
-                    ["docker", "inspect", "--format",
-                     "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}",
-                     container],
-                    capture_output=True, text=True, timeout=5,
+                    [
+                        "docker",
+                        "inspect",
+                        "--format",
+                        "{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}",
+                        container,
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
                 )
                 status = result.stdout.strip()
                 if status in ("healthy", "running"):
@@ -1583,7 +1699,7 @@ def health_check(config: dict) -> None:
         if config.get("admin_password_generated"):
             print(f"    Password: {bold(config['admin_password'])}")
         else:
-            print(f"    Password: (the password you entered)")
+            print("    Password: (the password you entered)")
         print()
         info("Change the admin password after your first login.")
     else:
@@ -1592,6 +1708,7 @@ def health_check(config: dict) -> None:
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
+
 
 def _timed(telem: SetupTelemetry, step_name: str, func, *args, **kwargs):
     """Run func, emit a telemetry event with timing. Returns func's result."""
@@ -1604,8 +1721,11 @@ def _timed(telem: SetupTelemetry, step_name: str, func, *args, **kwargs):
     except Exception as e:
         duration_ms = int((time.monotonic() - t0) * 1000)
         telem.step(
-            step_name, "failure", duration_ms=duration_ms,
-            error_message=str(e), error_code=type(e).__name__,
+            step_name,
+            "failure",
+            duration_ms=duration_ms,
+            error_message=str(e),
+            error_code=type(e).__name__,
         )
         raise
 
@@ -1617,44 +1737,93 @@ def _build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        "--non-interactive", action="store_true",
+        "--non-interactive",
+        action="store_true",
         help="Skip all prompts, use defaults + provided flags",
     )
-    parser.add_argument("--postgres-password", type=str, default=None,
-                        help="PostgreSQL superuser password")
-    parser.add_argument("--admin-email", type=str, default=None,
-                        help="Admin email (default: admin@the-other-dude.dev)")
-    parser.add_argument("--admin-password", type=str, default=None,
-                        help="Admin password (auto-generated if not provided)")
-    parser.add_argument("--domain", type=str, default=None,
-                        help="Production domain (e.g. tod.example.com)")
-    parser.add_argument("--smtp-host", type=str, default=None,
-                        help="SMTP host (skip email config if not provided)")
-    parser.add_argument("--smtp-port", type=str, default=None,
-                        help="SMTP port (default: 587)")
-    parser.add_argument("--smtp-user", type=str, default=None,
-                        help="SMTP username")
-    parser.add_argument("--smtp-password", type=str, default=None,
-                        help="SMTP password")
-    parser.add_argument("--smtp-from", type=str, default=None,
-                        help="SMTP from address")
-    parser.add_argument("--smtp-tls", action="store_true", default=False,
-                        help="Use TLS for SMTP (default: true in non-interactive)")
-    parser.add_argument("--no-smtp-tls", action="store_true", default=False,
-                        help="Disable TLS for SMTP")
-    parser.add_argument("--no-https", action="store_true", default=False,
-                        help="Use HTTP instead of HTTPS (for LAN/dev without TLS)")
-    parser.add_argument("--proxy", type=str, default=None,
-                        help="Reverse proxy type: caddy, nginx, apache, haproxy, traefik, skip")
-    parser.add_argument("--telemetry", action="store_true", default=False,
-                        help="Enable anonymous diagnostics")
-    parser.add_argument("--no-telemetry", action="store_true", default=False,
-                        help="Disable anonymous diagnostics")
-    parser.add_argument("--build-mode", type=str, default=None,
-                        choices=["prebuilt", "source"],
-                        help="Image source: prebuilt (pull from GHCR) or source (compile locally)")
-    parser.add_argument("--yes", "-y", action="store_true", default=False,
-                        help="Auto-confirm summary (don't prompt for confirmation)")
+    parser.add_argument(
+        "--postgres-password",
+        type=str,
+        default=None,
+        help="PostgreSQL superuser password",
+    )
+    parser.add_argument(
+        "--admin-email",
+        type=str,
+        default=None,
+        help="Admin email (default: admin@the-other-dude.dev)",
+    )
+    parser.add_argument(
+        "--admin-password",
+        type=str,
+        default=None,
+        help="Admin password (auto-generated if not provided)",
+    )
+    parser.add_argument(
+        "--domain",
+        type=str,
+        default=None,
+        help="Production domain (e.g. tod.example.com)",
+    )
+    parser.add_argument(
+        "--smtp-host",
+        type=str,
+        default=None,
+        help="SMTP host (skip email config if not provided)",
+    )
+    parser.add_argument(
+        "--smtp-port", type=str, default=None, help="SMTP port (default: 587)"
+    )
+    parser.add_argument("--smtp-user", type=str, default=None, help="SMTP username")
+    parser.add_argument("--smtp-password", type=str, default=None, help="SMTP password")
+    parser.add_argument("--smtp-from", type=str, default=None, help="SMTP from address")
+    parser.add_argument(
+        "--smtp-tls",
+        action="store_true",
+        default=False,
+        help="Use TLS for SMTP (default: true in non-interactive)",
+    )
+    parser.add_argument(
+        "--no-smtp-tls", action="store_true", default=False, help="Disable TLS for SMTP"
+    )
+    parser.add_argument(
+        "--no-https",
+        action="store_true",
+        default=False,
+        help="Use HTTP instead of HTTPS (for LAN/dev without TLS)",
+    )
+    parser.add_argument(
+        "--proxy",
+        type=str,
+        default=None,
+        help="Reverse proxy type: caddy, nginx, apache, haproxy, traefik, skip",
+    )
+    parser.add_argument(
+        "--telemetry",
+        action="store_true",
+        default=False,
+        help="Enable anonymous diagnostics",
+    )
+    parser.add_argument(
+        "--no-telemetry",
+        action="store_true",
+        default=False,
+        help="Disable anonymous diagnostics",
+    )
+    parser.add_argument(
+        "--build-mode",
+        type=str,
+        default=None,
+        choices=["prebuilt", "source"],
+        help="Image source: prebuilt (pull from GHCR) or source (compile locally)",
+    )
+    parser.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        default=False,
+        help="Auto-confirm summary (don't prompt for confirmation)",
+    )
     return parser
 
 
@@ -1670,15 +1839,20 @@ def main() -> int:
 
     def handle_sigint(sig, frame):
         nonlocal env_written
-        telem.step("setup_total", "failure",
-                    duration_ms=int((time.monotonic() - setup_start) * 1000),
-                    error_message="User cancelled (SIGINT)")
+        telem.step(
+            "setup_total",
+            "failure",
+            duration_ms=int((time.monotonic() - setup_start) * 1000),
+            error_message="User cancelled (SIGINT)",
+        )
         print()
         if not env_written:
             info("Aborted before writing .env.prod — no files changed.")
         else:
             warn(f".env.prod was already written to {ENV_PROD}")
-            info("OpenBao tokens may still be placeholders if bootstrap didn't complete.")
+            info(
+                "OpenBao tokens may still be placeholders if bootstrap didn't complete."
+            )
         sys.exit(1)
 
     signal.signal(signal.SIGINT, handle_sigint)
@@ -1706,16 +1880,20 @@ def main() -> int:
         wizard_reverse_proxy(config, args)
         telem.step("wizard", "success")
     except Exception as e:
-        telem.step("wizard", "failure",
-                   error_message=str(e), error_code=type(e).__name__)
+        telem.step(
+            "wizard", "failure", error_message=str(e), error_code=type(e).__name__
+        )
         raise
 
     # Summary
     if not show_summary(config, args):
         info("Setup cancelled.")
-        telem.step("setup_total", "failure",
-                   duration_ms=int((time.monotonic() - setup_start) * 1000),
-                   error_message="User cancelled at summary")
+        telem.step(
+            "setup_total",
+            "failure",
+            duration_ms=int((time.monotonic() - setup_start) * 1000),
+            error_message="User cancelled at summary",
+        )
         return 1
 
     # Phase 3: Write files and prepare directories
@@ -1727,8 +1905,9 @@ def main() -> int:
         prepare_data_dirs()
         telem.step("write_config", "success")
     except Exception as e:
-        telem.step("write_config", "failure",
-                   error_message=str(e), error_code=type(e).__name__)
+        telem.step(
+            "write_config", "failure", error_message=str(e), error_code=type(e).__name__
+        )
         raise
 
     # Phase 4: OpenBao
@@ -1738,13 +1917,23 @@ def main() -> int:
     if bao_ok:
         telem.step("openbao_bootstrap", "success", duration_ms=duration_ms)
     else:
-        telem.step("openbao_bootstrap", "failure", duration_ms=duration_ms,
-                   error_message="OpenBao did not become healthy or credentials not found")
-        if not ask_yes_no("Continue without OpenBao credentials? (stack will need manual fix)", default=False):
+        telem.step(
+            "openbao_bootstrap",
+            "failure",
+            duration_ms=duration_ms,
+            error_message="OpenBao did not become healthy or credentials not found",
+        )
+        if not ask_yes_no(
+            "Continue without OpenBao credentials? (stack will need manual fix)",
+            default=False,
+        ):
             warn("Fix OpenBao credentials in .env.prod and re-run setup.py.")
-            telem.step("setup_total", "failure",
-                       duration_ms=int((time.monotonic() - setup_start) * 1000),
-                       error_message="Aborted after OpenBao failure")
+            telem.step(
+                "setup_total",
+                "failure",
+                duration_ms=int((time.monotonic() - setup_start) * 1000),
+                error_message="Aborted after OpenBao failure",
+            )
             return 1
 
     # Phase 5: Build or Pull
@@ -1764,9 +1953,12 @@ def main() -> int:
         duration_ms = int((time.monotonic() - t0) * 1000)
         telem.step(step_name, "failure", duration_ms=duration_ms)
         warn(retry_hint)
-        telem.step("setup_total", "failure",
-                   duration_ms=int((time.monotonic() - setup_start) * 1000),
-                   error_message=fail_msg)
+        telem.step(
+            "setup_total",
+            "failure",
+            duration_ms=int((time.monotonic() - setup_start) * 1000),
+            error_message=fail_msg,
+        )
         return 1
     duration_ms = int((time.monotonic() - t0) * 1000)
     telem.step(step_name, "success", duration_ms=duration_ms)
@@ -1776,9 +1968,12 @@ def main() -> int:
     if not start_stack():
         duration_ms = int((time.monotonic() - t0) * 1000)
         telem.step("start_stack", "failure", duration_ms=duration_ms)
-        telem.step("setup_total", "failure",
-                   duration_ms=int((time.monotonic() - setup_start) * 1000),
-                   error_message="Stack failed to start")
+        telem.step(
+            "setup_total",
+            "failure",
+            duration_ms=int((time.monotonic() - setup_start) * 1000),
+            error_message="Stack failed to start",
+        )
         return 1
     duration_ms = int((time.monotonic() - t0) * 1000)
     telem.step("start_stack", "success", duration_ms=duration_ms)
