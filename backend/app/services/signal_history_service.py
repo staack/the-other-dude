@@ -51,7 +51,7 @@ async def get_signal_history(
             WHERE wr.mac_address = :mac_address
               AND wr.device_id = :device_id
               AND wr.tenant_id = :tenant_id
-              AND wr.time > now() - :lookback::interval
+              AND wr.time > now() - CAST(:lookback AS interval)
               AND wr.signal_strength IS NOT NULL
             GROUP BY bucket
             ORDER BY bucket

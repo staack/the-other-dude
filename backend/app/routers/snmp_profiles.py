@@ -163,7 +163,7 @@ async def create_profile(
                  category, profile_data, is_system)
             VALUES
                 (:tenant_id, :name, :description, :sys_object_id, :vendor,
-                 :category, :profile_data::jsonb, FALSE)
+                 :category, CAST(:profile_data AS jsonb), FALSE)
             RETURNING id, tenant_id, name, description, sys_object_id, vendor,
                       category, is_system, created_at, updated_at
         """),
@@ -234,7 +234,7 @@ async def update_profile(
 
     for field, value in fields.items():
         if field == "profile_data" and value is not None:
-            set_clauses.append(f"{field} = :{field}::jsonb")
+            set_clauses.append(f"{field} = CAST(:{field} AS jsonb)")
             updates[field] = json.dumps(value)
         else:
             set_clauses.append(f"{field} = :{field}")

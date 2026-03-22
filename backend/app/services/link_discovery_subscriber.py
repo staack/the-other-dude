@@ -106,8 +106,8 @@ async def on_wireless_registration_for_links(msg) -> None:
                             (gen_random_uuid(), :ap_device_id, :cpe_device_id, :tenant_id,
                              :interface, :client_mac, :signal_strength, :tx_ccq, :tx_rate,
                              :rx_rate,
-                             CASE WHEN :signal_strength::int IS NULL THEN 'active'
-                                  WHEN :signal_strength::int < :degraded_threshold THEN 'degraded'
+                             CASE WHEN CAST(:signal_strength AS int) IS NULL THEN 'active'
+                                  WHEN CAST(:signal_strength AS int) < :degraded_threshold THEN 'degraded'
                                   ELSE 'active' END,
                              0, NOW(), NOW(), NOW())
                         ON CONFLICT (ap_device_id, cpe_device_id) DO UPDATE SET
@@ -152,7 +152,7 @@ async def on_wireless_registration_for_links(msg) -> None:
                         WHERE ap_device_id = :ap_device_id
                           AND tenant_id = :tenant_id
                           AND cpe_device_id NOT IN (
-                              SELECT unnest(:seen_cpe_ids::uuid[])
+                              SELECT unnest(CAST(:seen_cpe_ids AS uuid[]))
                           )
                           AND state NOT IN ('down', 'stale')
                     """),
