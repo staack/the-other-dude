@@ -247,11 +247,11 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
     </>
   )
 
-  // Helper to get profile list as array
+  // Helper to get profile list as array (list() already unwraps the wrapper)
   const rosProfileList: CredentialProfileResponse[] =
-    rosProfiles?.profiles ?? []
+    Array.isArray(rosProfiles) ? rosProfiles : (rosProfiles?.profiles ?? [])
   const snmpCredProfileList: CredentialProfileResponse[] =
-    (snmpCredProfiles?.profiles ?? []).filter(
+    (Array.isArray(snmpCredProfiles) ? snmpCredProfiles : (snmpCredProfiles?.profiles ?? [])).filter(
       (p) => p.credential_type === 'snmp_v2c' || p.credential_type === 'snmp_v3',
     )
 

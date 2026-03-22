@@ -87,7 +87,7 @@ export function BulkAddForm({
     enabled: deviceType === 'snmp',
   })
 
-  const allProfiles: CredentialProfileResponse[] = profiles?.profiles ?? []
+  const allProfiles: CredentialProfileResponse[] = Array.isArray(profiles) ? profiles : (profiles?.profiles ?? [])
   const profileList = deviceType === 'snmp'
     ? allProfiles.filter((p) => p.credential_type === 'snmp_v2c' || p.credential_type === 'snmp_v3')
     : allProfiles
