@@ -8,6 +8,7 @@ COPY . .
 # the host CPU count), which combined with the parallel Node and Python builds
 # can saturate all cores and spike RAM on a 2-core / 2-4 GB server.
 RUN CGO_ENABLED=0 GOOS=linux GOMAXPROCS=1 go build -o /poller ./cmd/poller
+RUN CGO_ENABLED=0 GOOS=linux GOMAXPROCS=1 go build -o /tod-mib-parser ./cmd/mib-parser
 
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates iproute2

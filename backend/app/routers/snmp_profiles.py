@@ -367,7 +367,7 @@ async def parse_mib(
         # Call the MIB parser binary
         try:
             result = subprocess.run(
-                [MIB_PARSER_BINARY, tmp_path],
+                [MIB_PARSER_BINARY, tmp_path, "--search-path", "/app/mibs"],
                 capture_output=True,
                 text=True,
                 timeout=30,

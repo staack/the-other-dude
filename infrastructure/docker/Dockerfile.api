@@ -1,4 +1,12 @@
 # Multi-stage build for TOD API
+# Stage 0: build MIB parser binary from Go source
+FROM golang:1.25-alpine AS mib-builder
+WORKDIR /build
+COPY poller/go.mod poller/go.sum ./
+RUN go mod download
+COPY poller/ .
+RUN CGO_ENABLED=0 GOOS=linux GOMAXPROCS=1 go build -o /tod-mib-parser ./cmd/mib-parser
+
 # Stage 1: build — install Python deps
 FROM python:3.12-slim AS builder
 
@@ -41,6 +49,12 @@ WORKDIR /app
 
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
+
+# Copy MIB parser binary from Go builder stage
+COPY --from=mib-builder /tod-mib-parser /app/tod-mib-parser
+
+# Copy pre-loaded MIB files for common vendor support
+COPY backend/mibs/ /app/mibs/
 
 # Copy application source
 COPY backend/ .
