@@ -662,7 +662,7 @@ def upgrade() -> None:
                      category, profile_data, is_system)
                 VALUES
                     (NULL, :name, :description, :sys_object_id, :vendor,
-                     :category, :profile_data::jsonb, TRUE)
+                     :category, CAST(:profile_data AS jsonb), TRUE)
             """),
             {
                 "name": profile["name"],
