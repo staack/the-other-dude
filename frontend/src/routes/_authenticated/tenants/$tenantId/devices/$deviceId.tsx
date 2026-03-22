@@ -59,6 +59,7 @@ import { WinBoxButton } from '@/components/fleet/WinBoxButton'
 import { RemoteWinBoxButton } from '@/components/fleet/RemoteWinBoxButton'
 import { SSHTerminal } from '@/components/fleet/SSHTerminal'
 import { RollbackAlert } from '@/components/config/RollbackAlert'
+import { SNMPMetricsSection } from '@/components/fleet/SNMPMetricsSection'
 
 export const Route = createFileRoute(
   '/_authenticated/tenants/$tenantId/devices/$deviceId',
@@ -308,27 +309,31 @@ function DeviceDetailPage() {
     document.getElementById('main-content')?.scrollTo(0, 0)
   }
   const [editOpen, setEditOpen] = useState(false)
-  const { mode, toggleMode } = useSimpleConfigMode(deviceId)
-
   const { data: device, isLoading } = useQuery({
     queryKey: ['device', tenantId, deviceId],
     queryFn: () => devicesApi.get(tenantId, deviceId),
   })
 
+  const isRouterOS = (device?.device_type ?? 'routeros') === 'routeros'
+  const isSNMP = device?.device_type === 'snmp'
+
+  const { mode, toggleMode } = useSimpleConfigMode(isRouterOS ? deviceId : '__snmp__')
+
   const { data: backups } = useQuery({
     queryKey: ['config-backups', tenantId, deviceId],
     queryFn: () => configApi.listBackups(tenantId, deviceId),
+    enabled: isRouterOS,
   })
 
   // True if a pre-restore backup was created within the last 30 minutes,
   // indicating a config push just happened before the device went offline.
-  const hasRecentPushAlert = backups?.some((b) => {
+  const hasRecentPushAlert = isRouterOS && (backups?.some((b) => {
     if (b.trigger_type !== 'pre-restore') return false
     // created_at within last 30 minutes — compare timestamps without Date.now()
     const thirtyMinAgo = new Date()
     thirtyMinAgo.setMinutes(thirtyMinAgo.getMinutes() - 30)
     return new Date(b.created_at) > thirtyMinAgo
-  }) ?? false
+  }) ?? false)
 
   const { data: groups } = useQuery({
     queryKey: ['device-groups', tenantId],
@@ -457,7 +462,7 @@ function DeviceDetailPage() {
           )}>
             {device.status}
           </span>
-          <TlsSecurityBadge tlsMode={device.tls_mode} />
+          {isRouterOS && <TlsSecurityBadge tlsMode={device.tls_mode} />}
         </div>
         {/* Metadata + actions row */}
         <div className="flex items-center justify-between mt-0.5 gap-2">
@@ -465,22 +470,28 @@ function DeviceDetailPage() {
             {device.model ?? device.board_name ?? '\u2014'}
             {' \u00b7 '}
             <span className="font-mono text-[8px]">{device.ip_address}</span>
-            {device.routeros_version && (
+            {isRouterOS && device.routeros_version && (
               <>
                 {' \u00b7 '}
                 <span className="font-mono text-[8px]">v{device.routeros_version}</span>
               </>
             )}
+            {isSNMP && device.snmp_version && (
+              <>
+                {' \u00b7 '}
+                <span className="text-[8px]">SNMP {device.snmp_version.toUpperCase()}</span>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <SimpleModeToggle mode={mode} onModeChange={toggleMode} />
+            {isRouterOS && <SimpleModeToggle mode={mode} onModeChange={toggleMode} />}
             {user?.role !== 'viewer' && device.routeros_version !== null && (
               <>
                 <WinBoxButton tenantId={tenantId} deviceId={deviceId} />
                 <RemoteWinBoxButton tenantId={tenantId} deviceId={deviceId} />
               </>
             )}
-            {user?.role !== 'viewer' && (
+            {isRouterOS && user?.role !== 'viewer' && (
               <SSHTerminal tenantId={tenantId} deviceId={deviceId} deviceName={device.hostname} />
             )}
             {canWrite(user) && (
@@ -497,218 +508,364 @@ function DeviceDetailPage() {
         </div>
       </div>
 
-      {/* Emergency rollback banner */}
-      <RollbackAlert
-        tenantId={tenantId}
-        deviceId={deviceId}
-        deviceStatus={device.status}
-        hasRecentPushAlert={hasRecentPushAlert}
-      />
+      {/* Emergency rollback banner (RouterOS only) */}
+      {isRouterOS && (
+        <RollbackAlert
+          tenantId={tenantId}
+          deviceId={deviceId}
+          deviceStatus={device.status}
+          hasRecentPushAlert={hasRecentPushAlert}
+        />
+      )}
 
-      {/* Config View (Simple or Standard) */}
-      <SimpleConfigView
-        tenantId={tenantId}
-        deviceId={deviceId}
-        device={device}
-        mode={mode}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onModeChange={toggleMode}
-        overviewContent={
-          <>
-            {/* Device info */}
-            <div className="rounded-sm border border-border-default bg-panel px-3 py-1.5">
-              <InfoRow label="Model" value={device.model} />
-              <InfoRow label="RouterOS" value={device.routeros_version} />
-              <InfoRow label="Firmware" value={device.firmware_version || 'N/A'} />
-              <InfoRow label="Uptime" value={formatUptime(device.uptime_seconds)} />
-              <InfoRow label="Last Seen" value={formatDateTime(device.last_seen)} />
-              <InfoRow label="Serial" value={device.serial_number || 'N/A'} />
-              <InfoRow label="API Port" value={`${device.api_port} (plain) / ${device.api_ssl_port} (TLS)`} />
-              <InfoRow
-                label="TLS Mode"
-                value={
-                  <div className="flex items-center gap-2">
-                    <TlsSecurityBadge tlsMode={device.tls_mode} />
-                    {(user?.role === 'admin' || user?.role === 'super_admin') && (
-                      <TlsModeSelector
-                        tenantId={tenantId}
-                        deviceId={device.id}
-                        currentMode={device.tls_mode}
-                      />
-                    )}
-                  </div>
-                }
-              />
-              <InfoRow label="Added" value={formatDate(device.created_at)} />
-              <InfoRow
-                label="Site"
-                value={
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-text-muted" />
-                    {canWrite(user) ? (
-                      <Select
-                        value={device.site_id ?? 'unassigned'}
-                        onValueChange={(value) => siteAssignMutation.mutate(value)}
-                      >
-                        <SelectTrigger className="h-7 w-[160px] text-xs">
-                          <SelectValue placeholder="Unassigned" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="unassigned">Unassigned</SelectItem>
-                          {sitesData?.sites.map((s) => (
-                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="text-sm">{device.site_name ?? 'Unassigned'}</span>
-                    )}
-                  </div>
-                }
-              />
-            </div>
+      {/* Main content: RouterOS gets SimpleConfigView, SNMP gets dedicated layout */}
+      {isRouterOS ? (
+        <SimpleConfigView
+          tenantId={tenantId}
+          deviceId={deviceId}
+          device={device}
+          mode={mode}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onModeChange={toggleMode}
+          overviewContent={
+            <>
+              {/* Device info */}
+              <div className="rounded-sm border border-border-default bg-panel px-3 py-1.5">
+                <InfoRow label="Model" value={device.model} />
+                <InfoRow label="RouterOS" value={device.routeros_version} />
+                <InfoRow label="Firmware" value={device.firmware_version || 'N/A'} />
+                <InfoRow label="Uptime" value={formatUptime(device.uptime_seconds)} />
+                <InfoRow label="Last Seen" value={formatDateTime(device.last_seen)} />
+                <InfoRow label="Serial" value={device.serial_number || 'N/A'} />
+                <InfoRow label="API Port" value={`${device.api_port} (plain) / ${device.api_ssl_port} (TLS)`} />
+                <InfoRow
+                  label="TLS Mode"
+                  value={
+                    <div className="flex items-center gap-2">
+                      <TlsSecurityBadge tlsMode={device.tls_mode} />
+                      {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                        <TlsModeSelector
+                          tenantId={tenantId}
+                          deviceId={device.id}
+                          currentMode={device.tls_mode}
+                        />
+                      )}
+                    </div>
+                  }
+                />
+                <InfoRow label="Added" value={formatDate(device.created_at)} />
+                <InfoRow
+                  label="Site"
+                  value={
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5 text-text-muted" />
+                      {canWrite(user) ? (
+                        <Select
+                          value={device.site_id ?? 'unassigned'}
+                          onValueChange={(value) => siteAssignMutation.mutate(value)}
+                        >
+                          <SelectTrigger className="h-7 w-[160px] text-xs">
+                            <SelectValue placeholder="Unassigned" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                            {sitesData?.sites.map((s) => (
+                              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="text-sm">{device.site_name ?? 'Unassigned'}</span>
+                      )}
+                    </div>
+                  }
+                />
+              </div>
 
-            {/* Credentials (masked) */}
-            <div className="rounded-sm border border-border-default bg-panel px-3 py-2">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-text-secondary">Credentials</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCreds((v) => !v)}
-                  className="h-6 px-2 text-xs"
-                >
-                  {showCreds ? (
-                    <>
-                      <EyeOff className="h-3 w-3" /> Hide
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="h-3 w-3" /> Reveal
-                    </>
-                  )}
-                </Button>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex gap-4">
-                  <span className="text-xs text-text-muted w-20">Username</span>
-                  <span className="font-mono">
-                    {showCreds ? '(stored \u2014 not returned by API)' : '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'}
-                  </span>
-                </div>
-                <div className="flex gap-4">
-                  <span className="text-xs text-text-muted w-20">Password</span>
-                  <span className="font-mono">
-                    {showCreds ? '(encrypted at rest \u2014 not returned by API)' : '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Groups */}
-            <div className="rounded-sm border border-border-default bg-panel px-3 py-2 space-y-3">
-              <div className="flex items-center gap-2">
-                <FolderOpen className="h-4 w-4 text-text-muted" />
-                <h3 className="text-sm font-medium text-text-secondary">Groups</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {device.groups.map((group) => (
-                  <div
-                    key={group.id}
-                    className="flex items-center gap-1 text-xs border border-border-default rounded px-2 py-1"
+              {/* Credentials (masked) */}
+              <div className="rounded-sm border border-border-default bg-panel px-3 py-2">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-text-secondary">Credentials</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCreds((v) => !v)}
+                    className="h-6 px-2 text-xs"
                   >
-                    {group.name}
-                    {canWrite(user) && (
-                      <button
-                        onClick={() => removeFromGroupMutation.mutate(group.id)}
-                        className="text-text-muted hover:text-text-secondary ml-1"
-                        title="Remove from group"
-                      >
-                        &times;
-                      </button>
+                    {showCreds ? (
+                      <>
+                        <EyeOff className="h-3 w-3" /> Hide
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-3 w-3" /> Reveal
+                      </>
                     )}
-                  </div>
-                ))}
-                {device.groups.length === 0 && (
-                  <span className="text-xs text-text-muted">No groups assigned</span>
-                )}
-              </div>
-              {canWrite(user) && availableGroups.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <Select onValueChange={(id) => addToGroupMutation.mutate(id)}>
-                    <SelectTrigger className="h-7 text-xs w-48">
-                      <SelectValue placeholder="Add to group..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableGroups.map((g) => (
-                        <SelectItem key={g.id} value={g.id}>
-                          {g.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  </Button>
                 </div>
-              )}
-            </div>
-
-            {/* Tags */}
-            <div className="rounded-sm border border-border-default bg-panel px-3 py-2 space-y-3">
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-text-muted" />
-                <h3 className="text-sm font-medium text-text-secondary">Tags</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex gap-4">
+                    <span className="text-xs text-text-muted w-20">Username</span>
+                    <span className="font-mono">
+                      {showCreds ? '(stored \u2014 not returned by API)' : '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'}
+                    </span>
+                  </div>
+                  <div className="flex gap-4">
+                    <span className="text-xs text-text-muted w-20">Password</span>
+                    <span className="font-mono">
+                      {showCreds ? '(encrypted at rest \u2014 not returned by API)' : '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {device.tags.map((tag) => (
-                  <div key={tag.id} className="flex items-center gap-1">
-                    <Badge color={tag.color}>
-                      {tag.name}
+
+              {/* Groups */}
+              <div className="rounded-sm border border-border-default bg-panel px-3 py-2 space-y-3">
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4 text-text-muted" />
+                  <h3 className="text-sm font-medium text-text-secondary">Groups</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {device.groups.map((group) => (
+                    <div
+                      key={group.id}
+                      className="flex items-center gap-1 text-xs border border-border-default rounded px-2 py-1"
+                    >
+                      {group.name}
                       {canWrite(user) && (
                         <button
-                          onClick={() => removeTagMutation.mutate(tag.id)}
-                          className="ml-1 opacity-60 hover:opacity-100"
-                          title="Remove tag"
+                          onClick={() => removeFromGroupMutation.mutate(group.id)}
+                          className="text-text-muted hover:text-text-secondary ml-1"
+                          title="Remove from group"
                         >
                           &times;
                         </button>
                       )}
-                    </Badge>
+                    </div>
+                  ))}
+                  {device.groups.length === 0 && (
+                    <span className="text-xs text-text-muted">No groups assigned</span>
+                  )}
+                </div>
+                {canWrite(user) && availableGroups.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Select onValueChange={(id) => addToGroupMutation.mutate(id)}>
+                      <SelectTrigger className="h-7 text-xs w-48">
+                        <SelectValue placeholder="Add to group..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableGroups.map((g) => (
+                          <SelectItem key={g.id} value={g.id}>
+                            {g.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                ))}
-                {device.tags.length === 0 && (
-                  <span className="text-xs text-text-muted">No tags assigned</span>
                 )}
               </div>
-              {canWrite(user) && availableTags.length > 0 && (
-                <Select onValueChange={(id) => addTagMutation.mutate(id)}>
+
+              {/* Tags */}
+              <div className="rounded-sm border border-border-default bg-panel px-3 py-2 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-text-muted" />
+                  <h3 className="text-sm font-medium text-text-secondary">Tags</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {device.tags.map((tag) => (
+                    <div key={tag.id} className="flex items-center gap-1">
+                      <Badge color={tag.color}>
+                        {tag.name}
+                        {canWrite(user) && (
+                          <button
+                            onClick={() => removeTagMutation.mutate(tag.id)}
+                            className="ml-1 opacity-60 hover:opacity-100"
+                            title="Remove tag"
+                          >
+                            &times;
+                          </button>
+                        )}
+                      </Badge>
+                    </div>
+                  ))}
+                  {device.tags.length === 0 && (
+                    <span className="text-xs text-text-muted">No tags assigned</span>
+                  )}
+                </div>
+                {canWrite(user) && availableTags.length > 0 && (
+                  <Select onValueChange={(id) => addTagMutation.mutate(id)}>
+                    <SelectTrigger className="h-7 text-xs w-48">
+                      <SelectValue placeholder="Add tag..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableTags.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              {/* Interface Utilization */}
+              <div className="rounded-lg border border-border bg-panel p-4">
+                <h3 className="text-sm font-medium text-text-muted mb-3">Interface Utilization</h3>
+                <InterfaceGauges tenantId={tenantId} deviceId={deviceId} active={activeTab === 'overview'} />
+              </div>
+
+              {/* Configuration History */}
+              <ConfigHistorySection tenantId={tenantId} deviceId={deviceId} deviceName={device.hostname} />
+            </>
+          }
+          alertsContent={
+            <DeviceAlertsSection tenantId={tenantId} deviceId={deviceId} active={activeTab === 'alerts'} />
+          }
+        />
+      ) : (
+        <div className="space-y-3">
+          {/* SNMP device system info */}
+          <div className="rounded-sm border border-border-default bg-panel px-3 py-1.5">
+            <InfoRow label="Hostname" value={device.hostname} />
+            <InfoRow label="IP Address" value={device.ip_address} />
+            <InfoRow label="Model" value={device.model} />
+            <InfoRow label="Uptime" value={formatUptime(device.uptime_seconds)} />
+            <InfoRow label="Last Seen" value={formatDateTime(device.last_seen)} />
+            <InfoRow label="SNMP Version" value={device.snmp_version?.toUpperCase() ?? '\u2014'} />
+            <InfoRow label="SNMP Port" value={String(device.snmp_port ?? 161)} />
+            <InfoRow label="Firmware" value={device.firmware_version ?? '\u2014'} />
+            <InfoRow label="Added" value={formatDate(device.created_at)} />
+            <InfoRow
+              label="Site"
+              value={
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5 text-text-muted" />
+                  {canWrite(user) ? (
+                    <Select
+                      value={device.site_id ?? 'unassigned'}
+                      onValueChange={(value) => siteAssignMutation.mutate(value)}
+                    >
+                      <SelectTrigger className="h-7 w-[160px] text-xs">
+                        <SelectValue placeholder="Unassigned" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                        {sitesData?.sites.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <span className="text-sm">{device.site_name ?? 'Unassigned'}</span>
+                  )}
+                </div>
+              }
+            />
+          </div>
+
+          {/* SNMP Profile info */}
+          <SNMPMetricsSection tenantId={tenantId} deviceId={deviceId} snmpProfileId={device.snmp_profile_id} />
+
+          {/* Interface Utilization (works for SNMP via standard MIB mapping) */}
+          <div className="rounded-lg border border-border bg-panel p-4">
+            <h3 className="text-sm font-medium text-text-muted mb-3">Interface Utilization</h3>
+            <InterfaceGauges tenantId={tenantId} deviceId={deviceId} active={true} />
+          </div>
+
+          {/* Groups */}
+          <div className="rounded-sm border border-border-default bg-panel px-3 py-2 space-y-3">
+            <div className="flex items-center gap-2">
+              <FolderOpen className="h-4 w-4 text-text-muted" />
+              <h3 className="text-sm font-medium text-text-secondary">Groups</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {device.groups.map((group) => (
+                <div
+                  key={group.id}
+                  className="flex items-center gap-1 text-xs border border-border-default rounded px-2 py-1"
+                >
+                  {group.name}
+                  {canWrite(user) && (
+                    <button
+                      onClick={() => removeFromGroupMutation.mutate(group.id)}
+                      className="text-text-muted hover:text-text-secondary ml-1"
+                      title="Remove from group"
+                    >
+                      &times;
+                    </button>
+                  )}
+                </div>
+              ))}
+              {device.groups.length === 0 && (
+                <span className="text-xs text-text-muted">No groups assigned</span>
+              )}
+            </div>
+            {canWrite(user) && availableGroups.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Select onValueChange={(id) => addToGroupMutation.mutate(id)}>
                   <SelectTrigger className="h-7 text-xs w-48">
-                    <SelectValue placeholder="Add tag..." />
+                    <SelectValue placeholder="Add to group..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableTags.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name}
+                    {availableGroups.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Tags */}
+          <div className="rounded-sm border border-border-default bg-panel px-3 py-2 space-y-3">
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4 text-text-muted" />
+              <h3 className="text-sm font-medium text-text-secondary">Tags</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {device.tags.map((tag) => (
+                <div key={tag.id} className="flex items-center gap-1">
+                  <Badge color={tag.color}>
+                    {tag.name}
+                    {canWrite(user) && (
+                      <button
+                        onClick={() => removeTagMutation.mutate(tag.id)}
+                        className="ml-1 opacity-60 hover:opacity-100"
+                        title="Remove tag"
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </Badge>
+                </div>
+              ))}
+              {device.tags.length === 0 && (
+                <span className="text-xs text-text-muted">No tags assigned</span>
               )}
             </div>
+            {canWrite(user) && availableTags.length > 0 && (
+              <Select onValueChange={(id) => addTagMutation.mutate(id)}>
+                <SelectTrigger className="h-7 text-xs w-48">
+                  <SelectValue placeholder="Add tag..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTags.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
 
-            {/* Interface Utilization */}
-            <div className="rounded-lg border border-border bg-panel p-4">
-              <h3 className="text-sm font-medium text-text-muted mb-3">Interface Utilization</h3>
-              <InterfaceGauges tenantId={tenantId} deviceId={deviceId} active={activeTab === 'overview'} />
-            </div>
-
-            {/* Configuration History */}
-            <ConfigHistorySection tenantId={tenantId} deviceId={deviceId} deviceName={device.hostname} />
-          </>
-        }
-        alertsContent={
-          <DeviceAlertsSection tenantId={tenantId} deviceId={deviceId} active={activeTab === 'alerts'} />
-        }
-      />
+          {/* Alerts */}
+          <DeviceAlertsSection tenantId={tenantId} deviceId={deviceId} active={true} />
+        </div>
+      )}
 
       {canWrite(user) && (
         <EditDeviceDialog
