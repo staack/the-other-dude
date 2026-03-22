@@ -45,7 +45,7 @@ v9.8 extends TOD from a MikroTik-only fleet manager into a multi-vendor NMS by a
 - [x] **Phase 17: Backend API + Subscriber Extension** - Credential profile and SNMP profile CRUD APIs, snmp_custom subscriber handler, NAK safety net (completed 2026-03-22)
 - [x] **Phase 18: SNMP Collector Core** - gosnmp polling, profile-driven OID collection, counter delta computation, auto-detection (completed 2026-03-22)
 - [x] **Phase 19: Fleet UI + Bulk Add** - SNMP devices in fleet table, device detail, add device dialog, bulk add, credential profile management (completed 2026-03-22)
-- [ ] **Phase 20: Custom Profile Builder + MIB Upload** - MIB file upload, OID tree browser, profile editor, test profile against live device
+- [x] **Phase 20: Custom Profile Builder + MIB Upload** - MIB file upload, OID tree browser, profile editor, test profile against live device (completed 2026-03-22)
 
 ## Phase Details
 
@@ -130,7 +130,7 @@ Plans:
   2. OID tree browser lets operators expand/collapse MIB nodes and select OIDs to add to a custom profile's collection targets
   3. Operator can create custom SNMP profiles with arbitrary OID collections organized by poll group (e.g., fast 60s, standard 5m, slow 30m)
   4. Operator can test a custom profile against a live device and see actual OID values returned before committing the profile
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 20-01-PLAN.md -- Go CLI binary (tod-mib-parser) using gosmi for MIB file parsing
@@ -145,8 +145,7 @@ Plans:
 | Credentials | CRED-01, CRED-02, CRED-03 | 17 | 3 |
 | Credentials | CRED-04, CRED-05 | 16 | 2 |
 | SNMP Polling | POLL-01, POLL-02, POLL-03, POLL-04, POLL-05, POLL-06, POLL-07 | 18 | 5/5 | Complete    | 2026-03-22 | PROF-01, PROF-02 | 18 | 2 |
-| Device Profiles | PROF-03, PROF-04, PROF-05 | 20 | 3 |
-| Device Management | MGMT-01, MGMT-02, MGMT-03, MGMT-04, MGMT-05 | 19 | 4/4 | Complete    | 2026-03-22 | UI-01, UI-02, UI-03, UI-04, UI-05, UI-06 | 19 | 6 |
+| Device Profiles | PROF-03, PROF-04, PROF-05 | 20 | 3/3 | Complete   | 2026-03-22 | MGMT-01, MGMT-02, MGMT-03, MGMT-04, MGMT-05 | 19 | 4/4 | Complete    | 2026-03-22 | UI-01, UI-02, UI-03, UI-04, UI-05, UI-06 | 19 | 6 |
 | Fleet UI | UI-07 | 20 | 1 |
 | Metrics & Data | DATA-01, DATA-02, DATA-03 | 18 | 3 |
 | Metrics & Data | DATA-04 | 17 | 1 |

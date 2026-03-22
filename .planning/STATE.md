@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v9.8
 milestone_name: SNMP Device Integration
-status: complete
-stopped_at: Completed 19-04-PLAN.md (Device detail + SNMP metrics)
-last_updated: "2026-03-22T01:06:42.466Z"
+status: phase-complete
+stopped_at: Completed 20-03-PLAN.md (Frontend Profile Editor)
+last_updated: "2026-03-22T01:34:31Z"
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 16
-  completed_plans: 16
+  completed_phases: 5
+  total_plans: 19
+  completed_plans: 19
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Operators can monitor their entire network fleet -- MikroTik and SNMP devices side by side -- from a single pane of glass
-**Current focus:** Phase 19 — Fleet UI + Bulk Add
+**Current focus:** Phase 20 — Custom Profile Builder + MIB Upload
 
 ## Current Position
 
-Phase: 19 (Fleet UI + Bulk Add) — COMPLETE
-Plan: 4 of 4 (all plans complete)
+Phase: 20 (Custom Profile Builder + MIB Upload) — COMPLETE
+Plan: 3 of 3 (all complete)
 
 ## Performance Metrics
 
@@ -80,6 +80,12 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 19]: Router icon for RouterOS, Network icon for SNMP -- follows lucide semantics
 - [Phase 19]: device_type defaults to routeros via nullish coalescing for backward compat
 - [Phase 19]: SNMP devices get their own layout branch (not stripped RouterOS) for clean first-class experience
+- [Phase 20]: MIB_PARSER_PATH config with /app/tod-mib-parser default; shutil.which fallback for dev
+- [Phase 20]: Test-profile tests connectivity only (existing discovery probe), not full per-OID walk
+- [Phase 20]: AppendPath instead of SetPath to preserve gosmi default IETF MIB search paths
+- [Phase 20]: Virtualized flat list for OID tree (no tree library, reuses tanstack/react-virtual)
+- [Phase 20]: Three fixed poll groups (fast/standard/slow) with click-to-activate paradigm
+- [Phase 20]: Test panel starts collapsed since OID editing is primary workflow
 
 ### Pending Todos
 
@@ -94,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T01:06:42.462Z
-Stopped at: Completed 19-04-PLAN.md (Device detail + SNMP metrics)
+Last session: 2026-03-22T01:34:31Z
+Stopped at: Completed 20-03-PLAN.md (Frontend Profile Editor) -- Phase 20 complete
 Resume file: None

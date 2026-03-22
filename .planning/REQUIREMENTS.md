@@ -37,9 +37,9 @@
 
 - [x] **PROF-01**: TOD ships 6 system default profiles (generic-snmp, network-switch, network-router, wireless-ap, ups-device, mikrotik-snmp)
 - [x] **PROF-02**: Auto-detection probes sysObjectID via NATS request-reply and suggests matching profile
-- [ ] **PROF-03**: Operator can create custom SNMP profiles with arbitrary OID collections grouped by poll group
-- [ ] **PROF-04**: Operator can upload vendor MIB files and browse parsed OID tree to select collection targets
-- [ ] **PROF-05**: Operator can test a profile against a live device before saving
+- [x] **PROF-03**: Operator can create custom SNMP profiles with arbitrary OID collections grouped by poll group
+- [x] **PROF-04**: Operator can upload vendor MIB files and browse parsed OID tree to select collection targets
+- [x] **PROF-05**: Operator can test a profile against a live device before saving
 
 ### Device Management
 
@@ -57,7 +57,7 @@
 - [x] **UI-04**: SNMP device detail shows system info, interface metrics, health metrics, and custom OID charts
 - [x] **UI-05**: Add Device dialog has tabs for RouterOS, SNMP, and VPN with credential profile selectors
 - [x] **UI-06**: Credential profile management page lists, creates, edits, deletes profiles for both types
-- [ ] **UI-07**: SNMP profile editor with OID tree browser, MIB upload, poll group configuration
+- [x] **UI-07**: SNMP profile editor with OID tree browser, MIB upload, poll group configuration
 
 ### Metrics & Data
 
@@ -130,9 +130,9 @@
 | POLL-07 | Phase 18 | Complete |
 | PROF-01 | Phase 18 | Complete |
 | PROF-02 | Phase 18 | Complete |
-| PROF-03 | Phase 20 | Pending |
-| PROF-04 | Phase 20 | Pending |
-| PROF-05 | Phase 20 | Pending |
+| PROF-03 | Phase 20 | Complete |
+| PROF-04 | Phase 20 | Complete |
+| PROF-05 | Phase 20 | Complete |
 | MGMT-01 | Phase 19 | Complete |
 | MGMT-02 | Phase 19 | Complete |
 | MGMT-03 | Phase 19 | Complete |
@@ -144,7 +144,7 @@
 | UI-04 | Phase 19 | Complete |
 | UI-05 | Phase 19 | Complete |
 | UI-06 | Phase 19 | Complete |
-| UI-07 | Phase 20 | Pending |
+| UI-07 | Phase 20 | Complete |
 | DATA-01 | Phase 18 | Complete |
 | DATA-02 | Phase 18 | Complete |
 | DATA-03 | Phase 18 | Complete |
