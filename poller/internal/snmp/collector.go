@@ -68,12 +68,14 @@ func (c *SNMPCollector) Collect(ctx context.Context, dev store.Device, pub *bus.
 	profileID := ""
 	if dev.SNMPProfileID != nil {
 		profileID = *dev.SNMPProfileID
-	} else {
+	} else if c.profiles != nil {
 		profileID = c.profiles.GetGenericID()
 		if profileID == "" {
 			return fmt.Errorf("device %s: no SNMP profile assigned and no generic-snmp fallback found", dev.ID)
 		}
 		slog.Debug("using generic-snmp fallback profile", "device_id", dev.ID)
+	} else {
+		return fmt.Errorf("device %s: no SNMP profile assigned and profile cache not available", dev.ID)
 	}
 	profile := c.profiles.Get(profileID)
 	if profile == nil {

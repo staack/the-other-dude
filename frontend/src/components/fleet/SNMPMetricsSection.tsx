@@ -15,13 +15,13 @@ interface SNMPMetricsSectionProps {
  * and are shown by InterfaceGauges. Custom OID charting is Phase 20 (PROF-03).
  */
 export function SNMPMetricsSection({ tenantId, snmpProfileId }: SNMPMetricsSectionProps) {
-  if (!snmpProfileId) return null
-
   const { data: profile } = useQuery({
     queryKey: ['snmp-profile', tenantId, snmpProfileId],
     queryFn: () => snmpProfilesApi.get(tenantId, snmpProfileId!),
-    enabled: !!snmpProfileId,
+    enabled: !!snmpProfileId && !!tenantId,
   })
+
+  if (!snmpProfileId) return null
 
   return (
     <div className="rounded-sm border border-border-default bg-panel px-3 py-2">

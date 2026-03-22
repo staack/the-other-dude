@@ -10,8 +10,6 @@ import {
   X,
   Network,
   Copy,
-  ChevronDown,
-  ChevronRight,
 } from 'lucide-react'
 import {
   snmpProfilesApi,
@@ -33,7 +31,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { EmptyState } from '@/components/ui/empty-state'
 import { OIDTreeBrowser } from '@/components/settings/OIDTreeBrowser'
 import { ProfileTestPanel } from '@/components/settings/ProfileTestPanel'
 
@@ -208,7 +205,6 @@ export function SNMPProfileEditorPage({ tenantId }: SNMPProfileEditorPageProps) 
   const [pollGroups, setPollGroups] = useState<Record<PollGroupKey, PollGroup>>(buildEmptyPollGroups)
   const [activePollGroup, setActivePollGroup] = useState<PollGroupKey>('standard')
   const [selectedOids, setSelectedOids] = useState<Set<string>>(new Set())
-  const [advancedOpen, setAdvancedOpen] = useState(false)
 
   // ─── MIB state ─────────────────────────────────────────────────────────
 

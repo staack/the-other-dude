@@ -495,7 +495,7 @@ export interface CredentialProfileCreate {
   priv_passphrase?: string
 }
 
-export interface CredentialProfileUpdate extends Partial<CredentialProfileCreate> {}
+export type CredentialProfileUpdate = Partial<CredentialProfileCreate>
 
 export const credentialProfilesApi = {
   list: (tenantId: string, credentialType?: string) =>

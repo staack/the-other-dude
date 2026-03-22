@@ -35,11 +35,6 @@ interface CredentialProfilesPageProps {
 type CredentialType = 'routeros' | 'snmp_v2c' | 'snmp_v3'
 type SecurityLevel = 'no_auth_no_priv' | 'auth_no_priv' | 'auth_priv'
 
-const CREDENTIAL_TYPE_LABELS: Record<CredentialType, string> = {
-  routeros: 'RouterOS',
-  snmp_v2c: 'SNMP v2c',
-  snmp_v3: 'SNMP v3',
-}
 
 const SECURITY_LEVELS: { value: SecurityLevel; label: string }[] = [
   { value: 'no_auth_no_priv', label: 'No Auth, No Privacy' },

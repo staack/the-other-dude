@@ -20,7 +20,7 @@ func TestSNMPCollectorImplementsCollector(t *testing.T) {
 }
 
 // TestSNMPCollectorCollect_NilProfileID verifies that Collect returns an error
-// when the device has no SNMPProfileID set.
+// when the device has no SNMPProfileID and the profile cache is nil.
 func TestSNMPCollectorCollect_NilProfileID(t *testing.T) {
 	collector := NewSNMPCollector(nil, nil, nil, DefaultSNMPConfig())
 	dev := store.Device{
@@ -32,7 +32,7 @@ func TestSNMPCollectorCollect_NilProfileID(t *testing.T) {
 
 	err := collector.Collect(context.Background(), dev, &bus.Publisher{})
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no SNMP profile")
+	assert.Contains(t, err.Error(), "no SNMP profile assigned")
 }
 
 // TestSNMPCollectorCollect_UnknownProfileID verifies that Collect returns an error
