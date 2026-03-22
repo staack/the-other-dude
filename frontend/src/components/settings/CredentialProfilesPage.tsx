@@ -119,7 +119,7 @@ export function CredentialProfilesPage({ tenantId }: CredentialProfilesPageProps
     enabled: !!tenantId,
   })
 
-  const profiles = data?.profiles ?? []
+  const profiles = Array.isArray(data) ? data : (data?.profiles ?? [])
   const routerosProfiles = profiles.filter((p) => p.credential_type === 'routeros')
   const snmpProfiles = profiles.filter((p) => p.credential_type.startsWith('snmp_'))
 
@@ -401,8 +401,8 @@ export function CredentialProfilesPage({ tenantId }: CredentialProfilesPageProps
                 <div>
                   <Label className="text-xs">Security Name</Label>
                   <Input
-                    value={form.security_name ?? ''}
-                    onChange={(e) => updateForm({ security_name: e.target.value })}
+                    value={form.username ?? ''}
+                    onChange={(e) => updateForm({ username: e.target.value })}
                     placeholder={
                       editingProfile ? 'Leave blank to keep current' : 'snmpuser'
                     }
@@ -473,8 +473,8 @@ export function CredentialProfilesPage({ tenantId }: CredentialProfilesPageProps
                     <div>
                       <Label className="text-xs">Privacy Protocol</Label>
                       <Select
-                        value={form.privacy_protocol ?? 'AES128'}
-                        onValueChange={(v) => updateForm({ privacy_protocol: v })}
+                        value={form.priv_protocol ?? 'AES128'}
+                        onValueChange={(v) => updateForm({ priv_protocol: v })}
                       >
                         <SelectTrigger className="mt-1">
                           <SelectValue />
@@ -492,9 +492,9 @@ export function CredentialProfilesPage({ tenantId }: CredentialProfilesPageProps
                       <Label className="text-xs">Privacy Passphrase</Label>
                       <Input
                         type="password"
-                        value={form.privacy_passphrase ?? ''}
+                        value={form.priv_passphrase ?? ''}
                         onChange={(e) =>
-                          updateForm({ privacy_passphrase: e.target.value })
+                          updateForm({ priv_passphrase: e.target.value })
                         }
                         placeholder={
                           editingProfile ? 'Leave blank to keep current' : ''

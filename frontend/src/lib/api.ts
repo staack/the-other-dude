@@ -491,9 +491,8 @@ export interface CredentialProfileCreate {
   security_level?: string
   auth_protocol?: string
   auth_passphrase?: string
-  privacy_protocol?: string
-  privacy_passphrase?: string
-  security_name?: string
+  priv_protocol?: string
+  priv_passphrase?: string
 }
 
 export interface CredentialProfileUpdate extends Partial<CredentialProfileCreate> {}
@@ -505,7 +504,7 @@ export const credentialProfilesApi = {
         `/api/tenants/${tenantId}/credential-profiles`,
         { params: credentialType ? { credential_type: credentialType } : undefined },
       )
-      .then((r) => r.data),
+      .then((r) => r.data.profiles),
 
   get: (tenantId: string, profileId: string) =>
     api
