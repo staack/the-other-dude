@@ -603,8 +603,8 @@ export interface SNMPProfileCreate {
 export const snmpProfilesApi = {
   list: (tenantId: string) =>
     api
-      .get<SNMPProfileResponse[]>(`/api/tenants/${tenantId}/snmp-profiles`)
-      .then((r) => r.data),
+      .get<{ profiles: SNMPProfileResponse[] }>(`/api/tenants/${tenantId}/snmp-profiles`)
+      .then((r) => r.data.profiles),
 
   get: (tenantId: string, profileId: string) =>
     api
