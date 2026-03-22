@@ -304,6 +304,12 @@ export interface DeviceResponse {
   longitude: number | null
   status: string
   tls_mode: string
+  device_type: string // "routeros" | "snmp"
+  snmp_port: number | null
+  snmp_version: string | null
+  snmp_profile_id: string | null
+  credential_profile_id: string | null
+  board_name: string | null
   tags: DeviceTagRef[]
   groups: DeviceGroupRef[]
   site_id: string | null
@@ -323,10 +329,15 @@ export interface DeviceListResponse {
 export interface DeviceCreate {
   hostname: string
   ip_address: string
+  device_type?: 'routeros' | 'snmp'
   api_port?: number
   api_ssl_port?: number
-  username: string
-  password: string
+  username?: string
+  password?: string
+  credential_profile_id?: string
+  snmp_version?: 'v2c' | 'v3'
+  snmp_port?: number
+  snmp_profile_id?: string
 }
 
 export interface DeviceUpdate {
@@ -348,6 +359,7 @@ export interface DeviceListParams {
   sort_dir?: 'asc' | 'desc'
   search?: string
   status?: string
+  device_type?: string // "routeros" | "snmp"
   model?: string
   tag?: string
   site_id?: string
@@ -386,6 +398,11 @@ export const devicesApi = {
   bulkAdd: (tenantId: string, data: BulkAddRequest) =>
     api
       .post<BulkAddResult>(`/api/tenants/${tenantId}/devices/bulk-add`, data)
+      .then((r) => r.data),
+
+  bulkAddWithProfile: (tenantId: string, data: BulkAddWithProfileRequest) =>
+    api
+      .post<BulkAddWithProfileResult>(`/api/tenants/${tenantId}/devices/bulk`, data)
       .then((r) => r.data),
 
   addToGroup: (tenantId: string, deviceId: string, groupId: string) =>
@@ -443,6 +460,152 @@ export interface BulkAddRequest {
 export interface BulkAddResult {
   added: DeviceResponse[]
   failed: Array<{ ip_address: string; error: string }>
+}
+
+// ─── Credential Profiles ─────────────────────────────────────────────────────
+
+export interface CredentialProfileResponse {
+  id: string
+  name: string
+  description: string | null
+  credential_type: string // "routeros" | "snmp_v2c" | "snmp_v3"
+  device_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CredentialProfileListResponse {
+  profiles: CredentialProfileResponse[]
+}
+
+export interface CredentialProfileCreate {
+  name: string
+  description?: string
+  credential_type: string
+  // RouterOS
+  username?: string
+  password?: string
+  // SNMP v1/v2c
+  community?: string
+  // SNMP v3
+  security_level?: string
+  auth_protocol?: string
+  auth_passphrase?: string
+  privacy_protocol?: string
+  privacy_passphrase?: string
+  security_name?: string
+}
+
+export interface CredentialProfileUpdate extends Partial<CredentialProfileCreate> {}
+
+export const credentialProfilesApi = {
+  list: (tenantId: string, credentialType?: string) =>
+    api
+      .get<CredentialProfileListResponse>(
+        `/api/tenants/${tenantId}/credential-profiles`,
+        { params: credentialType ? { credential_type: credentialType } : undefined },
+      )
+      .then((r) => r.data),
+
+  get: (tenantId: string, profileId: string) =>
+    api
+      .get<CredentialProfileResponse>(
+        `/api/tenants/${tenantId}/credential-profiles/${profileId}`,
+      )
+      .then((r) => r.data),
+
+  create: (tenantId: string, data: CredentialProfileCreate) =>
+    api
+      .post<CredentialProfileResponse>(
+        `/api/tenants/${tenantId}/credential-profiles`,
+        data,
+      )
+      .then((r) => r.data),
+
+  update: (tenantId: string, profileId: string, data: CredentialProfileUpdate) =>
+    api
+      .put<CredentialProfileResponse>(
+        `/api/tenants/${tenantId}/credential-profiles/${profileId}`,
+        data,
+      )
+      .then((r) => r.data),
+
+  delete: (tenantId: string, profileId: string) =>
+    api
+      .delete(`/api/tenants/${tenantId}/credential-profiles/${profileId}`)
+      .then((r) => r.data),
+
+  devices: (tenantId: string, profileId: string) =>
+    api
+      .get<DeviceResponse[]>(
+        `/api/tenants/${tenantId}/credential-profiles/${profileId}/devices`,
+      )
+      .then((r) => r.data),
+}
+
+// ─── SNMP Profiles ───────────────────────────────────────────────────────────
+
+export interface SNMPProfileResponse {
+  id: string
+  name: string
+  description: string | null
+  is_system: boolean
+  profile_data: Record<string, unknown> | null
+  device_count: number
+  created_at: string
+  updated_at: string
+}
+
+export const snmpProfilesApi = {
+  list: (tenantId: string) =>
+    api
+      .get<SNMPProfileResponse[]>(`/api/tenants/${tenantId}/snmp-profiles`)
+      .then((r) => r.data),
+
+  get: (tenantId: string, profileId: string) =>
+    api
+      .get<SNMPProfileResponse>(
+        `/api/tenants/${tenantId}/snmp-profiles/${profileId}`,
+      )
+      .then((r) => r.data),
+}
+
+// ─── Bulk Add (credential profile) ──────────────────────────────────────────
+
+export interface BulkAddWithProfileDevice {
+  ip_address: string
+  hostname?: string
+}
+
+export interface BulkAddWithProfileDefaults {
+  api_port?: number
+  api_ssl_port?: number
+  tls_mode?: string
+  snmp_port?: number
+  snmp_version?: string
+  snmp_profile_id?: string
+}
+
+export interface BulkAddWithProfileRequest {
+  credential_profile_id: string
+  device_type: 'routeros' | 'snmp'
+  defaults?: BulkAddWithProfileDefaults
+  devices: BulkAddWithProfileDevice[]
+}
+
+export interface BulkAddWithProfileDeviceResult {
+  ip_address: string
+  hostname: string | null
+  success: boolean
+  device_id: string | null
+  error: string | null
+}
+
+export interface BulkAddWithProfileResult {
+  total: number
+  succeeded: number
+  failed: number
+  results: BulkAddWithProfileDeviceResult[]
 }
 
 // ─── Device Groups ────────────────────────────────────────────────────────────
@@ -948,6 +1111,16 @@ export async function getAccessToken(): Promise<string> {
   return response.access_token
 }
 
+export interface SNMPMetricPoint {
+  bucket: string
+  metric_name: string
+  metric_group: string
+  oid: string
+  avg_value: number | null
+  max_value: number | null
+  min_value: number | null
+}
+
 export const metricsApi = {
   health: (tenantId: string, deviceId: string, start: string, end: string) =>
     api
@@ -1012,6 +1185,14 @@ export const metricsApi = {
     api
       .get<SparklinePoint[]>(
         `/api/tenants/${tenantId}/devices/${deviceId}/metrics/sparkline`,
+      )
+      .then((r) => r.data),
+
+  snmp: (tenantId: string, deviceId: string, metricName: string, start: string, end: string) =>
+    api
+      .get<SNMPMetricPoint[]>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/metrics/snmp`,
+        { params: { metric_name: metricName, start, end } },
       )
       .then((r) => r.data),
 }
