@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SNMP Works (And the UI Got Out of the Way) — The Other Dude Blog</title>
+  <meta name="description" content="v9.8 adds SNMP device monitoring. It polls real devices, collects real data, and shows it alongside your MikroTik fleet. The UI also got simpler.">
+  <meta name="keywords" content="MikroTik, SNMP monitoring, fleet management, network management, The Other Dude, SNMP poller">
+  <meta name="author" content="The Other Dude">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#eae7de">
+  <link rel="canonical" href="https://theotherdude.net/blog/snmp-works.html">
+  <link rel="icon" href="../data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/></svg>">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="SNMP Works (And the UI Got Out of the Way) — The Other Dude">
+  <meta property="og:description" content="v9.8 adds SNMP device monitoring. It polls real devices, collects real data, and shows it alongside your MikroTik fleet. The UI also got simpler.">
+  <meta property="og:url" content="https://theotherdude.net/blog/snmp-works.html">
+  <meta property="og:site_name" content="The Other Dude">
+  <meta property="article:published_time" content="2026-03-22">
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "SNMP Works (And the UI Got Out of the Way)",
+    "description": "v9.8 adds SNMP device monitoring. It polls real devices, collects real data, and shows it alongside your MikroTik fleet. The UI also got simpler.",
+    "datePublished": "2026-03-22",
+    "author": {
+      "@type": "Organization",
+      "name": "The Other Dude"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "The Other Dude",
+      "url": "https://theotherdude.net"
+    },
+    "mainEntityOfPage": "https://theotherdude.net/blog/snmp-works.html"
+  }
+  </script>
+
+  <!-- Fonts -->
+
+  <link rel="stylesheet" href="../style.css?v=3">
+  <style>
+    /* Warm Precision overrides */
+    :root {
+      --background: #eae7de;
+      --surface: #f6f4ec;
+      --elevated: #f0ede4;
+      --border: rgba(40,36,28,0.12);
+      --text-primary: #1a1810;
+      --text-secondary: #5e5a4e;
+      --text-muted: #8a8578;
+      --accent: #8a7a48;
+    }
+    body { background-color: #eae7de; color: #1a1810; }
+    .site-nav { background: #e0dcd2 !important; border-bottom: 1px solid rgba(40,36,28,0.12); }
+    .site-nav .nav-logo span, .site-nav .nav-link, .site-nav .nav-cta { color: #1a1810 !important; }
+    .site-nav .nav-link:hover { color: #8a7a48 !important; }
+    .dark { /* prevent dark mode */ }
+  </style>
+  <style>
+    .blog-post {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+    .blog-post-meta {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .blog-post h1 {
+      font-family: "Manrope", sans-serif;
+      font-weight: 700;
+      font-size: 2.5rem;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 40px;
+    }
+    .blog-post h2 {
+      font-family: "Manrope", sans-serif;
+      font-weight: 600;
+      font-size: 1.4rem;
+      color: var(--text-primary);
+      margin-top: 48px;
+      margin-bottom: 16px;
+    }
+    .blog-post p {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 20px;
+    }
+    .blog-post p strong {
+      color: var(--text-primary);
+    }
+    .blog-post a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .blog-post a:hover {
+      color: var(--text-primary);
+    }
+    .blog-post .back-link {
+      display: inline-block;
+      margin-bottom: 32px;
+      font-size: 14px;
+      text-decoration: none;
+      color: var(--text-muted);
+    }
+    .blog-post .back-link:hover {
+      color: var(--accent);
+    }
+    @media (max-width: 480px) {
+      .blog-post h1 { font-size: 1.8rem; }
+      .blog-post { padding: 60px 20px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="site-nav">
+    <div class="nav-inner container">
+      <a href="../index.html" class="nav-logo">
+        <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
+          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
+          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+        </svg>
+        <span>The Other Dude</span>
+      </a>
+      <div class="nav-links">
+        <a href="../docs.html" class="nav-link">Docs</a>
+        <a href="index.html" class="nav-link">Blog</a>
+        <a href="https://github.com/staack/the-other-dude" class="nav-link" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <article class="blog-post">
+      <a href="index.html" class="back-link">&larr; Back to Blog</a>
+      <div class="blog-post-meta">March 22, 2026</div>
+      <h1>SNMP Works (And the UI Got Out of the Way)</h1>
+
+      <p>v9.8 ships SNMP support. You can add an SNMP device to TOD and it will poll it, collect metrics, and show it in the fleet table alongside your MikroTik gear. Interface traffic, CPU, memory, uptime — the same data you see for your Tiks, from any device that speaks SNMP.</p>
+
+      <p>It is early. It works. I am not going to oversell it.</p>
+
+      <h2>What "Working" Means Right Now</h2>
+
+      <p>You create a credential profile — basically a community string and SNMP version — and then add a device by IP. TOD probes the device, figures out what it is from the sysObjectID, assigns a collection profile, and starts polling. Standard MIB-II data flows into the same hypertables the MikroTik poller uses. Same charts, same fleet table, same everything.</p>
+
+      <p>There are seven built-in profiles: generic, switch, router, access point, UPS, MikroTik-over-SNMP, and Ubiquiti. The generic profile covers most devices out of the box. If you need something vendor-specific, you can build a custom profile with your own OIDs.</p>
+
+      <p>SNMPv1, v2c, and v3 are all supported. Counter64 is preferred over Counter32 automatically. BulkWalk is wrapped in timeouts so a misbehaving device does not hang your poller. The basics are covered.</p>
+
+      <h2>Why This Matters</h2>
+
+      <p>Nobody runs a pure MikroTik network. There is always a managed switch, a UPS, an access point from another vendor, a piece of infrastructure that only speaks SNMP. Before v9.8, those devices were invisible to TOD. You had to run a separate monitoring system to see them, or just not monitor them at all.</p>
+
+      <p>Now they show up in the same fleet table. Same status indicators, same interface graphs. You do not have to context-switch between two different tools to understand what your network is doing.</p>
+
+      <p>That is the entire point. Not fancy SNMP features. Just visibility.</p>
+
+      <h2>The UI Got Simpler</h2>
+
+      <p>While working on SNMP, I also stripped a lot of noise out of the interface. Gradients are gone. Shimmer loading placeholders are gone. Visual effects that existed because they looked nice rather than because they communicated something useful — gone.</p>
+
+      <p>The reason is practical. When you are looking at real data from real devices — when a number on the screen represents actual traffic on an actual interface — decorative UI gets in the way. You want to read data, not admire the container it is sitting in.</p>
+
+      <p>The interface should disappear. You should be thinking about your network, not about the tool you are using to look at it. Every visual element that does not carry information is a distraction. So I removed the ones that were not carrying their weight.</p>
+
+      <h2>What Is Not Done</h2>
+
+      <p>SNMP trap reception is not implemented. The poller collects data on a schedule — it does not listen for unsolicited events from devices. That is planned but not built yet.</p>
+
+      <p>SNMP SET operations are not supported. This is read-only monitoring. You cannot push configuration to SNMP devices through TOD. That may never be a feature — SNMP config management is a different problem with a lot of vendor-specific complexity.</p>
+
+      <p>The custom profile builder works but needs more polish. Uploading vendor MIBs and browsing OID trees is functional, but the UX is not where I want it yet. The standard path — add a device, let auto-detection handle it — is solid. The power-user path needs more work.</p>
+
+      <p>Bulk add supports SNMP devices but subnet discovery is still basic. It works, but it is not as smooth as it should be.</p>
+
+      <h2>Where This Is Going</h2>
+
+      <p>This is the version where TOD stopped being a MikroTik-only tool and started being a network management system. The MikroTik support is still the core — that is what the deep integration is for, that is where WinBox and config push and firmware management live. SNMP is the layer that lets everything else in the building show up on the same screen.</p>
+
+      <p>It is not a finished product. It is a system that is getting more useful every week. If you manage MikroTik gear alongside other network hardware and you are tired of running two monitoring systems, this is worth looking at.</p>
+
+    </article>
+  </main>
+
+</body>
+</html>
