@@ -140,7 +140,7 @@ class Settings(BaseSettings):
     LICENSE_DEVICES: int = 250
 
     # MIB parser binary path (tod-mib-parser Go binary)
-    MIB_PARSER_PATH: str = "/app/tod-mib-parser"
+    MIB_PARSER_PATH: str = "/usr/local/bin/tod-mib-parser"
 
     # App settings
     APP_NAME: str = "TOD - The Other Dude"

@@ -50,14 +50,11 @@ WORKDIR /app
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
 
-# Copy MIB parser binary from Go builder stage
-COPY --from=mib-builder /tod-mib-parser /app/tod-mib-parser
-
-# Copy pre-loaded MIB files for common vendor support
-COPY backend/mibs/ /app/mibs/
-
 # Copy application source
 COPY backend/ .
+
+# Copy MIB parser binary from Go builder stage (after COPY backend/ so it's not overwritten)
+COPY --from=mib-builder /tod-mib-parser /usr/local/bin/tod-mib-parser
 
 # Change ownership to non-root user
 RUN chown -R appuser:appuser /app
