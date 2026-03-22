@@ -79,11 +79,17 @@ async def list_profiles(
 
     result = await db.execute(
         text("""
-            SELECT id, tenant_id, name, description, sys_object_id, vendor,
-                   category, is_system, created_at, updated_at
-            FROM snmp_profiles
-            WHERE tenant_id = :tenant_id OR tenant_id IS NULL
-            ORDER BY is_system DESC, name ASC
+            SELECT sp.id, sp.tenant_id, sp.name, sp.description, sp.sys_object_id, sp.vendor,
+                   sp.category, sp.is_system, sp.created_at, sp.updated_at,
+                   COALESCE(dc.device_count, 0) AS device_count
+            FROM snmp_profiles sp
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) AS device_count
+                FROM devices d
+                WHERE d.snmp_profile_id = sp.id
+            ) dc ON true
+            WHERE sp.tenant_id = :tenant_id OR sp.tenant_id IS NULL
+            ORDER BY sp.is_system DESC, sp.name ASC
         """),
         {"tenant_id": str(tenant_id)},
     )

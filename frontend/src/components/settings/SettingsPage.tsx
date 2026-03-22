@@ -167,6 +167,23 @@ export function SettingsPage() {
         </div>
       )}
 
+      {/* SNMP Profiles */}
+      {isTenantAdmin(user) && (
+        <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-1">
+          <SectionHeader icon={Monitor} title="SNMP Profiles" />
+          <Link
+            to="/settings/snmp-profiles"
+            className="flex items-center justify-between py-2 px-1 rounded hover:bg-elevated/30 transition-colors group"
+          >
+            <div>
+              <span className="text-sm text-text-primary">SNMP Device Profiles</span>
+              <p className="text-xs text-text-muted">Manage OID collection profiles, upload MIBs, test against live devices</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-text-muted group-hover:text-text-primary transition-colors" />
+          </Link>
+        </div>
+      )}
+
       {/* Maintenance — super_admin only */}
       {isSuperAdmin(user) && (
         <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-1">

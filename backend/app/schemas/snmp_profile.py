@@ -75,6 +75,7 @@ class SNMPProfileResponse(BaseModel):
     vendor: Optional[str] = None
     category: Optional[str] = None
     is_system: bool
+    device_count: int = 0
     created_at: datetime
     updated_at: datetime
 
