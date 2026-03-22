@@ -6,7 +6,6 @@ import {
   vpnApi,
   credentialProfilesApi,
   type CredentialProfileResponse,
-  type ProfileTestResponse,
 } from '@/lib/api'
 import { toast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -58,8 +57,6 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
   const [showSnmpBulk, setShowSnmpBulk] = useState(false)
   const [snmpIp, setSnmpIp] = useState('')
   const [snmpCredProfileId, setSnmpCredProfileId] = useState('')
-  const [snmpDiscoverResult, setSnmpDiscoverResult] = useState<ProfileTestResponse | null>(null)
-
   // Shared state
   const [error, setError] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('idle')

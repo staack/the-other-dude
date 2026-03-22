@@ -208,12 +208,12 @@ export function FleetTable({
     updateSearch({ sort_by: col, sort_dir: newDir, page: 1 })
   }
 
-  const handleDeviceClick = (device: DeviceResponse) => {
+  const handleDeviceClick = useCallback((device: DeviceResponse) => {
     void navigate({
       to: '/tenants/$tenantId/devices/$deviceId',
       params: { tenantId, deviceId: device.id },
     })
-  }
+  }, [navigate, tenantId])
 
   const totalPages = data ? Math.ceil(data.total / data.page_size) : 0
   const startItem = data ? (data.page - 1) * data.page_size + 1 : 0
@@ -247,7 +247,7 @@ export function FleetTable({
       if (selectedIndex >= 0 && selectedIndex < items.length) {
         handleDeviceClick(items[selectedIndex])
       }
-    }, [selectedIndex, items]),
+    }, [selectedIndex, items, handleDeviceClick]),
     hasItems && selectedIndex >= 0,
   )
 
