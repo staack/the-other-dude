@@ -486,6 +486,54 @@ func (p *Publisher) PublishSessionEnd(ctx context.Context, event SessionEndEvent
 	return nil
 }
 
+// SNMPMetricsEvent is the payload published to NATS JetStream when custom SNMP
+// metrics are collected from a device. The backend subscribes to
+// "device.metrics.snmp_custom.>" to ingest these into the snmp_metrics hypertable.
+type SNMPMetricsEvent struct {
+	DeviceID    string            `json:"device_id"`
+	TenantID    string            `json:"tenant_id"`
+	CollectedAt string            `json:"collected_at"` // RFC3339
+	Type        string            `json:"type"`         // always "snmp_custom"
+	Metrics     []SNMPMetricEntry `json:"metrics"`
+}
+
+// SNMPMetricEntry is a single metric within an SNMPMetricsEvent. Numeric and
+// text values are mutually exclusive; IndexValue is populated for table metrics.
+type SNMPMetricEntry struct {
+	MetricName  string   `json:"metric_name"`
+	MetricGroup string   `json:"metric_group"`
+	OID         string   `json:"oid"`
+	ValueNum    *float64 `json:"value_numeric,omitempty"`
+	ValueText   *string  `json:"value_text,omitempty"`
+	IndexValue  *string  `json:"index_value,omitempty"`
+}
+
+// PublishSNMPMetrics publishes custom SNMP metrics to NATS JetStream.
+//
+// Events are published to "device.metrics.snmp_custom.{device_id}" so the
+// Python metrics_subscriber can ingest them into the snmp_metrics hypertable.
+func (p *Publisher) PublishSNMPMetrics(ctx context.Context, event SNMPMetricsEvent) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("marshalling SNMP metrics event: %w", err)
+	}
+
+	subject := fmt.Sprintf("device.metrics.snmp_custom.%s", event.DeviceID)
+
+	_, err = p.js.Publish(ctx, subject, data)
+	if err != nil {
+		return fmt.Errorf("publishing to %s: %w", subject, err)
+	}
+
+	slog.Debug("published SNMP metrics event",
+		"device_id", event.DeviceID,
+		"metrics_count", len(event.Metrics),
+		"subject", subject,
+	)
+
+	return nil
+}
+
 // Conn returns the raw NATS connection for use by other components
 // (e.g., CmdResponder for request-reply subscriptions).
 func (p *Publisher) Conn() *nats.Conn {
