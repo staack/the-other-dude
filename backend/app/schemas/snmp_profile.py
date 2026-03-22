@@ -91,3 +91,69 @@ class SNMPProfileListResponse(BaseModel):
     """List of SNMP profiles."""
 
     profiles: list[SNMPProfileResponse]
+
+
+# ---------------------------------------------------------------------------
+# MIB Parse schemas
+# ---------------------------------------------------------------------------
+
+
+class MIBParseResponse(BaseModel):
+    """Response from MIB file parsing."""
+
+    module_name: str
+    nodes: list[dict]  # OIDNode tree from tod-mib-parser
+    node_count: int
+
+
+class MIBParseErrorResponse(BaseModel):
+    """Error response when MIB parsing fails."""
+
+    error: str
+
+
+# ---------------------------------------------------------------------------
+# Profile Test schemas
+# ---------------------------------------------------------------------------
+
+
+class ProfileTestRequest(BaseModel):
+    """Request to test a profile's OIDs against a live device."""
+
+    ip_address: str
+    snmp_port: int = 161
+    snmp_version: str  # "v1", "v2c", "v3"
+    # v1/v2c
+    community: Optional[str] = None
+    # v3
+    security_level: Optional[str] = None
+    username: Optional[str] = None
+    auth_protocol: Optional[str] = None
+    auth_passphrase: Optional[str] = None
+    priv_protocol: Optional[str] = None
+    priv_passphrase: Optional[str] = None
+
+    @field_validator("snmp_version")
+    @classmethod
+    def validate_version(cls, v: str) -> str:
+        if v not in ("v1", "v2c", "v3"):
+            raise ValueError("snmp_version must be v1, v2c, or v3")
+        return v
+
+
+class ProfileTestOIDResult(BaseModel):
+    """Result of polling a single OID against a live device."""
+
+    oid: str
+    name: str
+    value: Optional[str] = None
+    error: Optional[str] = None
+
+
+class ProfileTestResponse(BaseModel):
+    """Response from testing a profile against a live device."""
+
+    success: bool
+    device_info: Optional[dict] = None  # sys_object_id, sys_descr, sys_name
+    results: list[ProfileTestOIDResult] = []
+    error: Optional[str] = None

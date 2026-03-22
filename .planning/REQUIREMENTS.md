@@ -46,15 +46,15 @@
 - [x] **MGMT-01**: Operator can add a single SNMP device with IP, SNMP version, credential (profile or manual), and device profile
 - [x] **MGMT-02**: Operator can bulk-add RouterOS devices using a credential profile + IP list (one per line, CIDR, or range)
 - [x] **MGMT-03**: Operator can bulk-add SNMP devices using a credential profile + IP list with auto-detected profiles
-- [ ] **MGMT-04**: Subnet scan discovers both RouterOS and SNMP devices with protocol-specific credential profiles
+- [x] **MGMT-04**: Subnet scan discovers both RouterOS and SNMP devices with protocol-specific credential profiles
 - [x] **MGMT-05**: Bulk add returns per-device results (success/failure with reason) and supports partial success
 
 ### Fleet UI
 
-- [ ] **UI-01**: Fleet table shows SNMP devices alongside MikroTik devices with type icon, status, CPU, memory, uptime
-- [ ] **UI-02**: Fleet table supports filtering by device type (All / RouterOS / SNMP)
-- [ ] **UI-03**: Device detail page conditionally renders sections based on device_type (no RouterOS-only sections for SNMP devices)
-- [ ] **UI-04**: SNMP device detail shows system info, interface metrics, health metrics, and custom OID charts
+- [x] **UI-01**: Fleet table shows SNMP devices alongside MikroTik devices with type icon, status, CPU, memory, uptime
+- [x] **UI-02**: Fleet table supports filtering by device type (All / RouterOS / SNMP)
+- [x] **UI-03**: Device detail page conditionally renders sections based on device_type (no RouterOS-only sections for SNMP devices)
+- [x] **UI-04**: SNMP device detail shows system info, interface metrics, health metrics, and custom OID charts
 - [x] **UI-05**: Add Device dialog has tabs for RouterOS, SNMP, and VPN with credential profile selectors
 - [x] **UI-06**: Credential profile management page lists, creates, edits, deletes profiles for both types
 - [ ] **UI-07**: SNMP profile editor with OID tree browser, MIB upload, poll group configuration
@@ -65,7 +65,7 @@
 - [x] **DATA-02**: SNMP health metrics (CPU, memory, disk) stored in existing health_metrics hypertable
 - [x] **DATA-03**: Custom SNMP metrics stored in snmp_metrics hypertable with metric_name, metric_group, oid, and value
 - [x] **DATA-04**: SNMP metrics API returns time-bucketed data in same format as existing metrics endpoints
-- [ ] **DATA-05**: Frontend charts for interface traffic and health work identically for SNMP and RouterOS devices
+- [x] **DATA-05**: Frontend charts for interface traffic and health work identically for SNMP and RouterOS devices
 
 ### Backward Compatibility
 
@@ -136,12 +136,12 @@
 | MGMT-01 | Phase 19 | Complete |
 | MGMT-02 | Phase 19 | Complete |
 | MGMT-03 | Phase 19 | Complete |
-| MGMT-04 | Phase 19 | Pending |
+| MGMT-04 | Phase 19 | Complete |
 | MGMT-05 | Phase 19 | Complete |
-| UI-01 | Phase 19 | Pending |
-| UI-02 | Phase 19 | Pending |
-| UI-03 | Phase 19 | Pending |
-| UI-04 | Phase 19 | Pending |
+| UI-01 | Phase 19 | Complete |
+| UI-02 | Phase 19 | Complete |
+| UI-03 | Phase 19 | Complete |
+| UI-04 | Phase 19 | Complete |
 | UI-05 | Phase 19 | Complete |
 | UI-06 | Phase 19 | Complete |
 | UI-07 | Phase 20 | Pending |
@@ -149,7 +149,7 @@
 | DATA-02 | Phase 18 | Complete |
 | DATA-03 | Phase 18 | Complete |
 | DATA-04 | Phase 17 | Complete |
-| DATA-05 | Phase 19 | Pending |
+| DATA-05 | Phase 19 | Complete |
 | COMPAT-01 | Phase 16 | Complete |
 | COMPAT-02 | Phase 16 | Complete |
 | COMPAT-03 | Phase 16 | Complete |

@@ -139,6 +139,9 @@ class Settings(BaseSettings):
     # Commercial license required above this limit.
     LICENSE_DEVICES: int = 250
 
+    # MIB parser binary path (tod-mib-parser Go binary)
+    MIB_PARSER_PATH: str = "/app/tod-mib-parser"
+
     # App settings
     APP_NAME: str = "TOD - The Other Dude"
     APP_VERSION: str = "9.7.2"
