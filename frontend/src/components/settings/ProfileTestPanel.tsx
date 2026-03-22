@@ -30,16 +30,16 @@ interface ProfileTestPanelProps {
 }
 
 type SNMPVersion = 'v1' | 'v2c' | 'v3'
-type SecurityLevel = 'noAuthNoPriv' | 'authNoPriv' | 'authPriv'
+type SecurityLevel = 'no_auth_no_priv' | 'auth_no_priv' | 'auth_priv'
 
 const SECURITY_LEVELS: { value: SecurityLevel; label: string }[] = [
-  { value: 'noAuthNoPriv', label: 'No Auth, No Privacy' },
-  { value: 'authNoPriv', label: 'Auth, No Privacy' },
-  { value: 'authPriv', label: 'Auth + Privacy' },
+  { value: 'no_auth_no_priv', label: 'No Auth, No Privacy' },
+  { value: 'auth_no_priv', label: 'Auth, No Privacy' },
+  { value: 'auth_priv', label: 'Auth and Privacy' },
 ]
 
-const AUTH_PROTOCOLS = ['MD5', 'SHA', 'SHA256'] as const
-const PRIV_PROTOCOLS = ['DES', 'AES', 'AES256'] as const
+const AUTH_PROTOCOLS = ['SHA256', 'SHA384', 'SHA512'] as const
+const PRIV_PROTOCOLS = ['AES128', 'AES256'] as const
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -52,11 +52,11 @@ export function ProfileTestPanel({ tenantId, profileId }: ProfileTestPanelProps)
   const [snmpPort, setSnmpPort] = useState('161')
   const [snmpVersion, setSnmpVersion] = useState<SNMPVersion>('v2c')
   const [community, setCommunity] = useState('public')
-  const [securityLevel, setSecurityLevel] = useState<SecurityLevel>('authNoPriv')
+  const [securityLevel, setSecurityLevel] = useState<SecurityLevel>('auth_no_priv')
   const [username, setUsername] = useState('')
-  const [authProtocol, setAuthProtocol] = useState('SHA')
+  const [authProtocol, setAuthProtocol] = useState('SHA256')
   const [authPassphrase, setAuthPassphrase] = useState('')
-  const [privProtocol, setPrivProtocol] = useState('AES')
+  const [privProtocol, setPrivProtocol] = useState('AES128')
   const [privPassphrase, setPrivPassphrase] = useState('')
 
   // ─── Test mutation ───────────────────────────────────────────────────
@@ -82,11 +82,11 @@ export function ProfileTestPanel({ tenantId, profileId }: ProfileTestPanelProps)
     } else {
       request.security_level = securityLevel
       if (username.trim()) request.username = username.trim()
-      if (securityLevel === 'authNoPriv' || securityLevel === 'authPriv') {
+      if (securityLevel === 'auth_no_priv' || securityLevel === 'auth_priv') {
         request.auth_protocol = authProtocol
         if (authPassphrase) request.auth_passphrase = authPassphrase
       }
-      if (securityLevel === 'authPriv') {
+      if (securityLevel === 'auth_priv') {
         request.priv_protocol = privProtocol
         if (privPassphrase) request.priv_passphrase = privPassphrase
       }
@@ -197,7 +197,7 @@ export function ProfileTestPanel({ tenantId, profileId }: ProfileTestPanelProps)
               </div>
 
               {/* Auth fields */}
-              {(securityLevel === 'authNoPriv' || securityLevel === 'authPriv') && (
+              {(securityLevel === 'auth_no_priv' || securityLevel === 'auth_priv') && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">Auth Protocol</Label>
@@ -227,7 +227,7 @@ export function ProfileTestPanel({ tenantId, profileId }: ProfileTestPanelProps)
               )}
 
               {/* Privacy fields */}
-              {securityLevel === 'authPriv' && (
+              {securityLevel === 'auth_priv' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">Privacy Protocol</Label>

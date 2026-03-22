@@ -75,10 +75,9 @@ export function BulkAddForm({
   const [error, setError] = useState<string | null>(null)
 
   // Credential profiles filtered by device type
-  const credType = deviceType === 'snmp' ? 'snmp_v2c' : 'routeros'
   const { data: profiles } = useQuery({
-    queryKey: ['credential-profiles', tenantId, credType],
-    queryFn: () => credentialProfilesApi.list(tenantId, credType),
+    queryKey: ['credential-profiles', tenantId, deviceType],
+    queryFn: () => credentialProfilesApi.list(tenantId, deviceType === 'snmp' ? undefined : 'routeros'),
   })
 
   // SNMP device profiles (only when deviceType is snmp)
@@ -88,7 +87,10 @@ export function BulkAddForm({
     enabled: deviceType === 'snmp',
   })
 
-  const profileList: CredentialProfileResponse[] = profiles?.profiles ?? []
+  const allProfiles: CredentialProfileResponse[] = profiles?.profiles ?? []
+  const profileList = deviceType === 'snmp'
+    ? allProfiles.filter((p) => p.credential_type === 'snmp_v2c' || p.credential_type === 'snmp_v3')
+    : allProfiles
   const snmpProfileList: SNMPProfileResponse[] = Array.isArray(snmpProfiles)
     ? snmpProfiles
     : snmpProfiles?.profiles ?? []

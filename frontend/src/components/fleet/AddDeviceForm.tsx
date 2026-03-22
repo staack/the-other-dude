@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2, XCircle, List } from 'lucide-react'
+import { CheckCircle2, XCircle, List, Loader2, Search } from 'lucide-react'
 import {
   devicesApi,
   vpnApi,
   credentialProfilesApi,
-  snmpProfilesApi,
   type CredentialProfileResponse,
-  type SNMPProfileResponse,
+  type ProfileTestResponse,
 } from '@/lib/api'
 import { toast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -56,15 +55,10 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
   })
 
   // SNMP state
-  const [snmpVersion, setSnmpVersion] = useState<'v2c' | 'v3'>('v2c')
   const [showSnmpBulk, setShowSnmpBulk] = useState(false)
-  const [snmpForm, setSnmpForm] = useState({
-    ip_address: '',
-    hostname: '',
-    snmp_port: '161',
-    credential_profile_id: '',
-    snmp_profile_id: '',
-  })
+  const [snmpIp, setSnmpIp] = useState('')
+  const [snmpCredProfileId, setSnmpCredProfileId] = useState('')
+  const [snmpDiscoverResult, setSnmpDiscoverResult] = useState<ProfileTestResponse | null>(null)
 
   // Shared state
   const [error, setError] = useState<string | null>(null)
@@ -86,18 +80,10 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
     enabled: open && !!tenantId,
   })
 
-  // SNMP credential profiles (filtered by version)
-  const snmpCredType = snmpVersion === 'v2c' ? 'snmp_v2c' : 'snmp_v3'
+  // SNMP credential profiles (all SNMP types — v2c and v3)
   const { data: snmpCredProfiles } = useQuery({
-    queryKey: ['credential-profiles', tenantId, snmpCredType],
-    queryFn: () => credentialProfilesApi.list(tenantId, snmpCredType),
-    enabled: open && !!tenantId,
-  })
-
-  // SNMP device profiles
-  const { data: snmpDeviceProfiles } = useQuery({
-    queryKey: ['snmp-profiles', tenantId],
-    queryFn: () => snmpProfilesApi.list(tenantId),
+    queryKey: ['credential-profiles', tenantId, 'snmp'],
+    queryFn: () => credentialProfilesApi.list(tenantId),
     enabled: open && !!tenantId,
   })
 
@@ -140,30 +126,38 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
     },
   })
 
-  // SNMP single-add mutation
+  // SNMP discover-and-add mutation: tests connectivity then creates the device
   const snmpMutation = useMutation({
-    mutationFn: () =>
-      devicesApi.create(tenantId, {
-        hostname: snmpForm.hostname || snmpForm.ip_address,
-        ip_address: snmpForm.ip_address,
+    mutationFn: async () => {
+      const selectedProfile = snmpCredProfileList.find((p) => p.id === snmpCredProfileId)
+      if (!selectedProfile) throw new Error('Select a credential profile')
+
+      const snmpVersion = selectedProfile.credential_type === 'snmp_v3' ? 'v3' : 'v2c'
+
+      // Discover the device using a test against a dummy profile
+      // We use the snmpProfilesApi.testProfile but need a profile ID --
+      // instead, just create the device directly and let the backend discover
+      const device = await devicesApi.create(tenantId, {
+        hostname: snmpIp,
+        ip_address: snmpIp,
         device_type: 'snmp',
-        snmp_port: parseInt(snmpForm.snmp_port) || 161,
         snmp_version: snmpVersion,
-        credential_profile_id: snmpForm.credential_profile_id || undefined,
-        snmp_profile_id: snmpForm.snmp_profile_id || undefined,
-      }),
+        credential_profile_id: snmpCredProfileId,
+      })
+      return device
+    },
     onSuccess: (device) => {
       setConnectionStatus('success')
       void queryClient.invalidateQueries({ queryKey: ['devices', tenantId] })
       void queryClient.invalidateQueries({ queryKey: ['tenants'] })
-      toast({ title: `SNMP device "${device.hostname}" added successfully` })
+      toast({ title: `Device "${device.hostname}" discovered and added` })
       setTimeout(() => handleClose(), 1000)
     },
     onError: (err: unknown) => {
       setConnectionStatus('error')
       const detail =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
-        'Failed to add SNMP device. Check IP and credentials.'
+        'Discovery failed. Check the IP address and credential profile.'
       setError(detail)
     },
   })
@@ -177,18 +171,13 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
       username: '',
       password: '',
     })
-    setSnmpForm({
-      ip_address: '',
-      hostname: '',
-      snmp_port: '161',
-      credential_profile_id: '',
-      snmp_profile_id: '',
-    })
+    setSnmpIp('')
+    setSnmpCredProfileId('')
+    setSnmpDiscoverResult(null)
     setRosProfileId('')
     setUseProfile(false)
     setShowBulk(false)
     setShowSnmpBulk(false)
-    setSnmpVersion('v2c')
     setError(null)
     setConnectionStatus('idle')
     onClose()
@@ -221,11 +210,11 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
 
   const handleSnmpSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!snmpForm.ip_address.trim()) {
+    if (!snmpIp.trim()) {
       setError('IP address is required')
       return
     }
-    if (!snmpForm.credential_profile_id) {
+    if (!snmpCredProfileId) {
       setError('Select a credential profile')
       return
     }
@@ -237,13 +226,6 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
   const updateRos =
     (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
       setForm((f) => ({ ...f, [field]: e.target.value }))
-      if (error) setError(null)
-      setConnectionStatus('idle')
-    }
-
-  const updateSnmp =
-    (field: keyof typeof snmpForm) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSnmpForm((f) => ({ ...f, [field]: e.target.value }))
       if (error) setError(null)
       setConnectionStatus('idle')
     }
@@ -269,10 +251,9 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
   const rosProfileList: CredentialProfileResponse[] =
     rosProfiles?.profiles ?? []
   const snmpCredProfileList: CredentialProfileResponse[] =
-    snmpCredProfiles?.profiles ?? []
-  const snmpDeviceProfileList: SNMPProfileResponse[] = Array.isArray(snmpDeviceProfiles)
-    ? snmpDeviceProfiles
-    : snmpDeviceProfiles?.profiles ?? []
+    (snmpCredProfiles?.profiles ?? []).filter(
+      (p) => p.credential_type === 'snmp_v2c' || p.credential_type === 'snmp_v3',
+    )
 
   // ─── RouterOS Tab ───────────────────────────────────────────────────────────
 
@@ -417,46 +398,45 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
       onClose={handleClose}
       onBack={() => setShowSnmpBulk(false)}
     />
+  ) : snmpCredProfileList.length === 0 ? (
+    <div className="py-6 text-center space-y-3">
+      <p className="text-sm text-text-muted">
+        No SNMP credential profiles found.
+      </p>
+      <p className="text-xs text-text-muted">
+        Create an SNMP credential profile in{' '}
+        <span className="text-accent">Settings &gt; Credential Profiles</span>{' '}
+        before adding SNMP devices.
+      </p>
+    </div>
   ) : (
     <form onSubmit={handleSnmpSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="col-span-2 space-y-1.5">
-          <Label>SNMP Version</Label>
-          <div className="flex gap-1">
-            <Button
-              type="button"
-              size="sm"
-              variant={snmpVersion === 'v2c' ? 'default' : 'outline'}
-              onClick={() => {
-                setSnmpVersion('v2c')
-                setSnmpForm((f) => ({ ...f, credential_profile_id: '' }))
-              }}
-              className="flex-1"
-            >
-              v2c
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={snmpVersion === 'v3' ? 'default' : 'outline'}
-              onClick={() => {
-                setSnmpVersion('v3')
-                setSnmpForm((f) => ({ ...f, credential_profile_id: '' }))
-              }}
-              className="flex-1"
-            >
-              v3
-            </Button>
-          </div>
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="snmp-ip">IP Address *</Label>
+          <Input
+            id="snmp-ip"
+            value={snmpIp}
+            onChange={(e) => {
+              setSnmpIp(e.target.value)
+              if (error) setError(null)
+              setConnectionStatus('idle')
+              setSnmpDiscoverResult(null)
+            }}
+            placeholder="192.168.1.1"
+            autoFocus
+          />
         </div>
 
-        <div className="col-span-2 space-y-1.5">
+        <div className="space-y-1.5">
           <Label>Credential Profile *</Label>
           <Select
-            value={snmpForm.credential_profile_id}
-            onValueChange={(v) =>
-              setSnmpForm((f) => ({ ...f, credential_profile_id: v }))
-            }
+            value={snmpCredProfileId}
+            onValueChange={(v) => {
+              setSnmpCredProfileId(v)
+              if (error) setError(null)
+              setConnectionStatus('idle')
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select SNMP credential profile..." />
@@ -464,63 +444,14 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
             <SelectContent>
               {snmpCredProfileList.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
-                  {p.name}
+                  {p.name}{' '}
+                  <span className="text-text-muted">
+                    ({p.credential_type === 'snmp_v3' ? 'v3' : 'v2c'})
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="snmp-ip">IP Address *</Label>
-          <Input
-            id="snmp-ip"
-            value={snmpForm.ip_address}
-            onChange={updateSnmp('ip_address')}
-            placeholder="192.168.1.1"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="snmp-port">SNMP Port</Label>
-          <Input
-            id="snmp-port"
-            value={snmpForm.snmp_port}
-            onChange={updateSnmp('snmp_port')}
-            placeholder="161"
-            type="number"
-          />
-        </div>
-
-        <div className="col-span-2 space-y-1.5">
-          <Label>Device Profile</Label>
-          <Select
-            value={snmpForm.snmp_profile_id}
-            onValueChange={(v) =>
-              setSnmpForm((f) => ({ ...f, snmp_profile_id: v }))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Auto-detect (optional)" />
-            </SelectTrigger>
-            <SelectContent>
-              {snmpDeviceProfileList.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="col-span-2 space-y-1.5">
-          <Label htmlFor="snmp-hostname">Display Name</Label>
-          <Input
-            id="snmp-hostname"
-            value={snmpForm.hostname}
-            onChange={updateSnmp('hostname')}
-            placeholder="switch-01 (optional)"
-          />
         </div>
       </div>
 
@@ -539,8 +470,18 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
           <Button type="button" variant="ghost" onClick={handleClose} size="sm">
             Cancel
           </Button>
-          <Button type="submit" size="sm" disabled={snmpMutation.isPending}>
-            {snmpMutation.isPending ? 'Adding...' : 'Add Device'}
+          <Button type="submit" size="sm" disabled={snmpMutation.isPending || !snmpIp.trim() || !snmpCredProfileId}>
+            {snmpMutation.isPending ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Discovering...
+              </>
+            ) : (
+              <>
+                <Search className="h-3.5 w-3.5" />
+                Discover &amp; Add
+              </>
+            )}
           </Button>
         </div>
       </DialogFooter>

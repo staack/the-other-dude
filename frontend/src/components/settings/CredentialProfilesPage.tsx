@@ -33,7 +33,7 @@ interface CredentialProfilesPageProps {
 }
 
 type CredentialType = 'routeros' | 'snmp_v2c' | 'snmp_v3'
-type SecurityLevel = 'noAuthNoPriv' | 'authNoPriv' | 'authPriv'
+type SecurityLevel = 'no_auth_no_priv' | 'auth_no_priv' | 'auth_priv'
 
 const CREDENTIAL_TYPE_LABELS: Record<CredentialType, string> = {
   routeros: 'RouterOS',
@@ -42,13 +42,13 @@ const CREDENTIAL_TYPE_LABELS: Record<CredentialType, string> = {
 }
 
 const SECURITY_LEVELS: { value: SecurityLevel; label: string }[] = [
-  { value: 'noAuthNoPriv', label: 'No Auth, No Privacy' },
-  { value: 'authNoPriv', label: 'Auth, No Privacy' },
-  { value: 'authPriv', label: 'Auth + Privacy' },
+  { value: 'no_auth_no_priv', label: 'No Auth, No Privacy' },
+  { value: 'auth_no_priv', label: 'Auth, No Privacy' },
+  { value: 'auth_priv', label: 'Auth and Privacy' },
 ]
 
-const AUTH_PROTOCOLS = ['MD5', 'SHA', 'SHA256'] as const
-const PRIVACY_PROTOCOLS = ['DES', 'AES', 'AES256'] as const
+const AUTH_PROTOCOLS = ['SHA256', 'SHA384', 'SHA512'] as const
+const PRIVACY_PROTOCOLS = ['AES128', 'AES256'] as const
 
 // ─── Profile Card ───────────────────────────────────────────────────────────
 
@@ -234,7 +234,7 @@ export function CredentialProfilesPage({ tenantId }: CredentialProfilesPageProps
   // ─── Render ─────────────────────────────────────────────────────────────
 
   const credType = form.credential_type as CredentialType
-  const secLevel = (form.security_level ?? 'noAuthNoPriv') as SecurityLevel
+  const secLevel = (form.security_level ?? 'no_auth_no_priv') as SecurityLevel
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -413,7 +413,7 @@ export function CredentialProfilesPage({ tenantId }: CredentialProfilesPageProps
                 <div>
                   <Label className="text-xs">Security Level</Label>
                   <Select
-                    value={form.security_level ?? 'noAuthNoPriv'}
+                    value={form.security_level ?? 'no_auth_no_priv'}
                     onValueChange={(v) => updateForm({ security_level: v })}
                   >
                     <SelectTrigger className="mt-1">
@@ -429,13 +429,13 @@ export function CredentialProfilesPage({ tenantId }: CredentialProfilesPageProps
                   </Select>
                 </div>
 
-                {/* Auth fields (authNoPriv or authPriv) */}
-                {(secLevel === 'authNoPriv' || secLevel === 'authPriv') && (
+                {/* Auth fields (auth_no_priv or auth_priv) */}
+                {(secLevel === 'auth_no_priv' || secLevel === 'auth_priv') && (
                   <>
                     <div>
                       <Label className="text-xs">Auth Protocol</Label>
                       <Select
-                        value={form.auth_protocol ?? 'SHA'}
+                        value={form.auth_protocol ?? 'SHA256'}
                         onValueChange={(v) => updateForm({ auth_protocol: v })}
                       >
                         <SelectTrigger className="mt-1">
@@ -467,13 +467,13 @@ export function CredentialProfilesPage({ tenantId }: CredentialProfilesPageProps
                   </>
                 )}
 
-                {/* Privacy fields (authPriv only) */}
-                {secLevel === 'authPriv' && (
+                {/* Privacy fields (auth_priv only) */}
+                {secLevel === 'auth_priv' && (
                   <>
                     <div>
                       <Label className="text-xs">Privacy Protocol</Label>
                       <Select
-                        value={form.privacy_protocol ?? 'AES'}
+                        value={form.privacy_protocol ?? 'AES128'}
                         onValueChange={(v) => updateForm({ privacy_protocol: v })}
                       >
                         <SelectTrigger className="mt-1">

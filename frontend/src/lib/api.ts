@@ -551,6 +551,10 @@ export interface SNMPProfileResponse {
   description: string | null
   is_system: boolean
   profile_data: Record<string, unknown> | null
+  sys_object_id: string | null
+  vendor: string | null
+  category: string | null
+  tenant_id: string | null
   device_count: number
   created_at: string
   updated_at: string
