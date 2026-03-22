@@ -64,13 +64,20 @@ func NewSNMPCollector(
 func (c *SNMPCollector) Collect(ctx context.Context, dev store.Device, pub *bus.Publisher) error {
 	startTime := time.Now()
 
-	// Step 1: Validate profile.
-	if dev.SNMPProfileID == nil {
-		return fmt.Errorf("device %s: no SNMP profile assigned (SNMPProfileID is nil)", dev.ID)
+	// Step 1: Resolve profile. Fall back to generic-snmp if none assigned.
+	profileID := ""
+	if dev.SNMPProfileID != nil {
+		profileID = *dev.SNMPProfileID
+	} else {
+		profileID = c.profiles.GetGenericID()
+		if profileID == "" {
+			return fmt.Errorf("device %s: no SNMP profile assigned and no generic-snmp fallback found", dev.ID)
+		}
+		slog.Debug("using generic-snmp fallback profile", "device_id", dev.ID)
 	}
-	profile := c.profiles.Get(*dev.SNMPProfileID)
+	profile := c.profiles.Get(profileID)
 	if profile == nil {
-		return fmt.Errorf("device %s: SNMP profile not found for ID %s", dev.ID, *dev.SNMPProfileID)
+		return fmt.Errorf("device %s: SNMP profile not found for ID %s", dev.ID, profileID)
 	}
 
 	// Step 2: Get credentials.

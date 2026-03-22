@@ -154,6 +154,13 @@ func (c *ProfileCache) Get(profileID string) *CompiledProfile {
 	return c.profiles[profileID]
 }
 
+// GetGenericID returns the profile ID of the generic-snmp fallback profile.
+func (c *ProfileCache) GetGenericID() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.genericID
+}
+
 // MatchSysObjectID finds the best profile for a device's sysObjectID value
 // using longest-prefix matching. Returns the generic-snmp profile ID if
 // no vendor-specific prefix matches.
