@@ -5,7 +5,7 @@ import { useAuth, isSuperAdmin, isTenantAdmin } from '@/lib/auth'
 import { authApi } from '@/lib/api'
 import { getSMTPSettings, updateSMTPSettings, testSMTPSettings, clearWinboxSessions } from '@/lib/settingsApi'
 import { SMTP_PRESETS } from '@/lib/smtpPresets'
-import { User, Shield, Info, Key, Lock, ChevronRight, Download, Trash2, AlertTriangle, Mail, Monitor } from 'lucide-react'
+import { User, Shield, Info, Key, KeyRound, Lock, ChevronRight, Download, Trash2, AlertTriangle, Mail, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -144,6 +144,23 @@ export function SettingsPage() {
             <div>
               <span className="text-sm text-text-primary">API Keys</span>
               <p className="text-xs text-text-muted">Manage keys for programmatic access</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-text-muted group-hover:text-text-primary transition-colors" />
+          </Link>
+        </div>
+      )}
+
+      {/* Credential Profiles */}
+      {isTenantAdmin(user) && (
+        <div className="rounded-lg border border-border bg-panel px-4 py-3 space-y-1">
+          <SectionHeader icon={KeyRound} title="Device Credentials" />
+          <Link
+            to="/settings/credentials"
+            className="flex items-center justify-between py-2 px-1 rounded hover:bg-elevated/30 transition-colors group"
+          >
+            <div>
+              <span className="text-sm text-text-primary">Credential Profiles</span>
+              <p className="text-xs text-text-muted">Manage shared credentials for RouterOS and SNMP devices</p>
             </div>
             <ChevronRight className="h-4 w-4 text-text-muted group-hover:text-text-primary transition-colors" />
           </Link>
