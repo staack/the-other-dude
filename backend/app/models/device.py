@@ -99,9 +99,9 @@ class Device(Base):
     )
     snmp_port: Mapped[int | None] = mapped_column(Integer, default=161, nullable=True)
     snmp_version: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # FK enforced at DB level by migration 039; no ORM model for snmp_profiles
     snmp_profile_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("snmp_profiles.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
