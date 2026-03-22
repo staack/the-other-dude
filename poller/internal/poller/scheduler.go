@@ -87,10 +87,17 @@ func NewScheduler(
 		activeDevices:   make(map[string]*deviceState),
 	}
 
-	// Register built-in collectors. Future device types (SNMP) register here.
+	// Register built-in collectors.
 	s.collectors["routeros"] = NewRouterOSCollector(locker, credentialCache, connTimeout, cmdTimeout, lockTTL)
 
 	return s
+}
+
+// RegisterCollector adds a named Collector to the scheduler's dispatch map.
+// This allows external packages (e.g., SNMP) to register collectors without
+// modifying NewScheduler's parameter list.
+func (s *Scheduler) RegisterCollector(name string, c Collector) {
+	s.collectors[name] = c
 }
 
 // Run is the main scheduler loop. It:

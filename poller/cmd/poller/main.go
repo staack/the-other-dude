@@ -22,6 +22,7 @@ import (
 	"github.com/staack/the-other-dude/poller/internal/config"
 	"github.com/staack/the-other-dude/poller/internal/observability"
 	"github.com/staack/the-other-dude/poller/internal/poller"
+	"github.com/staack/the-other-dude/poller/internal/snmp"
 	"github.com/staack/the-other-dude/poller/internal/sshrelay"
 	"github.com/staack/the-other-dude/poller/internal/store"
 	"github.com/staack/the-other-dude/poller/internal/tunnel"
@@ -266,6 +267,33 @@ func main() {
 		baseBackoff,
 		maxBackoff,
 	)
+
+	// -----------------------------------------------------------------------
+	// Initialize SNMP components (profile cache, counter cache, collector)
+	// -----------------------------------------------------------------------
+	profileCache := snmp.NewProfileCache(deviceStore.Pool(), 5*time.Minute)
+	if err := profileCache.Load(ctx); err != nil {
+		slog.Warn("initial SNMP profile cache load failed (SNMP polling will start after first refresh)", "error", err)
+	}
+	go profileCache.StartRefresh(ctx)
+
+	counterCache := snmp.NewCounterCache(redisClient)
+
+	snmpCollector := snmp.NewSNMPCollector(profileCache, credentialCache, counterCache, snmp.DefaultSNMPConfig())
+	scheduler.RegisterCollector("snmp", snmpCollector)
+
+	slog.Info("SNMP collector registered",
+		"profile_refresh_interval", "5m",
+	)
+
+	// -----------------------------------------------------------------------
+	// Initialize SNMP discovery responder (NATS request-reply)
+	// -----------------------------------------------------------------------
+	discoveryResponder := bus.NewDiscoveryResponder(publisher.Conn())
+	if err := discoveryResponder.Start(); err != nil {
+		slog.Error("failed to start SNMP discovery responder", "error", err)
+	}
+	defer discoveryResponder.Stop()
 
 	slog.Info("starting device scheduler",
 		"poll_interval", pollInterval,
