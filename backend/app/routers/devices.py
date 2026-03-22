@@ -91,6 +91,7 @@ async def list_devices(
     sort_order: str = Query("desc", description="asc or desc"),
     site_id: Optional[uuid.UUID] = Query(None, description="Filter by site"),
     sector_id: Optional[uuid.UUID] = Query(None, description="Filter by sector"),
+    device_type: Optional[str] = Query(None, description="Filter by device type (routeros, snmp)"),
     current_user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> DeviceListResponse:
@@ -110,6 +111,7 @@ async def list_devices(
         sort_order=sort_order,
         site_id=site_id,
         sector_id=sector_id,
+        device_type=device_type,
     )
     return DeviceListResponse(items=items, total=total, page=page, page_size=page_size)
 
