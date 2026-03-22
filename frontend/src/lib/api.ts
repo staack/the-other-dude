@@ -1789,3 +1789,72 @@ export const alertEventsApi = {
     return data.count
   },
 }
+
+// ─── Credential Profiles ─────────────────────────────────────────────────────
+
+export interface CredentialProfileResponse {
+  id: string
+  name: string
+  description: string | null
+  credential_type: string // "routeros" | "snmp_v2c" | "snmp_v3"
+  device_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CredentialProfileListResponse {
+  profiles: CredentialProfileResponse[]
+}
+
+export interface CredentialProfileCreate {
+  name: string
+  description?: string
+  credential_type: string
+  username?: string
+  password?: string
+  community?: string
+  security_level?: string
+  auth_protocol?: string
+  auth_passphrase?: string
+  privacy_protocol?: string
+  privacy_passphrase?: string
+  security_name?: string
+}
+
+export const credentialProfilesApi = {
+  list: (tenantId: string, credentialType?: string) =>
+    api
+      .get<CredentialProfileListResponse>(
+        `/api/tenants/${tenantId}/credential-profiles`,
+        { params: credentialType ? { credential_type: credentialType } : undefined },
+      )
+      .then((r) => r.data),
+
+  get: (tenantId: string, profileId: string) =>
+    api
+      .get<CredentialProfileResponse>(
+        `/api/tenants/${tenantId}/credential-profiles/${profileId}`,
+      )
+      .then((r) => r.data),
+
+  create: (tenantId: string, data: CredentialProfileCreate) =>
+    api
+      .post<CredentialProfileResponse>(
+        `/api/tenants/${tenantId}/credential-profiles`,
+        data,
+      )
+      .then((r) => r.data),
+
+  update: (tenantId: string, profileId: string, data: Partial<CredentialProfileCreate>) =>
+    api
+      .put<CredentialProfileResponse>(
+        `/api/tenants/${tenantId}/credential-profiles/${profileId}`,
+        data,
+      )
+      .then((r) => r.data),
+
+  delete: (tenantId: string, profileId: string) =>
+    api
+      .delete(`/api/tenants/${tenantId}/credential-profiles/${profileId}`)
+      .then((r) => r.data),
+}
