@@ -163,7 +163,7 @@ func NewPublisher(natsURL string) (*Publisher, error) {
 		Name:     "WIRELESS_REGISTRATIONS",
 		Subjects: []string{"wireless.registrations.>"},
 		MaxAge:   30 * 24 * time.Hour,    // 30-day retention
-		MaxBytes: 256 * 1024 * 1024,      // 256MB cap
+		MaxBytes: 128 * 1024 * 1024,      // 128MB cap
 		Discard:  jetstream.DiscardOld,
 	})
 	if err != nil {

@@ -63,6 +63,7 @@ async def ensure_sse_streams() -> None:
                 name="ALERT_EVENTS",
                 subjects=["alert.fired.>", "alert.resolved.>"],
                 max_age=3600,  # 1 hour retention
+                max_bytes=16 * 1024 * 1024,  # 16MB cap
             )
         )
         logger.info("nats.stream.ensured", stream="ALERT_EVENTS")
@@ -72,6 +73,7 @@ async def ensure_sse_streams() -> None:
                 name="OPERATION_EVENTS",
                 subjects=["firmware.progress.>"],
                 max_age=3600,  # 1 hour retention
+                max_bytes=16 * 1024 * 1024,  # 16MB cap
             )
         )
         logger.info("nats.stream.ensured", stream="OPERATION_EVENTS")

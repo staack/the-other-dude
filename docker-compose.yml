@@ -70,10 +70,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 384M
     networks:
       - tod
 

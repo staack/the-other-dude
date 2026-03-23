@@ -9,7 +9,7 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `APP_NAME` | `TOD - The Other Dude` | Application display name |
-| `APP_VERSION` | `9.8.1` | Semantic version string (see VERSION file at project root) |
+| `APP_VERSION` | `9.8.2` | Semantic version string (see VERSION file at project root) |
 | `TOD_VERSION` | `latest` | Docker image tag for pre-built images (set by setup.py) |
 | `ENVIRONMENT` | `dev` | Runtime environment: `dev`, `staging`, or `production` |
 | `DEBUG` | `false` | Enable debug mode |
