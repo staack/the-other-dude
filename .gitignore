@@ -42,6 +42,9 @@ Thumbs.db
 # Helm local overrides (contain dev credentials)
 infrastructure/helm/values-local.yaml
 
+# Incident reports (internal)
+incidents/
+
 # Local-only planning and design docs
 .planning/
 .superpowers/
