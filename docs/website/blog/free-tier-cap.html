@@ -233,7 +233,11 @@
 
       <p><strong>No feature gating.</strong> The free version and the commercial version are the same binary. Same code, same features, same everything. There is no "TOD Pro" with extra tabs unlocked. There is no "upgrade to access wireless link discovery." If it's in the repo, you get it.</p>
 
-      <p><strong>No phone-home enforcement.</strong> There's no license server. There's no API call that checks how many devices you have against a cloud database. The cap is enforced locally in the device creation endpoint. If you remove it, that's between you and the license agreement.</p>
+      <p><strong>No phone-home enforcement.</strong> There's no license server. There's no API call that checks how many devices you have against a cloud database.</p>
+
+      <p><strong>And nothing is actually enforced yet.</strong> Going past 250 doesn't stop you doing anything. You can keep adding devices, and the app behaves exactly as it did before: nothing is refused, nothing is locked, no features switch off, polling doesn't degrade. The only thing that happens is that the device count on the About page turns red and says a commercial license is required. That's the whole mechanism. A number on a page.</p>
+
+      <p>If I add a real check later, it will live in the device creation endpoint, and it will be in the release notes before it ships &mdash; not a surprise in a point release. Either way, whether you're over the line is between you and the license agreement.</p>
 
       <p><strong>No tracking.</strong> I don't know how many devices you have. I don't know if you're over the limit. I don't want to know.</p>
 
