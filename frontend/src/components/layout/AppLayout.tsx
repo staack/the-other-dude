@@ -4,6 +4,7 @@ import { ShortcutsDialog } from './ShortcutsDialog'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { Toaster } from '@/components/ui/toast'
 import { useUIStore } from '@/lib/store'
+import { LicenseBanner } from '@/components/layout/LicenseBanner'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -25,6 +26,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       </a>
       <Sidebar />
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <LicenseBanner />
         <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto p-5">
           {children}
         </main>

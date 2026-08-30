@@ -51,9 +51,31 @@ export interface LicenseStatus {
   actual_devices: number
   over_limit: boolean
   tier: 'free' | 'commercial'
+  licensee: string | null
+  key_invalid: boolean
 }
 
 export async function getLicenseStatus(): Promise<LicenseStatus> {
   const res = await api.get('/api/settings/license')
+  return res.data
+}
+
+export interface LicenseActivation {
+  status: string
+  licensee: string
+  licensed_devices: number
+  issued: string
+  license_id: string
+}
+
+export async function activateLicense(
+  licenseKey: string,
+): Promise<LicenseActivation> {
+  const res = await api.post('/api/settings/license', { license_key: licenseKey })
+  return res.data
+}
+
+export async function removeLicense(): Promise<{ status: string }> {
+  const res = await api.delete('/api/settings/license')
   return res.data
 }

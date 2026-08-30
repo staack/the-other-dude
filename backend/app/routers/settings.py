@@ -8,12 +8,13 @@ import logging
 from typing import Optional
 
 import redis.asyncio as aioredis
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 
 from app.config import settings
 from app.database import AdminAsyncSessionLocal
+from app.license import LicenseError, verify_license_key
 from app.middleware.rbac import require_role
 from app.services.email_service import SMTPConfig, send_test_email, test_smtp_connection
 
@@ -183,6 +184,31 @@ async def clear_winbox_sessions(user=Depends(require_role("super_admin"))):
 # ---------------------------------------------------------------------------
 
 
+LICENSE_KEY_SETTING = "license_key"
+
+
+class LicenseKeyActivate(BaseModel):
+    license_key: str
+
+
+async def _active_license():
+    """Return the verified stored license, or None.
+
+    A stored key that no longer verifies (public key rotated, database edited)
+    is reported rather than raising, so the UI can say so plainly instead of
+    silently dropping the customer back to the free tier with no explanation.
+    """
+    stored = await _get_system_settings([LICENSE_KEY_SETTING])
+    raw = (stored.get(LICENSE_KEY_SETTING) or "").strip()
+    if not raw:
+        return None, False
+    try:
+        return verify_license_key(raw, settings.LICENSE_PUBLIC_KEY), False
+    except LicenseError as exc:
+        logger.warning("Stored license key failed verification: %s", exc)
+        return None, True
+
+
 @router.get("/license", summary="Get license status")
 async def get_license_status():
     """Return current license tier, device limit, and actual device count."""
@@ -190,10 +216,62 @@ async def get_license_status():
         result = await session.execute(text("SELECT count(*)::int FROM devices"))
         device_count = result.scalar() or 0
 
-    limit = settings.LICENSE_DEVICES
+    active, key_invalid = await _active_license()
+
+    if active:
+        limit = active.devices
+        tier = "commercial"
+        licensee = active.licensee
+    else:
+        limit = settings.LICENSE_DEVICES
+        tier = "commercial" if limit > 250 else "free"
+        licensee = None
+
     return {
         "licensed_devices": limit,
         "actual_devices": device_count,
         "over_limit": device_count > limit,
-        "tier": "commercial" if limit > 250 else "free",
+        "tier": tier,
+        "licensee": licensee,
+        "key_invalid": key_invalid,
     }
+
+
+@router.post("/license", summary="Activate a commercial license key")
+async def activate_license(
+    body: LicenseKeyActivate,
+    user=Depends(require_role("super_admin")),
+):
+    """Verify and store a pasted license key.
+
+    Verification is entirely local: the key is an Ed25519-signed blob checked
+    against the public key shipped with the application. No network call is
+    made, and nothing about the installation is reported anywhere.
+    """
+    try:
+        info = verify_license_key(body.license_key, settings.LICENSE_PUBLIC_KEY)
+    except LicenseError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    await _set_system_settings({LICENSE_KEY_SETTING: body.license_key.strip()}, str(user.user_id))
+    logger.info(
+        "License activated: licensee=%s devices=%s id=%s",
+        info.licensee,
+        info.devices,
+        info.license_id,
+    )
+    return {
+        "status": "ok",
+        "licensee": info.licensee,
+        "licensed_devices": info.devices,
+        "issued": info.issued,
+        "license_id": info.license_id,
+    }
+
+
+@router.delete("/license", summary="Remove the stored license key")
+async def remove_license(user=Depends(require_role("super_admin"))):
+    """Clear the stored key and fall back to the free tier."""
+    await _set_system_settings({LICENSE_KEY_SETTING: None}, str(user.user_id))
+    logger.info("License key removed")
+    return {"status": "ok"}

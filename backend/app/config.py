@@ -139,6 +139,11 @@ class Settings(BaseSettings):
     # Commercial license required above this limit.
     LICENSE_DEVICES: int = 250
 
+    # Ed25519 public key used to verify pasted commercial license keys.
+    # The matching private key is held by the maintainer and never ships.
+    # Overridable so a fork can sign its own keys.
+    LICENSE_PUBLIC_KEY: str = "0a70e7b9bde88fefb0e33e2eec8988427b3a489d5b999b2df6f3e966408ad54b"
+
     # MIB parser binary path (tod-mib-parser Go binary)
     MIB_PARSER_PATH: str = "/usr/local/bin/tod-mib-parser"
 
