@@ -5,7 +5,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { APP_VERSION } from '@/lib/version'
-import { BTC_ADDRESS } from '@/routes/_authenticated/about'
 
 // ── ANSI Art Content ────────────────────────────────────────────────────────
 // Each line is a tuple: [colorClass, text]
@@ -64,8 +63,6 @@ function buildNfoLines(): ArtLine[] {
     [accent, ''],
     [primary, '  CookyPuss'],
     [secondary, '  Built with AI assistance'],
-    [accent, ''],
-    [dim, `  BTC: ${BTC_ADDRESS}`],
     [accent, ''],
     [dim, `  ${bar}`],
     [accent, ''],
