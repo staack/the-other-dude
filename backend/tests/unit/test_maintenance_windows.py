@@ -119,8 +119,11 @@ class TestRouterRegistration:
             from app.main import app
         except ImportError:
             pytest.skip("app.main requires full dependencies (prometheus, etc.)")
-        route_paths = [r.path for r in app.routes]
-        route_paths_str = " ".join(route_paths)
+        # Read the paths off the OpenAPI schema rather than app.routes: since
+        # FastAPI 0.141 an included router is a _IncludedRouter with no .path,
+        # so introspecting app.routes raises AttributeError. The schema is the
+        # public surface and is what this test actually cares about.
+        route_paths_str = " ".join(app.openapi()["paths"])
         assert "maintenance-windows" in route_paths_str
 
 
