@@ -12,6 +12,7 @@ import {
   Bell,
   Map,
   BarChart3,
+  Network,
   Terminal,
   FileCode,
   Download,
@@ -158,6 +159,7 @@ export function Sidebar() {
     ),
     { label: 'Traffic', href: '/traffic', icon: BarChart3 },
     { label: 'Map', href: '/map', icon: Map },
+    { label: 'Topology', href: '/topology', icon: Network },
   ]
 
   const actItems: NavItem[] = [
