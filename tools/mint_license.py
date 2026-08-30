@@ -46,7 +46,7 @@ device count will stop showing red.
 {key}
 
 Licensed to: {licensee}
-Devices: {devices:,}
+Devices: {devices}
 Issued: {issued}
 License ID: {license_id}
 
@@ -100,7 +100,14 @@ def init_signing_key(path: pathlib.Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--name", help="Licensee name, shown in the app")
-    parser.add_argument("--devices", type=int, help="Device limit this key grants (e.g. 2000)")
+    parser.add_argument(
+        "--devices", type=int, help="Device limit this key grants (e.g. 2000)"
+    )
+    parser.add_argument(
+        "--unlimited",
+        action="store_true",
+        help="Issue an unlimited license (the normal commercial key)",
+    )
     parser.add_argument("--id", help="License ID (default: auto-generated)")
     parser.add_argument(
         "--key-file",
@@ -108,30 +115,42 @@ def main() -> None:
         default=DEFAULT_KEY_FILE,
         help=f"Signing key path (default: {DEFAULT_KEY_FILE})",
     )
-    parser.add_argument("--init", action="store_true", help="Generate a new signing key and exit")
-    parser.add_argument("--key-only", action="store_true", help="Print just the key, no email body")
+    parser.add_argument(
+        "--init", action="store_true", help="Generate a new signing key and exit"
+    )
+    parser.add_argument(
+        "--key-only", action="store_true", help="Print just the key, no email body"
+    )
     args = parser.parse_args()
 
     if args.init:
         init_signing_key(args.key_file)
         return
 
-    if not args.name or not args.devices:
-        parser.error("--name and --devices are required (or use --init)")
-    if args.devices < 1:
+    if not args.name:
+        parser.error("--name is required (or use --init)")
+    if args.unlimited and args.devices:
+        parser.error("use either --unlimited or --devices, not both")
+    if not args.unlimited and not args.devices:
+        parser.error("pass --unlimited for a standard commercial key, or --devices N")
+    if args.devices is not None and args.devices < 1:
         parser.error("--devices must be at least 1")
+
+    devices = None if args.unlimited else args.devices
 
     private_key = load_signing_key(args.key_file)
     issued = datetime.date.today().isoformat()
-    license_id = args.id or f"TOD-{issued.replace('-', '')}-{secrets.token_hex(2).upper()}"
+    license_id = (
+        args.id or f"TOD-{issued.replace('-', '')}-{secrets.token_hex(2).upper()}"
+    )
 
-    payload = build_payload(args.name, args.devices, issued, license_id)
+    payload = build_payload(args.name, devices, issued, license_id)
     key = format_key(payload, private_key.sign(payload))
 
     # Never hand out a key without proving it verifies against the public key
     # the application will actually use.
     info = verify_license_key(key, public_key_hex(private_key))
-    assert info.licensee == args.name and info.devices == args.devices
+    assert info.licensee == args.name and info.devices == devices
 
     if args.key_only:
         print(key)
@@ -141,7 +160,7 @@ def main() -> None:
         EMAIL_TEMPLATE.format(
             key=key,
             licensee=info.licensee,
-            devices=info.devices,
+            devices="Unlimited" if info.is_unlimited else f"{info.devices:,}",
             issued=info.issued,
             license_id=info.license_id,
         )

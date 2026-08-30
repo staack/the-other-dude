@@ -219,7 +219,7 @@ async def get_license_status():
     active, key_invalid = await _active_license()
 
     if active:
-        limit = active.devices
+        limit = active.devices  # None means unlimited
         tier = "commercial"
         licensee = active.licensee
     else:
@@ -230,7 +230,8 @@ async def get_license_status():
     return {
         "licensed_devices": limit,
         "actual_devices": device_count,
-        "over_limit": device_count > limit,
+        "over_limit": False if limit is None else device_count > limit,
+        "unlimited": limit is None,
         "tier": tier,
         "licensee": licensee,
         "key_invalid": key_invalid,
@@ -264,6 +265,7 @@ async def activate_license(
         "status": "ok",
         "licensee": info.licensee,
         "licensed_devices": info.devices,
+        "unlimited": info.is_unlimited,
         "issued": info.issued,
         "license_id": info.license_id,
     }

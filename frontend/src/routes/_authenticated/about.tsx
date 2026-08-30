@@ -555,7 +555,9 @@ function AboutPage() {
               {license.tier === 'commercial' ? 'Commercial License' : 'BSL 1.1 — Free Tier'}
             </span>
             <span className={`text-sm font-mono ${license.over_limit ? 'text-error' : 'text-text-secondary'}`}>
-              {license.actual_devices} / {license.licensed_devices} devices
+              {license.unlimited
+                ? `${license.actual_devices.toLocaleString()} devices · unlimited`
+                : `${license.actual_devices} / ${license.licensed_devices} devices`}
             </span>
           </div>
           {license.licensee && (

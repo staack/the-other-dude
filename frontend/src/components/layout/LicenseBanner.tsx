@@ -38,7 +38,9 @@ export function LicenseBanner() {
     retry: false,
   })
 
-  if (dismissed || !license?.over_limit) return null
+  // over_limit is never true for an unlimited license, but the null check
+  // keeps the render below honest for TypeScript.
+  if (dismissed || !license?.over_limit || license.licensed_devices === null) return null
 
   const dismiss = () => {
     try {

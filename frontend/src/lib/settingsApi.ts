@@ -47,9 +47,11 @@ export async function testSMTPSettings(data: {
 }
 
 export interface LicenseStatus {
-  licensed_devices: number
+  /** null when the license is unlimited */
+  licensed_devices: number | null
   actual_devices: number
   over_limit: boolean
+  unlimited: boolean
   tier: 'free' | 'commercial'
   licensee: string | null
   key_invalid: boolean
@@ -63,7 +65,8 @@ export async function getLicenseStatus(): Promise<LicenseStatus> {
 export interface LicenseActivation {
   status: string
   licensee: string
-  licensed_devices: number
+  licensed_devices: number | null
+  unlimited: boolean
   issued: string
   license_id: string
 }

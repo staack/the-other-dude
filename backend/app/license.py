@@ -40,12 +40,21 @@ class LicenseError(ValueError):
 
 @dataclass(frozen=True)
 class LicenseInfo:
-    """The verified contents of a license key."""
+    """The verified contents of a license key.
+
+    ``devices`` is None for an unlimited license, which is the normal shape of
+    a key sold at the flat commercial price. A number is only used for keys
+    deliberately capped below unlimited.
+    """
 
     licensee: str
-    devices: int
+    devices: int | None
     issued: str
     license_id: str
+
+    @property
+    def is_unlimited(self) -> bool:
+        return self.devices is None
 
 
 def _b64url_decode(segment: str) -> bytes:
@@ -62,7 +71,7 @@ def _b64url_encode(raw: bytes) -> str:
     return base64.urlsafe_b64encode(raw).decode().rstrip("=")
 
 
-def build_payload(licensee: str, devices: int, issued: str, license_id: str) -> bytes:
+def build_payload(licensee: str, devices: int | None, issued: str, license_id: str) -> bytes:
     """Serialize a payload deterministically.
 
     Signing and verification must agree byte for byte, so key order and
@@ -138,8 +147,14 @@ def verify_license_key(key: str, public_key_hex: str) -> LicenseInfo:
 
     if not isinstance(licensee, str) or not licensee.strip():
         raise LicenseError("License key is missing a licensee.")
+    # devices must be present and explicit: null means unlimited, a number
+    # means a cap. A missing field is a malformed key, not an implied default.
     # bool is a subclass of int; a payload of {"devices": true} must not pass.
-    if not isinstance(devices, int) or isinstance(devices, bool) or devices < 1:
+    if "devices" not in data:
+        raise LicenseError("License key has an invalid device count.")
+    if devices is not None and (
+        not isinstance(devices, int) or isinstance(devices, bool) or devices < 1
+    ):
         raise LicenseError("License key has an invalid device count.")
     if not isinstance(issued, str) or not issued:
         raise LicenseError("License key is missing an issue date.")

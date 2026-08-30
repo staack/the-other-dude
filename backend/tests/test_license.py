@@ -239,3 +239,57 @@ def test_license_writer_uses_the_user_id_attribute_that_exists():
     source = inspect.getsource(settings_router)
     assert "str(user.id)" not in source
     assert source.count("str(user.user_id)") >= 3
+
+
+# ---------------------------------------------------------------------------
+# Unlimited licenses — the shape sold at the flat commercial price
+# ---------------------------------------------------------------------------
+
+
+def test_unlimited_key_round_trips(signer):
+    private_key, public_hex = signer
+    info = verify_license_key(mint(private_key, devices=None), public_hex)
+
+    assert info.devices is None
+    assert info.is_unlimited is True
+    assert info.licensee == "Acme Networks"
+
+
+def test_capped_key_is_not_unlimited(signer):
+    private_key, public_hex = signer
+    info = verify_license_key(mint(private_key, devices=500), public_hex)
+
+    assert info.devices == 500
+    assert info.is_unlimited is False
+
+
+def test_payload_missing_the_devices_field_is_rejected(signer):
+    """Unlimited must be an explicit null, never an omitted field."""
+    private_key, public_hex = signer
+    payload = json.dumps(
+        {"licensee": "A", "issued": "2026-09-01", "id": "X"},
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode()
+
+    with pytest.raises(LicenseError, match="invalid device count"):
+        verify_license_key(format_key(payload, private_key.sign(payload)), public_hex)
+
+
+async def test_unlimited_license_is_never_over_limit(signer, monkeypatch):
+    from app.config import settings as app_settings
+    from app.routers import settings as settings_router
+
+    private_key, public_hex = signer
+    monkeypatch.setattr(app_settings, "LICENSE_PUBLIC_KEY", public_hex)
+
+    async def fake_get(_keys):
+        return {settings_router.LICENSE_KEY_SETTING: mint(private_key, devices=None)}
+
+    monkeypatch.setattr(settings_router, "_get_system_settings", fake_get)
+
+    info, key_invalid = await settings_router._active_license()
+
+    assert info is not None
+    assert info.is_unlimited is True
+    assert key_invalid is False
