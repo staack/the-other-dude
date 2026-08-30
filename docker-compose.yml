@@ -163,8 +163,8 @@ services:
     platform: linux/amd64
     container_name: tod_winbox_worker
     environment:
-      IDLE_TIMEOUT: 600
-      MAX_LIFETIME: 7200
+      IDLE_TIMEOUT_SECONDS: 600
+      MAX_LIFETIME_SECONDS: 7200
       MAX_CONCURRENT_SESSIONS: 10
       LOG_LEVEL: info
       XDG_RUNTIME_DIR: /run/user/1001
