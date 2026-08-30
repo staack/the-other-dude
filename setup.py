@@ -30,6 +30,7 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 # ── Constants ────────────────────────────────────────────────────────────────
@@ -552,6 +553,16 @@ def generate_encryption_key() -> str:
 
 def generate_db_password() -> str:
     return secrets.token_urlsafe(24)
+
+
+def _url_quote(secret: str) -> str:
+    """Percent-encode a secret for safe use in a connection URL's userinfo.
+
+    safe="" so that @ : / ? # & and friends are all encoded. quote() is used
+    rather than quote_plus() because a literal + in userinfo is a plus, not a
+    space — spaces must be %20.
+    """
+    return urllib.parse.quote(secret, safe="")
 
 
 def generate_admin_password() -> str:
@@ -1210,6 +1221,14 @@ def write_env_prod(config: dict) -> None:
     poll_pw = config["poller_user_password"]
     ts = datetime.datetime.now().isoformat(timespec="seconds")
 
+    # Passwords embedded in a connection URL must be percent-encoded, or a
+    # special character (notably @) is parsed as the userinfo/host separator
+    # and the connection fails. POSTGRES_PASSWORD below stays raw — Postgres
+    # itself takes the literal value, not a URL. See issue #2.
+    pg_pw_url = _url_quote(pg_pw)
+    app_pw_url = _url_quote(app_pw)
+    poll_pw_url = _url_quote(poll_pw)
+
     smtp_block = ""
     if config.get("smtp_configured"):
         smtp_block = f"""\
@@ -1239,10 +1258,10 @@ SMTP_FROM_ADDRESS=noreply@example.com"""
 POSTGRES_DB={db}
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD={pg_pw}
-DATABASE_URL=postgresql+asyncpg://postgres:{pg_pw}@postgres:5432/{db}
-SYNC_DATABASE_URL=postgresql+psycopg2://postgres:{pg_pw}@postgres:5432/{db}
-APP_USER_DATABASE_URL=postgresql+asyncpg://app_user:{app_pw}@postgres:5432/{db}
-POLLER_DATABASE_URL=postgres://poller_user:{poll_pw}@postgres:5432/{db}?sslmode=disable
+DATABASE_URL=postgresql+asyncpg://postgres:{pg_pw_url}@postgres:5432/{db}
+SYNC_DATABASE_URL=postgresql+psycopg2://postgres:{pg_pw_url}@postgres:5432/{db}
+APP_USER_DATABASE_URL=postgresql+asyncpg://app_user:{app_pw_url}@postgres:5432/{db}
+POLLER_DATABASE_URL=postgres://poller_user:{poll_pw_url}@postgres:5432/{db}?sslmode=disable
 
 # --- Security ---
 JWT_SECRET_KEY={config["jwt_secret"]}
