@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,9 +21,14 @@ type Config struct {
 	WSPortMax   int
 	IdleTimeout int // seconds
 	MaxLifetime int // seconds
+	// GracePeriod is how long a session survives with no attached xpra
+	// client before termination (design: 30s). Zero means the default.
+	GracePeriod time.Duration
 	WinBoxPath  string
 	BindAddr    string
 }
+
+const defaultGracePeriod = 30 * time.Second
 
 type Manager struct {
 	mu       sync.Mutex
@@ -32,14 +36,26 @@ type Manager struct {
 	displays *Pool
 	wsPorts  *Pool
 	cfg      Config
+
+	// Seams for tests; set once in NewManager, never mutated afterwards in
+	// production code (tests override them before any session exists).
+	startXpra   func(XpraConfig) (*XpraProc, error)
+	waitReady   func(ctx context.Context, bindAddr string, wsPort int, timeout time.Duration) error
+	queryStatus func(display int) XpraStatus
 }
 
 func NewManager(cfg Config) *Manager {
+	if cfg.GracePeriod <= 0 {
+		cfg.GracePeriod = defaultGracePeriod
+	}
 	return &Manager{
-		sessions: make(map[string]*Session),
-		displays: NewPool(cfg.DisplayMin, cfg.DisplayMax),
-		wsPorts:  NewPool(cfg.WSPortMin, cfg.WSPortMax),
-		cfg:      cfg,
+		sessions:    make(map[string]*Session),
+		displays:    NewPool(cfg.DisplayMin, cfg.DisplayMax),
+		wsPorts:     NewPool(cfg.WSPortMin, cfg.WSPortMax),
+		cfg:         cfg,
+		startXpra:   StartXpra,
+		waitReady:   WaitForXpraReady,
+		queryStatus: QueryXpraStatus,
 	}
 }
 
@@ -122,7 +138,7 @@ func (m *Manager) CreateSession(req CreateRequest) (*CreateResponse, error) {
 		TmpDir:     tmpDir,
 		WinBoxPath: m.cfg.WinBoxPath,
 	}
-	proc, err := StartXpra(xpraCfg)
+	proc, err := m.startXpra(xpraCfg)
 
 	// Zero credential copies (Go-side only; /proc and exec args are a known v1 limitation)
 	xpraCfg.Username = ""
@@ -137,16 +153,40 @@ func (m *Manager) CreateSession(req CreateRequest) (*CreateResponse, error) {
 
 	sess.mu.Lock()
 	sess.XpraPID = proc.Pid
+	sess.proc = proc
 	sess.mu.Unlock()
+
+	// From here on the child is guaranteed to be reaped (startReaped owns
+	// cmd.Wait), and any self-exit — crash, OOM kill, WinBox quitting under
+	// --exit-with-children — drives full session cleanup as an event instead
+	// of waiting for a poll cycle.
+	go m.watchProcessExit(workerID, proc)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := WaitForXpraReady(ctx, m.cfg.BindAddr, wsPort, 10*time.Second); err != nil {
-		m.terminateSession(workerID, "xpra not ready")
-		return nil, fmt.Errorf("xpra ready: %w", err)
+	readyCh := make(chan error, 1)
+	go func() { readyCh <- m.waitReady(ctx, m.cfg.BindAddr, wsPort, 10*time.Second) }()
+	select {
+	case err := <-readyCh:
+		if err != nil {
+			m.terminateSession(workerID, "xpra not ready")
+			return nil, fmt.Errorf("xpra ready: %w", err)
+		}
+	case <-proc.Done():
+		// Child died during startup; fail fast instead of dialing a dead
+		// port for the full timeout. The watcher goroutine handles cleanup;
+		// terminate here too (idempotent) so the failure path is not racy.
+		m.terminateSession(workerID, "xpra exited during startup")
+		return nil, fmt.Errorf("xpra exited during startup: %v", proc.ExitErr())
 	}
 
 	sess.mu.Lock()
+	if sess.State == StateTerminating || sess.State == StateTerminated {
+		// The exit watcher tore the session down while we were waiting for
+		// readiness; do not resurrect it.
+		sess.mu.Unlock()
+		return nil, fmt.Errorf("session terminated during startup")
+	}
 	sess.State = StateActive
 	createdAt := sess.CreatedAt
 	sess.mu.Unlock()
@@ -179,16 +219,21 @@ func (m *Manager) terminateSession(workerID string, reason string) error {
 		return nil
 	}
 	sess.State = StateTerminating
-	pid := sess.XpraPID
+	proc := sess.proc
 	tmpDir := sess.TmpDir
 	display := sess.Display
 	wsPort := sess.WSPort
+	if sess.graceTimer != nil {
+		sess.graceTimer.Stop()
+		sess.graceTimer = nil
+	}
+	sess.graceGen++ // invalidate any in-flight grace expiry
 	sess.mu.Unlock()
 
 	slog.Info("terminating session", "id", workerID, "reason", reason)
 
-	if pid > 0 {
-		KillXpraSession(pid)
+	if proc != nil {
+		KillXpraSession(proc)
 	}
 
 	if tmpDir != "" {
@@ -227,7 +272,7 @@ func (m *Manager) GetSession(workerID string) (*StatusResponse, error) {
 	createdAt := sess.CreatedAt
 	sess.mu.Unlock()
 
-	idleSec := QueryIdleTime(display)
+	idleSec := m.queryStatus(display).IdleSeconds
 
 	return &StatusResponse{
 		WorkerSessionID: id,
@@ -270,7 +315,7 @@ func (m *Manager) ListSessions() []StatusResponse {
 			Display:         info.display,
 			WSPort:          info.wsPort,
 			CreatedAt:       info.createdAt,
-			IdleSeconds:     QueryIdleTime(info.display),
+			IdleSeconds:     m.queryStatus(info.display).IdleSeconds,
 		})
 	}
 	return result
@@ -288,6 +333,107 @@ func (m *Manager) RunCleanupLoop(ctx context.Context) {
 			m.checkTimeouts()
 		}
 	}
+}
+
+// watchProcessExit runs once per launched xpra process. It blocks until the
+// reaper goroutine has collected the exit status, then tears the session down
+// unless an explicit termination already did (terminateSession's state guard
+// makes the race benign). This replaces the old kill(pid, 0) liveness probe as
+// the primary detector: signal 0 succeeds against a zombie, so the old probe
+// could never notice a self-exited child — and the explicit teardown path it
+// gated was the only place the child was ever waited on.
+func (m *Manager) watchProcessExit(workerID string, proc *XpraProc) {
+	<-proc.Done()
+
+	m.mu.Lock()
+	sess, ok := m.sessions[workerID]
+	m.mu.Unlock()
+	if !ok {
+		return
+	}
+
+	sess.mu.Lock()
+	state := sess.State
+	sess.mu.Unlock()
+	if state == StateTerminating || state == StateTerminated {
+		return // expected exit: explicit teardown is already handling it
+	}
+
+	slog.Warn("xpra process exited on its own", "id", workerID, "pid", proc.Pid, "err", proc.ExitErr())
+	m.terminateSession(workerID, "process_exit")
+}
+
+// enterGrace transitions Active -> Grace and arms the 30s expiry timer.
+func (m *Manager) enterGrace(id string, sess *Session) {
+	sess.mu.Lock()
+	if sess.State != StateActive {
+		sess.mu.Unlock()
+		return
+	}
+	sess.State = StateGrace
+	sess.graceStartedAt = time.Now()
+	sess.graceGen++
+	gen := sess.graceGen
+	sess.graceTimer = time.AfterFunc(m.cfg.GracePeriod, func() {
+		m.expireGrace(id, gen)
+	})
+	sess.mu.Unlock()
+	slog.Info("no xpra client attached, entering grace period",
+		"id", id, "grace", m.cfg.GracePeriod.String())
+}
+
+// cancelGrace transitions Grace -> Active (a client reconnected in time).
+func (m *Manager) cancelGrace(id string, sess *Session) {
+	sess.mu.Lock()
+	if sess.State != StateGrace {
+		sess.mu.Unlock()
+		return
+	}
+	sess.State = StateActive
+	sess.graceStartedAt = time.Time{}
+	sess.graceGen++ // invalidate the pending timer even if Stop loses the race
+	if sess.graceTimer != nil {
+		sess.graceTimer.Stop()
+		sess.graceTimer = nil
+	}
+	sess.mu.Unlock()
+	slog.Info("client reconnected, grace period cancelled", "id", id)
+}
+
+// expireGrace fires when the grace timer elapses. It re-queries xpra before
+// terminating because a client may have reconnected between poll ticks; the
+// generation check discards timers that lost a Stop() race or belong to an
+// earlier grace period.
+func (m *Manager) expireGrace(id string, gen uint64) {
+	m.mu.Lock()
+	sess, ok := m.sessions[id]
+	m.mu.Unlock()
+	if !ok {
+		return
+	}
+
+	sess.mu.Lock()
+	if sess.State != StateGrace || sess.graceGen != gen {
+		sess.mu.Unlock()
+		return
+	}
+	display := sess.Display
+	sess.mu.Unlock()
+
+	st := m.queryStatus(display)
+	if st.Clients > 0 {
+		m.cancelGrace(id, sess)
+		return
+	}
+	if st.Clients < 0 {
+		// Could not confirm the client is still gone; leave the session in
+		// grace. The poll loop terminates it once clients=0 is confirmed
+		// past the deadline, and a dead process is caught by the watcher.
+		slog.Warn("grace expiry: xpra status unknown, deferring to poll loop", "id", id)
+		return
+	}
+	slog.Info("grace period expired with no client", "id", id)
+	m.terminateSession(id, "grace_expired")
 }
 
 func (m *Manager) checkTimeouts() {
@@ -313,7 +459,8 @@ func (m *Manager) checkTimeouts() {
 		maxLifetime := sess.MaxLifetime
 		idleTimeout := sess.IdleTimeout
 		display := sess.Display
-		pid := sess.XpraPID
+		proc := sess.proc
+		graceStartedAt := sess.graceStartedAt
 		sess.mu.Unlock()
 
 		if state != StateActive && state != StateGrace {
@@ -326,19 +473,42 @@ func (m *Manager) checkTimeouts() {
 			continue
 		}
 
-		if pid > 0 {
-			proc, err := os.FindProcess(pid)
-			if err != nil || proc.Signal(syscall.Signal(0)) != nil {
-				slog.Info("xpra process dead", "id", id)
-				m.terminateSession(id, "worker_failure")
-				continue
-			}
+		// Backstop liveness check. proc.Done() closes only after the child
+		// has been reaped, so unlike kill(pid, 0) it cannot be fooled by a
+		// zombie. watchProcessExit normally fires first; this catches it if
+		// that goroutine is somehow delayed.
+		if proc != nil && proc.Exited() {
+			slog.Info("xpra process dead", "id", id)
+			m.terminateSession(id, "worker_failure")
+			continue
 		}
 
-		idleSec := QueryIdleTime(display)
-		if idleSec >= 0 && time.Duration(idleSec)*time.Second > idleTimeout {
-			slog.Info("session idle timeout", "id", id, "idle_seconds", idleSec)
-			m.terminateSession(id, "idle_timeout")
+		st := m.queryStatus(display)
+		switch {
+		case st.Clients < 0:
+			// Query failed (already logged and counted). Don't change state
+			// on unknown data.
+			continue
+
+		case st.Clients == 0:
+			// Disconnected. client.idle_time vanishes in this state, so
+			// clients= is the only reliable signal (verified on xpra 3.1.5).
+			if state == StateActive {
+				m.enterGrace(id, sess)
+			} else if !graceStartedAt.IsZero() && now.Sub(graceStartedAt) >= m.cfg.GracePeriod {
+				// Backstop for a lost/deferred grace timer.
+				slog.Info("grace period expired with no client", "id", id)
+				m.terminateSession(id, "grace_expired")
+			}
+
+		default: // clients attached
+			if state == StateGrace {
+				m.cancelGrace(id, sess)
+			}
+			if st.IdleSeconds >= 0 && time.Duration(st.IdleSeconds)*time.Second > idleTimeout {
+				slog.Info("session idle timeout", "id", id, "idle_seconds", st.IdleSeconds)
+				m.terminateSession(id, "idle_timeout")
+			}
 		}
 	}
 }

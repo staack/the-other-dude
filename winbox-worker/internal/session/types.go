@@ -31,6 +31,17 @@ type Session struct {
 	CreatedAt   time.Time     `json:"created_at"`
 	IdleTimeout time.Duration `json:"-"`
 	MaxLifetime time.Duration `json:"-"`
+
+	// proc is the reaped xpra process handle. Its Done() channel is the
+	// authoritative "the process tree leader has exited" signal.
+	proc *XpraProc
+
+	// Grace-period bookkeeping (all guarded by mu). graceGen is bumped on
+	// every grace enter/cancel so a stale AfterFunc that lost the race with
+	// Stop() cannot act on a newer grace period (ABA protection).
+	graceStartedAt time.Time
+	graceTimer     *time.Timer
+	graceGen       uint64
 }
 
 type CreateRequest struct {

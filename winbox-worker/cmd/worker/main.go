@@ -44,6 +44,7 @@ func main() {
 		WSPortMax:   10119,
 		IdleTimeout: envInt("IDLE_TIMEOUT_SECONDS", 600),
 		MaxLifetime: envInt("MAX_LIFETIME_SECONDS", 7200),
+		GracePeriod: time.Duration(envInt("DISCONNECT_GRACE_SECONDS", 30)) * time.Second,
 		WinBoxPath:  envStr("WINBOX_PATH", "/opt/winbox/WinBox"),
 		BindAddr:    envStr("BIND_ADDR", "0.0.0.0"),
 	}
@@ -117,10 +118,11 @@ func main() {
 
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{
-			"status":    "ok",
-			"sessions":  mgr.SessionCount(),
-			"capacity":  cfg.MaxSessions,
-			"available": cfg.MaxSessions - mgr.SessionCount(),
+			"status":              "ok",
+			"sessions":            mgr.SessionCount(),
+			"capacity":            cfg.MaxSessions,
+			"available":           cfg.MaxSessions - mgr.SessionCount(),
+			"xpra_query_failures": session.XpraQueryFailureCount(),
 		})
 	})
 
