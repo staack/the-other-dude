@@ -11,6 +11,7 @@ import {
   MapPin,
   Bell,
   Map,
+  BarChart3,
   Terminal,
   FileCode,
   Download,
@@ -155,6 +156,7 @@ export function Sidebar() {
       ? [{ label: 'Wireless', href: `/tenants/${user.tenant_id}/wireless-links`, icon: Wifi }]
       : [{ label: 'Wireless', href: '/wireless', icon: Wifi }]
     ),
+    { label: 'Traffic', href: '/traffic', icon: BarChart3 },
     { label: 'Map', href: '/map', icon: Map },
   ]
 
