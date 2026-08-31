@@ -1,18 +1,32 @@
-"""Two-phase config push with panic-revert safety for RouterOS devices.
+"""Two-phase config push with safe-mode rollback for RouterOS devices.
 
-This module implements the critical safety mechanism for config restoration:
+This module implements the safety mechanism for config restoration:
 
 Phase 1 — Push:
   1. Pre-backup (mandatory) — snapshot current config before any changes
-  2. Install panic-revert RouterOS scheduler — auto-reverts if device becomes
-     unreachable (the scheduler fires after 90s and loads the pre-push backup)
-  3. Push the target config via SSH /import
+  2. Save a binary backup to device flash as a manual restore point
+  3. Upload the target config and /import it inside a RouterOS safe-mode
+     session (see app/services/safe_mode.py)
 
-Phase 2 — Verification (60s settle window):
-  4. Wait 60s for config to settle (scheduled processes restart, etc.)
-  5. Reachability check via asyncssh
-  6a. Reachable — remove panic-revert scheduler; mark operation committed
-  6b. Unreachable — RouterOS is auto-reverting; mark operation reverted
+Phase 2 — Verification (settle window):
+  4. Wait for the config to settle (scheduled processes restart, etc.)
+  5. Reachability check on a NEW connection, independent of the safe-mode one
+  6a. Reachable — release safe mode, keeping the changes; mark committed
+  6b. Unreachable — drop the safe-mode session; RouterOS reverts by itself,
+      without rebooting; mark operation reverted
+
+Why safe mode and not a scheduler:
+  Earlier versions installed a RouterOS scheduler
+  (``start-time=startup interval=90s`` running ``/system backup load``) as the
+  "panic revert". Measured on real hardware, that scheduler fires on a lattice
+  anchored to device boot time, so the gap between installing it and its first
+  fire is whatever is left of the current 90-second slot — anywhere from a
+  moment to 90 seconds. The push flow waited 60 seconds before it even began
+  verifying, so it usually lost the race, and ``/system backup load`` reverts
+  *and reboots*. A completely successful push would reboot the customer's
+  router. Nothing in that mechanism ever checked reachability, despite the
+  comments and documentation claiming it did. Safe mode replaces it: it is
+  conditioned on the actual loss of the session, and it never reboots.
 
 Pitfall 6 handling:
   If the API pod restarts during the 60s window, the config_push_operations
@@ -38,13 +52,19 @@ from app.models.device import Device
 from app.services import backup_service, git_store
 from app.services.event_publisher import publish_event
 from app.services.push_tracker import record_push, clear_push
+from app.services.safe_mode import (
+    SAFE_MODE_USERNAME_SUFFIX,
+    SafeModeOverflowRisk,
+    SafeModeSession,
+)
 
 logger = logging.getLogger(__name__)
 
-# Name of the panic-revert scheduler installed on the RouterOS device
-_PANIC_REVERT_SCHEDULER = "the-other-dude-panic-revert"
-# Name of the pre-push binary backup saved on device flash
+# Name of the pre-push binary backup saved on device flash. This is a manual
+# restore point only — nothing on the device is armed to load it automatically.
 _PRE_PUSH_BACKUP = "portal-pre-push"
+# Seconds to let the pushed config settle before verifying reachability.
+_SETTLE_SECONDS = 60
 # Name of the RSC file used for /import on device
 _RESTORE_RSC = "portal-restore.rsc"
 
@@ -183,7 +203,8 @@ async def restore_config(
         device_id=device.id,
         tenant_id=device.tenant_id,
         pre_push_commit_sha=pre_backup_sha,
-        scheduler_name=_PANIC_REVERT_SCHEDULER,
+        # Retained for schema compatibility; no scheduler is installed any more.
+        scheduler_name=None,
         status="pending_verification",
     )
     db_session.add(push_op)
@@ -197,7 +218,7 @@ async def restore_config(
     )
 
     # ------------------------------------------------------------------
-    # Step 5: SSH to device — install panic-revert, push config
+    # Step 5: SSH to device — push config under safe mode
     # ------------------------------------------------------------------
     push_op_id_str = str(push_op_id)
     await _publish_push_progress(
@@ -205,12 +226,19 @@ async def restore_config(
     )
 
     logger.info(
-        "Pushing config to device %s (%s): installing panic-revert scheduler and uploading config",
+        "Pushing config to device %s (%s): uploading config and applying under safe mode",
         hostname,
         ip,
     )
 
     try:
+        # 5a: Create a binary backup on device flash as a manual restore point.
+        #     Nothing is armed against it: it exists so an operator can restore
+        #     by hand if they need to, not as an automatic trigger. The previous
+        #     implementation installed a RouterOS scheduler pointed at this
+        #     backup, which rebooted the device on a timer whether or not the
+        #     push had succeeded. See app/services/safe_mode.py for the
+        #     hardware measurements that condemned it.
         async with asyncssh.connect(
             ip,
             port=22,
@@ -219,71 +247,37 @@ async def restore_config(
             known_hosts=None,  # RouterOS self-signed host keys — see module docstring
             connect_timeout=30,
         ) as conn:
-            # 5a: Create binary backup on device as revert point
             await conn.run(
                 f"/system backup save name={_PRE_PUSH_BACKUP} dont-encrypt=yes",
                 check=True,
             )
             logger.debug("Pre-push binary backup saved on device as %s.backup", _PRE_PUSH_BACKUP)
 
-            # 5b: Install panic-revert RouterOS scheduler
-            # The scheduler fires after 90s on startup and loads the pre-push backup.
-            # This is the safety net: if the device becomes unreachable after push,
-            # RouterOS will auto-revert to the known-good config on the next reboot
-            # or after 90s of uptime.
-            await conn.run(
-                f"/system scheduler add "
-                f'name="{_PANIC_REVERT_SCHEDULER}" '
-                f"interval=90s "
-                f'on-event=":delay 0; /system backup load name={_PRE_PUSH_BACKUP}" '
-                f"start-time=startup",
-                check=True,
-            )
-            logger.debug("Panic-revert scheduler installed on device")
-
-            # 5c: Upload export.rsc and /import it
-            # Write the RSC content to the device filesystem via SSH exec,
-            # then use /import to apply it. The file is cleaned up after import.
-            # We use a here-doc approach: write content line-by-line via /file set.
-            # RouterOS supports writing files via /tool fetch or direct file commands.
-            # Simplest approach for large configs: use asyncssh's write_into to
-            # write file content, then /import.
-            #
-            # RouterOS doesn't support direct SFTP uploads via SSH open_sftp() easily
-            # for config files. Use the script approach instead:
-            # /system script add + run + remove (avoids flash write concerns).
-            #
-            # Actually the simplest method: write the export.rsc line by line via
-            # /file print / set commands is RouterOS 6 only and unreliable.
-            # Best approach for RouterOS 7: use SFTP to upload the file.
+            # 5b: Upload the .rsc. Writing a file is not a config action, so
+            #     doing it outside safe mode keeps the undo buffer for the
+            #     import itself.
             async with conn.start_sftp_client() as sftp:
                 async with sftp.open(_RESTORE_RSC, "wb") as f:
                     await f.write(export_text.encode("utf-8"))
             logger.debug("Uploaded %s to device flash", _RESTORE_RSC)
 
-            # /import the config file
-            import_result = await conn.run(
-                f"/import file={_RESTORE_RSC}",
-                check=False,  # Don't raise on non-zero exit — import may succeed with warnings
-            )
-            logger.info(
-                "Config import result for device %s: exit_status=%s stdout=%r",
-                hostname,
-                import_result.exit_status,
-                (import_result.stdout or "")[:200],
-            )
-
-            # Clean up the uploaded RSC file (best-effort)
-            try:
-                await conn.run(f"/file remove {_RESTORE_RSC}", check=True)
-            except Exception as cleanup_err:
-                logger.warning(
-                    "Failed to clean up %s from device %s: %s",
-                    _RESTORE_RSC,
-                    ip,
-                    cleanup_err,
-                )
-
+        # 5c: Apply the config inside a RouterOS safe-mode session.
+        #
+        #     This is the rollback. Safe mode reverts every change made in the
+        #     session if the session is lost, and keeps them only when we
+        #     explicitly release it. The event that would break the device —
+        #     the pushed config severing the management path — is the same
+        #     event that drops this session, so the guarantee is conditioned on
+        #     actual reachability rather than on a timer. It also does not
+        #     reboot the device.
+        safe_conn = await asyncssh.connect(
+            ip,
+            port=22,
+            username=ssh_username + SAFE_MODE_USERNAME_SUFFIX,
+            password=ssh_password,
+            known_hosts=None,
+            connect_timeout=30,
+        )
     except Exception as push_err:
         logger.error(
             "SSH push phase failed for device %s (%s): %s",
@@ -291,7 +285,6 @@ async def restore_config(
             ip,
             push_err,
         )
-        # Update push operation to failed
         await _update_push_op_status(push_op_id, "failed", db_session)
         await _publish_push_progress(
             tenant_id,
@@ -307,123 +300,159 @@ async def restore_config(
             "pre_backup_sha": pre_backup_sha,
         }
 
-    # Record push in Redis so the poller can detect post-push offline events
-    await record_push(
-        device_id=device_id,
-        tenant_id=tenant_id,
-        push_type="restore",
-        push_operation_id=push_op_id_str,
-        pre_push_commit_sha=pre_backup_sha,
-    )
-
-    # ------------------------------------------------------------------
-    # Step 6: Wait 60s for config to settle
-    # ------------------------------------------------------------------
-    await _publish_push_progress(
-        tenant_id,
-        device_id,
-        "settling",
-        f"Config pushed to {hostname} — waiting 60s for settle",
-        push_op_id=push_op_id_str,
-    )
-
-    logger.info(
-        "Config pushed to device %s — waiting 60s for config to settle",
-        hostname,
-    )
-    await asyncio.sleep(60)
-
-    # ------------------------------------------------------------------
-    # Step 7: Reachability check
-    # ------------------------------------------------------------------
-    await _publish_push_progress(
-        tenant_id,
-        device_id,
-        "verifying",
-        f"Verifying device {hostname} reachability",
-        push_op_id=push_op_id_str,
-    )
-
-    reachable = await _check_reachability(ip, ssh_username, ssh_password)
-
-    if reachable:
-        # ------------------------------------------------------------------
-        # Step 8a: Device is reachable — remove panic-revert scheduler + cleanup
-        # ------------------------------------------------------------------
-        logger.info("Device %s (%s) is reachable after push — committing", hostname, ip)
-        try:
-            async with asyncssh.connect(
-                ip,
-                port=22,
-                username=ssh_username,
-                password=ssh_password,
-                known_hosts=None,
-                connect_timeout=30,
-            ) as conn:
-                # Remove the panic-revert scheduler
-                await conn.run(
-                    f'/system scheduler remove "{_PANIC_REVERT_SCHEDULER}"',
-                    check=False,  # Non-fatal if already removed
+    committed = False
+    revert_reason: str | None = None
+    try:
+        async with SafeModeSession(safe_conn) as session:
+            try:
+                import_output = await session.import_rsc(export_text, filename=_RESTORE_RSC)
+            except SafeModeOverflowRisk as overflow_err:
+                # Too many actions for safe mode to undo. Leaving the block
+                # without committing drops the session, so nothing that was
+                # applied survives.
+                logger.error(
+                    "Refusing unprotected push to device %s (%s): %s",
+                    hostname,
+                    ip,
+                    overflow_err,
                 )
-                # Clean up the pre-push binary backup from device flash
-                await conn.run(
-                    f"/file remove {_PRE_PUSH_BACKUP}.backup",
-                    check=False,  # Non-fatal if already removed
+                await _update_push_op_status(push_op_id, "failed", db_session)
+                await _publish_push_progress(
+                    tenant_id,
+                    device_id,
+                    "failed",
+                    f"Config push refused for {hostname}: {overflow_err}",
+                    push_op_id=push_op_id_str,
+                    error=str(overflow_err),
                 )
-        except Exception as cleanup_err:
-            # Cleanup failure is non-fatal — scheduler will eventually fire but
-            # the backup is now the correct config, so it's acceptable.
-            logger.warning(
-                "Failed to clean up panic-revert scheduler/backup on device %s: %s",
+                return {
+                    "status": "failed",
+                    "message": str(overflow_err),
+                    "pre_backup_sha": pre_backup_sha,
+                }
+
+            logger.info(
+                "Config import result for device %s: %r",
                 hostname,
-                cleanup_err,
+                import_output[-200:],
             )
 
-        await _update_push_op_status(push_op_id, "committed", db_session)
+            # Record push in Redis so the poller can detect post-push offline events
+            await record_push(
+                device_id=device_id,
+                tenant_id=tenant_id,
+                push_type="restore",
+                push_operation_id=push_op_id_str,
+                pre_push_commit_sha=pre_backup_sha,
+            )
+
+            # --------------------------------------------------------------
+            # Step 6: Settle, then verify over an INDEPENDENT connection
+            # --------------------------------------------------------------
+            # The check must not reuse the safe-mode connection: that
+            # connection is already established, so it would keep reporting
+            # success even if the device had become unreachable to anything
+            # new. Dialling a fresh connection is what actually proves the
+            # management path still works.
+            await _publish_push_progress(
+                tenant_id,
+                device_id,
+                "settling",
+                f"Config pushed to {hostname} — waiting {_SETTLE_SECONDS}s for settle",
+                push_op_id=push_op_id_str,
+            )
+            await asyncio.sleep(_SETTLE_SECONDS)
+
+            await _publish_push_progress(
+                tenant_id,
+                device_id,
+                "verifying",
+                f"Verifying device {hostname} reachability",
+                push_op_id=push_op_id_str,
+            )
+            reachable = await _check_reachability(ip, ssh_username, ssh_password)
+
+            if reachable:
+                try:
+                    await session.commit()
+                    committed = True
+                except Exception as commit_err:
+                    # The safe-mode session died before we could release it.
+                    # RouterOS has already reverted; report that honestly
+                    # rather than claiming a commit that did not happen.
+                    revert_reason = f"safe-mode session lost before commit: {commit_err}"
+            else:
+                revert_reason = "device did not answer a new connection after the push"
+    except Exception as session_err:
+        revert_reason = f"safe-mode session failed: {session_err}"
+
+    if not committed:
+        # ------------------------------------------------------------------
+        # Reverted: the safe-mode session ended without a commit, so RouterOS
+        # restored the pre-push config by itself. No reboot was involved.
+        # ------------------------------------------------------------------
+        logger.warning(
+            "Config push to device %s (%s) was rolled back by RouterOS safe mode: %s",
+            hostname,
+            ip,
+            revert_reason,
+        )
+        await _update_push_op_status(push_op_id, "reverted", db_session)
         await clear_push(device_id)
         await _publish_push_progress(
             tenant_id,
             device_id,
-            "committed",
-            f"Config restored successfully on {hostname}",
-            push_op_id=push_op_id_str,
-        )
-
-        return {
-            "status": "committed",
-            "message": "Config restored successfully",
-            "pre_backup_sha": pre_backup_sha,
-        }
-
-    else:
-        # ------------------------------------------------------------------
-        # Step 8b: Device unreachable — RouterOS is auto-reverting via scheduler
-        # ------------------------------------------------------------------
-        logger.warning(
-            "Device %s (%s) is unreachable after push — RouterOS panic-revert scheduler "
-            "will auto-revert to %s.backup",
-            hostname,
-            ip,
-            _PRE_PUSH_BACKUP,
-        )
-
-        await _update_push_op_status(push_op_id, "reverted", db_session)
-        await _publish_push_progress(
-            tenant_id,
-            device_id,
             "reverted",
-            f"Device {hostname} unreachable — auto-reverting via panic-revert scheduler",
+            f"Config push to {hostname} rolled back automatically ({revert_reason})",
             push_op_id=push_op_id_str,
         )
-
         return {
             "status": "reverted",
             "message": (
-                "Device unreachable after push; RouterOS is auto-reverting "
-                "via panic-revert scheduler"
+                "Config push was rolled back automatically by RouterOS safe mode "
+                f"({revert_reason}). The device was not rebooted."
             ),
             "pre_backup_sha": pre_backup_sha,
         }
+
+    # ----------------------------------------------------------------------
+    # Committed: tidy up the files we left on device flash. Best-effort — a
+    # leftover file is inert, unlike the scheduler this replaced.
+    # ----------------------------------------------------------------------
+    logger.info("Device %s (%s) reachable after push — committed", hostname, ip)
+    try:
+        async with asyncssh.connect(
+            ip,
+            port=22,
+            username=ssh_username,
+            password=ssh_password,
+            known_hosts=None,
+            connect_timeout=30,
+        ) as conn:
+            await conn.run(f"/file remove {_RESTORE_RSC}", check=False)
+            await conn.run(f"/file remove {_PRE_PUSH_BACKUP}.backup", check=False)
+    except Exception as cleanup_err:
+        logger.warning(
+            "Failed to clean up push artefacts on device %s: %s",
+            hostname,
+            cleanup_err,
+        )
+
+    await _update_push_op_status(push_op_id, "committed", db_session)
+    await clear_push(device_id)
+    await _publish_push_progress(
+        tenant_id,
+        device_id,
+        "committed",
+        f"Config restored successfully on {hostname}",
+        push_op_id=push_op_id_str,
+    )
+
+    return {
+        "status": "committed",
+        "message": "Config restored successfully",
+        "pre_backup_sha": pre_backup_sha,
+    }
 
 
 async def _check_reachability(ip: str, username: str, password: str) -> bool:
@@ -434,7 +463,8 @@ async def _check_reachability(ip: str, username: str, password: str) -> bool:
 
     Uses asyncssh (not the poller's binary API) to avoid a circular import.
     A 30-second timeout is used — if the device doesn't respond within that
-    window, it's considered unreachable (panic-revert will handle it).
+    window, it's considered unreachable and the safe-mode session is dropped,
+    which makes RouterOS revert the push.
 
     Args:
         ip:       Device IP address.
@@ -489,7 +519,16 @@ async def _update_push_op_status(
 async def _remove_panic_scheduler(
     ip: str, username: str, password: str, scheduler_name: str
 ) -> bool:
-    """SSH to device and remove the panic-revert scheduler. Returns True if removed."""
+    """Remove a legacy panic-revert scheduler left behind by an older version.
+
+    No push installs a scheduler any more — safe mode replaced it. This exists
+    purely so that a device pushed to by a pre-safe-mode build, whose push
+    operation is still pending when this build starts up, gets disarmed rather
+    than left holding a timer that reboots it.
+
+    Returns:
+        True if a scheduler was found and removed, False otherwise.
+    """
     try:
         async with asyncssh.connect(
             ip,
@@ -575,29 +614,46 @@ async def recover_stale_push_operations(db_session: AsyncSession) -> None:
             reachable = await _check_reachability(device.ip_address, ssh_username, ssh_password)
 
             if reachable:
-                # Try to remove scheduler (if still there, push was good)
-                removed = await _remove_panic_scheduler(
-                    device.ip_address,
-                    ssh_username,
-                    ssh_password,
-                    op.scheduler_name,
-                )
-                if removed:
-                    logger.info("Recovery: committed op %s (scheduler removed)", op.id)
+                if op.scheduler_name:
+                    # Legacy op from a pre-safe-mode build: the device is still
+                    # holding a scheduler that will reboot it. Disarm it first —
+                    # this is the urgent part of recovery.
+                    removed = await _remove_panic_scheduler(
+                        device.ip_address,
+                        ssh_username,
+                        ssh_password,
+                        op.scheduler_name,
+                    )
+                    logger.info(
+                        "Recovery: op %s — legacy panic-revert scheduler %s",
+                        op.id,
+                        "removed" if removed else "already gone",
+                    )
+                    await _update_push_op_status(op.id, "committed", db_session)
+                    status, note = "committed", "Recovered after API restart"
                 else:
-                    # Scheduler already gone — device may have reverted
+                    # Safe-mode era. A push only reaches 'committed' by
+                    # explicitly releasing safe mode. This operation never got
+                    # that far, so whatever interrupted it also dropped the
+                    # safe-mode session, and RouterOS reverted the change. The
+                    # device being reachable now is consistent with that — it is
+                    # reachable on its ORIGINAL config.
                     logger.warning(
-                        "Recovery: op %s — scheduler gone, device may have reverted. "
-                        "Marking committed (device is reachable).",
+                        "Recovery: op %s was interrupted before commit — "
+                        "safe mode will have reverted the push",
                         op.id,
                     )
-                await _update_push_op_status(op.id, "committed", db_session)
+                    await _update_push_op_status(op.id, "reverted", db_session)
+                    status, note = (
+                        "reverted",
+                        "Push interrupted before commit — safe mode reverted it",
+                    )
 
                 await _publish_push_progress(
                     str(op.tenant_id),
                     str(op.device_id),
-                    "committed",
-                    "Recovered after API restart",
+                    status,
+                    note,
                     push_op_id=str(op.id),
                 )
             else:
