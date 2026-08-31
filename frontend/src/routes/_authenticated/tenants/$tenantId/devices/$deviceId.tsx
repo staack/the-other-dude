@@ -169,8 +169,8 @@ function EditDeviceDialog({
           <div className="border-t border-border pt-3">
             <p className="text-xs text-text-muted mb-2">GPS coordinates (optional)</p>
             <div className="grid grid-cols-2 gap-3">
-              {field('latitude', 'Latitude', form.latitude, (v) => setForm((f) => ({ ...f, latitude: v ? parseFloat(v) : undefined })), { type: 'number', placeholder: '0.000000' })}
-              {field('longitude', 'Longitude', form.longitude, (v) => setForm((f) => ({ ...f, longitude: v ? parseFloat(v) : undefined })), { type: 'number', placeholder: '0.000000' })}
+              {field('latitude', 'Latitude', form.latitude ?? undefined, (v) => setForm((f) => ({ ...f, latitude: v ? parseFloat(v) : undefined })), { type: 'number', placeholder: '0.000000' })}
+              {field('longitude', 'Longitude', form.longitude ?? undefined, (v) => setForm((f) => ({ ...f, longitude: v ? parseFloat(v) : undefined })), { type: 'number', placeholder: '0.000000' })}
             </div>
           </div>
 
@@ -325,10 +325,13 @@ function DeviceDetailPage() {
     enabled: isRouterOS,
   })
 
-  // True if a pre-restore backup was created within the last 30 minutes,
-  // indicating a config push just happened before the device went offline.
+  // True if a pre-push backup was created within the last 30 minutes,
+  // indicating a config push just happened. These are the same trigger types
+  // the emergency-rollback endpoint will look for, so the banner is only shown
+  // when that endpoint would actually find something to roll back to.
+  const ROLLBACKABLE_TRIGGERS = ['pre-restore', 'checkpoint', 'pre-template-push']
   const hasRecentPushAlert = isRouterOS && (backups?.some((b) => {
-    if (b.trigger_type !== 'pre-restore') return false
+    if (!ROLLBACKABLE_TRIGGERS.includes(b.trigger_type)) return false
     // created_at within last 30 minutes — compare timestamps without Date.now()
     const thirtyMinAgo = new Date()
     thirtyMinAgo.setMinutes(thirtyMinAgo.getMinutes() - 30)

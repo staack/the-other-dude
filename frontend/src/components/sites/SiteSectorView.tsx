@@ -9,6 +9,7 @@ import {
   type SectorResponse,
   type DeviceResponse,
   type LinkResponse,
+  type UserMe,
 } from '@/lib/api'
 import { useAuth, canWrite, canDelete } from '@/lib/auth'
 import { cn } from '@/lib/utils'
@@ -293,7 +294,7 @@ interface SectorSectionProps {
   linksByAP: Map<string, LinkResponse[]>
   stats: { clientCount: number; avgSignal: number | null; linkCount: number }
   allSectors: Array<{ id: string; name: string }>
-  user: ReturnType<typeof useAuth>['user']
+  user: UserMe | null
   onEdit: () => void
   onDelete: () => void
   onAssign: (deviceId: string, sectorId: string | null) => void
@@ -332,7 +333,7 @@ function SectorSection({
         </span>
 
         {!isUnassigned && sector.azimuth != null && (
-          <Badge variant="secondary" className="text-[10px]">
+          <Badge className="text-[10px]">
             {sector.azimuth}&deg;
           </Badge>
         )}
@@ -413,7 +414,7 @@ interface APCardProps {
   links: LinkResponse[]
   allSectors: Array<{ id: string; name: string }>
   currentSectorId: string | null
-  user: ReturnType<typeof useAuth>['user']
+  user: UserMe | null
   onAssign: (deviceId: string, sectorId: string | null) => void
 }
 

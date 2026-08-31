@@ -50,10 +50,12 @@ function TermsPage() {
             <h2 className="text-lg font-semibold text-text-primary">4. Device Management</h2>
             <p>
               The Software connects to MikroTik devices using the RouterOS API. Configuration
-              changes pushed through the portal use a two-phase commit with automatic rollback.
-              However, you acknowledge that managing network devices carries inherent risk, and
-              you are responsible for testing changes in a controlled environment before applying
-              them to production networks.
+              restores and template pushes are applied using RouterOS safe mode, which reverts
+              the change if the device stops responding. Other configuration changes, including
+              those made in the config editor, are applied directly and are not rolled back
+              automatically. You acknowledge that managing network devices carries inherent risk,
+              and you are responsible for testing changes in a controlled environment before
+              applying them to production networks.
             </p>
           </section>
 

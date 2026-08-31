@@ -166,13 +166,26 @@ Log in with the `FIRST_ADMIN_EMAIL` and `FIRST_ADMIN_PASSWORD` credentials set i
 
 ## Storage Configuration
 
-Docker volumes mount to the host filesystem. Default locations are configured in `docker-compose.yml`:
+Most state is bind-mounted to the host filesystem under `./docker-data/`. Default locations are configured in `docker-compose.yml`:
 
 - **PostgreSQL data**: `./docker-data/postgres`
 - **Redis data**: `./docker-data/redis`
 - **NATS data**: `./docker-data/nats`
 - **Git store (config backups)**: `./docker-data/git-store`
 - **Firmware cache**: `./docker-data/firmware-cache` (downloaded RouterOS firmware packages)
+
+There is one exception, and it matters more than the rest:
+
+- **OpenBao data**: the `openbao_data` **named Docker volume**, not a bind mount
+
+That volume holds the Transit encryption keys. Device credentials, credential
+profiles, config backup contents and audit log detail bodies are all stored as
+ciphertext that only those keys can open, and the keys cannot be exported
+through the Transit API — copying the storage is the only way to back them up.
+Because it is a named volume rather than a bind mount, **`docker compose down -v`
+and `docker volume prune` both destroy it** while leaving the database and the
+git store fully intact on disk and permanently unreadable. See
+[Data Loss Failure Modes](#data-loss-failure-modes).
 
 To change storage locations, edit the volume mounts in `docker-compose.yml`.
 
@@ -317,17 +330,118 @@ The API and poller export Prometheus metrics:
 
 ## Maintenance
 
-### Backup Strategy
+### Backup and Restore
 
-- **Database**: Use `pg_dump` or configure PostgreSQL streaming replication
-- **Config backups**: Git repositories in the git-store volume (automatic nightly backups)
-- **Encryption key**: Store `CREDENTIAL_ENCRYPTION_KEY` securely -- required to decrypt device credentials
+TOD's data lives in four places. A backup missing any one of them restores a
+portal that looks healthy and cannot read its own data:
+
+| What | Where | Lose it and |
+|------|-------|-------------|
+| Devices, users, license, backup timeline | PostgreSQL | Everything is gone |
+| Config backup **contents** | `./docker-data/git-store` | The timeline survives; every backup in it is unopenable. `config_backup_runs` stores only a commit SHA — the export.rsc and backup.bin are not in PostgreSQL |
+| Transit encryption keys | `openbao_data` volume | Credentials, config backup bodies and audit details are undecryptable ciphertext |
+| `BAO_UNSEAL_KEY`, `CREDENTIAL_ENCRYPTION_KEY` | `.env.prod` (gitignored, in no volume) | The OpenBao data above is a safe with no combination |
+
+Use the supplied scripts rather than a bare `pg_dump`, which captures only the
+first row of that table:
+
+```bash
+# Take a backup. Refuses rather than producing an archive it knows to be
+# unrestorable: aborts if OpenBao is sealed or unreachable, if BAO_UNSEAL_KEY
+# is missing, or if the database records config backups whose git store is not
+# there. Stops OpenBao briefly for a consistent copy of the key store.
+./scripts/backup.sh
+
+# Restore. Ends by Transit-decrypting a real device credential and a real
+# config backup body, and fails loudly if either cannot be read, rather than
+# reporting success on a restore that silently cannot decrypt anything.
+./scripts/restore.sh backups/tod-backup-YYYYmmdd-HHMMSS.tar.gz
+```
+
+The archive contains your unseal key and credential encryption key in
+cleartext. Anyone holding it can decrypt every device credential and config
+backup in it. Store it encrypted and off this host.
+
+Two things a restore does not bring back:
+
+- **WireGuard peer configuration** is regenerated from the database rather than
+  restored, and is only rewritten when a tenant's VPN settings are next saved.
+  Until then WireGuard serves whatever config was on the host.
+- **Redis contents** are not backed up at all. See below for what that costs.
+
+### Data Loss Failure Modes
+
+These lose data. They are listed here so an operator reads them rather than
+discovers them.
+
+| Failure | Effect | Prevention |
+|---------|--------|------------|
+| `docker compose down -v` | Destroys `openbao_data`. Every credential, config backup body and audit detail becomes permanently undecryptable — while the database and git store survive intact, so nothing looks broken until a device fails to poll. On the next start OpenBao initialises a **fresh** key set and the API begins returning 403s against the old token, which reads as a permissions problem rather than as data loss | Never use `-v` on a production stack. Take a backup first |
+| `docker volume prune` while the stack is down | Identical to the above, from a command whose purpose is to be safe | As above |
+| Losing `.env.prod` | OpenBao can never be unsealed again; the Transit keys are unrecoverable even with a perfect volume backup | `backup.sh` includes it. Store the archive off-host |
+| Backing up PostgreSQL only | Loses 100% of config backup contents, silently — the UI still lists every run | Use `backup.sh` |
+| Redis loss or wipe | Redis runs with stock settings: RDB snapshots, no AOF, so a crash loses the most recent writes. WinBox session registry, the recent-push tracker that drives rollback, and alert flap-detection windows are all Redis-only and are all rebuildable. **The JWT revocation list is not**: wiping Redis makes every revoked refresh token valid again for up to 7 days | Rotate `JWT_SECRET_KEY` after any unplanned Redis loss |
+| NATS JetStream retention | `DEVICE_EVENTS` is capped at 24h / 64MB with `DiscardOld`. An API outage that outlasts the backlog silently drops the oldest events while the poller reports success throughout. At roughly 20 devices, 64MB is on the order of ten hours | Restore API service within the retention window; raise `MaxBytes` for larger fleets |
+| Host disk loss | Everything, including `.env.prod` | Off-host backups |
+
+Gaps caused by the poller failing to deliver data — a NATS outage, a PostgreSQL
+outage, or the poller process dying — are **recorded** in the `ingest_gaps`
+table rather than silently absent. TOD does not attempt to recover the lost
+samples; it records that they are missing, with the interval and the reason.
+
+### Restart and Recovery Behaviour
+
+Every production service carries `restart: unless-stopped`, so the stack is
+configured to return on its own after a host reboot or a Docker daemon restart.
+A plain restart (`docker compose restart`, or `down` without `-v` followed by
+`up -d`) is not expected to lose committed data: devices, credentials, config
+snapshots and license state are all on disk.
+
+**Measured recovery time: 17 seconds.** Timed on a 10-container single-node
+install by restarting the Docker daemon, which is what a host reboot does to
+the stack:
+
+| | |
+|---|---|
+| Docker daemon responsive | +16s |
+| All containers running | +16s |
+| API `/health/ready` returning 200 | **+17s** |
+
+One case is much slower. If the NATS JetStream streams do not yet exist — a
+genuine first boot, or a start after `./docker-data/nats` has been lost — the
+API takes around **220 seconds** to begin serving. Roughly seven NATS
+subscribers each retry the missing stream six times at five-second intervals,
+sequentially, before giving up, and that happens during application startup
+before the API accepts any request. The streams are created by the poller, so
+this resolves itself once the poller has run; on an ordinary reboot the streams
+are already on disk and the 17-second figure applies.
+
+Before v10 the stack did not come back at all. `postgres` and `redis` carried
+no restart policy, so a daemon restart left them stopped along with everything
+that depends on them, and the API never returned. If you are running an older
+compose file, add `restart: unless-stopped` to both.
+
+`restart: on-failure` is **not** sufficient here, which is easy to get wrong. A
+daemon restart stops containers cleanly, so they exit 0, and `on-failure` only
+restarts a container that exited non-zero. Measured on the same host: with
+`on-failure`, postgres, redis, NATS, the API and the frontend all stayed down
+after a daemon restart. `unless-stopped` is the policy that returns.
+
+The poller reconnects to both NATS and PostgreSQL without intervention —
+unlimited reconnects with a 2s backoff for NATS, and a connection pool that
+re-dials PostgreSQL. Any interval during which it could not deliver what it
+collected is written to `ingest_gaps`, including the window it was not running
+at all, which it reconstructs on startup from the last heartbeat it wrote.
+
+`/health/ready` on the API and `/healthz` on the poller both report real
+dependency state and return 503 when PostgreSQL, Redis or NATS is unreachable.
+Neither returns a fixed value.
 
 ### Updating
 
 ```bash
-# Back up the database before upgrading
-docker compose exec postgres pg_dump -U postgres mikrotik > backup-$(date +%Y%m%d).sql
+# Back up before upgrading -- see Backup and Restore above
+./scripts/backup.sh
 
 git pull
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build api
@@ -337,6 +451,32 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.
 ```
 
 Database migrations run automatically on API startup via Alembic.
+
+### WinBox Binary Updates
+
+The WinBox binary used by the WinBox Worker is downloaded and checksum-verified **at image build time only** -- never at runtime. Its version and expected SHA256 are pinned as build args in `winbox-worker/Dockerfile`:
+
+```dockerfile
+ARG WINBOX_VERSION=4.0.1
+ARG WINBOX_SHA256=8ec2d08929fd434c4b88881f3354bdf60b057ecd2fb54961dd912df57e326a70
+```
+
+`docker build` downloads `https://download.mikrotik.com/routeros/winbox/${WINBOX_VERSION}/WinBox_Linux.zip` and runs `sha256sum -c` against the pinned hash before unzipping it into the image -- the build fails outright if the archive doesn't match. Nothing the worker container does at runtime touches the network for this; the binary that ships in the image is exactly the one that was built and scanned.
+
+**Automated updates.** `.github/workflows/winbox-version-check.yml` runs weekly (and on manual `workflow_dispatch`). It renders MikroTik's download page (`mikrotik.com/download/winbox` -- there is no version API or feed; MikroTik does not publish one, so this is real browser automation, not a JSON lookup), and if a newer release exists:
+
+1. Downloads that release's `WinBox_Linux.zip.sha256` (MikroTik publishes one alongside every download) and the archive itself, and verifies the archive matches the published checksum -- entirely independent of anything the Dockerfile does. A checksum mismatch aborts the run; no PR is opened for an archive this job couldn't verify itself.
+2. Bumps `WINBOX_VERSION` / `WINBOX_SHA256` in `winbox-worker/Dockerfile` and opens a pull request.
+
+**This PR does not merge itself.** It goes through the normal `ci.yml` pipeline like any other change: the `build` job builds the `winbox-worker` image with the new pin (which independently re-verifies the checksum via the Dockerfile's own `sha256sum -c`) and then runs `winbox-worker/scripts/smoke_test.sh` against the built image, which starts a real WinBox session and confirms the WinBox process is actually running inside the container -- not just that the image built. A version bump that breaks session startup fails that step and blocks the merge. A human still reviews and merges the PR.
+
+**Pinning a version by hand.** If you don't trust the automated pipeline, or want to hold back a release, disable or ignore `winbox-version-check.yml` and edit the two `ARG` lines in `winbox-worker/Dockerfile` yourself. To get the checksum for any WinBox release without running the pipeline:
+
+```bash
+curl -fsSL "https://download.mikrotik.com/routeros/winbox/<version>/WinBox_Linux.zip.sha256"
+```
+
+That prints a single `<sha256>  WinBox_Linux.zip` line straight from MikroTik -- paste the hash into `WINBOX_SHA256` and the version into `WINBOX_VERSION`, then rebuild the `winbox-worker` image. The Dockerfile's own build-time verification catches a typo or a stale hash either way.
 
 ### Logs
 

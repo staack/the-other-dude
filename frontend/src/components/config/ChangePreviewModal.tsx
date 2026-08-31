@@ -1,8 +1,8 @@
 /**
  * ChangePreviewModal — Preview pending config changes before execution.
  *
- * Standard Apply mode: numbered list of human-readable change descriptions.
- * Safe Apply (with auto-revert) mode: generated RSC script in a monospace code block.
+ * Apply Now mode: numbered list of human-readable change descriptions.
+ * Review Changes mode: generated RSC script in a monospace code block.
  */
 
 import {
@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, Zap, ShieldCheck } from 'lucide-react'
 import type { ApplyMode, ConfigChange } from '@/lib/configPanelTypes'
-import { describeChanges, generateRscScript } from '@/lib/configPanelTypes'
+import { generateRscScript } from '@/lib/configPanelTypes'
 
 interface ChangePreviewModalProps {
   open: boolean
@@ -29,8 +29,8 @@ interface ChangePreviewModalProps {
 }
 
 const WARNINGS: Record<ApplyMode, string> = {
-  quick: 'These changes will be applied immediately without rollback capability.',
-  safe: 'This RSC script will be executed on the device.',
+  quick: 'These changes will be applied immediately. They cannot be rolled back automatically.',
+  safe: 'These commands will be executed on the device. They cannot be rolled back automatically -- review them before confirming.',
 }
 
 export function ChangePreviewModal({
@@ -57,7 +57,7 @@ export function ChangePreviewModal({
             ) : (
               <Badge className="gap-1 bg-accent/20 text-accent border-accent/40">
                 <ShieldCheck className="h-3 w-3" />
-                Safe (auto-revert)
+                Reviewed
               </Badge>
             )}
           </DialogTitle>
@@ -108,15 +108,14 @@ export function ChangePreviewModal({
 // ---------------------------------------------------------------------------
 
 function QuickPreview({ changes }: { changes: ConfigChange[] }) {
-  const descriptions = describeChanges(changes)
   return (
     <ol className="space-y-1.5 text-sm text-text-primary">
-      {descriptions.map((desc, i) => (
+      {changes.map((change, i) => (
         <li key={i} className="flex gap-2">
           <span className="text-text-secondary font-mono shrink-0 w-5 text-right">
             {i + 1}.
           </span>
-          <span>{changes[i].description}</span>
+          <span>{change.description}</span>
         </li>
       ))}
     </ol>

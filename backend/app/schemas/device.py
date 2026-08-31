@@ -7,6 +7,24 @@ from typing import Optional
 from pydantic import BaseModel, field_validator, model_validator
 
 
+# How the poller is allowed to reach a RouterOS device. This is not cosmetic:
+# "auto" tries CA-verified then insecure TLS on api_ssl_port and deliberately
+# does NOT fall back to plain text, so "plain" is the only mode that ever uses
+# api_port. Adopting a plain-API device without saying so leaves it unpollable.
+ALLOWED_TLS_MODES = {"auto", "insecure", "plain", "portal_ca"}
+
+
+def _validate_tls_mode(v: Optional[str]) -> Optional[str]:
+    """Shared validator body -- keeps the allowed set in one place."""
+    if v is None:
+        return v
+    if v not in ALLOWED_TLS_MODES:
+        raise ValueError(
+            f"tls_mode must be one of: {', '.join(sorted(ALLOWED_TLS_MODES))}"
+        )
+    return v
+
+
 # ---------------------------------------------------------------------------
 # Device schemas
 # ---------------------------------------------------------------------------
@@ -29,6 +47,14 @@ class DeviceCreate(BaseModel):
     snmp_profile_id: Optional[str] = None
     credential_profile_id: Optional[str] = None
     community: Optional[str] = None  # inline v2c community string
+    # How the poller may reach this device. create_device reads this
+    # unconditionally, so it has to exist here, not only on DeviceUpdate.
+    tls_mode: Optional[str] = None
+
+    @field_validator("tls_mode")
+    @classmethod
+    def validate_tls_mode(cls, v: Optional[str]) -> Optional[str]:
+        return _validate_tls_mode(v)
 
     @field_validator("device_type")
     @classmethod
@@ -80,12 +106,7 @@ class DeviceUpdate(BaseModel):
     @classmethod
     def validate_tls_mode(cls, v: Optional[str]) -> Optional[str]:
         """Validate tls_mode is one of the allowed values."""
-        if v is None:
-            return v
-        allowed = {"auto", "insecure", "plain", "portal_ca"}
-        if v not in allowed:
-            raise ValueError(f"tls_mode must be one of: {', '.join(sorted(allowed))}")
-        return v
+        return _validate_tls_mode(v)
 
     @field_validator("snmp_version")
     @classmethod
@@ -226,6 +247,12 @@ class BulkDeviceAdd(BaseModel):
     api_ssl_port: int = 8729
     username: Optional[str] = None
     password: Optional[str] = None
+    tls_mode: Optional[str] = None
+
+    @field_validator("tls_mode")
+    @classmethod
+    def validate_tls_mode(cls, v: Optional[str]) -> Optional[str]:
+        return _validate_tls_mode(v)
 
 
 class BulkAddRequest(BaseModel):
@@ -233,12 +260,27 @@ class BulkAddRequest(BaseModel):
     Bulk-add devices selected from a scan result.
 
     shared_username / shared_password are used for all devices that do not
-    provide their own credentials.
+    provide their own credentials. tls_mode works the same way: a per-device
+    value wins, then the shared value, then "auto".
     """
 
     devices: list[BulkDeviceAdd]
     shared_username: Optional[str] = None
     shared_password: Optional[str] = None
+    tls_mode: Optional[str] = None
+
+    @field_validator("tls_mode")
+    @classmethod
+    def validate_tls_mode(cls, v: Optional[str]) -> Optional[str]:
+        return _validate_tls_mode(v)
+
+    def tls_mode_for(self, entry: BulkDeviceAdd) -> str:
+        """Resolve the connection mode for one entry.
+
+        Defaults to "auto" rather than "plain": adoption must never silently
+        produce a plain-text device without an explicit opt-in.
+        """
+        return entry.tls_mode or self.tls_mode or "auto"
 
 
 class BulkAddResult(BaseModel):
@@ -409,3 +451,39 @@ class DeviceTagResponse(BaseModel):
     color: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+class DeviceConnectionTestResponse(BaseModel):
+    """Result of a live connectivity probe against a device.
+
+    Always returned with HTTP 200 when the probe ran: a device that cannot be
+    reached is a successful test with a negative result, not a failed request.
+    Callers branch on ``ok`` and ``reason``, and show ``message`` to the user.
+    """
+
+    ok: bool
+    # How far the handshake got: "tcp", "tls", "login", "query", "done".
+    stage: str
+    # Stable classification: "ok", "unreachable", "timeout",
+    # "tls_cipher_mismatch", "tls_cert_untrusted", "tls_error", "auth_failed",
+    # "protocol_error", "unknown", "probe_unavailable".
+    reason: str
+    # Human-readable explanation, safe to display verbatim.
+    message: str
+    # Raw underlying error, for operators and support. May be null.
+    detail: Optional[str] = None
+    # The TLS mode the probe used.
+    tls_mode: str
+    # A mode that was *verified* to work when the configured one did not.
+    # Populated only when the probe actually confirmed it, so it is a tested
+    # recommendation rather than a guess.
+    suggested_tls_mode: Optional[str] = None
+    # Device identity, populated only on success.
+    identity: Optional[str] = None
+    version: Optional[str] = None
+    board_name: Optional[str] = None
+    elapsed_ms: int = 0
+    # False when the poller could not be reached, so no verdict was possible.
+    # Distinguishes "the device is broken" from "we could not ask".
+    probe_available: bool = True
+    checked_at: datetime

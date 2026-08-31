@@ -16,6 +16,7 @@ services:
   postgres:
     image: timescale/timescaledb:2.17.2-pg17
     container_name: tod_postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-tod}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -40,6 +41,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: tod_redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
@@ -88,7 +90,11 @@ services:
         bao server -config=/etc/openbao/config.hcl &
         BAO_PID=$$!
         sleep 2
-        /init/init.sh
+        if ! /init/init.sh; then
+          echo "OpenBao startup refused - see the message above. Not serving." >&2
+          kill $$BAO_PID 2>/dev/null || true
+          exit 1
+        fi
         wait $$BAO_PID
     environment:
       BAO_ADDR: "http://127.0.0.1:8200"
@@ -162,9 +168,13 @@ services:
       context: ./winbox-worker
     platform: linux/amd64
     container_name: tod_winbox_worker
+    restart: unless-stopped
+    # PID-1 init so orphaned session processes (Xvfb after an xpra crash)
+    # are reaped; the worker also sweeps zombies itself as a fallback.
+    init: true
     environment:
-      IDLE_TIMEOUT: 600
-      MAX_LIFETIME: 7200
+      IDLE_TIMEOUT_SECONDS: 600
+      MAX_LIFETIME_SECONDS: 7200
       MAX_CONCURRENT_SESSIONS: 10
       LOG_LEVEL: info
       XDG_RUNTIME_DIR: /run/user/1001

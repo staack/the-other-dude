@@ -1,0 +1,8 @@
+# Runtime deps for the WinBox auto-update pipeline (.github/workflows/winbox-version-check.yml).
+# `playwright` needs its browser binary installed separately:
+#   playwright install --with-deps chromium
+playwright>=1.55,<2
+requests>=2.32,<3
+
+# Dev/test only
+pytest>=8.3,<9

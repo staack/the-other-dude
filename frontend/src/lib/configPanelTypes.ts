@@ -9,7 +9,7 @@
 // Core Types
 // ---------------------------------------------------------------------------
 
-/** Apply mode: 'quick' (Standard Apply) executes add/set/remove directly; 'safe' (Safe Apply with auto-revert) generates an RSC script */
+/** Apply mode: 'quick' (Apply Now) executes add/set/remove directly; 'safe' (Review Changes) shows the equivalent RSC script first. Neither reverts automatically. */
 export type ApplyMode = 'quick' | 'safe'
 
 /** A single pending configuration change to be previewed and applied */

@@ -278,63 +278,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         )
 
     # Start Remote WinBox session reconciliation loop (60s interval).
-    # Detects orphaned sessions (worker lost them) and cleans up Redis + tunnels.
+    # Sweeps both directions: Redis records the worker has lost, and worker sessions
+    # no Redis record accounts for (the leak that pins a concurrency slot and an
+    # authenticated tunnel to a customer router).
     winbox_reconcile_task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
     try:
-        from app.routers.winbox_remote import _get_redis as _wb_get_redis, _close_tunnel
-        from app.services.winbox_remote import get_session as _wb_worker_get
-
-        async def _winbox_reconcile_loop() -> None:
-            """Scan Redis for winbox-remote:* keys and reconcile with worker."""
-            import json as _json
-
-            while True:
-                try:
-                    await asyncio.sleep(60)
-                    rd = await _wb_get_redis()
-                    cursor = "0"
-                    while True:
-                        cursor, keys = await rd.scan(
-                            cursor=cursor, match="winbox-remote:*", count=100
-                        )
-                        for key in keys:
-                            raw = await rd.get(key)
-                            if raw is None:
-                                continue
-                            try:
-                                sess = _json.loads(raw)
-                            except Exception:
-                                await rd.delete(key)
-                                continue
-
-                            sess_status = sess.get("status")
-                            if sess_status not in ("creating", "active", "grace"):
-                                continue
-
-                            session_id = sess.get("session_id")
-                            if not session_id:
-                                await rd.delete(key)
-                                continue
-
-                            # Health-check against worker
-                            worker_info = await _wb_worker_get(session_id)
-                            if worker_info is None:
-                                # Worker lost the session — clean up
-                                logger.warning(
-                                    "reconcile: worker lost session %s, cleaning up",
-                                    session_id,
-                                )
-                                tunnel_id = sess.get("tunnel_id")
-                                if tunnel_id:
-                                    await _close_tunnel(tunnel_id)
-                                await rd.delete(key)
-
-                        if cursor == "0" or cursor == 0:
-                            break
-                except asyncio.CancelledError:
-                    break
-                except Exception as exc:
-                    logger.warning("winbox reconcile loop error: %s", exc)
+        from app.services.winbox_reconcile import reconcile_loop as _winbox_reconcile_loop
 
         winbox_reconcile_task = asyncio.create_task(_winbox_reconcile_loop())
     except Exception as exc:
@@ -469,6 +418,12 @@ def create_app() -> FastAPI:
     from app.routers.sectors import router as sectors_router
     from app.routers.signal_history import router as signal_history_router
     from app.routers.site_alerts import router as site_alerts_router
+
+    # Keep submitted credentials out of 422 responses and anything that logs
+    # them: Pydantic echoes the raw request body in validation errors.
+    from app.errors import install_validation_error_handler
+
+    install_validation_error_handler(app)
 
     app.include_router(auth_router, prefix="/api")
     app.include_router(tenants_router, prefix="/api")

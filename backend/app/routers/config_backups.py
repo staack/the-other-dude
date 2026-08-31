@@ -512,12 +512,13 @@ async def restore_config_endpoint(
 ) -> dict[str, Any]:
     """Restore a device config to a specific backup version.
 
-    Implements two-phase push with panic-revert:
+    Implements two-phase push with safe-mode rollback:
     1. Pre-backup is taken on device (mandatory before any push)
-    2. RouterOS scheduler is installed as safety net (auto-reverts if unreachable)
-    3. Config is pushed via /import
-    4. Wait 60s for config to settle
-    5. Reachability check — remove scheduler if device is reachable
+    2. Config is pushed via /import inside a RouterOS safe-mode session
+    3. Wait 60s for config to settle
+    4. Reachability check on a NEW connection, independent of the safe-mode one
+    5. Reachable: release safe mode, keeping the change. Unreachable: drop the
+       session, and RouterOS reverts the push by itself — without rebooting
     6. Return committed/reverted/failed status
 
     Returns: {"status": str, "message": str, "pre_backup_sha": str}

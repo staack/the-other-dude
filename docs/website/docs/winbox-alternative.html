@@ -139,13 +139,13 @@
 
       <p><strong>Fleet dashboard.</strong> See all your devices in one view — online/offline status, CPU, memory, bandwidth utilization, uptime, firmware version. Filter by group, site, or alert status. The device table uses virtual scrolling to handle hundreds of routers without performance degradation.</p>
 
-      <p><strong>Configuration management.</strong> Browse and edit the RouterOS config tree from the web UI, with <a href="routeros-configuration-management.html">two-phase commit and automatic rollback</a>. Every change is stored in git-backed version history with full diff capability. Templates let you define a config once and push it to a group of devices with per-device variable substitution.</p>
+      <p><strong>Configuration management.</strong> Browse and edit the RouterOS config tree from the web UI. Every change is stored in git-backed version history with full diff capability. Templates let you define a config once and push it to a group of devices with per-device variable substitution, and template pushes run inside a <a href="routeros-configuration-management.html">RouterOS safe-mode session</a> so a change that breaks the management path is reverted by the router itself. Direct edits in the config editor are applied immediately, without that protection.</p>
 
       <p><strong>Automated backups.</strong> The platform captures a full config export from every device on a <a href="mikrotik-backup-solution.html">configurable schedule</a>. Navigate the version timeline, compare any two snapshots side by side, restore with one click.</p>
 
       <p><strong>Monitoring and alerts.</strong> CPU, memory, traffic, and wireless metrics stored in TimescaleDB with <a href="mikrotik-router-monitoring.html">threshold-based alerting</a>. Maintenance windows suppress alerts during planned work.</p>
 
-      <p><strong>Bulk operations.</strong> <a href="mikrotik-bulk-configuration.html">Push config changes or run CLI commands</a> across a group of devices simultaneously. Each device gets its own result with success/failure reporting.</p>
+      <p><strong>Bulk operations.</strong> <a href="mikrotik-bulk-configuration.html">Push config changes or run CLI commands</a> across a group of devices, one device at a time, with per-device success/failure reporting. A CLI run can be aborted partway through, and template pushes stop at the first device that fails.</p>
 
       <p><strong>Multi-tenant isolation.</strong> <a href="msp-mikrotik-management.html">MSPs can manage multiple clients</a> from one platform with hard tenant boundaries enforced at the database level.</p>
 
@@ -153,7 +153,7 @@
 
       <p>The entire platform — fleet dashboard, config editor, WinBox sessions, SSH terminal, monitoring, backups — runs in a web browser. Deploy the platform on your infrastructure via Docker Compose or the Kubernetes Helm chart, and every engineer on your team has access from any device with a browser. No WinBox installation, no SSH key distribution, no VPN client for each operations workstation.</p>
 
-      <p>The platform is open source and self-hosted. Your device credentials, config history, and monitoring data stay on your infrastructure. Full setup takes about ten minutes — the <a href="../docs.html#quickstart">Quick Start guide</a> covers the process from clone to first connected device.</p>
+      <p>The platform is self-hosted, and the full source is published under the BSL 1.1 — source-available rather than open source, converting to Apache 2.0 in March 2030. Your device credentials, config history, and monitoring data stay on your infrastructure. Full setup takes about ten minutes — the <a href="../docs.html#quickstart">Quick Start guide</a> covers the process from clone to first connected device.</p>
 
       <div class="related-links">
         <h2>Related</h2>

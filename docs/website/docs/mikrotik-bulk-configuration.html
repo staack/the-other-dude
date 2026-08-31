@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MikroTik Bulk Configuration — Fleet-Wide Config Management</title>
-  <meta name="description" content="Push MikroTik configuration changes across multiple devices at once. Config templates with variable substitution, batch CLI commands, two-phase commit with automatic rollback.">
+  <meta name="description" content="Push MikroTik configuration changes across multiple devices from one place. Config templates with variable substitution, batch CLI commands, and safe-mode rollback on every template push.">
   <meta name="keywords" content="mikrotik bulk configuration, mikrotik mass config, routeros bulk commands, mikrotik fleet configuration, mikrotik template config">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111113">
@@ -14,7 +14,7 @@
   <!-- Open Graph -->
   <meta property="og:type" content="article">
   <meta property="og:title" content="MikroTik Bulk Configuration — Fleet-Wide Config Management">
-  <meta property="og:description" content="Push MikroTik configuration changes across multiple devices at once. Config templates, batch CLI commands, two-phase commit with automatic rollback.">
+  <meta property="og:description" content="Push MikroTik configuration changes across multiple devices from one place. Config templates, batch CLI commands, and safe-mode rollback on every template push.">
   <meta property="og:url" content="https://theotherdude.net/docs/mikrotik-bulk-configuration.html">
   <meta property="og:site_name" content="The Other Dude">
   <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
@@ -23,7 +23,7 @@
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="MikroTik Bulk Configuration — Fleet-Wide Config Management">
-  <meta name="twitter:description" content="Push MikroTik configuration changes across multiple devices at once. Config templates, batch CLI commands, two-phase commit with automatic rollback.">
+  <meta name="twitter:description" content="Push MikroTik configuration changes across multiple devices from one place. Config templates, batch CLI commands, and safe-mode rollback on every template push.">
   <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
 
   <!-- Structured Data -->
@@ -32,7 +32,7 @@
     "@context": "https://schema.org",
     "@type": "TechArticle",
     "headline": "MikroTik Bulk Configuration — Fleet-Wide Config Management",
-    "description": "Push MikroTik configuration changes across multiple devices at once. Config templates with variable substitution, batch CLI commands, two-phase commit with automatic rollback.",
+    "description": "Push MikroTik configuration changes across multiple devices from one place. Config templates with variable substitution, batch CLI commands, and safe-mode rollback on every template push.",
     "datePublished": "2026-03-18",
     "author": {
       "@type": "Organization",
@@ -100,7 +100,7 @@
 
       <h2>Bulk CLI Command Execution</h2>
 
-      <p>The Other Dude lets you run RouterOS CLI commands across multiple devices simultaneously from the web UI. Select a group of devices (by tag, site, or manual selection), enter a command, and execute. Each device gets its own result — success with output, failure with error details, or timeout.</p>
+      <p>The Other Dude lets you run a RouterOS CLI command across a group of devices from the web UI. Select the devices (by tag, site, or manual selection), enter a command, and execute. They run one at a time so you can watch the results arrive, and you can abort the run partway through if the first few outputs aren't what you expected. Each device gets its own result — success with output, failure with error details, or timeout. Offline devices are skipped rather than retried. A blocklist refuses the commands with no safe bulk use: reboot, shutdown, reset-configuration, and changes to users, passwords or certificates.</p>
 
       <p>This is available to users with operator role or above. The RBAC system ensures that viewer-level users can't execute commands, even if they can see the devices.</p>
 
@@ -132,24 +132,29 @@
 
       <p>Templates are reusable. A standard firewall ruleset, a VPN configuration, a monitoring agent setup — define it once and apply it across new devices as you add them to the fleet.</p>
 
-      <h2>Two-Phase Commit with Automatic Rollback</h2>
+      <h2>Safe-Mode Rollback, Per Device</h2>
 
-      <p>Bulk config pushes use the same <a href="routeros-configuration-management.html">two-phase commit mechanism</a> as single-device config changes. For each device in the batch:</p>
+      <p>Template pushes are applied inside a <a href="routeros-configuration-management.html">RouterOS safe-mode session</a>, one device at a time. For each device in the group:</p>
 
       <ol>
-        <li>The config change is applied to the device.</li>
-        <li>The platform waits for confirmation that the device is still reachable.</li>
-        <li>If the device remains reachable, the change is confirmed.</li>
-        <li>If the device becomes unreachable — indicating the change broke the management path — the device automatically reverts to its previous configuration.</li>
+        <li>A binary backup is written to the device's own flash as an independent recovery point.</li>
+        <li>The platform enters safe mode on the device and applies the change inside that session.</li>
+        <li>After a settle period it dials a <em>new</em> connection to check the device still answers — the existing session would answer regardless, so it proves nothing.</li>
+        <li>If the device answers, the session is released and the change stands.</li>
+        <li>If it doesn't, the session is dropped and RouterOS reverts the change itself, without rebooting.</li>
       </ol>
 
-      <p>This is critical for bulk operations because the blast radius of a bad config push scales with the number of target devices. A firewall rule that accidentally blocks the management subnet would lock you out of every device you pushed it to. With two-phase commit, each device independently detects the problem and reverts itself. You don't need to drive to a site or find an out-of-band console connection.</p>
+      <p>This matters most in bulk, because the blast radius of a bad config push scales with the number of targets. A firewall rule that accidentally blocks the management subnet would otherwise lock you out of every device you pushed it to.</p>
 
-      <p>The rollback is per-device, not per-batch. If a change succeeds on 48 of 50 devices and fails on 2, the 2 failing devices revert while the 48 successful devices keep the new config. You get a clear report of which devices succeeded and which reverted, and you can investigate the failures individually.</p>
+      <p><strong>Rollouts are sequential and they halt.</strong> Devices are pushed in order, and the rollout stops at the first device that fails rather than continuing into the rest of the group. So the realistic worst case is not "48 of 50 succeeded and 2 reverted" — it is a handful committed, one reverted, and the remainder never attempted. That is the second safety mechanism, and it is the one that limits how far a bad change can get. Each device takes about a minute, which is the cost of it.</p>
+
+      <p>One limit worth knowing before you write a large template: safe mode's undo buffer holds 100 actions, and beyond that RouterOS silently stops reverting. The platform counts the change set up front and refuses a push it could not protect, rather than applying it unprotected. Split a very large template into stages.</p>
 
       <h2>Batch Config Push via the Config Editor</h2>
 
-      <p>In addition to templates and CLI commands, the platform's <a href="routeros-configuration-management.html">config editor</a> supports batch operations. You can browse the RouterOS path tree, make a change, and push it to multiple devices at once. This is useful for structured changes that don't warrant a full template — adding a single firewall rule, modifying a DNS setting, or updating an NTP server across a device group.</p>
+      <p>In addition to templates and CLI commands, the platform's <a href="routeros-configuration-management.html">config editor</a> supports batch operations. You can browse the RouterOS path tree, make a change, and apply it to each device in a group in turn. This is convenient for structured changes that don't warrant a full template — a DNS setting or an NTP server across a device group.</p>
+
+      <p><strong>Batch Config has no rollback, and that matters more here than anywhere else in the product.</strong> It runs on the config editor's path, so there is no pre-push backup and no safe-mode session, and it does not stop when a device fails — it continues through the rest of the list. A change that cuts off the management path is therefore applied to every device you selected and reverted on none of them. For anything that could affect reachability, including the firewall rule in the example above, use a template push instead: those are safe-mode protected per device and halt on the first failure.</p>
 
       <h2>How This Differs from SSH Scripts</h2>
 
@@ -157,7 +162,7 @@
 
       <ul>
         <li><strong>Error handling.</strong> SSH scripts need explicit handling for connection timeouts, authentication failures, command errors, and partial execution. The platform handles this per-device automatically.</li>
-        <li><strong>Rollback.</strong> SSH scripts don't have a rollback mechanism. If a command locks you out, you're locked out. The platform's two-phase commit reverts bad changes automatically.</li>
+        <li><strong>Rollback.</strong> SSH scripts don't have a rollback mechanism. If a command locks you out, you're locked out. The platform applies template pushes inside a RouterOS safe-mode session, so a change that breaks the management path is reverted by the router itself.</li>
         <li><strong>Audit trail.</strong> SSH scripts produce log files at best. The platform records every operation with user attribution, timestamps, and per-device results in a queryable audit log.</li>
         <li><strong>Access control.</strong> SSH scripts run under whoever's credentials are in the script. The platform enforces RBAC — an operator can run bulk commands but a viewer can't.</li>
         <li><strong>State management.</strong> Tracking which devices got the change and which didn't is your problem with scripts. The platform gives you a per-device results view for every operation.</li>

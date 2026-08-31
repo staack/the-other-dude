@@ -20,7 +20,18 @@ type deviceState struct {
 	cancel              context.CancelFunc
 	consecutiveFailures int
 	backoffUntil        time.Time
+
+	// consecutiveSkips counts poll ticks skipped because the per-device lock
+	// was held elsewhere. A skip is normal for one tick in a multi-replica
+	// deployment; a device that skips every tick is not being polled at all,
+	// and that needs to be visible without turning on debug logging.
+	consecutiveSkips int
 }
+
+// skipsBeforeWarning is how many consecutive skipped ticks it takes before the
+// skip is reported at WARN. Two replicas can legitimately race for a tick or
+// two; nothing legitimate skips this many in a row.
+const skipsBeforeWarning = 5
 
 // Scheduler manages the lifecycle of per-device polling goroutines.
 //
@@ -69,9 +80,6 @@ func NewScheduler(
 	baseBackoff time.Duration,
 	maxBackoff time.Duration,
 ) *Scheduler {
-	// lockTTL gives the poll cycle time to complete: interval + connection timeout + 15s margin.
-	lockTTL := pollInterval + connTimeout + 15*time.Second
-
 	s := &Scheduler{
 		store:           store,
 		locker:          locker,
@@ -89,7 +97,7 @@ func NewScheduler(
 	}
 
 	// Register built-in collectors.
-	s.collectors["routeros"] = NewRouterOSCollector(locker, credentialCache, connTimeout, cmdTimeout, lockTTL)
+	s.collectors["routeros"] = NewRouterOSCollector(credentialCache, connTimeout, cmdTimeout)
 
 	return s
 }
@@ -247,11 +255,22 @@ func (s *Scheduler) runDeviceLoop(ctx context.Context, dev store.Device, ds *dev
 			lockTTL := s.pollInterval + s.connTimeout + 15*time.Second
 			lock, lockErr := s.locker.Obtain(ctx, lockKey, lockTTL, nil)
 			if lockErr == redislock.ErrNotObtained {
+				ds.consecutiveSkips++
 				slog.Debug("skipping poll — lock held by another pod", "device_id", dev.ID)
+				// A device that skips every tick is silently unmonitored. Debug alone
+				// hid exactly that for four releases, so say it at WARN once.
+				if ds.consecutiveSkips == skipsBeforeWarning {
+					slog.Warn("device has skipped every poll — it is not being monitored",
+						"device_id", dev.ID,
+						"ip", dev.IPAddress,
+						"consecutive_skips", ds.consecutiveSkips,
+					)
+				}
 				observability.PollTotal.WithLabelValues("skipped").Inc()
 				observability.RedisLockTotal.WithLabelValues("not_obtained").Inc()
 				continue
 			}
+			ds.consecutiveSkips = 0
 			if lockErr != nil {
 				slog.Error("failed to obtain Redis lock", "device_id", dev.ID, "error", lockErr)
 				observability.RedisLockTotal.WithLabelValues("error").Inc()

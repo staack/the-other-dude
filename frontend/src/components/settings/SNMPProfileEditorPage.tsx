@@ -103,7 +103,7 @@ function ProfileCard({
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-text-primary">{profile.name}</span>
             {profile.is_system && (
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+              <Badge className="text-[10px] px-1.5 py-0">
                 built-in
               </Badge>
             )}
@@ -293,7 +293,6 @@ export function SNMPProfileEditorPage({ tenantId }: SNMPProfileEditorPageProps) 
     setSelectedOids(new Set())
     setParsedNodes([])
     setParsedModuleName(null)
-    setAdvancedOpen(false)
     setManualOid('')
     setManualName('')
   }
@@ -374,7 +373,6 @@ export function SNMPProfileEditorPage({ tenantId }: SNMPProfileEditorPageProps) 
     setParsedNodes([])
     setParsedModuleName(null)
     setActivePollGroup('standard')
-    setAdvancedOpen(false)
     setView('edit')
   }
 
@@ -715,7 +713,7 @@ export function SNMPProfileEditorPage({ tenantId }: SNMPProfileEditorPageProps) 
                 </p>
               </div>
               {parsedModuleName && (
-                <Badge variant="outline" className="text-[10px]">
+                <Badge className="text-[10px]">
                   {parsedModuleName}
                 </Badge>
               )}

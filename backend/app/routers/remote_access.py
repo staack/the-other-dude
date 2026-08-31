@@ -29,7 +29,11 @@ from app.schemas.remote_access import (
     TunnelStatusItem,
     WinboxSessionResponse,
 )
-from app.schemas.winbox_remote import RemoteWinboxSessionItem
+from app.schemas.winbox_remote import (
+    LIVE_STATES as LIVE_WINBOX_REMOTE_STATES,
+    RemoteWinboxSessionItem,
+)
+from app.routers.winbox_remote import REDIS_PREFIX as WINBOX_REMOTE_PREFIX
 from app.middleware.rate_limit import limiter
 from app.services.audit_service import log_action
 from sqlalchemy import select
@@ -94,6 +98,34 @@ async def _check_tenant_access(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied: you do not belong to this tenant.",
         )
+
+
+def _winbox_remote_item_for_device(
+    raw: Optional[str], tenant_id: uuid.UUID, device_id: uuid.UUID
+) -> Optional[RemoteWinboxSessionItem]:
+    """Decode one winbox-remote:* record, keeping it only if it belongs to this device.
+
+    Remote WinBox keys are winbox-remote:{session_id}; the device is only recorded in
+    the value, so the caller scans the prefix and this decides membership. A record
+    that will not decode is skipped rather than failing the whole panel.
+    """
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    if data.get("device_id") != str(device_id) or data.get("tenant_id") != str(tenant_id):
+        return None
+    if data.get("status") not in LIVE_WINBOX_REMOTE_STATES:
+        return None
+    try:
+        return RemoteWinboxSessionItem(**data)
+    except Exception as exc:
+        logger.warning("skipping malformed winbox-remote record: %s", exc)
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -361,21 +393,25 @@ async def list_sessions(
         logger.warning("tunnel.status.list NATS request failed: %s", exc)
         # Return empty list rather than error — poller may be unavailable
 
-    # Query Redis for remote winbox (browser) sessions for this device
+    # Query Redis for remote winbox (browser) sessions for this device.
+    # Keys are winbox-remote:{session_id} — there is no device_id in the key, so the
+    # device filter has to come from the stored record. Scanning the prefix and
+    # filtering keeps the key format untouched, which matters because changing it
+    # would strand every key already live in a running deployment.
     remote_winbox: list[RemoteWinboxSessionItem] = []
     try:
         rd = await _get_redis()
-        pattern = f"winbox-remote:{device_id}:*"
-        cursor, keys = await rd.scan(0, match=pattern, count=100)
-        while keys or cursor:
+        pattern = f"{WINBOX_REMOTE_PREFIX}*"
+        cursor = "0"
+        while True:
+            cursor, keys = await rd.scan(cursor=cursor, match=pattern, count=100)
             for key in keys:
                 raw = await rd.get(key)
-                if raw:
-                    data = json.loads(raw)
-                    remote_winbox.append(RemoteWinboxSessionItem(**data))
-            if not cursor:
+                item = _winbox_remote_item_for_device(raw, tenant_id, device_id)
+                if item is not None:
+                    remote_winbox.append(item)
+            if cursor == "0" or cursor == 0:
                 break
-            cursor, keys = await rd.scan(cursor, match=pattern, count=100)
     except Exception as exc:
         logger.warning("Redis winbox-remote scan failed: %s", exc)
 

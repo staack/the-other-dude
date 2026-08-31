@@ -852,7 +852,7 @@ function LeasesTab({
         )
       default:
         return (
-          <Badge variant="outline" className="text-xs">
+          <Badge className="text-xs">
             {status || 'unknown'}
           </Badge>
         )

@@ -87,13 +87,11 @@ export function BulkAddForm({
     enabled: deviceType === 'snmp',
   })
 
-  const allProfiles: CredentialProfileResponse[] = Array.isArray(profiles) ? profiles : (profiles?.profiles ?? [])
+  const allProfiles: CredentialProfileResponse[] = profiles ?? []
   const profileList = deviceType === 'snmp'
     ? allProfiles.filter((p) => p.credential_type === 'snmp_v2c' || p.credential_type === 'snmp_v3')
     : allProfiles
-  const snmpProfileList: SNMPProfileResponse[] = Array.isArray(snmpProfiles)
-    ? snmpProfiles
-    : snmpProfiles?.profiles ?? []
+  const snmpProfileList: SNMPProfileResponse[] = snmpProfiles ?? []
 
   const parsedIPs = useMemo(() => parseIPList(ipText), [ipText])
 

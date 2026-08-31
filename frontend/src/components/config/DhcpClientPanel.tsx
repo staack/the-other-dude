@@ -439,7 +439,7 @@ export function DhcpClientPanel({ tenantId, deviceId, active }: ConfigPanelProps
 function StatusBadge({ status, disabled }: { status: string; disabled: boolean }) {
   if (disabled) {
     return (
-      <Badge variant="outline" className="text-[10px] text-text-muted border-border">
+      <Badge className="text-[10px] text-text-muted border-border">
         disabled
       </Badge>
     )
@@ -448,13 +448,13 @@ function StatusBadge({ status, disabled }: { status: string; disabled: boolean }
   switch (status) {
     case 'bound':
       return (
-        <Badge variant="outline" className="text-[10px] text-success border-success/40 bg-success/10">
+        <Badge className="text-[10px] text-success border-success/40 bg-success/10">
           bound
         </Badge>
       )
     case 'searching':
       return (
-        <Badge variant="outline" className="text-[10px] text-warning border-warning/40 bg-warning/10">
+        <Badge className="text-[10px] text-warning border-warning/40 bg-warning/10">
           searching
         </Badge>
       )
@@ -462,13 +462,13 @@ function StatusBadge({ status, disabled }: { status: string; disabled: boolean }
     case 'rebinding':
     case 'renewing':
       return (
-        <Badge variant="outline" className="text-[10px] text-accent border-accent/40 bg-accent/10">
+        <Badge className="text-[10px] text-accent border-accent/40 bg-accent/10">
           {status}
         </Badge>
       )
     default:
       return (
-        <Badge variant="outline" className="text-[10px] text-text-muted border-border">
+        <Badge className="text-[10px] text-text-muted border-border">
           {status || '—'}
         </Badge>
       )

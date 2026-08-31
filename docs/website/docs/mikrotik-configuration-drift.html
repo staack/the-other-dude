@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MikroTik Configuration Drift Detection</title>
-  <meta name="description" content="How to detect and prevent configuration drift in MikroTik RouterOS fleets. Open source automated auditing, backup comparison, and centralized management.">
+  <meta name="description" content="How to detect and prevent configuration drift in MikroTik RouterOS fleets. Source-available automated auditing, backup comparison, and centralized management.">
   <meta name="keywords" content="mikrotik configuration drift, routeros configuration audit, mikrotik config management, router configuration comparison">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111113">
@@ -108,13 +108,13 @@
 
       <h2>How The Other Dude Handles Configuration Drift</h2>
 
-      <p>The Other Dude polls RouterOS devices on a configurable interval using the RouterOS binary API (port 8729, TLS). On each poll cycle it retrieves the full running configuration and stores it in PostgreSQL alongside a complete version history. Every stored snapshot is compared to the previous one; if anything changed, the difference is recorded.</p>
+      <p>The Other Dude captures the full running configuration from each device on its own schedule — every six hours by default, configurable — over SSH, separately from the much faster metrics polling that runs over the RouterOS binary API. Each capture is stored with a complete version history and compared against the previous one; if anything changed, the difference is recorded. Six hours is the default detection window for out-of-band changes, so tighten the interval if you need drift caught sooner.</p>
 
       <p>The web UI includes a side-by-side diff viewer. You can select any two snapshots for a device — or compare two different devices — and see exactly which lines differ. This makes it straightforward to answer questions like "what changed on this router between Tuesday and Thursday" or "why does this branch site have different firewall rules than the others."</p>
 
       <p>Config changes pushed through the platform are recorded in an audit trail with full user attribution. If someone pushes a new firewall ruleset or modifies an interface address, that action is logged with the user, timestamp, and the exact config diff applied. Out-of-band changes made directly via WinBox or SSH will show up in the next polling cycle as an unexpected diff.</p>
 
-      <p>For safe config pushes, The Other Dude uses a two-phase approach: changes are applied to the device, and the platform waits for a confirmation that the device is still reachable. If the device goes silent after the change — which can happen if a firewall or routing change cuts off the management path — the platform automatically reverts to the previous config. This significantly reduces the risk of locking yourself out of a remote device.</p>
+      <p>For safe config pushes, The Other Dude uses RouterOS safe mode. A config restore or template push is applied inside a safe-mode session; the platform then dials a new connection to check the device still answers, and only then releases the session. If the device goes silent — which can happen if a firewall or routing change cuts off the management path — the session is dropped and the router reverts the change by itself, without rebooting. Note that this covers restores and template pushes; edits made directly in the config editor are applied immediately and are not rolled back automatically.</p>
 
       <p>For fleet-scale work, the platform supports config templates with variable substitution. You can define a template for a class of site (branch office, retail location, distribution hub) and push it across a batch of devices with per-device values filled in. This makes it easier to maintain consistency across similar sites and to identify which devices have diverged from that common baseline. To be clear: the current implementation detects config changes between snapshots. Full desired-state compliance checking — where the system continuously validates each device against a canonical template and flags deviations — is not yet implemented, but the snapshot and diff infrastructure is designed to support it.</p>
 

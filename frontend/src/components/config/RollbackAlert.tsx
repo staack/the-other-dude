@@ -1,6 +1,15 @@
 /**
- * RollbackAlert — Banner shown when a device went offline after a config push.
- * Offers one-click emergency rollback.
+ * RollbackAlert — Banner offering a one-click rollback after a recent config push.
+ *
+ * The rollback it offers works by pushing the previous backup over SSH, so it
+ * needs the device to be REACHABLE. This banner used to render only when
+ * `deviceStatus === 'offline'` — the single state in which the button it
+ * offers cannot do anything — so the affordance existed exactly when it was
+ * useless and was hidden whenever it would have worked.
+ *
+ * It now shows whenever there is a recent push to undo, and adapts: an
+ * actionable button while the device is reachable, and an explanation of what
+ * to do instead while it is not.
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -28,40 +37,49 @@ export function RollbackAlert({
   const rollbackMutation = useMutation({
     mutationFn: () => configApi.emergencyRollback(tenantId, deviceId),
     onSuccess: () => {
-      toast.success('Emergency rollback successful')
+      toast({ title: 'Rollback successful' })
       queryClient.invalidateQueries({ queryKey: ['config-backups', tenantId, deviceId] })
     },
     onError: () => {
-      toast.error('Emergency rollback failed')
+      toast({ title: 'Rollback failed', variant: 'destructive' })
     },
   })
 
-  if (deviceStatus !== 'offline' || !hasRecentPushAlert) {
+  if (!hasRecentPushAlert) {
     return null
   }
 
+  const isOffline = deviceStatus === 'offline'
+
   return (
-    <div className="rounded-lg border border-error/30 bg-error/5 px-4 py-3 flex items-center justify-between">
+    <div className="rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <AlertTriangle className="h-5 w-5 text-error shrink-0" />
+        <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
         <div>
-          <p className="text-sm font-medium text-error">
-            Device went offline after config change
+          <p className="text-sm font-medium text-warning">
+            {isOffline
+              ? 'Device went offline after a config change'
+              : 'Config was changed recently'}
           </p>
           <p className="text-xs text-text-secondary mt-0.5">
-            A config change was made recently. You can rollback to the last known good config.
+            {isOffline
+              ? 'Rollback pushes the previous config over SSH, so it needs the device to be reachable. ' +
+                'While it is offline, recover it locally — a restore point was saved to the device before the push.'
+              : 'You can roll back to the config captured before that change.'}
           </p>
         </div>
       </div>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={() => rollbackMutation.mutate()}
-        disabled={rollbackMutation.isPending}
-      >
-        <RotateCcw className="h-4 w-4 mr-1.5" />
-        {rollbackMutation.isPending ? 'Rolling back...' : 'Rollback Now'}
-      </Button>
+      {!isOffline && (
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={() => rollbackMutation.mutate()}
+          disabled={rollbackMutation.isPending}
+        >
+          <RotateCcw className="h-4 w-4 mr-1.5" />
+          {rollbackMutation.isPending ? 'Rolling back...' : 'Rollback Now'}
+        </Button>
+      )}
     </div>
   )
 }

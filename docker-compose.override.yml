@@ -125,6 +125,7 @@ services:
     environment:
       LOG_LEVEL: debug
       MAX_CONCURRENT_SESSIONS: 5
+    init: true
     deploy:
       resources:
         limits:

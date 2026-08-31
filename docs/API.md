@@ -214,7 +214,7 @@ Device config backup timeline, restore, and schedule management. All routes are 
 | Method | Endpoint | RBAC | Description |
 |--------|----------|------|-------------|
 | `POST` | `.../config/preview-restore` | operator | Preview impact analysis before restoring a config version |
-| `POST` | `.../config/restore` | operator | Restore a config version (two-phase push with panic-revert) |
+| `POST` | `.../config/restore` | operator | Restore a config version (safe-mode protected push) |
 | `POST` | `.../config/emergency-rollback` | operator | Rollback to most recent pre-push backup |
 
 ### Schedules

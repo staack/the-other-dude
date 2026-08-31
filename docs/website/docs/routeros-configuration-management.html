@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RouterOS Configuration Management — Safe Config Pushes with Rollback</title>
-  <meta name="description" content="RouterOS configuration management with a web-based config editor, two-phase commit with automatic rollback, git-backed version history, and template system for fleet-wide config management.">
+  <meta name="description" content="RouterOS configuration management with a web-based config editor, safe-mode rollback on config restore and template pushes, git-backed version history, and a template system for fleet-wide config management.">
   <meta name="keywords" content="routeros configuration management, mikrotik config management, routeros config editor, mikrotik safe config push, routeros config rollback">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111113">
@@ -14,7 +14,7 @@
   <!-- Open Graph -->
   <meta property="og:type" content="article">
   <meta property="og:title" content="RouterOS Configuration Management — Safe Config Pushes with Rollback">
-  <meta property="og:description" content="RouterOS configuration management with web-based config editor, two-phase commit with automatic rollback, and git-backed version history.">
+  <meta property="og:description" content="RouterOS configuration management with a web-based config editor, safe-mode rollback on config restore and template pushes, and git-backed version history.">
   <meta property="og:url" content="https://theotherdude.net/docs/routeros-configuration-management.html">
   <meta property="og:site_name" content="The Other Dude">
   <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
@@ -23,7 +23,7 @@
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="RouterOS Configuration Management — Safe Config Pushes with Rollback">
-  <meta name="twitter:description" content="RouterOS configuration management with web-based config editor, two-phase commit with automatic rollback, and git-backed version history.">
+  <meta name="twitter:description" content="RouterOS configuration management with a web-based config editor, safe-mode rollback on config restore and template pushes, and git-backed version history.">
   <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
 
   <!-- Structured Data -->
@@ -32,7 +32,7 @@
     "@context": "https://schema.org",
     "@type": "TechArticle",
     "headline": "RouterOS Configuration Management — Safe Config Pushes with Rollback",
-    "description": "RouterOS configuration management with a web-based config editor, two-phase commit with automatic rollback, git-backed version history, and template system for fleet-wide config management.",
+    "description": "RouterOS configuration management with a web-based config editor, safe-mode rollback on config restore and template pushes, git-backed version history, and a template system for fleet-wide config management.",
     "datePublished": "2026-03-18",
     "author": {
       "@type": "Organization",
@@ -104,21 +104,33 @@
 
       <p>The config editor reads the current state of each path directly from the device via the RouterOS binary API. What you see in the editor is the live running configuration, not a cached snapshot. You can view entries, add new ones, modify existing ones, or remove them — the same operations WinBox provides, but through a browser.</p>
 
-      <p>The advantage over WinBox isn't the interface — WinBox is faster for single-device work. The advantage is everything that wraps around the edit: rollback protection, version history, audit logging, RBAC enforcement, and the ability to push the same change to multiple devices.</p>
+      <p>The advantage over WinBox isn't the interface — WinBox is faster for single-device work. The advantage is everything that wraps around the edit: version history, audit logging, RBAC enforcement, safe-mode rollback when a change goes out as a restore or a template, and the ability to push the same change to multiple devices.</p>
 
-      <h2>Two-Phase Commit: The Safety Net</h2>
+      <h2>Safe Mode: The Safety Net</h2>
 
-      <p>This is the most important feature in the config management system. Every config push — whether from the editor, a template, or a bulk operation — uses a two-phase commit process:</p>
+      <p><strong>Which paths this covers.</strong> Config restore and template pushes are applied inside a RouterOS safe-mode session. If the device stops responding — for example because the change cut off the management path — the router reverts to its previous configuration on its own, without rebooting. Changes made in the config editor are applied directly and are <em>not</em> rolled back automatically. That distinction matters, so it is repeated wherever it is relevant on this page.</p>
+
+      <p>Safe mode is a RouterOS feature, not something layered on top of it. Entering it changes the device's own prompt to <code>&lt;SAFE&gt;</code> and makes the router track every configuration action taken in that session. Release the session cleanly and the changes stand. Lose it — for any reason — and the router undoes all of them itself.</p>
+
+      <p>A protected push runs like this:</p>
 
       <ol>
-        <li><strong>Apply.</strong> The config change is sent to the device and takes effect immediately, as RouterOS requires.</li>
-        <li><strong>Verify.</strong> The platform waits for a configurable confirmation period, continuously checking that the device is still reachable via the API.</li>
-        <li><strong>Confirm or revert.</strong> If the device remains reachable throughout the confirmation period, the change is committed as permanent. If the device becomes unreachable at any point during the confirmation period — indicating the change broke the management path — the device automatically reverts to its pre-change configuration.</li>
+        <li><strong>Take an independent copy.</strong> A full binary <code>/system backup</code> is written to the device's own flash before anything changes, and the pre-push <code>/export</code> is already committed to git on the server.</li>
+        <li><strong>Enter safe mode.</strong> The platform opens an SSH session to the device and enters safe mode, confirming it by the <code>&lt;SAFE&gt;</code> prompt rather than assuming it worked.</li>
+        <li><strong>Apply inside the session.</strong> The config is uploaded over SFTP and applied with <code>/import</code> from within the safe-mode session, so every action it performs is in the undo buffer.</li>
+        <li><strong>Verify on a new connection.</strong> After a 60-second settle, the platform dials a fresh, independent connection to the device. This is the part that actually proves anything: the existing session would keep answering even if the device had become unreachable to everything else.</li>
+        <li><strong>Commit or let go.</strong> If the new connection succeeds, the session is released and the changes are kept. If it fails, the session is simply dropped and RouterOS reverts every change made in it.</li>
       </ol>
 
-      <p>The revert mechanism uses RouterOS's built-in safe mode capabilities. The platform sets up a revert timer before applying the change. If the platform confirms the change successfully, it cancels the timer. If the platform loses contact with the device, the timer expires and RouterOS reverts the change on its own.</p>
+      <p>The trigger for a revert is loss of the safe-mode session, not a timeout and not a confirmation you have to click in time. There is no confirmation window to miss. If the platform itself crashes, loses its network, or is killed halfway through a push, the device reverts for exactly the same reason it would if the change had broken connectivity.</p>
 
-      <p>This means you can push a firewall rule to a remote router with confidence. If the rule blocks your management traffic, the router will revert itself. You don't need to call someone to reboot it. You don't need a serial console. The safety net is built into the push mechanism itself.</p>
+      <p>And no reboot is involved. Safe mode unwinds the configuration in place. The device that reverts is the same device, still up, with the same uptime.</p>
+
+      <h3>Pushes too large to protect are refused</h3>
+
+      <p>RouterOS's safe-mode undo buffer holds 100 actions. Past that it does not warn, error, or log anything — it silently keeps the changes and carries on displaying the <code>&lt;SAFE&gt;</code> prompt, so there is no signal from the device that the safety net has stopped working. This was confirmed on hardware at 128, 140 and 150 actions.</p>
+
+      <p>The platform counts the change set before it opens the session and refuses any push that would exceed the limit. A too-large push fails cleanly and changes nothing on the device. That is the deliberate trade: a config push either has a working safety net or it does not happen.</p>
 
       <h2>Git-Backed Version History</h2>
 
@@ -130,7 +142,7 @@
         <li><strong>A complete timeline.</strong> Navigate through every configuration state the device has been in since it was added to the platform.</li>
         <li><strong>Side-by-side diffs.</strong> Compare any two versions and see exactly what changed — additions, removals, and modifications highlighted line by line.</li>
         <li><strong>Cross-device comparison.</strong> Compare the config of two different devices to identify <a href="mikrotik-configuration-drift.html">configuration drift</a> or verify consistency across a group.</li>
-        <li><strong>One-click restore.</strong> Select any previous version and push it back to the device, using the same two-phase commit mechanism for safety.</li>
+        <li><strong>One-click restore.</strong> Select any previous version and push it back to the device, inside a safe-mode session so the router reverts itself if the restore breaks the management path.</li>
       </ul>
 
       <p>This is functionally equivalent to having every config change committed to a git repository. You get the audit trail, the diff capability, and the ability to roll back — without requiring engineers to use git directly.</p>
@@ -139,7 +151,7 @@
 
       <p>Not every config change requires navigating the full RouterOS path tree. The config editor includes a Simple Mode that provides a streamlined interface for the most common tasks: IP addressing, DHCP configuration, basic firewall rules, DNS settings, and interface management.</p>
 
-      <p>Simple Mode is modeled after consumer router interfaces — fill in the fields, click apply. Under the hood, it generates the same RouterOS commands and uses the same two-phase commit mechanism. The safety guarantees are identical; only the UI complexity is reduced.</p>
+      <p>Simple Mode is modeled after consumer router interfaces — fill in the fields, click apply. Under the hood, it generates the same RouterOS commands and applies them the same way as the full config editor; only the UI complexity is reduced. That includes the safety behaviour: like the config editor, Simple Mode applies changes directly and does not run them inside a safe-mode session.</p>
 
       <p>This is particularly useful for MSPs with <a href="msp-mikrotik-management.html">operator-level staff</a> who need to handle common tasks without deep RouterOS expertise. An operator can change a DHCP pool or add a port forward through Simple Mode without needing to know the exact RouterOS path syntax.</p>
 
@@ -147,14 +159,14 @@
 
       <p>For <a href="mikrotik-bulk-configuration.html">fleet-wide configuration changes</a>, the template system lets you define a set of RouterOS commands with variable placeholders. Variables are substituted per-device at push time, allowing a single template to be applied across devices with different IP ranges, interface names, or site-specific values.</p>
 
-      <p>Templates combine with two-phase commit for safe bulk operations. Each device in the batch independently verifies the change and reverts if needed. A template push to 50 devices will succeed on the devices where the change works and revert on any where it doesn't.</p>
+      <p>Template pushes are safe-mode protected, per device: each device gets its own session, its own verification on a fresh connection, and reverts itself if that check fails. Rollouts run one device at a time, in order, and stop at the first device that fails rather than continuing into the rest of the group — so a bad template reaches one router, not fifty.</p>
 
       <h2>How This Differs from SSH Scripts and Ansible</h2>
 
       <p>The most common alternative to a config management platform is SSH scripting — either raw Bash/Python scripts or Ansible playbooks with the routeros modules. These approaches can work, but they require you to solve several problems yourself:</p>
 
       <ul>
-        <li><strong>No rollback.</strong> SSH scripts apply changes. If the change locks you out, you're locked out. There's no built-in safety net. Ansible's routeros modules don't implement two-phase commit.</li>
+        <li><strong>No rollback.</strong> SSH scripts apply changes. If the change locks you out, you're locked out. There's no built-in safety net, and nothing took a copy of what was there before. Ansible's routeros modules don't drive safe mode either.</li>
         <li><strong>No version history.</strong> Scripts produce the desired end state. They don't track what the config was before, what changed, or when. That's a separate system you'd need to build.</li>
         <li><strong>No UI for browsing.</strong> Scripts push changes. They don't let you browse the current config tree, compare versions, or preview what will change before you apply it.</li>
         <li><strong>Limited error context.</strong> SSH scripts give you exit codes and stderr. The platform gives you per-device success/failure with detailed error messages, rendered in a UI that shows the full batch result at a glance.</li>
@@ -165,7 +177,7 @@
 
       <h2>Getting Started</h2>
 
-      <p>The config editor and two-phase commit are available immediately when a device is connected to the platform. The <a href="../docs.html#quickstart">Quick Start guide</a> covers deploying the platform and connecting your first device. Once connected, you can browse the device's config tree, make changes with rollback protection, and see the first backup appear in the version history.</p>
+      <p>The config editor is available immediately when a device is connected to the platform. The <a href="../docs.html#quickstart">Quick Start guide</a> covers deploying the platform and connecting your first device. Once connected, you can browse the device's config tree, make changes, and see the first backup appear in the version history. For changes you want safe-mode protection on, push them as a template or a restore rather than an editor edit.</p>
 
       <div class="related-links">
         <h2>Related</h2>

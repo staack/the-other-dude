@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MikroTik Router Backup Automation</title>
-  <meta name="description" content="Automate MikroTik router configuration backups with open source tooling. Compare backup versions, restore configs, and track changes across your RouterOS fleet.">
+  <meta name="description" content="Automate MikroTik router configuration backups with self-hosted, source-available tooling. Compare backup versions, restore configs, and track changes across your RouterOS fleet.">
   <meta name="keywords" content="mikrotik backup automation, mikrotik configuration management, RouterOS backup, MikroTik config export, RouterOS fleet backup">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111113">
@@ -138,11 +138,11 @@
         <li><strong>Version-controlled storage.</strong> Config exports are stored in PostgreSQL with complete version history. Every backup is a timestamped snapshot. Nothing is overwritten.</li>
         <li><strong>Change detection.</strong> The poller can detect configuration changes via NATS events in addition to scheduled polling, so a change pushed through WinBox or the CLI shows up in the history within minutes rather than waiting for the next scheduled run.</li>
         <li><strong>Diff viewer.</strong> The web UI shows a timeline of config changes per device. Select any two versions and get a side-by-side diff — additions in green, removals in red, unchanged lines in grey. This works the same way whether you're comparing yesterday to today or last year to last month.</li>
-        <li><strong>One-click restore.</strong> Select a previous backup from the history and push it back to the device using the config editor's two-phase apply mechanism. The two-phase process applies the config and waits for confirmation before committing, which means a restore that breaks connectivity will roll back automatically.</li>
+        <li><strong>One-click restore.</strong> Select a previous backup from the history and push it back to the device. The restore is applied inside a RouterOS safe-mode session and only committed once the device answers a fresh connection, which means a restore that breaks connectivity is reverted by the router itself — without a reboot.</li>
         <li><strong>Batch operations.</strong> You can pull the current config from multiple devices and compare them to identify inconsistencies — useful when you want to verify that a template change was applied uniformly across a group of devices.</li>
       </ul>
 
-      <p>Because the backup system is built on top of the same API connection the poller uses for everything else, there's no separate backup infrastructure to maintain. A device that's reachable for monitoring is reachable for backups.</p>
+      <p>There's no separate backup infrastructure to maintain — the same poller does the work. It does use a different path to the device, though: metrics come over the RouterOS binary API, while backups are pulled over SSH and SFTP on port 22. So check that SSH is reachable and that password authentication is enabled for TOD's user; monitoring working is not by itself proof that backups will.</p>
 
       <h2>Related Guides</h2>
 
@@ -154,7 +154,7 @@
           <li><a href="mikrotik-router-monitoring.html">How to monitor MikroTik routers at scale</a> — metrics collection, alerting, and health dashboards</li>
           <li><a href="mikrotik-centralized-management.html">MikroTik centralized management</a> — multi-site visibility, bulk operations, and unified access</li>
           <li><a href="mikrotik-backup-solution.html">MikroTik backup solution</a> — overview of the backup system with git-backed history and one-click restore</li>
-          <li><a href="routeros-configuration-management.html">RouterOS configuration management</a> — safe config pushes with two-phase commit and rollback</li>
+          <li><a href="routeros-configuration-management.html">RouterOS configuration management</a> — safe config pushes with RouterOS safe-mode rollback</li>
           <li><a href="https://github.com/staack/the-other-dude" rel="noopener">The Other Dude on GitHub</a> — source code, issue tracker, and release notes</li>
         </ul>
       </div>

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { Plus, Scan, ChevronRight } from 'lucide-react'
+import { Plus, Scan, Wand2, ChevronRight } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { z } from 'zod'
 import { tenantsApi } from '@/lib/api'
@@ -81,6 +81,12 @@ function DevicesPage() {
               <Button variant="outline" size="sm">
                 <Scan className="h-3.5 w-3.5" />
                 Scan Subnet
+              </Button>
+            </Link>
+            <Link to="/tenants/$tenantId/devices/adopt" params={{ tenantId }}>
+              <Button variant="outline" size="sm">
+                <Wand2 className="h-3.5 w-3.5" />
+                Adopt Devices
               </Button>
             </Link>
             <Button size="sm" onClick={() => setAddOpen(true)}>

@@ -178,7 +178,11 @@ export function BridgePortPanel({ tenantId, deviceId, active }: ConfigPanelProps
                       cost={entry['path-cost'] || '10'} edge={entry['edge'] || 'auto'}
                     </td>
                     <td className="px-3 py-1.5 text-center">
-                      {entry['hw'] === 'yes' && <Cpu className="h-3.5 w-3.5 text-success inline-block" title="Hardware offload" />}
+                      {entry['hw'] === 'yes' && (
+                        <span title="Hardware offload" className="inline-block">
+                          <Cpu className="h-3.5 w-3.5 text-success inline-block" />
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-1.5 text-right">
                       <div className="flex gap-1 justify-end">

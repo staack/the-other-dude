@@ -12,14 +12,16 @@ RBAC:
 - admin/tenant_admin: DELETE
 """
 
+import logging
 import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, set_tenant_context
 from app.middleware.rate_limit import limiter
 from app.services.audit_service import log_action
 from app.middleware.rbac import (
@@ -33,6 +35,7 @@ from app.schemas.device import (
     BulkAddResult,
     BulkAddWithProfileRequest,
     BulkAddWithProfileResult,
+    DeviceConnectionTestResponse,
     DeviceCreate,
     DeviceListResponse,
     DeviceResponse,
@@ -41,7 +44,10 @@ from app.schemas.device import (
     SubnetScanResponse,
 )
 from app.services import device as device_service
+from app.services import device_probe
 from app.services.scanner import scan_subnet
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["devices"])
 
@@ -194,6 +200,21 @@ async def update_device(
 ) -> DeviceResponse:
     """Update device fields. Requires operator role or above."""
     await _check_tenant_access(current_user, tenant_id, db)
+
+    # Capture the TLS mode before the change so a downgrade can be recorded as
+    # its own auditable event rather than buried in a generic "changes" dict.
+    previous_tls_mode: Optional[str] = None
+    if data.tls_mode is not None:
+        try:
+            existing = await device_service.get_device(
+                db=db, tenant_id=tenant_id, device_id=device_id
+            )
+            previous_tls_mode = existing.tls_mode
+        except HTTPException:
+            raise
+        except Exception:
+            logger.warning("Could not read the previous tls_mode for device %s", device_id)
+
     result = await device_service.update_device(
         db=db,
         tenant_id=tenant_id,
@@ -215,6 +236,33 @@ async def update_device(
         )
     except Exception:
         pass
+
+    # A weakening of transport security gets its own action name so it can be
+    # alerted on, rather than being one key inside a device_update payload.
+    if previous_tls_mode is not None and device_service.is_tls_downgrade(
+        previous_tls_mode, data.tls_mode
+    ):
+        try:
+            await log_action(
+                db,
+                tenant_id,
+                current_user.user_id,
+                "device_tls_downgrade",
+                resource_type="device",
+                resource_id=str(device_id),
+                device_id=device_id,
+                details={
+                    "from": previous_tls_mode,
+                    "to": data.tls_mode,
+                    "consequence": device_service.describe_tls_downgrade(
+                        previous_tls_mode, data.tls_mode
+                    ),
+                },
+                ip_address=request.client.host if request.client else None,
+            )
+        except Exception:
+            logger.exception("Failed to audit a TLS downgrade for device %s", device_id)
+
     return result
 
 
@@ -364,6 +412,7 @@ async def bulk_add_devices(
             api_ssl_port=dev_data.api_ssl_port,
             username=username,
             password=password,
+            tls_mode=data.tls_mode_for(dev_data),
         )
 
         try:
@@ -373,7 +422,6 @@ async def bulk_add_devices(
                 data=create_data,
                 encryption_key=encryption_key,
             )
-            added.append(device)
             try:
                 await log_action(
                     db,
@@ -390,12 +438,72 @@ async def bulk_add_devices(
                 )
             except Exception:
                 pass
-        except HTTPException as exc:
-            failed.append({"ip_address": dev_data.ip_address, "error": exc.detail})
+
+            # Commit this device now rather than at the end of the request.
+            # get_db commits once, at request end, so a batch that overruns
+            # gunicorn's 120s timeout is discarded in full -- including the
+            # devices that already adopted. Validation is a live handshake per
+            # device now, so batches take real time and that ceiling is
+            # reachable. Committing as we go makes a timeout cost the
+            # remainder instead of everything.
+            await db.commit()
+            await _restore_tenant_context(db, tenant_id)
+            added.append(device)
+
         except Exception as exc:
-            failed.append({"ip_address": dev_data.ip_address, "error": str(exc)})
+            # describe_device_failure keeps an empty-message exception from
+            # rendering as "10.0.0.1: ", and keeps a DBAPIError's bound
+            # parameters -- which include the credential ciphertext -- out of
+            # the response.
+            await _abandon_failed_device(db, tenant_id)
+            logger.warning(
+                "Bulk adoption failed for %s", dev_data.ip_address, exc_info=True
+            )
+            failed.append({
+                "ip_address": dev_data.ip_address,
+                "error": device_service.describe_device_failure(exc),
+            })
 
     return BulkAddResult(added=added, failed=failed)
+
+
+async def _restore_tenant_context(db: AsyncSession, tenant_id: uuid.UUID) -> None:
+    """Re-establish the RLS tenant context after a transaction ends.
+
+    The context is set with SET LOCAL, which dies with its transaction -- both
+    on commit and on rollback. Once it is gone, the policy predicate
+    `tenant_id::text = current_setting('app.current_tenant', true)` compares
+    against '' and is false, so RLS denies the row. Any commit or rollback
+    inside a request must therefore be followed by this.
+
+    Verified against the test stack's Postgres as app_user (non-superuser,
+    non-BYPASSRLS) on 2026-08-30: after COMMIT the setting reads '' (an empty
+    string, not NULL -- a custom GUC placeholder resets to empty rather than
+    becoming undefined), INSERT is refused with a loud
+    "new row violates row-level security policy" (SQLSTATE 42501), and SELECT
+    returns zero rows with no error at all. So writes fail noisily and reads
+    fail silently; without this call every device after the first in a batch
+    would be rejected by the database.
+
+    tenant_id is the right value for both callers: a normal user's own tenant
+    must equal it, and _check_tenant_access has already re-pointed a
+    super_admin's context at it.
+    """
+    await set_tenant_context(db, str(tenant_id))
+
+
+async def _abandon_failed_device(db: AsyncSession, tenant_id: uuid.UUID) -> None:
+    """Discard a failed device's partial work without harming the batch.
+
+    A failed flush -- a duplicate hostname, say -- leaves the session needing a
+    rollback before it will accept anything else. Without this, one bad device
+    breaks every device after it.
+    """
+    try:
+        await db.rollback()
+        await _restore_tenant_context(db, tenant_id)
+    except Exception:  # noqa: BLE001 -- never let cleanup mask the real error
+        logger.exception("Failed to reset the session after a bulk-add failure")
 
 
 @router.post(
@@ -534,3 +642,60 @@ async def remove_tag_from_device(
     """Remove a tag from a device. Requires operator or above."""
     await _check_tenant_access(current_user, tenant_id, db)
     await device_service.remove_tag_from_device(db, tenant_id, device_id, tag_id)
+
+
+@router.post(
+    "/tenants/{tenant_id}/devices/{device_id}/test-connection",
+    response_model=DeviceConnectionTestResponse,
+    summary="Test a device's connection with a live protocol handshake",
+    dependencies=[Depends(require_operator_or_above), require_scope("devices:write")],
+)
+@limiter.limit("30/minute")
+async def test_device_connection(
+    request: Request,
+    tenant_id: uuid.UUID,
+    device_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> DeviceConnectionTestResponse:
+    """
+    Probe a stored device live: TCP, then TLS, then a RouterOS API login.
+
+    The probe runs in the poller using the device's own saved settings and
+    credentials, so it exercises the same code path as a poll — a device that
+    passes here can be polled, and one that fails says why.
+
+    Returns HTTP 200 whether or not the device answers. A device that cannot be
+    reached is a successful test with `ok: false` and a classified `reason`;
+    only auth, permission and lookup problems produce error statuses.
+
+    Requires operator role or above.
+    """
+    await _check_tenant_access(current_user, tenant_id, db)
+
+    # Raises 404 if the device does not exist or is not visible to this tenant.
+    device = await device_service.get_device(db, tenant_id, device_id)
+
+    if device.device_type == "snmp":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="test-connection is only supported for RouterOS devices",
+        )
+
+    outcome = await device_probe.probe_stored_device(str(device_id))
+
+    return DeviceConnectionTestResponse(
+        ok=outcome.ok,
+        stage=outcome.stage,
+        reason=outcome.reason,
+        message=outcome.message,
+        detail=outcome.detail,
+        tls_mode=outcome.tls_mode or device.tls_mode,
+        suggested_tls_mode=outcome.suggested_tls_mode,
+        identity=outcome.identity,
+        version=outcome.version,
+        board_name=outcome.board_name,
+        elapsed_ms=outcome.elapsed_ms,
+        probe_available=outcome.probe_available,
+        checked_at=datetime.now(timezone.utc),
+    )
