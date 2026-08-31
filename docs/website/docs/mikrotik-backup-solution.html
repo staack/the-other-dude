@@ -115,7 +115,7 @@
 
       <h2>How The Other Dude Handles Backups</h2>
 
-      <p>The Other Dude's backup system is built on the same Go-based poller that handles monitoring and command execution. It connects to each device via the RouterOS binary API over TLS (port 8729) and retrieves a full <code>/export</code> on a configurable schedule — every six hours by default.</p>
+      <p>The Other Dude's backup system is built on the same Go-based poller that handles monitoring and command execution. It runs on its own schedule — every six hours by default, configurable — and captures both a full <code>/export</code> and a binary <code>.backup</code> file from each device. This path is SSH and SFTP on port 22, not the RouterOS binary API the poller uses for metrics. A device TOD monitors successfully is not automatically a device TOD can back up: it also needs SSH reachable and password authentication enabled for TOD's user.</p>
 
       <p>There are no per-device Scheduler scripts to maintain. No FTP server. No per-device backup configuration at all. Every device that's connected to the platform is automatically included in the backup schedule from the moment it's added.</p>
 

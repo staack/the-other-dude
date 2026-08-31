@@ -142,7 +142,7 @@
         <li><strong>Batch operations.</strong> You can pull the current config from multiple devices and compare them to identify inconsistencies — useful when you want to verify that a template change was applied uniformly across a group of devices.</li>
       </ul>
 
-      <p>Because the backup system is built on top of the same API connection the poller uses for everything else, there's no separate backup infrastructure to maintain. A device that's reachable for monitoring is reachable for backups.</p>
+      <p>There's no separate backup infrastructure to maintain — the same poller does the work. It does use a different path to the device, though: metrics come over the RouterOS binary API, while backups are pulled over SSH and SFTP on port 22. So check that SSH is reachable and that password authentication is enabled for TOD's user; monitoring working is not by itself proof that backups will.</p>
 
       <h2>Related Guides</h2>
 

@@ -108,7 +108,7 @@
 
       <h2>How The Other Dude Handles Configuration Drift</h2>
 
-      <p>The Other Dude polls RouterOS devices on a configurable interval using the RouterOS binary API (port 8729, TLS). On each poll cycle it retrieves the full running configuration and stores it in PostgreSQL alongside a complete version history. Every stored snapshot is compared to the previous one; if anything changed, the difference is recorded.</p>
+      <p>The Other Dude captures the full running configuration from each device on its own schedule — every six hours by default, configurable — over SSH, separately from the much faster metrics polling that runs over the RouterOS binary API. Each capture is stored with a complete version history and compared against the previous one; if anything changed, the difference is recorded. Six hours is the default detection window for out-of-band changes, so tighten the interval if you need drift caught sooner.</p>
 
       <p>The web UI includes a side-by-side diff viewer. You can select any two snapshots for a device — or compare two different devices — and see exactly which lines differ. This makes it straightforward to answer questions like "what changed on this router between Tuesday and Thursday" or "why does this branch site have different firewall rules than the others."</p>
 
