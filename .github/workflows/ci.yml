@@ -29,10 +29,10 @@ jobs:
         run: pip install ruff
 
       - name: Ruff check
-        run: ruff check backend/
+        run: ruff check backend/ setup.py
 
       - name: Ruff format check
-        run: ruff format --check backend/
+        run: ruff format --check backend/ setup.py
 
   go-lint:
     name: Lint Go (golangci-lint)
