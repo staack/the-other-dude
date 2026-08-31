@@ -137,6 +137,9 @@ services:
 
   winbox-worker:
     image: ghcr.io/staack/the-other-dude/winbox-worker:${TOD_VERSION:-latest}
+    # PID-1 init so orphaned session processes (Xvfb after an xpra crash)
+    # are reaped; the worker also sweeps zombies itself as a fallback.
+    init: true
     environment:
       LOG_LEVEL: info
       MAX_CONCURRENT_SESSIONS: 10

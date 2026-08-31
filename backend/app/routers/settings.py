@@ -7,6 +7,7 @@ Transit encryption for passwords. Falls back to .env values.
 import logging
 from typing import Optional
 
+import httpx
 import redis.asyncio as aioredis
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -16,6 +17,7 @@ from app.config import settings
 from app.database import AdminAsyncSessionLocal
 from app.license import LicenseError, verify_license_key
 from app.middleware.rbac import require_role
+from app.services import winbox_remote
 from app.services.email_service import SMTPConfig, send_test_email, test_smtp_connection
 
 logger = logging.getLogger(__name__)
@@ -164,7 +166,36 @@ async def test_smtp(
 
 @router.delete("/winbox-sessions")
 async def clear_winbox_sessions(user=Depends(require_role("super_admin"))):
-    """Clear all WinBox remote session and rate-limit keys from Redis."""
+    """Clear all WinBox remote session and rate-limit keys from Redis, first
+    terminating the live worker sessions those keys refer to.
+
+    Terminations come first deliberately: if this crashes mid-way, Redis
+    still knows about the sessions and the background reconciliation can
+    finish the job. Deleting the keys first used to return "ok, deleted N"
+    while N sessions stayed live on customers' routers — holding worker
+    slots and authenticated connections — until the reconciler's grace
+    window expired.
+    """
+    terminated = 0
+    terminate_failed = 0
+    worker_unreachable = False
+    try:
+        sessions = await winbox_remote.list_sessions()
+    except httpx.HTTPError:
+        logger.warning("winbox worker unreachable; clearing Redis keys only", exc_info=True)
+        worker_unreachable = True
+        sessions = []
+    for sess in sessions:
+        session_id = sess.get("worker_session_id")
+        if not session_id:
+            continue
+        try:
+            await winbox_remote.terminate_session(session_id)
+            terminated += 1
+        except httpx.HTTPError:
+            logger.warning("failed to terminate worker session %s", session_id, exc_info=True)
+            terminate_failed += 1
+
     rd = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
     try:
         deleted = 0
@@ -174,7 +205,13 @@ async def clear_winbox_sessions(user=Depends(require_role("super_admin"))):
                 keys.append(key)
             if keys:
                 deleted += await rd.delete(*keys)
-        return {"status": "ok", "deleted": deleted}
+        return {
+            "status": "ok",
+            "deleted": deleted,
+            "worker_terminated": terminated,
+            "worker_terminate_failed": terminate_failed,
+            "worker_unreachable": worker_unreachable,
+        }
     finally:
         await rd.aclose()
 
