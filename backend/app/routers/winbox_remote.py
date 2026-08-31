@@ -191,6 +191,32 @@ async def _close_tunnel(tunnel_id: str) -> None:
         pass  # Idempotent — tunnel may already be closed
 
 
+async def _rollback_worker_session(session_id: str) -> None:
+    """Terminate a worker session during create rollback — never raises.
+
+    A rollback runs while another exception is in flight, so this must not throw
+    and mask the error that triggered it. A failure here is logged loudly rather
+    than swallowed, because the cost is real: the session keeps a display, a WS
+    port, one of ten concurrency slots and an authenticated connection to the
+    device until the reconciliation sweep picks it up.
+
+    Call this BEFORE closing the tunnel. The worker session holds the TCP
+    connection that runs through the tunnel, and the poller only reaps a tunnel
+    once ActiveConns() reaches zero — killing the session first is what lets that
+    happen, whereas closing the tunnel first leaves the connection to be torn
+    down from the far end.
+    """
+    try:
+        await worker_terminate_session(session_id)
+    except Exception as exc:
+        logger.error(
+            "rollback: could not terminate worker session %s (%s) — it will hold a "
+            "slot until the reconciler sweeps it",
+            session_id,
+            exc,
+        )
+
+
 # ---------------------------------------------------------------------------
 # POST — Create a Remote WinBox (Browser) session
 # ---------------------------------------------------------------------------
@@ -288,6 +314,11 @@ async def create_winbox_remote_session(
     tunnel_data = None
     session_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
+    # Set once the worker may be holding a session for session_id. Everything after
+    # the worker create — the Redis write above all — can fail, and until this flag
+    # is consulted on the way out, such a failure strands a live session with no
+    # record anywhere. That is the leak.
+    worker_launched = False
 
     try:
         tunnel_data = await _open_tunnel(device_id, tenant_id, current_user.user_id)
@@ -312,17 +343,38 @@ async def create_winbox_remote_session(
                 idle_timeout_seconds=body.idle_timeout_seconds,
                 max_lifetime_seconds=body.max_lifetime_seconds,
             )
+            worker_launched = True
         except WorkerCapacityError:
+            # The worker refused before launching anything, so there is nothing to
+            # terminate — this is the one failure mode that is unambiguously clean.
             await _close_tunnel(tunnel_id)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="No capacity for new sessions",
             )
         except WorkerLaunchError as exc:
+            # The worker attempted a launch and reported failure. Its own cleanup
+            # should have run, but "should have" is not a guarantee worth a leaked
+            # slot, and DELETE /sessions is idempotent, so ask anyway.
+            await _rollback_worker_session(session_id)
             await _close_tunnel(tunnel_id)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=f"Session launch failed: {exc}",
+            )
+        except httpx.TransportError as exc:
+            # AMBIGUOUS: we never got a response, but the worker may have completed
+            # the launch. Assume it did. Broader than TimeoutException on purpose —
+            # a dropped connection or protocol error mid-response is ambiguous in
+            # exactly the same way. Over-terminating costs one idempotent request
+            # that 404s; under-terminating costs a slot and a live connection to a
+            # customer's router for up to max_lifetime.
+            logger.error("Worker create did not respond for %s: %s", session_id, exc)
+            await _rollback_worker_session(session_id)
+            await _close_tunnel(tunnel_id)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Session launch did not complete",
             )
         finally:
             # Zero credentials
@@ -383,8 +435,12 @@ async def create_winbox_remote_session(
     except HTTPException:
         raise
     except Exception as exc:
-        # Full rollback
+        # Full rollback. The worker session goes first: it holds the connection
+        # running through the tunnel, and the tunnel is only reapable once that
+        # connection is gone.
         logger.error("Unexpected error creating winbox remote session: %s", exc)
+        if worker_launched:
+            await _rollback_worker_session(session_id)
         if tunnel_data and tunnel_data.get("tunnel_id"):
             await _close_tunnel(tunnel_data["tunnel_id"])
         await _delete_session_from_redis(session_id)

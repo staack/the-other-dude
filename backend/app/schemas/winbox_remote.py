@@ -17,6 +17,15 @@ class RemoteWinboxState(str, Enum):
     failed = "failed"
 
 
+# States that mean "this session should still exist on the worker". Shared so the
+# active-sessions panel and the reconciliation sweep agree on what "live" means.
+LIVE_STATES: tuple[str, ...] = (
+    RemoteWinboxState.creating.value,
+    RemoteWinboxState.active.value,
+    RemoteWinboxState.grace.value,
+)
+
+
 class RemoteWinboxCreateRequest(BaseModel):
     idle_timeout_seconds: int = Field(default=600, ge=60, le=3600)
     max_lifetime_seconds: int = Field(default=7200, ge=300, le=14400)
