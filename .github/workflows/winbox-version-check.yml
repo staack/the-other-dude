@@ -1,0 +1,93 @@
+name: WinBox Version Check
+
+# MikroTik doesn't publish a version index or feed for WinBox -- the
+# download page at mikrotik.com/download/winbox is a client-rendered app,
+# so scripts/winbox_update/check_version.py drives a real headless browser
+# to find the latest release. See docs/DEPLOYMENT.md's "WinBox Binary
+# Updates" section for the full picture, including how to pin a version by
+# hand instead of trusting this job.
+#
+# This job only detects a new release, verifies its checksum against
+# MikroTik's own published `.sha256` file, and opens a PR bumping the pin in
+# winbox-worker/Dockerfile. It does not merge anything: the regular CI
+# workflow (.github/workflows/ci.yml) runs on that PR like any other and
+# actually builds the image and starts a session against the new binary
+# before a human can merge it.
+
+on:
+  schedule:
+    # Weekly, Monday 06:00 UTC. WinBox doesn't release often enough to
+    # justify anything tighter, and a stale pin for a few extra days is a
+    # much smaller problem than what a tight loop would cost in noise.
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-open-pr:
+    name: Check for a new WinBox release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}
+
+      - name: Install dependencies
+        working-directory: scripts/winbox_update
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      # Fails the job (non-zero exit) if MikroTik's download page doesn't
+      # look the way this script expects, or if the downloaded archive
+      # doesn't match its published checksum. Never opens a PR for an
+      # archive it couldn't verify.
+      - name: Check for a new WinBox release
+        id: check
+        working-directory: scripts/winbox_update
+        run: python check_version.py
+
+      - name: Create Pull Request
+        if: steps.check.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(winbox-worker): bump WinBox to ${{ steps.check.outputs.version }}"
+          committer: "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          branch: winbox-update/${{ steps.check.outputs.version }}
+          delete-branch: true
+          title: "chore(winbox-worker): bump WinBox ${{ steps.check.outputs.previous_version }} -> ${{ steps.check.outputs.version }}"
+          body: |
+            Automated version bump opened by `.github/workflows/winbox-version-check.yml`.
+
+            - Previous version: `${{ steps.check.outputs.previous_version }}`
+            - New version: `${{ steps.check.outputs.version }}`
+            - SHA256 (verified against MikroTik's published `WinBox_Linux.zip.sha256` before this PR was opened): `${{ steps.check.outputs.sha256 }}`
+
+            The image build re-verifies this checksum independently --
+            `winbox-worker/Dockerfile`'s `sha256sum -c` step fails the build
+            outright if the downloaded archive doesn't match the pin above.
+
+            **This PR does not merge itself.** CI on this branch builds the
+            `winbox-worker` image with the new pin and starts a real WinBox
+            session against it before this can be merged
+            (`winbox-worker/scripts/smoke_test.sh`, run from `ci.yml`'s
+            `build` job).
+
+            Before approving, skim the WinBox changelog for this version:
+            https://mikrotik.com/download/changelogs/winbox
+          labels: |
+            automated
+            winbox-worker
+          draft: false
