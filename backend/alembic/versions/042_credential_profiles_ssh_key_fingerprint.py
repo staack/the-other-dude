@@ -1,7 +1,7 @@
 """Add ssh_public_key_fingerprint to credential_profiles.
 
-Revision ID: 041
-Revises: 040
+Revision ID: 042
+Revises: 041
 Create Date: 2026-08-30
 
 Supports ssh_key credential profiles. The private key itself lives inside the
@@ -18,8 +18,8 @@ queue behind long-running queries.
 import sqlalchemy as sa
 from alembic import op
 
-revision = "041"
-down_revision = "040"
+revision = "042"
+down_revision = "041"
 branch_labels = None
 depends_on = None
 
