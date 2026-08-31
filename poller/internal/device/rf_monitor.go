@@ -12,10 +12,10 @@ import (
 // rather than individual clients.
 type RFMonitorStats struct {
 	Interface         string `json:"interface"`
-	NoiseFloor        int    `json:"noise_floor"`         // dBm, e.g. -105
-	ChannelWidth      string `json:"channel_width"`       // e.g. "20MHz", "40MHz"
-	TxPower           int    `json:"tx_power"`            // dBm, e.g. 24
-	RegisteredClients int    `json:"registered_clients"`  // count from monitor
+	NoiseFloor        int    `json:"noise_floor"`        // dBm, e.g. -105
+	ChannelWidth      string `json:"channel_width"`      // e.g. "20MHz", "40MHz"
+	TxPower           int    `json:"tx_power"`           // dBm, e.g. 24
+	RegisteredClients int    `json:"registered_clients"` // count from monitor
 }
 
 // CollectRFMonitor queries the RouterOS device for per-interface RF statistics

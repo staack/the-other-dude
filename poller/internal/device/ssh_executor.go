@@ -148,15 +148,15 @@ func RunCommand(ctx context.Context, ip string, port int, username, password str
 		// Context cancelled/timed out mid-execution
 		session.Close()
 		return &CommandResult{
-			Stdout:   stdout.String(),
-			Stderr:   stderr.String(),
-			ExitCode: -1,
-			Duration: time.Since(start),
-		}, observedFP, &SSHError{
-			Kind:    ErrTruncatedOutput,
-			Err:     ctx.Err(),
-			Message: "command timed out mid-execution, output may be truncated",
-		}
+				Stdout:   stdout.String(),
+				Stderr:   stderr.String(),
+				ExitCode: -1,
+				Duration: time.Since(start),
+			}, observedFP, &SSHError{
+				Kind:    ErrTruncatedOutput,
+				Err:     ctx.Err(),
+				Message: "command timed out mid-execution, output may be truncated",
+			}
 	case runErr = <-done:
 	}
 

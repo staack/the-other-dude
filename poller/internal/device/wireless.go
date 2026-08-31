@@ -12,9 +12,9 @@ import (
 type WirelessStats struct {
 	Interface   string `json:"interface"`
 	ClientCount int    `json:"client_count"`
-	AvgSignal   int    `json:"avg_signal"`  // dBm (negative), e.g. -67
-	CCQ         int    `json:"ccq"`         // 0–100 percentage; 0 if not available (v7)
-	Frequency   int    `json:"frequency"`   // MHz
+	AvgSignal   int    `json:"avg_signal"` // dBm (negative), e.g. -67
+	CCQ         int    `json:"ccq"`        // 0–100 percentage; 0 if not available (v7)
+	Frequency   int    `json:"frequency"`  // MHz
 }
 
 // CollectWireless queries the RouterOS device for wireless registration-table

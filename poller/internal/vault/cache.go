@@ -54,7 +54,7 @@ type CredentialCache struct {
 	cache    *expirable.LRU[string, *CachedCreds]
 	rawCache *expirable.LRU[string, []byte] // raw decrypted credential JSON bytes
 	transit  *TransitClient
-	legacy   []byte       // legacy AES-256-GCM key (nil if not available)
+	legacy   []byte        // legacy AES-256-GCM key (nil if not available)
 	db       *pgxpool.Pool // for key_access_log inserts (nil if not available)
 }
 

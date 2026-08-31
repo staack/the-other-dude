@@ -261,9 +261,9 @@ func TestMatchSysObjectID_FallbackToGeneric(t *testing.T) {
 func TestMatchSysObjectID_LongestPrefixWins(t *testing.T) {
 	cache := &ProfileCache{
 		profiles: map[string]*CompiledProfile{
-			"mikrotik-broad-uuid":   {ID: "mikrotik-broad-uuid", Name: "mikrotik-broad"},
-			"mikrotik-narrow-uuid":  {ID: "mikrotik-narrow-uuid", Name: "mikrotik-narrow"},
-			"generic-uuid":          {ID: "generic-uuid", Name: "generic-snmp"},
+			"mikrotik-broad-uuid":  {ID: "mikrotik-broad-uuid", Name: "mikrotik-broad"},
+			"mikrotik-narrow-uuid": {ID: "mikrotik-narrow-uuid", Name: "mikrotik-narrow"},
+			"generic-uuid":         {ID: "generic-uuid", Name: "generic-snmp"},
 		},
 		sysOIDMap: []sysOIDEntry{
 			// Sorted by prefix length descending (longest first)

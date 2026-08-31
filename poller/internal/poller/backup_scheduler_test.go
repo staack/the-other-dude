@@ -17,9 +17,9 @@ import (
 
 // mockSSHHostKeyUpdater implements SSHHostKeyUpdater for testing.
 type mockSSHHostKeyUpdater struct {
-	mu           sync.Mutex
-	updatedKeys  map[string]string // device_id -> fingerprint
-	err          error
+	mu          sync.Mutex
+	updatedKeys map[string]string // device_id -> fingerprint
+	err         error
 }
 
 func newMockSSHHostKeyUpdater() *mockSSHHostKeyUpdater {

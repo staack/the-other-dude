@@ -10,16 +10,16 @@ import (
 // DeviceInfo holds metadata collected from /system/resource/print and
 // /system/routerboard/print.
 type DeviceInfo struct {
-	Version         string
-	MajorVersion    int
-	BoardName       string
-	Architecture    string
-	Uptime          string
-	CPULoad         string
-	FreeMemory      string
-	TotalMemory     string
-	SerialNumber    string // from /system/routerboard serial-number
-	FirmwareVersion string // from /system/routerboard current-firmware
+	Version          string
+	MajorVersion     int
+	BoardName        string
+	Architecture     string
+	Uptime           string
+	CPULoad          string
+	FreeMemory       string
+	TotalMemory      string
+	SerialNumber     string // from /system/routerboard serial-number
+	FirmwareVersion  string // from /system/routerboard current-firmware
 	LastConfigChange string // from /system/resource last-config-change (RouterOS 7.x)
 }
 
@@ -41,12 +41,12 @@ func DetectVersion(c *routeros.Client) (DeviceInfo, error) {
 	m := reply.Re[0].Map
 
 	info := DeviceInfo{
-		Version:      m["version"],
-		BoardName:    m["board-name"],
-		Architecture: m["architecture-name"],
-		Uptime:       m["uptime"],
-		CPULoad:      m["cpu-load"],
-		FreeMemory:   m["free-memory"],
+		Version:          m["version"],
+		BoardName:        m["board-name"],
+		Architecture:     m["architecture-name"],
+		Uptime:           m["uptime"],
+		CPULoad:          m["cpu-load"],
+		FreeMemory:       m["free-memory"],
 		TotalMemory:      m["total-memory"],
 		LastConfigChange: m["last-config-change"],
 	}

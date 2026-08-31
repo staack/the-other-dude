@@ -161,9 +161,9 @@ func main() {
 	}
 
 	credentialCache := vault.NewCredentialCache(
-		1024,             // max 1024 cached credentials
-		5*time.Minute,    // 5-minute TTL
-		transitClient,    // nil if OpenBao not configured
+		1024,                        // max 1024 cached credentials
+		5*time.Minute,               // 5-minute TTL
+		transitClient,               // nil if OpenBao not configured
 		cfg.CredentialEncryptionKey, // nil if legacy key not set
 		deviceStore.Pool(),          // for key_access_log inserts
 	)

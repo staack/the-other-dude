@@ -43,14 +43,14 @@ func TestRegistrationEntryFields(t *testing.T) {
 		Interface:        "wlan1",
 		MacAddress:       "AA:BB:CC:DD:EE:FF",
 		SignalStrength:   -67,
-		TxCCQ:           95,
-		TxRate:          "130Mbps",
-		RxRate:          "130Mbps",
-		Uptime:          "3d12h5m",
-		Distance:        150,
-		LastIP:          "192.168.1.100",
+		TxCCQ:            95,
+		TxRate:           "130Mbps",
+		RxRate:           "130Mbps",
+		Uptime:           "3d12h5m",
+		Distance:         150,
+		LastIP:           "192.168.1.100",
 		TxSignalStrength: -65,
-		Bytes:           "123456,789012",
+		Bytes:            "123456,789012",
 	}
 	if entry.Interface != "wlan1" {
 		t.Error("Interface field not set correctly")

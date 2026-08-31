@@ -101,4 +101,3 @@ func collectTemperature(client *routeros.Client, majorVersion int) string {
 
 	return ""
 }
-

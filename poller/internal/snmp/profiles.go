@@ -20,9 +20,9 @@ type profileDataJSON struct {
 }
 
 type pollGroupJSON struct {
-	IntervalMultiplier int              `json:"interval_multiplier"`
-	Scalars            []scalarOIDJSON  `json:"scalars"`
-	Tables             []tableOIDJSON   `json:"tables"`
+	IntervalMultiplier int             `json:"interval_multiplier"`
+	Scalars            []scalarOIDJSON `json:"scalars"`
+	Tables             []tableOIDJSON  `json:"tables"`
 }
 
 type scalarOIDJSON struct {
@@ -61,7 +61,7 @@ type sysOIDEntry struct {
 type ProfileCache struct {
 	mu        sync.RWMutex
 	profiles  map[string]*CompiledProfile // keyed by profile UUID
-	sysOIDMap []sysOIDEntry              // sorted by prefix length desc
+	sysOIDMap []sysOIDEntry               // sorted by prefix length desc
 	genericID string                      // UUID of generic-snmp (fallback)
 	refreshAt time.Duration
 	db        *pgxpool.Pool

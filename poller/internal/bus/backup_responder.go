@@ -32,7 +32,7 @@ type BackupTriggerRequest struct {
 
 // BackupTriggerResponse is the JSON reply for a config.backup.trigger NATS request.
 type BackupTriggerResponse struct {
-	Status     string `json:"status"`                // "success", "failed", "locked"
+	Status     string `json:"status"` // "success", "failed", "locked"
 	SHA256Hash string `json:"sha256_hash,omitempty"`
 	Message    string `json:"message,omitempty"`
 	Error      string `json:"error,omitempty"`

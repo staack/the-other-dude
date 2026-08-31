@@ -19,7 +19,7 @@ import (
 type DeviceStatusEvent struct {
 	DeviceID        string `json:"device_id"`
 	TenantID        string `json:"tenant_id"`
-	Status          string `json:"status"` // "online" or "offline"
+	Status          string `json:"status"`                     // "online" or "offline"
 	SoftwareVersion string `json:"software_version,omitempty"` // parsed from sysDescr for SNMP devices
 	RouterOSVersion string `json:"routeros_version,omitempty"`
 	MajorVersion    int    `json:"major_version,omitempty"`
@@ -73,7 +73,7 @@ type ConfigSnapshotEvent struct {
 	DeviceID             string `json:"device_id"`
 	TenantID             string `json:"tenant_id"`
 	RouterOSVersion      string `json:"routeros_version,omitempty"`
-	CollectedAt          string `json:"collected_at"`          // RFC3339
+	CollectedAt          string `json:"collected_at"` // RFC3339
 	SHA256Hash           string `json:"sha256_hash"`
 	ConfigText           string `json:"config_text"`
 	NormalizationVersion int    `json:"normalization_version"`
@@ -129,7 +129,7 @@ func NewPublisher(natsURL string) (*Publisher, error) {
 	defer cancel()
 
 	_, err = js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
-		Name:     "DEVICE_EVENTS",
+		Name: "DEVICE_EVENTS",
 		Subjects: []string{
 			"device.status.>",
 			"device.metrics.>",
@@ -162,8 +162,8 @@ func NewPublisher(natsURL string) (*Publisher, error) {
 	_, err = js.CreateOrUpdateStream(ctx2, jetstream.StreamConfig{
 		Name:     "WIRELESS_REGISTRATIONS",
 		Subjects: []string{"wireless.registrations.>"},
-		MaxAge:   30 * 24 * time.Hour,    // 30-day retention
-		MaxBytes: 128 * 1024 * 1024,      // 128MB cap
+		MaxAge:   30 * 24 * time.Hour, // 30-day retention
+		MaxBytes: 128 * 1024 * 1024,   // 128MB cap
 		Discard:  jetstream.DiscardOld,
 	})
 	if err != nil {
@@ -443,9 +443,9 @@ func (p *Publisher) PublishPushAlert(ctx context.Context, event PushAlertEvent) 
 // are collected from a device. This is separate from DEVICE_EVENTS to allow
 // independent retention (30 days vs 24 hours) and consumer scaling.
 type WirelessRegistrationEvent struct {
-	DeviceID      string                   `json:"device_id"`
-	TenantID      string                   `json:"tenant_id"`
-	CollectedAt   string                   `json:"collected_at"` // RFC3339
+	DeviceID      string                     `json:"device_id"`
+	TenantID      string                     `json:"tenant_id"`
+	CollectedAt   string                     `json:"collected_at"` // RFC3339
 	Registrations []device.RegistrationEntry `json:"registrations"`
 	RFStats       []device.RFMonitorStats    `json:"rf_stats,omitempty"`
 }

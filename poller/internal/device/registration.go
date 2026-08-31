@@ -17,8 +17,8 @@ type RegistrationEntry struct {
 	MacAddress       string `json:"mac_address"`
 	SignalStrength   int    `json:"signal_strength"`    // dBm, parsed from signal-strength or signal
 	TxCCQ            int    `json:"tx_ccq"`             // 0-100, 0 if unavailable (v7)
-	TxRate           string `json:"tx_rate"`             // e.g. "130Mbps"
-	RxRate           string `json:"rx_rate"`             // e.g. "130Mbps"
+	TxRate           string `json:"tx_rate"`            // e.g. "130Mbps"
+	RxRate           string `json:"rx_rate"`            // e.g. "130Mbps"
 	Uptime           string `json:"uptime"`             // RouterOS duration format e.g. "3d12h5m"
 	Distance         int    `json:"distance"`           // meters, 0 if unavailable
 	LastIP           string `json:"last_ip"`            // client IP if available
