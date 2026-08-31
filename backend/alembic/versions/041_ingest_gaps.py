@@ -1,6 +1,6 @@
 """Create ingest_gaps and poller_heartbeats so a hole in the metrics is visible.
 
-Revision ID: 042
+Revision ID: 041
 Revises: 040
 Create Date: 2026-08-30
 
