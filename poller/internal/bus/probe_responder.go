@@ -67,7 +67,11 @@ type ProbeResponse struct {
 // (poller/internal/poller/worker.go:113), so the probe resolves credentials
 // exactly as polling does.
 type ProbeCredentialResolver interface {
-	GetCredentials(deviceID, tenantID string, transitCiphertext *string, legacyCiphertext []byte) (string, string, error)
+	GetCredentials(
+		deviceID, tenantID string,
+		transitCiphertext *string, legacyCiphertext []byte,
+		profileTransitCiphertext *string, profileLegacyCiphertext []byte,
+	) (string, string, error)
 }
 
 // ProbeResponder handles NATS request-reply for RouterOS connectivity probes.
@@ -185,6 +189,8 @@ func (r *ProbeResponder) handleStoredRequest(msg *nats.Msg) {
 		dev.TenantID,
 		dev.EncryptedCredentialsTransit,
 		dev.EncryptedCredentials,
+		dev.ProfileEncryptedCredentialsTransit,
+		dev.ProfileEncryptedCredentials,
 	)
 	if err != nil {
 		// Reported as a transport error, not a probe failure: probing with
