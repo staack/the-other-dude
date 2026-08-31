@@ -1,0 +1,24 @@
+# Ruff configuration for files outside backend/ — principally setup.py, which CI
+# started linting in 385ab07.
+#
+# Why this file exists: the project's rule selection lives in backend/pyproject.toml
+# and only governs files under backend/. setup.py sits at the repo root, so without
+# a config here it inherits ruff's *built-in defaults* — and those change between
+# releases. CI installs ruff unpinned: 0.15.7 reported setup.py clean, 0.16.5
+# reported 37 issues, and main went red on a commit that passed locally. The CI job
+# now pins its ruff version too, but pinning alone only defers the next surprise;
+# this file makes the rule set an explicit project decision.
+#
+# The rules mirror backend/pyproject.toml. Ruff has no config inheritance across
+# directories, so if you change the selection there, change it here as well.
+#
+# line-length is deliberately NOT set. setup.py is formatted to ruff's default, and
+# raising it to the backend's 100 would rewrite ~50 lines of the installer for no
+# functional gain. If you want the two aligned, do it as its own formatting commit.
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "W"]
+ignore = [
+    "E501",  # Line too long — matches the backend's ignore
+]
