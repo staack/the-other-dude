@@ -417,6 +417,21 @@ async def _run_single_push(job_id: str) -> None:
         #          Best-effort: a leftover file is inert, unlike the scheduler
         #          this replaced.
         logger.info("Device %s (%s) is reachable after push - committing", hostname, ip_address)
+
+        # Record the push so the poller can auto-rollback if the device drops off
+        # *after* safe mode's window has closed — a routing or firewall change can
+        # take effect later than the reachability probe above. poller worker.go:186
+        # reads this key and publishes a rollback event for 'template'.
+        from app.services.push_tracker import record_push
+
+        await record_push(
+            device_id=device_id,
+            tenant_id=tenant_id,
+            push_type="template",
+            push_operation_id=job_id,
+            pre_push_commit_sha=backup_sha,
+        )
+
         try:
             async with asyncssh.connect(
                 ip_address,
