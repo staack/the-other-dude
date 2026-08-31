@@ -175,7 +175,7 @@
 
       <p><strong>Command palette.</strong> Ctrl+K (or Cmd+K) opens a command palette. Type a device name, jump straight to it. Type a page name, go there. It's fast. You don't have to click through four menus to get where you're going.</p>
 
-      <p><strong>Configuration management.</strong> This is the part that actually matters. You can view a device's running config, edit it, and push changes. Config pushes use a two-phase commit with automatic panic revert — if the device doesn't confirm the change within a timeout, it rolls back. Every config change is stored in git, so you get full history, diffs, and the ability to restore any previous version.</p>
+      <p><strong>Configuration management.</strong> This is the part that actually matters. You can view a device's running config, edit it, and push changes. Restores and template pushes go on inside a RouterOS safe-mode session, so if the change cuts off the management path the router undoes it by itself — no reboot, no timeout to miss, no confirmation to click. Editing directly in the config editor doesn't get that protection; those changes are applied straight to the device. Every config change is stored in git, so you get full history, diffs, and the ability to restore any previous version.</p>
 
       <p><strong>Config templates.</strong> Write a template once with variables, apply it across devices. Not a full-blown scripting language — just variable substitution for common patterns. Good enough for standardizing DNS settings across a fleet or rolling out a firewall rule change.</p>
 
@@ -199,7 +199,9 @@
 
       <h2>Where It's Rough</h2>
 
-      <p><strong>WinBox sessions occasionally hang.</strong> The container lifecycle management works most of the time, but sometimes a session doesn't terminate cleanly and you end up with an orphaned container. It's a known issue. It doesn't break anything else, it just wastes resources until it times out.</p>
+      <p><strong>WinBox sessions leak.</strong> A session that doesn't end cleanly — you close the tab, the browser dies, WinBox exits on its own — often isn't cleaned up. This paragraph used to call that "an orphaned container," which was wrong, and wrong in a way that made it sound smaller than it is. There is no per-session container. Every session is an Xpra + Xvfb + WinBox process tree running inside the one long-lived worker container, so a leaked session appears nowhere in <code>docker ps</code> and nothing sweeps it up.</p>
+
+      <p>It also isn't free. There are ten concurrent session slots. Leaks one through nine are invisible; the tenth means the next person to click WinBox gets a 503, and so does everyone after them. A leaked session additionally holds an authenticated connection open to the router it was pointed at. The ten-minute idle timeout that was supposed to catch abandoned sessions has never fired once — it looks for a field name in <code>xpra info</code> that this version of xpra doesn't emit — so at best an abandoned session sits there for the full two-hour lifetime cap, and a session the worker has lost track of doesn't age out at all. Fixing the session lifecycle properly is the current priority.</p>
 
       <p><strong>The map view is basic.</strong> Devices show up on a map if they have coordinates. That's about it. No topology overlays, no link visualization, no automatic geolocation. You have to manually set coordinates.</p>
 
@@ -213,15 +215,17 @@
 
       <h2>What's Missing Entirely</h2>
 
-      <p><strong>No traffic analytics page.</strong> The code for per-interface traffic visualization exists but isn't wired up yet. You can see interface counters in device detail, but there's no dedicated traffic analysis view.</p>
+      <p><em>Updated August 30, 2026. This post was written in March and three of the five items below are no longer true — two shipped afterwards, one was wrong when it was written. Leaving them standing would be misleading rather than merely stale, so they're corrected inline rather than quietly deleted.</em></p>
 
-      <p><strong>No wireless dashboard.</strong> Same situation — the data is collected, the page is built, but it's not in the navigation yet.</p>
+      <p><strong>No traffic analytics page.</strong> <em>Still true.</em> The per-interface traffic page exists in the code and is routed, but it isn't in the sidebar, so you can only reach it by typing the URL. You can see interface counters in device detail in the meantime.</p>
 
-      <p><strong>No high-availability deployment.</strong> The system runs as a single instance. If the server goes down, management goes down. The architecture supports horizontal scaling for the poller, but nobody has tested multi-replica deployments in production.</p>
+      <p><strong>No wireless dashboard.</strong> <em>Shipped — this one was just wrong.</em> There is a Wireless entry in the sidebar. It lists the APs across the fleet that are actually in trouble, with signal in dBm, CCQ, and client counts, colour-coded by severity and refreshed every thirty seconds. There's a matching "APs Needing Attention" card on the overview page, and per-interface wireless charts on each device's detail page.</p>
 
-      <p><strong>No automated firmware upgrades.</strong> The system tells you what's available. It doesn't push firmware. That's intentional for now — firmware upgrades on network equipment deserve more caution than a background job.</p>
+      <p><strong>No high-availability deployment.</strong> <em>Still true.</em> The system runs as a single instance. If the server goes down, management goes down. The architecture supports horizontal scaling for the poller, but nobody has tested multi-replica deployments in production.</p>
 
-      <p><strong>No SNMP.</strong> Everything talks RouterOS API. If you have non-MikroTik devices, this tool doesn't help you.</p>
+      <p><strong>No automated firmware upgrades.</strong> <em>Shipped.</em> There is now a full upgrade path — download, upload, reboot, verify — for a single device or a staged mass rollout, with cancel, retry, and abort. The caution described here is now in the workflow rather than in the absence of the feature: nothing upgrades on a schedule, and every rollout is started deliberately.</p>
+
+      <p><strong>No SNMP.</strong> <em>Shipped.</em> SNMP v1/v2c/v3 monitoring landed in v9.8, five days after this post went up, along with a custom profile builder and MIB upload. It is read-only — no SET, no traps — but non-MikroTik switches, APs, and UPSes now sit in the same fleet view as the routers.</p>
 
       <h2>Why It's Built This Way</h2>
 
@@ -229,11 +233,11 @@
 
       <p><strong>Minimalism over features.</strong> Every feature that exists was added because a real workflow needed it, not because it looked good on a feature comparison chart. The goal is a small set of things that work reliably, not a large set of things that mostly work.</p>
 
-      <p><strong>Safety over convenience.</strong> Config pushes have automatic rollback. Credential encryption uses a real KMS, not a hardcoded key. Authentication doesn't send your password to the server. These choices make the system slightly more complex to set up but significantly harder to accidentally break.</p>
+      <p><strong>Safety over convenience.</strong> Restores and template pushes have automatic rollback, and a push too large for RouterOS to undo is refused rather than applied without a safety net. Credential encryption uses a real KMS, not a hardcoded key. Authentication doesn't send your password to the server. These choices make the system slightly more complex to set up but significantly harder to accidentally break.</p>
 
       <p><strong>Predictable behavior over magic.</strong> The system doesn't try to be clever. It doesn't auto-remediate. It doesn't silently retry failed operations. When something fails, it tells you it failed and lets you decide what to do. Magic is great until it does the wrong thing to production equipment at 3am.</p>
 
-      <p><strong>No vendor lock-in.</strong> Self-hosted. Open source. Your data stays on your infrastructure. No cloud dependency, no phone-home, no license server. The optional telemetry is genuinely optional — disabled by default, anonymous when enabled, and you can see exactly what it collects.</p>
+      <p><strong>No vendor lock-in.</strong> Self-hosted, and the source is published — though under the BSL 1.1, which is source-available rather than open source, and converts to Apache 2.0 in March 2030. Your data stays on your infrastructure. No cloud dependency, no phone-home, no license server. The optional telemetry is genuinely optional — disabled by default, anonymous when enabled, and you can see exactly what it collects.</p>
 
       <h2>What You Should Not Use It For Yet</h2>
 
@@ -249,7 +253,7 @@
 
       <p>If that's useful to you now, use it. If not, check back later.</p>
 
-      <p style="margin-top: 48px; font-size: 0.9rem; color: var(--text-muted);">The Other Dude is <a href="../index.html">open source MikroTik fleet management</a> — <a href="../docs.html">read the docs</a> or <a href="https://github.com/staack/the-other-dude" rel="noopener">view on GitHub</a>.</p>
+      <p style="margin-top: 48px; font-size: 0.9rem; color: var(--text-muted);">The Other Dude is <a href="../index.html">source-available MikroTik fleet management</a> — <a href="../docs.html">read the docs</a> or <a href="https://github.com/staack/the-other-dude" rel="noopener">view on GitHub</a>.</p>
     </article>
   </main>
 

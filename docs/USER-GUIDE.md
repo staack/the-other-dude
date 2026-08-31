@@ -121,10 +121,12 @@ The Config Editor provides direct access to RouterOS configuration paths (e.g., 
 - Select a device from the header dropdown.
 - Navigate the configuration tree to browse, add, edit, or delete entries.
 - Two apply modes are available:
-  - **Standard Apply** -- changes are applied immediately.
-  - **Safe Apply** -- two-phase commit with automatic panic-revert. Changes are applied, and you have a confirmation window to accept them. If the confirmation times out (device becomes unreachable), changes automatically revert to prevent lockouts.
+  - **Apply Now** -- changes are sent as soon as you confirm them.
+  - **Review Changes** -- shows the equivalent RSC script so you can inspect it first, then sends the same commands.
 
-Safe Apply is strongly recommended for firewall rules and routing changes on remote devices.
+**Neither mode rolls anything back.** The config editor applies changes directly over the RouterOS API. Until August 2026 this control was labelled "Safe Apply (with auto-revert)" and this guide recommended it for firewall and routing changes on remote devices; that was wrong, and both have been corrected. Review Changes is a review step, not a safety net.
+
+Automatic rollback does exist, on a different path. Config restore and template push apply their changes inside a RouterOS safe-mode session, so the router reverts itself if the change cuts off the management path, without rebooting. For a firewall or routing change on a remote device, prefer a template push over an editor edit, or arrange out-of-band access first. Templates render to RSC, so anything the editor can express a template can too. One limit: safe mode can only undo 100 actions, and a larger push is refused rather than applied unprotected -- split a big change set into stages. That refusal is the safety working.
 
 ### Simple Config
 
@@ -368,7 +370,7 @@ The fleet map provides a geographic view of all devices that have coordinates as
 
 - Use the **command palette** (`Cmd+K`) for the fastest way to navigate. It searches pages, devices, and actions.
 - The **Audit Trail** is immutable -- every configuration change, login, and admin action is recorded and cannot be deleted.
-- **Safe Apply** is your safety net for remote devices. If a firewall change locks you out, the automatic revert restores access.
+- **Safe-mode rollback** is your safety net for remote devices, and it covers config restore and template push -- not direct config editor edits. If a change made that way locks you out, the router reverts it on its own. For a risky change on a remote device, push it as a template.
 - **API Keys** (prefixed `mktp_`) provide programmatic access at operator-level permissions for automation and scripting.
 - The **Topology** view automatically arranges devices for readability. Toggle shared subnet edges to reduce visual clutter on complex networks.
 

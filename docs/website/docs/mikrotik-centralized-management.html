@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MikroTik Centralized Management Platform</title>
-  <meta name="description" content="Open source centralized management for MikroTik RouterOS fleets. Configuration, monitoring, backups, and security from a single self-hosted platform.">
+  <meta name="description" content="Self-hosted, source-available centralized management for MikroTik RouterOS fleets. Configuration, monitoring, backups, and security from a single self-hosted platform.">
   <meta name="keywords" content="mikrotik centralized management, routeros configuration management, mikrotik router fleet management, MSP network management, MikroTik monitoring">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111113">
@@ -120,7 +120,7 @@
 
       <ol>
         <li><strong>Visibility</strong> — A fleet-wide dashboard showing device inventory, health status, active alerts, bandwidth utilization, and wireless issues. You need to know the state of every device without logging into any of them.</li>
-        <li><strong>Configuration</strong> — The ability to browse, edit, push, and track configuration changes across any device in the fleet. That includes safe push mechanisms with automatic rollback if a change breaks connectivity, template-based operations for applying consistent configs across groups of devices, and a change history that tells you what changed, when, and who made the change.</li>
+        <li><strong>Configuration</strong> — The ability to browse, edit, push, and track configuration changes across any device in the fleet. That includes a push mechanism that reverts a change which breaks connectivity, template-based operations for applying consistent configs across groups of devices, and a change history that tells you what changed, when, and who made the change. Ask any vendor which push paths the rollback actually covers, and whether it has been tested on hardware — the answer is often narrower than the feature list implies.</li>
         <li><strong>Monitoring</strong> — Real-time metrics with historical trending. Threshold-based alerts with configurable notification channels. The ability to suppress alerts during scheduled maintenance windows so on-call staff aren't paged for expected downtime.</li>
         <li><strong>Backups</strong> — Automated configuration snapshots that run without human intervention, a version timeline you can navigate, side-by-side diff views between any two snapshots, and a tested restore path. Backups that exist but can't be restored aren't backups.</li>
         <li><strong>Security</strong> — Encrypted credential storage, a complete audit trail of all management actions, role-based access control so operators can do their jobs without needing admin privileges, and tenant isolation for MSPs managing multiple clients.</li>
@@ -133,13 +133,13 @@
 
       <p><strong>Fleet Visibility:</strong> The main dashboard surfaces device health, active alerts, bandwidth utilization, and wireless issues at a glance. The device table uses virtual scrolling to handle hundreds of devices without performance degradation. A geographic map and a network topology view (built on ReactFlow with Dagre layout) give you spatial and logical context for the fleet. A built-in subnet scanner handles device discovery when you're onboarding a new site.</p>
 
-      <p><strong>Configuration Management:</strong> The config editor exposes the full RouterOS path hierarchy, letting you navigate and edit any config section the same way WinBox does — but with fleet-wide reach. Config pushes use a two-phase process: the change is applied, a connectivity check runs, and if the check fails the router automatically reverts to its previous state. This eliminates the risk of locking yourself out with a bad firewall rule or routing change. Simple Config mode provides a streamlined UI for common tasks — IP addressing, DHCP, firewall basics — modeled after consumer router interfaces for operators who don't need full RouterOS syntax exposure. Templates support variable substitution for batch operations across groups of devices.</p>
+      <p><strong>Configuration Management:</strong> The config editor exposes the full RouterOS path hierarchy, letting you navigate and edit any config section the same way WinBox does — but with fleet-wide reach. Edits made in the config editor are applied directly and are not rolled back automatically; for a change you want protected, push it as a template or restore a saved version, which run inside a RouterOS safe-mode session and revert themselves if the device stops answering. Simple Config mode provides a streamlined UI for common tasks — IP addressing, DHCP, firewall basics — modeled after consumer router interfaces for operators who don't need full RouterOS syntax exposure. Templates support variable substitution for batch operations across groups of devices.</p>
 
       <p><strong>Monitoring and Alerts:</strong> Health, traffic, and wireless metrics are stored in TimescaleDB hypertables, which handle high-frequency time-series data efficiently without requiring separate infrastructure. Alerts are threshold-based and configurable per device or device group. Real-time updates push via SSE backed by NATS JetStream. Maintenance windows suppress alerts for scheduled work so you're not managing noise during planned outages.</p>
 
       <p><strong>Security:</strong> Authentication uses SRP-6a — a zero-knowledge protocol where the server never sees your password. Device credentials are encrypted at rest using AES-256-GCM with per-tenant envelope encryption via OpenBao Transit. Role-based access control supports four roles (super_admin, admin, operator, viewer) with appropriate permission boundaries at each level. PostgreSQL Row-Level Security enforces tenant isolation at the database layer — one tenant's data is never accessible to another's, regardless of application-layer logic. Every management action is recorded in an immutable audit trail.</p>
 
-      <p><strong>Self-Hosted:</strong> The entire platform deploys via Docker Compose. Your device credentials, configuration history, and monitoring data stay on your infrastructure. The platform is open source and available on GitHub.</p>
+      <p><strong>Self-Hosted:</strong> The entire platform deploys via Docker Compose. Your device credentials, configuration history, and monitoring data stay on your infrastructure. The full source is published on GitHub under the BSL 1.1 — source-available rather than open source, converting to Apache 2.0 in March 2030.</p>
 
       <h2>Getting Started</h2>
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manage Multiple MikroTik Routers</title>
-  <meta name="description" content="How to manage hundreds of MikroTik routers from a single dashboard with open source tooling. Fleet-level visibility, batch configuration, and centralized monitoring.">
+  <meta name="description" content="How to manage hundreds of MikroTik routers from a single dashboard with self-hosted, source-available tooling. Fleet-level visibility, batch configuration, and centralized monitoring.">
   <meta name="keywords" content="manage multiple mikrotik routers, mikrotik router fleet management, mikrotik centralized management, routeros fleet, msp mikrotik">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111113">
@@ -128,7 +128,7 @@
 
       <ul>
         <li><strong>Single-pane-of-glass visibility.</strong> Device count, online/offline status, uptime, CPU load, and memory usage across all routers without opening individual sessions.</li>
-        <li><strong>Batch configuration operations.</strong> Push a firewall rule or interface change to 50 devices simultaneously, with per-device success/failure reporting and rollback capability.</li>
+        <li><strong>Batch configuration operations.</strong> Push a firewall rule or interface change across a group of devices from one place, with per-device success/failure reporting. Batch pushes run one device at a time, in order, and stop at the first device that fails rather than continuing into the rest of the fleet — deliberately, so a bad change reaches one router instead of fifty.</li>
         <li><strong>Consistent firmware management.</strong> Know which devices are running which RouterOS version, which are behind, and which hardware supports the target version before you start an upgrade cycle.</li>
         <li><strong>Credential management without spreadsheets.</strong> Store device credentials encrypted at rest, rotate them centrally, and audit access without maintaining parallel systems.</li>
         <li><strong>Multi-tenant isolation.</strong> MSPs managing multiple client networks need hard boundaries between client data — not just UI filtering, but enforced at the data layer.</li>
@@ -141,7 +141,7 @@
 
       <p><strong>Fleet dashboard.</strong> A single view shows device count, online/offline ratio, uptime sparklines, and per-device CPU and memory across your entire fleet. The device table is virtual-scrolled and handles hundreds of routers without performance degradation.</p>
 
-      <p><strong>Batch configuration.</strong> Apply a config template to multiple devices simultaneously. Each device gets its own result — success, failure, or partial — and the operation is logged with a timestamp and the identity of who ran it. Config templates support variable substitution, so you can define a standard firewall ruleset once and apply it across sites with different IP ranges without editing the template for each device.</p>
+      <p><strong>Batch configuration.</strong> Apply a config template across a group of devices. Each device gets its own result — success, failure, or partial — and the operation is logged with a timestamp and the identity of who ran it. Config templates support variable substitution, so you can define a standard firewall ruleset once and apply it across sites with different IP ranges without editing the template for each device. Template rollouts run one device at a time and stop at the first failure, and each device's change is applied inside a RouterOS safe-mode session so it reverts itself if the device stops answering.</p>
 
       <p><strong>Bulk command execution.</strong> Run arbitrary RouterOS CLI commands across a device group. Useful for one-off queries (what's the uptime on all devices at site X?) or scripted changes that don't fit a template pattern.</p>
 
