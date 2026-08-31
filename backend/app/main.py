@@ -470,6 +470,12 @@ def create_app() -> FastAPI:
     from app.routers.signal_history import router as signal_history_router
     from app.routers.site_alerts import router as site_alerts_router
 
+    # Keep submitted credentials out of 422 responses and anything that logs
+    # them: Pydantic echoes the raw request body in validation errors.
+    from app.errors import install_validation_error_handler
+
+    install_validation_error_handler(app)
+
     app.include_router(auth_router, prefix="/api")
     app.include_router(tenants_router, prefix="/api")
     app.include_router(users_router, prefix="/api")
