@@ -175,7 +175,7 @@
 
       <p><strong>Command palette.</strong> Ctrl+K (or Cmd+K) opens a command palette. Type a device name, jump straight to it. Type a page name, go there. It's fast. You don't have to click through four menus to get where you're going.</p>
 
-      <p><strong>Configuration management.</strong> This is the part that actually matters. You can view a device's running config, edit it, and push changes. Config pushes use a two-phase commit with automatic panic revert — if the device doesn't confirm the change within a timeout, it rolls back. Every config change is stored in git, so you get full history, diffs, and the ability to restore any previous version.</p>
+      <p><strong>Configuration management.</strong> This is the part that actually matters. You can view a device's running config, edit it, and push changes. Every config change is stored in git, so you get full history, diffs, and the ability to restore any previous version. This paragraph used to say pushes have "a two-phase commit with automatic panic revert" that rolls back on timeout — see the correction further down; the revert timer is real but fires unconditionally, and pushing to production isn't safe until that's fixed.</p>
 
       <p><strong>Config templates.</strong> Write a template once with variables, apply it across devices. Not a full-blown scripting language — just variable substitution for common patterns. Good enough for standardizing DNS settings across a fleet or rolling out a firewall rule change.</p>
 
@@ -233,7 +233,9 @@
 
       <p><strong>Minimalism over features.</strong> Every feature that exists was added because a real workflow needed it, not because it looked good on a feature comparison chart. The goal is a small set of things that work reliably, not a large set of things that mostly work.</p>
 
-      <p><strong>Safety over convenience.</strong> Config pushes have automatic rollback. Credential encryption uses a real KMS, not a hardcoded key. Authentication doesn't send your password to the server. These choices make the system slightly more complex to set up but significantly harder to accidentally break.</p>
+      <p><strong>Safety over convenience.</strong> Credential encryption uses a real KMS, not a hardcoded key. Authentication doesn't send your password to the server. These choices make the system slightly more complex to set up but significantly harder to accidentally break.</p>
+
+      <p>This paragraph used to open with "config pushes have automatic rollback." They don't. The intent was there — a pre-push backup gets written to the device's own flash, and an on-device revert timer gets installed — but the timer fires unconditionally instead of on unreachability, and it beats the platform to the punch about 72% of the time, reverting and rebooting a router after a push that worked. The principle stands; this particular implementation of it does not, and it's being fixed. Details are in the <a href="../docs/routeros-configuration-management.html">config management guide</a>.</p>
 
       <p><strong>Predictable behavior over magic.</strong> The system doesn't try to be clever. It doesn't auto-remediate. It doesn't silently retry failed operations. When something fails, it tells you it failed and lets you decide what to do. Magic is great until it does the wrong thing to production equipment at 3am.</p>
 

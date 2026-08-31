@@ -120,7 +120,7 @@
 
       <ol>
         <li><strong>Visibility</strong> — A fleet-wide dashboard showing device inventory, health status, active alerts, bandwidth utilization, and wireless issues. You need to know the state of every device without logging into any of them.</li>
-        <li><strong>Configuration</strong> — The ability to browse, edit, push, and track configuration changes across any device in the fleet. That includes safe push mechanisms with automatic rollback if a change breaks connectivity, template-based operations for applying consistent configs across groups of devices, and a change history that tells you what changed, when, and who made the change.</li>
+        <li><strong>Configuration</strong> — The ability to browse, edit, push, and track configuration changes across any device in the fleet. That includes a safety mechanism for a push that cuts off your own management path, template-based operations for applying consistent configs across groups of devices, and a change history that tells you what changed, when, and who made the change. On the safety mechanism, insist on evidence it has been tested against real hardware; The Other Dude's own has a <a href="routeros-configuration-management.html">documented defect</a> found exactly that way.</li>
         <li><strong>Monitoring</strong> — Real-time metrics with historical trending. Threshold-based alerts with configurable notification channels. The ability to suppress alerts during scheduled maintenance windows so on-call staff aren't paged for expected downtime.</li>
         <li><strong>Backups</strong> — Automated configuration snapshots that run without human intervention, a version timeline you can navigate, side-by-side diff views between any two snapshots, and a tested restore path. Backups that exist but can't be restored aren't backups.</li>
         <li><strong>Security</strong> — Encrypted credential storage, a complete audit trail of all management actions, role-based access control so operators can do their jobs without needing admin privileges, and tenant isolation for MSPs managing multiple clients.</li>
@@ -153,7 +153,7 @@
           <li><a href="manage-multiple-mikrotik-routers.html">Managing multiple MikroTik routers from one interface</a></li>
           <li><a href="mikrotik-router-monitoring.html">Monitoring MikroTik routers at scale</a></li>
           <li><a href="open-source-mikrotik-management.html">Why open source matters for MikroTik management</a></li>
-          <li><a href="routeros-configuration-management.html">RouterOS configuration management with safe rollback</a></li>
+          <li><a href="routeros-configuration-management.html">RouterOS configuration management, version history, and templates</a></li>
           <li><a href="msp-mikrotik-management.html">Multi-tenant MikroTik management for MSPs</a></li>
           <li><a href="winbox-alternative.html">Browser-based WinBox alternative</a></li>
           <li><a href="https://github.com/staack/the-other-dude" rel="noopener">The Other Dude on GitHub</a></li>

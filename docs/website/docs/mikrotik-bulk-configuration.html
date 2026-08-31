@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MikroTik Bulk Configuration — Fleet-Wide Config Management</title>
-  <meta name="description" content="Push MikroTik configuration changes across multiple devices at once. Config templates with variable substitution, batch CLI commands, two-phase commit with automatic rollback.">
+  <meta name="description" content="Push MikroTik configuration changes across multiple devices from one place. Config templates with variable substitution, batch CLI commands, and sequential rollouts that stop at the first failure.">
   <meta name="keywords" content="mikrotik bulk configuration, mikrotik mass config, routeros bulk commands, mikrotik fleet configuration, mikrotik template config">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111113">
@@ -14,7 +14,7 @@
   <!-- Open Graph -->
   <meta property="og:type" content="article">
   <meta property="og:title" content="MikroTik Bulk Configuration — Fleet-Wide Config Management">
-  <meta property="og:description" content="Push MikroTik configuration changes across multiple devices at once. Config templates, batch CLI commands, two-phase commit with automatic rollback.">
+  <meta property="og:description" content="Push MikroTik configuration changes across multiple devices from one place. Config templates, batch CLI commands, and sequential rollouts that stop at the first failure.">
   <meta property="og:url" content="https://theotherdude.net/docs/mikrotik-bulk-configuration.html">
   <meta property="og:site_name" content="The Other Dude">
   <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
@@ -23,7 +23,7 @@
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="MikroTik Bulk Configuration — Fleet-Wide Config Management">
-  <meta name="twitter:description" content="Push MikroTik configuration changes across multiple devices at once. Config templates, batch CLI commands, two-phase commit with automatic rollback.">
+  <meta name="twitter:description" content="Push MikroTik configuration changes across multiple devices from one place. Config templates, batch CLI commands, and sequential rollouts that stop at the first failure.">
   <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
 
   <!-- Structured Data -->
@@ -32,7 +32,7 @@
     "@context": "https://schema.org",
     "@type": "TechArticle",
     "headline": "MikroTik Bulk Configuration — Fleet-Wide Config Management",
-    "description": "Push MikroTik configuration changes across multiple devices at once. Config templates with variable substitution, batch CLI commands, two-phase commit with automatic rollback.",
+    "description": "Push MikroTik configuration changes across multiple devices from one place. Config templates with variable substitution, batch CLI commands, and sequential rollouts that stop at the first failure.",
     "datePublished": "2026-03-18",
     "author": {
       "@type": "Organization",
@@ -132,20 +132,15 @@
 
       <p>Templates are reusable. A standard firewall ruleset, a VPN configuration, a monitoring agent setup — define it once and apply it across new devices as you add them to the fleet.</p>
 
-      <h2>Two-Phase Commit with Automatic Rollback</h2>
+      <h2>How a Bulk Rollout Actually Runs</h2>
 
-      <p>Bulk config pushes use the same <a href="routeros-configuration-management.html">two-phase commit mechanism</a> as single-device config changes. For each device in the batch:</p>
+      <p><strong>Correction, August 2026.</strong> This section previously described a two-phase commit that reverts each failing device automatically while the rest of the batch keeps the new config, illustrated with "48 of 50 devices succeed and 2 revert". That is not how the rollout works, and the revert mechanism it relied on is currently defective. What follows is accurate.</p>
 
-      <ol>
-        <li>The config change is applied to the device.</li>
-        <li>The platform waits for confirmation that the device is still reachable.</li>
-        <li>If the device remains reachable, the change is confirmed.</li>
-        <li>If the device becomes unreachable — indicating the change broke the management path — the device automatically reverts to its previous configuration.</li>
-      </ol>
+      <p>A rollout is <strong>sequential and it halts</strong>. Devices are pushed one at a time, in order, and the moment one fails the rollout stops. You never get 48 succeeded and 2 failed — you get however many committed before the failure, one device that failed, and the remainder never attempted. That is deliberate, and it is the real protection here: the blast radius of a bad config push is one router, not the whole group. Each device takes about a minute, so a large group takes a while, and that is the trade.</p>
 
-      <p>This is critical for bulk operations because the blast radius of a bad config push scales with the number of target devices. A firewall rule that accidentally blocks the management subnet would lock you out of every device you pushed it to. With two-phase commit, each device independently detects the problem and reverts itself. You don't need to drive to a site or find an out-of-band console connection.</p>
+      <p>Each device does get a genuine pre-push safety copy: a full binary <code>/system backup</code> written to the device's own flash before anything changes, plus the pre-push <code>/export</code> already in git on the server.</p>
 
-      <p>The rollback is per-device, not per-batch. If a change succeeds on 48 of 50 devices and fails on 2, the 2 failing devices revert while the 48 successful devices keep the new config. You get a clear report of which devices succeeded and which reverted, and you can investigate the failures individually.</p>
+      <p><strong>The automatic revert, however, does not work as advertised, and you should not run template push against production equipment right now.</strong> The revert is a RouterOS scheduler that fires unconditionally on a 90-second interval — it never checks whether the device is reachable, so it reverts whether or not anything broke. The only thing that stops it is the platform racing back to delete it, and because the scheduler's interval is anchored to the device's last boot rather than to when it was installed, the platform loses that race about 72% of the time. When it loses, the device reverts <em>and reboots</em> after a push that had worked. Full detail is in the <a href="routeros-configuration-management.html">config management guide</a>. Fixing it is the current priority.</p>
 
       <h2>Batch Config Push via the Config Editor</h2>
 
@@ -157,7 +152,7 @@
 
       <ul>
         <li><strong>Error handling.</strong> SSH scripts need explicit handling for connection timeouts, authentication failures, command errors, and partial execution. The platform handles this per-device automatically.</li>
-        <li><strong>Rollback.</strong> SSH scripts don't have a rollback mechanism. If a command locks you out, you're locked out. The platform's two-phase commit reverts bad changes automatically.</li>
+        <li><strong>Blast radius.</strong> A script that loops over a device list will happily push a lockout to all of them. The platform's rollout is sequential and stops at the first failure, and every device gets a pre-push backup written to its own flash before anything changes.</li>
         <li><strong>Audit trail.</strong> SSH scripts produce log files at best. The platform records every operation with user attribution, timestamps, and per-device results in a queryable audit log.</li>
         <li><strong>Access control.</strong> SSH scripts run under whoever's credentials are in the script. The platform enforces RBAC — an operator can run bulk commands but a viewer can't.</li>
         <li><strong>State management.</strong> Tracking which devices got the change and which didn't is your problem with scripts. The platform gives you a per-device results view for every operation.</li>
@@ -172,7 +167,7 @@
       <div class="related-links">
         <h2>Related</h2>
         <ul>
-          <li><a href="routeros-configuration-management.html">RouterOS configuration management with safe rollback</a></li>
+          <li><a href="routeros-configuration-management.html">RouterOS configuration management, version history, and templates</a></li>
           <li><a href="manage-multiple-mikrotik-routers.html">Managing multiple MikroTik routers from one interface</a></li>
           <li><a href="mikrotik-backup-solution.html">Automated MikroTik backup solution</a></li>
           <li><a href="mikrotik-configuration-drift.html">Detecting configuration drift across your fleet</a></li>

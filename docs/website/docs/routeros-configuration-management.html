@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RouterOS Configuration Management — Safe Config Pushes with Rollback</title>
-  <meta name="description" content="RouterOS configuration management with a web-based config editor, two-phase commit with automatic rollback, git-backed version history, and template system for fleet-wide config management.">
-  <meta name="keywords" content="routeros configuration management, mikrotik config management, routeros config editor, mikrotik safe config push, routeros config rollback">
+  <title>RouterOS Configuration Management — Config Editor, Version History, and Templates</title>
+  <meta name="description" content="RouterOS configuration management with a web-based config editor reading live device state, git-backed version history with side-by-side diffs, and a template system for fleet-wide config management.">
+  <meta name="keywords" content="routeros configuration management, mikrotik config management, routeros config editor, mikrotik config push, routeros config version history">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111113">
   <link rel="canonical" href="https://theotherdude.net/docs/routeros-configuration-management.html">
@@ -13,8 +13,8 @@
 
   <!-- Open Graph -->
   <meta property="og:type" content="article">
-  <meta property="og:title" content="RouterOS Configuration Management — Safe Config Pushes with Rollback">
-  <meta property="og:description" content="RouterOS configuration management with web-based config editor, two-phase commit with automatic rollback, and git-backed version history.">
+  <meta property="og:title" content="RouterOS Configuration Management — Config Editor, Version History, and Templates">
+  <meta property="og:description" content="RouterOS configuration management with a web-based config editor, git-backed version history, and fleet-wide config templates.">
   <meta property="og:url" content="https://theotherdude.net/docs/routeros-configuration-management.html">
   <meta property="og:site_name" content="The Other Dude">
   <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
@@ -22,8 +22,8 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="RouterOS Configuration Management — Safe Config Pushes with Rollback">
-  <meta name="twitter:description" content="RouterOS configuration management with web-based config editor, two-phase commit with automatic rollback, and git-backed version history.">
+  <meta name="twitter:title" content="RouterOS Configuration Management — Config Editor, Version History, and Templates">
+  <meta name="twitter:description" content="RouterOS configuration management with a web-based config editor, git-backed version history, and fleet-wide config templates.">
   <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
 
   <!-- Structured Data -->
@@ -31,8 +31,8 @@
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
-    "headline": "RouterOS Configuration Management — Safe Config Pushes with Rollback",
-    "description": "RouterOS configuration management with a web-based config editor, two-phase commit with automatic rollback, git-backed version history, and template system for fleet-wide config management.",
+    "headline": "RouterOS Configuration Management — Config Editor, Version History, and Templates",
+    "description": "RouterOS configuration management with a web-based config editor reading live device state, git-backed version history with side-by-side diffs, and a template system for fleet-wide config management.",
     "datePublished": "2026-03-18",
     "author": {
       "@type": "Organization",
@@ -104,21 +104,29 @@
 
       <p>The config editor reads the current state of each path directly from the device via the RouterOS binary API. What you see in the editor is the live running configuration, not a cached snapshot. You can view entries, add new ones, modify existing ones, or remove them — the same operations WinBox provides, but through a browser.</p>
 
-      <p>The advantage over WinBox isn't the interface — WinBox is faster for single-device work. The advantage is everything that wraps around the edit: rollback protection, version history, audit logging, RBAC enforcement, and the ability to push the same change to multiple devices.</p>
+      <p>The advantage over WinBox isn't the interface — WinBox is faster for single-device work. The advantage is everything that wraps around the edit: version history, audit logging, RBAC enforcement, and the ability to push the same change to multiple devices.</p>
 
-      <h2>Two-Phase Commit: The Safety Net</h2>
+      <h2>Config Push: What Actually Happens</h2>
 
-      <p>This is the most important feature in the config management system. Every config push — whether from the editor, a template, or a bulk operation — uses a two-phase commit process:</p>
+      <p><strong>Correction, August 2026.</strong> This section previously described a two-phase commit that continuously checks reachability over a configurable window, reverts using RouterOS safe mode, and lets you push a firewall rule to a remote router with confidence. That description was wrong on every point, and the corrected version below is worth reading before you push anything. There are two different paths, and neither behaves the way this page used to claim.</p>
 
-      <ol>
-        <li><strong>Apply.</strong> The config change is sent to the device and takes effect immediately, as RouterOS requires.</li>
-        <li><strong>Verify.</strong> The platform waits for a configurable confirmation period, continuously checking that the device is still reachable via the API.</li>
-        <li><strong>Confirm or revert.</strong> If the device remains reachable throughout the confirmation period, the change is committed as permanent. If the device becomes unreachable at any point during the confirmation period — indicating the change broke the management path — the device automatically reverts to its pre-change configuration.</li>
-      </ol>
+      <h3>Editing through the config editor</h3>
 
-      <p>The revert mechanism uses RouterOS's built-in safe mode capabilities. The platform sets up a revert timer before applying the change. If the platform confirms the change successfully, it cancels the timer. If the platform loses contact with the device, the timer expires and RouterOS reverts the change on its own.</p>
+      <p>Add, change, and remove operations from the config editor are sent straight to the device over the RouterOS API and take effect immediately. There is no pre-push backup and no revert timer on this path. The editor offers a "Safe Apply" mode, but it runs exactly the same commands as Standard Apply — the difference is a review-and-confirm dialog showing you what is about to run, which is useful, but it is a review step and not a rollback.</p>
 
-      <p>This means you can push a firewall rule to a remote router with confidence. If the rule blocks your management traffic, the router will revert itself. You don't need to call someone to reboot it. You don't need a serial console. The safety net is built into the push mechanism itself.</p>
+      <h3>Restoring a backup version, or pushing a template</h3>
+
+      <p>These two paths do take a real safety copy. Before changing anything, the platform opens SSH to the device and writes a full binary <code>/system backup</code> to the device's own flash, and the pre-push <code>/export</code> is already in git on the server. Both of those work, and they are what you would actually restore from.</p>
+
+      <p>The platform then installs a RouterOS scheduler as an automatic revert timer, applies the config via <code>/import</code>, waits 60 seconds, makes a single reachability check over SSH, and deletes the scheduler if the device answers.</p>
+
+      <h3>The revert timer is defective, and the failure mode is a reboot</h3>
+
+      <p>The timer is a <code>/system scheduler</code> entry running <code>/system backup load</code> on a 90-second interval. There is no safe mode involved anywhere in the product. More importantly, <strong>the scheduler never checks reachability</strong>. It is unconditional. It reverts on schedule whether or not the change broke anything, and the only thing that stops it is the platform racing back to delete it first.</p>
+
+      <p>The platform usually loses that race. The scheduler's interval is anchored to the device's last boot rather than to when it was installed, so the delay before its first fire is effectively random between 0 and 90 seconds — while the platform needs roughly 65 seconds to finish its wait, run its check, reconnect and delete. Measured against real hardware, the timer wins about 72% of the time. When it does, <code>/system backup load</code> restores the pre-push configuration <em>and reboots the router</em>, on a push that had worked perfectly.</p>
+
+      <p><strong>The practical advice today: do not run backup restore or template push against production equipment.</strong> Browsing and editing the config tree, version history, diffs, scheduled backups, templates as documents, and everything in the monitoring side are unaffected — this is specific to the two paths that install the scheduler. Fixing it is the current priority, and this page will be updated when it is rather than quietly.</p>
 
       <h2>Git-Backed Version History</h2>
 
@@ -130,7 +138,7 @@
         <li><strong>A complete timeline.</strong> Navigate through every configuration state the device has been in since it was added to the platform.</li>
         <li><strong>Side-by-side diffs.</strong> Compare any two versions and see exactly what changed — additions, removals, and modifications highlighted line by line.</li>
         <li><strong>Cross-device comparison.</strong> Compare the config of two different devices to identify <a href="mikrotik-configuration-drift.html">configuration drift</a> or verify consistency across a group.</li>
-        <li><strong>One-click restore.</strong> Select any previous version and push it back to the device, using the same two-phase commit mechanism for safety.</li>
+        <li><strong>One-click restore.</strong> Select any previous version and push it back to the device. This uses the config push path described above, including its current revert-timer defect.</li>
       </ul>
 
       <p>This is functionally equivalent to having every config change committed to a git repository. You get the audit trail, the diff capability, and the ability to roll back — without requiring engineers to use git directly.</p>
@@ -139,7 +147,7 @@
 
       <p>Not every config change requires navigating the full RouterOS path tree. The config editor includes a Simple Mode that provides a streamlined interface for the most common tasks: IP addressing, DHCP configuration, basic firewall rules, DNS settings, and interface management.</p>
 
-      <p>Simple Mode is modeled after consumer router interfaces — fill in the fields, click apply. Under the hood, it generates the same RouterOS commands and uses the same two-phase commit mechanism. The safety guarantees are identical; only the UI complexity is reduced.</p>
+      <p>Simple Mode is modeled after consumer router interfaces — fill in the fields, click apply. Under the hood, it generates the same RouterOS commands and applies them the same way as the full config editor. The behaviour is identical; only the UI complexity is reduced. That includes the safety behaviour: like the config editor, Simple Mode applies changes directly and does not install a revert timer.</p>
 
       <p>This is particularly useful for MSPs with <a href="msp-mikrotik-management.html">operator-level staff</a> who need to handle common tasks without deep RouterOS expertise. An operator can change a DHCP pool or add a port forward through Simple Mode without needing to know the exact RouterOS path syntax.</p>
 
@@ -147,14 +155,14 @@
 
       <p>For <a href="mikrotik-bulk-configuration.html">fleet-wide configuration changes</a>, the template system lets you define a set of RouterOS commands with variable placeholders. Variables are substituted per-device at push time, allowing a single template to be applied across devices with different IP ranges, interface names, or site-specific values.</p>
 
-      <p>Templates combine with two-phase commit for safe bulk operations. Each device in the batch independently verifies the change and reverts if needed. A template push to 50 devices will succeed on the devices where the change works and revert on any where it doesn't.</p>
+      <p>Template rollouts run one device at a time, in order, and stop at the first device that fails rather than continuing into the rest of the group — so a bad template reaches one router, not fifty. Each device gets its own pre-push backup. Note that the revert-timer defect described above applies to this path, so template push is subject to the same warning.</p>
 
       <h2>How This Differs from SSH Scripts and Ansible</h2>
 
       <p>The most common alternative to a config management platform is SSH scripting — either raw Bash/Python scripts or Ansible playbooks with the routeros modules. These approaches can work, but they require you to solve several problems yourself:</p>
 
       <ul>
-        <li><strong>No rollback.</strong> SSH scripts apply changes. If the change locks you out, you're locked out. There's no built-in safety net. Ansible's routeros modules don't implement two-phase commit.</li>
+        <li><strong>No safety net.</strong> SSH scripts apply changes. If the change locks you out, you're locked out, and nothing took a copy of what was there before. Ansible's routeros modules don't implement two-phase commit either. To be straight about it: The Other Dude's advantage here is currently the pre-push backup on the device and in git, not the automatic revert — that part is broken, as described above.</li>
         <li><strong>No version history.</strong> Scripts produce the desired end state. They don't track what the config was before, what changed, or when. That's a separate system you'd need to build.</li>
         <li><strong>No UI for browsing.</strong> Scripts push changes. They don't let you browse the current config tree, compare versions, or preview what will change before you apply it.</li>
         <li><strong>Limited error context.</strong> SSH scripts give you exit codes and stderr. The platform gives you per-device success/failure with detailed error messages, rendered in a UI that shows the full batch result at a glance.</li>
@@ -165,7 +173,7 @@
 
       <h2>Getting Started</h2>
 
-      <p>The config editor and two-phase commit are available immediately when a device is connected to the platform. The <a href="../docs.html#quickstart">Quick Start guide</a> covers deploying the platform and connecting your first device. Once connected, you can browse the device's config tree, make changes with rollback protection, and see the first backup appear in the version history.</p>
+      <p>The config editor is available immediately when a device is connected to the platform. The <a href="../docs.html#quickstart">Quick Start guide</a> covers deploying the platform and connecting your first device. Once connected, you can browse the device's config tree, make changes, and see the first backup appear in the version history. Read the config push section above before pushing anything to hardware you depend on.</p>
 
       <div class="related-links">
         <h2>Related</h2>

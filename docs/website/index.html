@@ -45,7 +45,7 @@
     },
     "featureList": [
       "Monitor device state across fleet",
-      "Push configuration with automatic rollback",
+      "Push configuration to one device or a group",
       "Track config changes in git",
       "Manage firmware versions",
       "WinBox in the browser",
@@ -475,7 +475,7 @@
         <h2>What it does</h2>
         <ul class="wp-list">
           <li>Monitor device state across your fleet</li>
-          <li>Push configuration with automatic rollback</li>
+          <li>Push configuration to one device or a group</li>
           <li>Track config changes in git</li>
           <li>Manage firmware versions</li>
           <li>WinBox in the browser</li>
@@ -540,6 +540,7 @@
           <li>Not stable</li>
           <li>Not for everyone</li>
           <li>Things break, APIs change. That is intentional before v11.</li>
+          <li>Config push has a live defect: it can revert and reboot a device after a push that worked. Read the <a href="docs.html#config-push-safety">docs</a> before pointing it at anything you care about.</li>
         </ul>
       </section>
 

@@ -839,29 +839,30 @@ open http://localhost</code></pre>
           <li>Releases Redis lock</li>
         </ol>
 
-        <h3>Config Push (Two-Phase with Panic Revert)</h3>
-        <pre><code>Frontend        API           RouterOS
-   |              |               |
-   +--push config-&gt;|              |
-   |              +--apply config-&gt;|
-   |              +--set revert---&gt;|
-   |              |&lt;--ack---------+
-   |&lt;--pending----+               |
-   |              |               |  (timer counting down)
-   +--confirm-----&gt;|              |
-   |              +--cancel timer-&gt;|
-   |              |&lt;--ack---------+
-   |&lt;--confirmed--+               |</code></pre>
+        <h3 id="config-push-safety">Config Push (Backup Restore and Template Push)</h3>
+        <pre><code>Frontend        API                          RouterOS
+   |              |                             |
+   +--push config-&gt;|                            |
+   |              +--/system backup save-------&gt;|  pre-push revert point
+   |              +--/system scheduler add-----&gt;|  90s panic-revert timer
+   |              +--sftp upload + /import-----&gt;|  config applied
+   |&lt;--pushed-----+                             |
+   |              |        (fixed 60s wait)     |
+   |              +--reachability check (SSH)--&gt;|
+   |              +--/system scheduler remove--&gt;|  only if reachable
+   |&lt;--committed--+                             |</code></pre>
         <ol>
-          <li>Frontend sends config commands to the API</li>
-          <li>API connects to the device and applies the configuration</li>
-          <li>Sets a revert timer on the device (RouterOS safe mode / scheduler)</li>
-          <li>Returns pending status to the frontend</li>
-          <li>User confirms the change works (e.g., connectivity still up)</li>
-          <li>If confirmed: API cancels the revert timer, config is permanent</li>
-          <li>If timeout or rejected: device automatically reverts to the previous configuration</li>
+          <li>API opens SSH to the device and saves a full binary <code>/system backup</code> to the device's own flash as the revert point</li>
+          <li>Installs a <code>/system scheduler</code> entry that runs <code>/system backup load</code> on a 90-second interval</li>
+          <li>Uploads the config over SFTP and applies it with <code>/import</code></li>
+          <li>Waits a fixed 60 seconds</li>
+          <li>Makes a single reachability check over SSH</li>
+          <li>If reachable: removes the scheduler and the on-device backup file, and the push is committed</li>
+          <li>If unreachable: leaves the scheduler in place, and RouterOS reverts on its own</li>
         </ol>
-        <p>This pattern prevents lockouts from misconfigured firewall rules or IP changes.</p>
+        <p><strong>Correction, August 2026 &mdash; this mechanism is currently defective, and the defect can reboot a device after a push that worked.</strong> This section previously said the revert timer used &ldquo;RouterOS safe mode&rdquo; and that the device reverts if the change breaks connectivity. Neither is true. There is no safe mode anywhere in the product. The scheduler is an unconditional timer that never checks reachability &mdash; it reverts on schedule regardless of whether anything broke, and the only thing stopping it is the platform getting back in time to delete it.</p>
+        <p>The platform usually does not get back in time. The scheduler fires on a 90-second lattice anchored to the device's last boot, so the gap between installing it and its first fire is effectively random between 0 and 90 seconds, while the platform needs roughly 65 seconds to finish its wait, check, reconnect and delete. Measured against real hardware, it loses that race about 72% of the time. When it fires, <code>/system backup load</code> restores the pre-push config <em>and reboots the device</em>.</p>
+        <p><strong>Do not run backup restore or template push against production equipment until this is fixed.</strong> Browsing and editing the config tree, version history, diffs, scheduled backups, and monitoring are all unaffected &mdash; this is specific to the two paths that install the scheduler. Fixing it is the current priority, and this page will be updated when it is.</p>
 
         <h3>SRP-6a Authentication Flow</h3>
         <pre><code>Browser                     API                   PostgreSQL
@@ -1106,10 +1107,11 @@ open http://localhost</code></pre>
 
         <h3>Apply Modes</h3>
         <ul>
-          <li><strong>Standard Apply</strong> &mdash; changes are applied immediately.</li>
-          <li><strong>Safe Apply</strong> &mdash; two-phase commit with automatic panic-revert. Changes are applied, and you have a confirmation window to accept them. If the confirmation times out (device becomes unreachable), changes automatically revert to prevent lockouts.</li>
+          <li><strong>Standard Apply</strong> &mdash; changes are applied immediately, one command at a time, over the RouterOS API.</li>
+          <li><strong>Safe Apply</strong> &mdash; the same commands, applied the same way, behind a review-and-confirm dialog that shows you exactly what is about to run.</li>
         </ul>
-        <p><strong>Safe Apply is strongly recommended</strong> for firewall rules and routing changes on remote devices.</p>
+        <p><strong>Correction, August 2026.</strong> This section used to describe Safe Apply as &ldquo;two-phase commit with automatic panic-revert&rdquo; and recommended it for firewall and routing changes on remote devices. That was wrong. Safe Apply installs no revert timer and rolls nothing back &mdash; both modes execute identical commands. The only thing Safe Apply adds is the confirmation dialog, which is worth having, but it is a review step and not a safety net.</p>
+        <p>Do not rely on either mode for a change that could cut off your own management path to a remote device. For a firewall or routing change you cannot afford to get wrong, arrange out-of-band access first. The one place a real device-side revert timer does get installed is the backup-restore and template-push path described under <a href="#config-push-safety">Config Push</a> &mdash; and that mechanism has a defect of its own, documented there.</p>
       </section>
 
       <!-- REMOTE ACCESS -->

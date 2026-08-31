@@ -104,7 +104,7 @@
 
       <p><strong>Fleet visibility.</strong> Dashboard with device health, bandwidth utilization, alerts, and wireless metrics across your entire fleet. Virtual-scrolled device tables that handle hundreds of routers. Geographic map and network topology views.</p>
 
-      <p><strong>Configuration management.</strong> Browse and edit the full RouterOS config tree from the web UI. Config pushes use two-phase commit with automatic rollback — if a change breaks connectivity, the router reverts itself. Every change is stored in git with full version history and diff capability.</p>
+      <p><strong>Configuration management.</strong> Browse and edit the full RouterOS config tree from the web UI. Backup restores and template pushes write a pre-push backup to the device's own flash first, and every change is stored in git with full version history and diff capability. The automatic revert timer on those two paths is currently defective and can reboot a device after a successful push — see the <a href="routeros-configuration-management.html">config management guide</a> before using them against production.</p>
 
       <p><strong>Automated backups.</strong> Scheduled configuration snapshots stored in git. Navigate the timeline, compare any two versions side by side, restore to any previous state with one click.</p>
 
@@ -129,7 +129,7 @@
       <ul>
         <li>Audit the security model and credential handling</li>
         <li>Read exactly what API calls the poller makes to your routers</li>
-        <li>Verify that configuration pushes include rollback protection</li>
+        <li>Check what happens to a device when a config push goes wrong, and whether the safety mechanism has been tested on real hardware</li>
         <li>Extend the platform for your specific needs</li>
         <li>Run it in air-gapped environments with no internet access</li>
         <li>Contribute improvements back to the project</li>

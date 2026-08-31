@@ -133,9 +133,9 @@
 
       <h3>One-Click Restore</h3>
 
-      <p>Select any previous backup from the timeline and push it back to the device. The restore uses the same <a href="routeros-configuration-management.html">two-phase commit mechanism</a> as all config pushes: the config is applied, the platform verifies the device is still reachable, and if the device goes silent (indicating the restore broke connectivity), the change is automatically reverted.</p>
+      <p>Select any previous backup from the timeline and push it back to the device. The restore writes a fresh binary backup to the device's own flash first, applies the config, waits 60 seconds, and then checks that the device is still reachable. It also installs an on-device revert timer — and that timer is <a href="routeros-configuration-management.html">currently defective</a>: it fires unconditionally rather than on unreachability, and about 72% of the time it reverts and reboots the device after a restore that had worked. Until that is fixed, don't run a restore against production equipment.</p>
 
-      <p>This means you can restore a previous config to a remote device with confidence that you won't lock yourself out. If the restored config breaks the management path, the device reverts to its pre-restore state automatically.</p>
+      <p>What that gives you today is a reliable copy to go back to, not a hands-off restore. The pre-restore state is captured on the device and in git before anything changes, so recovery is always possible — but until the revert timer is fixed, plan on being able to reach the device yourself if a remote restore goes wrong.</p>
 
       <h3>Binary Export Download</h3>
 
@@ -145,9 +145,9 @@
 
       <p>The backup system doesn't only run on the scheduled interval. The poller detects configuration changes via NATS events, so a change made through WinBox or SSH between scheduled backup cycles will trigger an additional snapshot capture. This means the version timeline reflects actual change events, not just periodic snapshots that might miss intermediate states.</p>
 
-      <h2>Config Push Rollback as a Safety Net</h2>
+      <h2>Backups as the Safety Net</h2>
 
-      <p>Backups and <a href="routeros-configuration-management.html">config management</a> work together as complementary safety mechanisms. The backup system gives you a timeline of every previous state. The config push system's two-phase commit gives you automatic rollback on bad changes. Together, they mean you always have both a way to undo a recent change automatically and a full history to restore from manually.</p>
+      <p>Backups and <a href="routeros-configuration-management.html">config management</a> are meant to work together. The backup system gives you a timeline of every previous state, and a push writes a fresh pre-push backup to the device's own flash before it changes anything. The automatic revert that was supposed to complete the picture does not currently work — it fires unconditionally rather than on unreachability, and can revert and reboot a device after a successful push. Until that is fixed, treat the backup history as the real safety net and the manual restore as the real undo.</p>
 
       <p>For MSPs managing multiple clients, the backup system is <a href="msp-mikrotik-management.html">tenant-scoped</a>. Each client's backup history is isolated. Backup schedules, retention policies, and restore operations all operate within tenant boundaries.</p>
 
@@ -161,7 +161,7 @@
         <h2>Related</h2>
         <ul>
           <li><a href="mikrotik-router-backup-automation.html">Detailed guide to RouterOS backup automation</a></li>
-          <li><a href="routeros-configuration-management.html">RouterOS configuration management with safe rollback</a></li>
+          <li><a href="routeros-configuration-management.html">RouterOS configuration management, version history, and templates</a></li>
           <li><a href="mikrotik-configuration-drift.html">Detecting configuration drift across your fleet</a></li>
           <li><a href="mikrotik-bulk-configuration.html">Bulk configuration across multiple devices</a></li>
           <li><a href="../blog/what-you-can-do-today.html">What You Can Do With It Today (blog)</a></li>
