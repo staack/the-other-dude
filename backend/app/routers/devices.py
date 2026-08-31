@@ -462,11 +462,20 @@ async def bulk_add_devices(
 async def _restore_tenant_context(db: AsyncSession, tenant_id: uuid.UUID) -> None:
     """Re-establish the RLS tenant context after a transaction ends.
 
-    The context is set with SET LOCAL, which dies with its transaction. The
-    policy reads current_setting('app.current_tenant', true) -- missing_ok --
-    so once it is gone the setting reads NULL and RLS *silently* denies every
-    subsequent write rather than raising. Any commit or rollback inside a
-    request must therefore be followed by this.
+    The context is set with SET LOCAL, which dies with its transaction -- both
+    on commit and on rollback. Once it is gone, the policy predicate
+    `tenant_id::text = current_setting('app.current_tenant', true)` compares
+    against '' and is false, so RLS denies the row. Any commit or rollback
+    inside a request must therefore be followed by this.
+
+    Verified against the test stack's Postgres as app_user (non-superuser,
+    non-BYPASSRLS) on 2026-08-30: after COMMIT the setting reads '' (an empty
+    string, not NULL -- a custom GUC placeholder resets to empty rather than
+    becoming undefined), INSERT is refused with a loud
+    "new row violates row-level security policy" (SQLSTATE 42501), and SELECT
+    returns zero rows with no error at all. So writes fail noisily and reads
+    fail silently; without this call every device after the first in a batch
+    would be rejected by the database.
 
     tenant_id is the right value for both callers: a normal user's own tenant
     must equal it, and _check_tenant_access has already re-pointed a

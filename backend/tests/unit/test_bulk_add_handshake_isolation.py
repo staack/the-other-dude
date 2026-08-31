@@ -130,9 +130,11 @@ async def test_devices_after_a_failure_are_still_attempted():
 # per device makes a timeout cost the remainder rather than everything.
 #
 # The catch: RLS context is set with SET LOCAL, which dies with the
-# transaction, and the policy reads current_setting('app.current_tenant', true)
-# with missing_ok -- so it returns NULL and RLS *silently* denies every
-# subsequent write. Each commit must re-establish the context.
+# transaction. Once gone, current_setting('app.current_tenant', true) reads ''
+# and the policy predicate is false, so the database refuses the row. Verified
+# on real Postgres as app_user: INSERT raises SQLSTATE 42501 ("new row
+# violates row-level security policy") while SELECT quietly returns nothing.
+# Each commit and each rollback must re-establish the context.
 # ---------------------------------------------------------------------------
 
 
