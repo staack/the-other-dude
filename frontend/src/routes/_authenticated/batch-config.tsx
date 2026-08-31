@@ -14,6 +14,13 @@
  * through the UI, or deliberately not" criterion is answered here with
  * "deliberately not".
  *
+ * It is worse than unrevertable, because it does not stop. The execution loop
+ * catches each device's failure and continues to the next one
+ * (BatchConfigPanel.tsx:805-815 -- no break, nothing rethrown), unlike
+ * template rollout, which halts at the first failure. So a change that severs
+ * the management path does not fail once and stop; it reaches every device in
+ * the selection, and is reverted on none of them.
+ *
  * What unblocks linking it: the config editor gaining safe mode, which means
  * moving it off the RouterOS binary API onto SSH. See
  * backend/app/services/safe_mode.py and the roadmap input on that transport
@@ -82,9 +89,11 @@ function BatchConfigPage() {
           </p>
           <p className="text-xs text-text-secondary">
             Batch configuration applies directly to every device you select,
-            with no automatic revert if a change goes wrong. A mistake here
-            affects the whole selection at once. Back up the devices first, and
-            try the change on a single device before running it across a fleet.
+            with no automatic revert if a change goes wrong. It also does not
+            stop on failure -- a device that breaks is recorded and the run
+            continues to the next one, so a bad change reaches the whole
+            selection. Back up the devices first, and try the change on a
+            single device before running it across a fleet.
           </p>
         </div>
       </div>

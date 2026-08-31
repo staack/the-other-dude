@@ -12,6 +12,7 @@ import {
   pollVerifyStatuses,
   probeVerifyStatuses,
   resultFromProbe,
+  tlsDowngradeCost,
   type VerifyStatus,
 } from '../adoptionVerify'
 import type { DeviceConnectionTestResponse } from '@/lib/api'
@@ -379,5 +380,33 @@ describe('probeVerifyStatuses', () => {
       d1: { status: 'waiting' },
       d2: { status: 'waiting' },
     })
+  })
+})
+
+describe('tlsDowngradeCost', () => {
+  it('warns that plain sends credentials unencrypted', () => {
+    const cost = tlsDowngradeCost('plain')
+    expect(cost).toBeTruthy()
+    expect(cost).toMatch(/unencrypted/i)
+  })
+
+  it('warns that insecure stops verifying the certificate', () => {
+    const cost = tlsDowngradeCost('insecure')
+    expect(cost).toBeTruthy()
+    expect(cost).toMatch(/certificate/i)
+  })
+
+  it('says nothing for modes that do not weaken the connection', () => {
+    expect(tlsDowngradeCost('auto')).toBeNull()
+    expect(tlsDowngradeCost('portal_ca')).toBeNull()
+  })
+
+  it('never lets plain be offered without a stated cost', () => {
+    // The invariant: "auto" refuses plaintext deliberately, so a one-click
+    // switch to plain must always carry its consequence. If someone empties
+    // this string, the UI silently starts offering a security downgrade with
+    // no warning attached.
+    expect(tlsDowngradeCost('plain')).not.toBeNull()
+    expect((tlsDowngradeCost('plain') ?? '').length).toBeGreaterThan(40)
   })
 })

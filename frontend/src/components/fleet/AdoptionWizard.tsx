@@ -36,6 +36,7 @@ import {
   pollVerifyStatuses,
   probeVerifyStatuses,
   resultFromProbe,
+  tlsDowngradeCost,
   VERIFY_TIMEOUT_MS,
   type VerifyResult,
 } from './adoptionVerify'
@@ -1292,12 +1293,19 @@ function ImportVerifyStep({
 
                             {suggested && (
                               <div className="space-y-1.5 rounded-md border border-warning/50 bg-warning/10 p-2">
-                                <p className="text-[10px] text-text-secondary">
-                                  This device answered on{' '}
-                                  <span className="font-medium">
-                                    {suggested}
-                                  </span>
-                                  . Applying it changes the TLS mode from{' '}
+                                <p className="text-[10px] font-medium text-text-secondary">
+                                  The probe confirmed this device answers on{' '}
+                                  <span className="font-mono">{suggested}</span>
+                                  {' '}-- but that is a fallback, not a fix.
+                                </p>
+                                {tlsDowngradeCost(suggested) && (
+                                  <p className="text-[10px] text-warning">
+                                    {tlsDowngradeCost(suggested)}
+                                  </p>
+                                )}
+                                <p className="text-[10px] text-text-muted">
+                                  Prefer the remedy above where you can. This
+                                  changes only this device's TLS mode, from{' '}
                                   <span className="font-mono">
                                     {d.tls_mode}
                                   </span>{' '}
@@ -1321,6 +1329,8 @@ function ImportVerifyStep({
                                       <Loader2 className="h-3 w-3 animate-spin" />
                                       Applying...
                                     </>
+                                  ) : tlsDowngradeCost(suggested) ? (
+                                    `Switch to ${suggested} anyway and re-test`
                                   ) : (
                                     `Switch to ${suggested} and re-test`
                                   )}

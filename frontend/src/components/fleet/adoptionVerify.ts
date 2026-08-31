@@ -224,3 +224,22 @@ export async function pollVerifyStatuses({
   onUpdate({ ...statuses })
   return statuses
 }
+
+/**
+ * What accepting a suggested mode costs, in security terms.
+ *
+ * The probe proves a mode WORKS. It says nothing about it being acceptable.
+ * "auto" refuses to fall back to plaintext on purpose (see
+ * poller/internal/device/client.go:101, "the key security change"), so
+ * offering a one-click switch to plain undoes a deliberate decision on the
+ * user's behalf -- they need to know that at the moment they click, not later.
+ */
+export function tlsDowngradeCost(mode: string): string | null {
+  if (mode === 'plain') {
+    return 'Plain turns TLS off for this device: the API password and all config traffic travel unencrypted, and "auto" refuses plaintext deliberately.'
+  }
+  if (mode === 'insecure') {
+    return "Insecure keeps TLS but stops verifying the device's certificate, so the connection is no longer protected against interception."
+  }
+  return null
+}
