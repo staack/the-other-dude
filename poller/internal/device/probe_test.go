@@ -166,3 +166,31 @@ func TestProbeRouterOS_PlainModeUsesPlainPort(t *testing.T) {
 		t.Errorf("expected reason %q, got %q (detail: %s)", ReasonUnreachable, res.Reason, res.Detail)
 	}
 }
+
+// TestTCPStageTimeoutIsCapped guards a bulk-adoption hazard.
+//
+// bulk_add_devices probes every device sequentially inside one HTTP request,
+// and gunicorn kills a worker at 120s -- which rolls back the whole batch,
+// losing even the devices that did adopt. An unreachable IP costs the full TCP
+// dial timeout, so that per-device cost sets how many bad IPs a batch survives.
+//
+// Capping the TCP stage at 3s keeps a blackholed host cheaper than the check
+// this replaced (which dialled two ports at 3s each, so 6s), while leaving the
+// full timeout available to TLS and login -- stages that only run once a host
+// has already proven responsive.
+func TestTCPStageTimeoutIsCapped(t *testing.T) {
+	cases := []struct {
+		overall time.Duration
+		want    time.Duration
+	}{
+		{overall: 10 * time.Second, want: 3 * time.Second},
+		{overall: 30 * time.Second, want: 3 * time.Second},
+		{overall: 2 * time.Second, want: 2 * time.Second}, // never exceed the overall budget
+		{overall: 500 * time.Millisecond, want: 500 * time.Millisecond},
+	}
+	for _, c := range cases {
+		if got := tcpStageTimeout(c.overall); got != c.want {
+			t.Errorf("tcpStageTimeout(%s) = %s, want %s", c.overall, got, c.want)
+		}
+	}
+}

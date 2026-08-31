@@ -364,7 +364,10 @@ async def create_device(
         snmp_version=data.snmp_version if is_snmp else None,
         snmp_profile_id=snmp_profile_uuid,
         credential_profile_id=credential_profile_uuid,
-        tls_mode=data.tls_mode,
+        # `or "auto"` so a None can never reach a NOT NULL column. Converged
+        # with wizard-frontend (a796170), which independently found that this
+        # constructor was discarding DeviceCreate.tls_mode entirely.
+        tls_mode=data.tls_mode or "auto",
         # A RouterOS device that completed a live handshake is known to be
         # online right now, so say so rather than leaving it "unknown" until
         # the next poll cycle -- up to 120s later. Anything not positively

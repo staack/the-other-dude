@@ -114,7 +114,7 @@ func ProbeRouterOS(
 
 	// Stage 1: TCP. Separates "nothing is listening" from "listening but
 	// unusable" -- conflating those is what made the old error useless.
-	if err := tcpCheck(ip, port, timeout); err != nil {
+	if err := tcpCheck(ip, port, tcpStageTimeout(timeout)); err != nil {
 		res.Stage = StageTCP
 		res.Reason, res.Message = classifyTCPError(err, ip, port, portLabel)
 		res.Detail = err.Error()
@@ -157,6 +157,24 @@ func ProbeRouterOS(
 	res.BoardName = board
 	res.Message = fmt.Sprintf("Connected to %s and completed a RouterOS API login.", ip)
 	return finish(res)
+}
+
+// maxTCPStageTimeout caps how long the probe waits for a bare TCP connect.
+//
+// A host that silently drops packets costs this much per probe, and
+// bulk adoption probes devices sequentially inside a single HTTP request that
+// gunicorn kills at 120s -- which rolls back the entire batch. Keeping the TCP
+// stage short bounds that blast radius. TLS and login still get the full
+// timeout, because by then the host has already answered.
+const maxTCPStageTimeout = 3 * time.Second
+
+// tcpStageTimeout returns the TCP-stage budget: capped, but never larger than
+// the caller's overall timeout.
+func tcpStageTimeout(overall time.Duration) time.Duration {
+	if overall < maxTCPStageTimeout {
+		return overall
+	}
+	return maxTCPStageTimeout
 }
 
 // tcpCheck dials the port and immediately closes it.
