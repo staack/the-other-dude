@@ -146,10 +146,9 @@ func main() {
 	}
 	go gapRecorder.RunHeartbeat(ctx, heartbeatInterval)
 	poller.SetGapRecorder(gapRecorder)
-	slog.Info("ingest gap recording enabled",
-		"instance", hostname,
-		"heartbeat_interval", heartbeatInterval,
-	)
+	// The default logger already carries "instance"; repeating it here emitted
+	// a duplicate JSON key.
+	slog.Info("ingest gap recording enabled", "heartbeat_interval", heartbeatInterval)
 
 	// -----------------------------------------------------------------------
 	// Initialize credential cache (OpenBao Transit + legacy fallback)
