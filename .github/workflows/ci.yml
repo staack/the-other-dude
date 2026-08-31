@@ -269,12 +269,18 @@ jobs:
       # never blocks. ignore-unfixed is load-bearing on both — without it, a
       # CVE in a base image with no available patch would block every build
       # forever, which is exactly how these scans ended up permanently
-      # continue-on-error in the first place. The `with:` defaults are
-      # defined via YAML anchor on first use and merged+overridden (image-ref
-      # only) on the rest, so each severity's policy lives in one place.
+      # continue-on-error in the first place.
+      #
+      # These eight blocks are deliberately spelled out rather than shared via
+      # a YAML anchor: GitHub Actions' workflow parser rejects anchors, aliases
+      # and merge keys outright, and the failure mode is the ENTIRE file
+      # failing to load — no jobs, no annotation, just "this run likely failed
+      # because of a workflow file issue". PyYAML accepts them happily, so
+      # linting the file locally with a general-purpose YAML parser will not
+      # catch it. If you change the scan policy, change it in all eight.
       - name: Scan API image (CRITICAL)
         uses: aquasecurity/trivy-action@v0.33.1
-        with: &trivy_critical
+        with:
           image-ref: "tod-api:ci"
           format: "table"
           exit-code: "1"
@@ -284,7 +290,7 @@ jobs:
       - name: Scan API image (HIGH)
         uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
-        with: &trivy_high
+        with:
           image-ref: "tod-api:ci"
           format: "table"
           exit-code: "1"
@@ -297,15 +303,21 @@ jobs:
       - name: Scan Poller image (CRITICAL)
         uses: aquasecurity/trivy-action@v0.33.1
         with:
-          <<: *trivy_critical
           image-ref: "tod-poller:ci"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL"
 
       - name: Scan Poller image (HIGH)
         uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
-          <<: *trivy_high
           image-ref: "tod-poller:ci"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "HIGH"
 
       - name: Build Frontend image
         run: docker build -f infrastructure/docker/Dockerfile.frontend -t tod-frontend:ci .
@@ -313,30 +325,43 @@ jobs:
       - name: Scan Frontend image (CRITICAL)
         uses: aquasecurity/trivy-action@v0.33.1
         with:
-          <<: *trivy_critical
           image-ref: "tod-frontend:ci"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL"
 
       - name: Scan Frontend image (HIGH)
         uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
-          <<: *trivy_high
           image-ref: "tod-frontend:ci"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "HIGH"
+
       - name: Build WinBox Worker image
         run: docker build -f winbox-worker/Dockerfile -t tod-winbox-worker:ci ./winbox-worker
 
       - name: Scan WinBox Worker image (CRITICAL)
         uses: aquasecurity/trivy-action@v0.33.1
         with:
-          <<: *trivy_critical
           image-ref: "tod-winbox-worker:ci"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "CRITICAL"
 
       - name: Scan WinBox Worker image (HIGH)
         uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
-          <<: *trivy_high
           image-ref: "tod-winbox-worker:ci"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "HIGH"
 
       # Not continue-on-error: a WinBox version that builds but can't
       # actually start a session must fail this job, not just get logged.
