@@ -62,6 +62,8 @@ type CommandResult struct {
 // RunCommand executes a command on a remote device via SSH with TOFU host key verification.
 //
 // Parameters:
+//   - privateKey: unencrypted PEM private key, or empty string for password-only auth.
+//     When present it is offered before the password.
 //   - knownFingerprint: empty string for first connect (TOFU accepts any key), or a
 //     previously stored "SHA256:base64(...)" fingerprint for verification.
 //   - command: the RouterOS CLI command to execute (e.g., "/export")
@@ -70,16 +72,23 @@ type CommandResult struct {
 //   - result: command output (stdout, stderr, exit code, duration)
 //   - observedFingerprint: the SSH host key fingerprint observed during connection
 //   - err: classified SSHError on failure, nil on success
-func RunCommand(ctx context.Context, ip string, port int, username, password string,
+func RunCommand(ctx context.Context, ip string, port int, username, password, privateKey string,
 	timeout time.Duration, knownFingerprint string, command string) (*CommandResult, string, error) {
 
 	cb, fpCh := tofuHostKeyCallback(knownFingerprint)
 
+	authMethods, err := SSHAuthMethods(password, privateKey)
+	if err != nil {
+		return nil, "", &SSHError{
+			Kind:    ErrAuthFailed,
+			Err:     err,
+			Message: fmt.Sprintf("building SSH auth methods for %s", ip),
+		}
+	}
+
 	config := &ssh.ClientConfig{
-		User: username,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(password),
-		},
+		User:            username,
+		Auth:            authMethods,
 		HostKeyCallback: cb,
 		Timeout:         timeout,
 	}

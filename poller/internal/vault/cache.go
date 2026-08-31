@@ -167,20 +167,27 @@ func (c *CredentialCache) GetRawCredentials(
 	return raw, nil
 }
 
-// GetCredentials returns decrypted RouterOS credentials for a device, using the cache.
-// This is a backward-compatible wrapper around GetRawCredentials that maintains the
-// original (username, password, error) return signature. All existing callers
-// (PollDevice, CmdResponder, TunnelResponder, BackupResponder, SSHRelay) continue
-// to work without changes.
+// GetCredentials returns decrypted RouterOS username/password for a device.
+// It is a thin wrapper around GetRawCredentials for callers that use the
+// RouterOS binary API, which has no public-key authentication. SSH callers
+// should use GetSSHCredentials instead.
 //
-// transitCiphertext is the Transit-encrypted string (nullable),
-// legacyCiphertext is the legacy BYTEA (nullable).
+// transitCiphertext/legacyCiphertext are the per-device ciphertexts; the
+// profile* parameters are the credential-profile fallbacks resolved by the
+// FetchDevices JOIN. Passing the profile ciphertexts is required for devices
+// whose credentials live only on a credential profile.
 func (c *CredentialCache) GetCredentials(
 	deviceID, tenantID string,
 	transitCiphertext *string,
 	legacyCiphertext []byte,
+	profileTransitCiphertext *string,
+	profileLegacyCiphertext []byte,
 ) (string, string, error) {
-	raw, err := c.GetRawCredentials(deviceID, tenantID, transitCiphertext, legacyCiphertext, nil, nil)
+	raw, err := c.GetRawCredentials(
+		deviceID, tenantID,
+		transitCiphertext, legacyCiphertext,
+		profileTransitCiphertext, profileLegacyCiphertext,
+	)
 	if err != nil {
 		return "", "", err
 	}
@@ -215,4 +222,30 @@ func (c *CredentialCache) logKeyAccess(deviceID, tenantID, action, justification
 	if err != nil {
 		slog.Warn("failed to log key access", "error", err, "device_id", deviceID)
 	}
+}
+
+// GetSSHCredentials returns decrypted SSH authentication material for a device,
+// resolving device-level credentials ahead of credential-profile credentials via
+// the same fallback chain as GetRawCredentials.
+//
+// Unlike GetCredentials, which returns only (username, password), this also
+// surfaces a private key when the credential envelope carries one. SSH callers
+// should prefer this; the RouterOS binary API has no key auth and continues to
+// use GetCredentials.
+func (c *CredentialCache) GetSSHCredentials(
+	deviceID, tenantID string,
+	transitCiphertext *string,
+	legacyCiphertext []byte,
+	profileTransitCiphertext *string,
+	profileLegacyCiphertext []byte,
+) (*SSHCredential, error) {
+	raw, err := c.GetRawCredentials(
+		deviceID, tenantID,
+		transitCiphertext, legacyCiphertext,
+		profileTransitCiphertext, profileLegacyCiphertext,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSSHCredentials(raw)
 }

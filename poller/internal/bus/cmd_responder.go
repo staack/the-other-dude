@@ -96,6 +96,8 @@ func (r *CmdResponder) handleRequest(msg *nats.Msg) {
 		dev.TenantID,
 		dev.EncryptedCredentialsTransit,
 		dev.EncryptedCredentials,
+		dev.ProfileEncryptedCredentialsTransit,
+		dev.ProfileEncryptedCredentials,
 	)
 	if err != nil {
 		r.respondError(msg, fmt.Sprintf("credential decryption failed: %s", err))

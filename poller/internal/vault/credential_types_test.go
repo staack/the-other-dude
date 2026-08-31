@@ -100,3 +100,57 @@ func TestParseSNMPCredentials_EmptyJSON(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "not an SNMP type")
 }
+
+// --- ParseSSHCredentials tests ---
+//
+// SSH auth material may arrive as a legacy/routeros envelope (password only)
+// or as an ssh_key envelope carrying a private key, optionally with a password
+// retained as a fallback during migration.
+
+func TestParseSSHCredentials_SSHKeyType(t *testing.T) {
+	raw := []byte(`{"type":"ssh_key","username":"admin","private_key":"-----BEGIN OPENSSH PRIVATE KEY-----\nabc\n-----END OPENSSH PRIVATE KEY-----"}`)
+	creds, err := ParseSSHCredentials(raw)
+	require.NoError(t, err)
+	assert.Equal(t, "admin", creds.Username)
+	assert.Contains(t, creds.PrivateKey, "BEGIN OPENSSH PRIVATE KEY")
+	assert.Empty(t, creds.Password)
+}
+
+func TestParseSSHCredentials_SSHKeyWithPasswordFallback(t *testing.T) {
+	raw := []byte(`{"type":"ssh_key","username":"admin","private_key":"KEYDATA","password":"fallback"}`)
+	creds, err := ParseSSHCredentials(raw)
+	require.NoError(t, err)
+	assert.Equal(t, "KEYDATA", creds.PrivateKey)
+	assert.Equal(t, "fallback", creds.Password)
+}
+
+func TestParseSSHCredentials_RouterOSTypeStillWorks(t *testing.T) {
+	// Existing password deployments must keep working untouched.
+	raw := []byte(`{"type":"routeros","username":"admin","password":"secret"}`)
+	creds, err := ParseSSHCredentials(raw)
+	require.NoError(t, err)
+	assert.Equal(t, "admin", creds.Username)
+	assert.Equal(t, "secret", creds.Password)
+	assert.Empty(t, creds.PrivateKey)
+}
+
+func TestParseSSHCredentials_LegacyNoTypeField(t *testing.T) {
+	raw := []byte(`{"username":"admin","password":"secret"}`)
+	creds, err := ParseSSHCredentials(raw)
+	require.NoError(t, err)
+	assert.Equal(t, "admin", creds.Username)
+	assert.Equal(t, "secret", creds.Password)
+	assert.Empty(t, creds.PrivateKey)
+}
+
+func TestParseSSHCredentials_RejectsSNMPType(t *testing.T) {
+	raw := []byte(`{"type":"snmp_v2c","community":"public"}`)
+	_, err := ParseSSHCredentials(raw)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not usable for SSH")
+}
+
+func TestParseSSHCredentials_MalformedJSON(t *testing.T) {
+	_, err := ParseSSHCredentials([]byte(`not json`))
+	require.Error(t, err)
+}
