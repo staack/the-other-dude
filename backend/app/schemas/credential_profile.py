@@ -4,10 +4,10 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, SecretStr, field_validator, model_validator
 
 
-VALID_CREDENTIAL_TYPES = ("routeros", "snmp_v1", "snmp_v2c", "snmp_v3")
+VALID_CREDENTIAL_TYPES = ("routeros", "snmp_v1", "snmp_v2c", "snmp_v3", "ssh_key")
 VALID_SECURITY_LEVELS = ("no_auth_no_priv", "auth_no_priv", "auth_priv")
 VALID_AUTH_PROTOCOLS = ("SHA256", "SHA384", "SHA512")
 VALID_PRIV_PROTOCOLS = ("AES128", "AES256")
@@ -23,6 +23,13 @@ class CredentialProfileCreate(BaseModel):
     # RouterOS credential fields
     username: Optional[str] = None
     password: Optional[str] = None
+
+    # SSH key credential fields.
+    # Both are SecretStr so an accidental repr() or log interpolation prints
+    # "**********" rather than the value. The passphrase is used once at upload
+    # to decrypt the key and is never persisted.
+    private_key: Optional[SecretStr] = None
+    key_passphrase: Optional[SecretStr] = None
 
     # SNMP v1/v2c credential fields
     community: Optional[str] = None
@@ -58,6 +65,11 @@ class CredentialProfileCreate(BaseModel):
                 raise ValueError("username is required for routeros credentials")
             if not self.password:
                 raise ValueError("password is required for routeros credentials")
+        elif ct == "ssh_key":
+            if not self.username:
+                raise ValueError("username is required for ssh_key credentials")
+            if not self.private_key:
+                raise ValueError("private_key is required for ssh_key credentials")
         elif ct in ("snmp_v1", "snmp_v2c"):
             if not self.community:
                 raise ValueError(f"community is required for {ct} credentials")
@@ -113,6 +125,13 @@ class CredentialProfileUpdate(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
 
+    # SSH key credential fields.
+    # Both are SecretStr so an accidental repr() or log interpolation prints
+    # "**********" rather than the value. The passphrase is used once at upload
+    # to decrypt the key and is never persisted.
+    private_key: Optional[SecretStr] = None
+    key_passphrase: Optional[SecretStr] = None
+
     # SNMP v1/v2c credential fields
     community: Optional[str] = None
 
@@ -149,6 +168,8 @@ class CredentialProfileUpdate(BaseModel):
         cred_fields = {
             "username",
             "password",
+            "private_key",
+            "key_passphrase",
             "community",
             "security_level",
             "auth_protocol",
@@ -170,6 +191,11 @@ class CredentialProfileUpdate(BaseModel):
                     raise ValueError("username is required for routeros credentials")
                 if not self.password:
                     raise ValueError("password is required for routeros credentials")
+            elif ct == "ssh_key":
+                if not self.username:
+                    raise ValueError("username is required for ssh_key credentials")
+                if not self.private_key:
+                    raise ValueError("private_key is required for ssh_key credentials")
             elif ct in ("snmp_v1", "snmp_v2c"):
                 if not self.community:
                     raise ValueError(f"community is required for {ct} credentials")
@@ -211,6 +237,9 @@ class CredentialProfileResponse(BaseModel):
     name: str
     description: Optional[str] = None
     credential_type: str
+    # Non-secret; lets an operator identify which key is stored without it
+    # ever being readable back.
+    ssh_public_key_fingerprint: Optional[str] = None
     device_count: int = 0
     created_at: datetime
     updated_at: datetime
