@@ -13,6 +13,7 @@ RBAC:
 """
 
 import uuid
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -33,6 +34,7 @@ from app.schemas.device import (
     BulkAddResult,
     BulkAddWithProfileRequest,
     BulkAddWithProfileResult,
+    DeviceConnectionTestResponse,
     DeviceCreate,
     DeviceListResponse,
     DeviceResponse,
@@ -41,6 +43,7 @@ from app.schemas.device import (
     SubnetScanResponse,
 )
 from app.services import device as device_service
+from app.services import device_probe
 from app.services.scanner import scan_subnet
 
 router = APIRouter(tags=["devices"])
@@ -534,3 +537,60 @@ async def remove_tag_from_device(
     """Remove a tag from a device. Requires operator or above."""
     await _check_tenant_access(current_user, tenant_id, db)
     await device_service.remove_tag_from_device(db, tenant_id, device_id, tag_id)
+
+
+@router.post(
+    "/tenants/{tenant_id}/devices/{device_id}/test-connection",
+    response_model=DeviceConnectionTestResponse,
+    summary="Test a device's connection with a live protocol handshake",
+    dependencies=[Depends(require_operator_or_above), require_scope("devices:write")],
+)
+@limiter.limit("30/minute")
+async def test_device_connection(
+    request: Request,
+    tenant_id: uuid.UUID,
+    device_id: uuid.UUID,
+    current_user: CurrentUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> DeviceConnectionTestResponse:
+    """
+    Probe a stored device live: TCP, then TLS, then a RouterOS API login.
+
+    The probe runs in the poller using the device's own saved settings and
+    credentials, so it exercises the same code path as a poll — a device that
+    passes here can be polled, and one that fails says why.
+
+    Returns HTTP 200 whether or not the device answers. A device that cannot be
+    reached is a successful test with `ok: false` and a classified `reason`;
+    only auth, permission and lookup problems produce error statuses.
+
+    Requires operator role or above.
+    """
+    await _check_tenant_access(current_user, tenant_id, db)
+
+    # Raises 404 if the device does not exist or is not visible to this tenant.
+    device = await device_service.get_device(db, tenant_id, device_id)
+
+    if device.device_type == "snmp":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="test-connection is only supported for RouterOS devices",
+        )
+
+    outcome = await device_probe.probe_stored_device(str(device_id))
+
+    return DeviceConnectionTestResponse(
+        ok=outcome.ok,
+        stage=outcome.stage,
+        reason=outcome.reason,
+        message=outcome.message,
+        detail=outcome.detail,
+        tls_mode=outcome.tls_mode or device.tls_mode,
+        suggested_tls_mode=outcome.suggested_tls_mode,
+        identity=outcome.identity,
+        version=outcome.version,
+        board_name=outcome.board_name,
+        elapsed_ms=outcome.elapsed_ms,
+        probe_available=outcome.probe_available,
+        checked_at=datetime.now(timezone.utc),
+    )

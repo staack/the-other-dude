@@ -19,6 +19,11 @@ class DeviceCreate(BaseModel):
     ip_address: str
     api_port: int = 8728
     api_ssl_port: int = 8729
+    # How the poller connects: "auto" (CA-verified TLS, then insecure TLS, no
+    # plain-text fallback), "portal_ca", "insecure", or "plain". Settable at
+    # onboarding so a device whose api-ssl has no certificate — which cannot
+    # complete a TLS handshake at all — can be added in plain mode.
+    tls_mode: str = "auto"
     # RouterOS credentials — optional for SNMP devices
     username: Optional[str] = None
     password: Optional[str] = None
@@ -35,6 +40,13 @@ class DeviceCreate(BaseModel):
     def validate_device_type(cls, v: str) -> str:
         if v not in ("routeros", "snmp"):
             raise ValueError("device_type must be 'routeros' or 'snmp'")
+        return v
+
+    @field_validator("tls_mode")
+    @classmethod
+    def validate_tls_mode(cls, v: str) -> str:
+        if v not in ("auto", "portal_ca", "insecure", "plain"):
+            raise ValueError("tls_mode must be 'auto', 'portal_ca', 'insecure', or 'plain'")
         return v
 
     @field_validator("snmp_version")
@@ -409,3 +421,39 @@ class DeviceTagResponse(BaseModel):
     color: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+class DeviceConnectionTestResponse(BaseModel):
+    """Result of a live connectivity probe against a device.
+
+    Always returned with HTTP 200 when the probe ran: a device that cannot be
+    reached is a successful test with a negative result, not a failed request.
+    Callers branch on ``ok`` and ``reason``, and show ``message`` to the user.
+    """
+
+    ok: bool
+    # How far the handshake got: "tcp", "tls", "login", "query", "done".
+    stage: str
+    # Stable classification: "ok", "unreachable", "timeout",
+    # "tls_cipher_mismatch", "tls_cert_untrusted", "tls_error", "auth_failed",
+    # "protocol_error", "unknown", "probe_unavailable".
+    reason: str
+    # Human-readable explanation, safe to display verbatim.
+    message: str
+    # Raw underlying error, for operators and support. May be null.
+    detail: Optional[str] = None
+    # The TLS mode the probe used.
+    tls_mode: str
+    # A mode that was *verified* to work when the configured one did not.
+    # Populated only when the probe actually confirmed it, so it is a tested
+    # recommendation rather than a guess.
+    suggested_tls_mode: Optional[str] = None
+    # Device identity, populated only on success.
+    identity: Optional[str] = None
+    version: Optional[str] = None
+    board_name: Optional[str] = None
+    elapsed_ms: int = 0
+    # False when the poller could not be reached, so no verdict was possible.
+    # Distinguishes "the device is broken" from "we could not ask".
+    probe_available: bool = True
+    checked_at: datetime

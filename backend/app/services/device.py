@@ -14,6 +14,7 @@ Credential policy:
 
 import asyncio
 import json
+import logging
 import uuid
 from typing import Optional
 
@@ -44,10 +45,13 @@ from app.schemas.device import (
     DeviceUpdate,
 )
 from app.config import settings
+from app.services import device_probe
 from app.services.crypto import (
     decrypt_credentials_hybrid,
     encrypt_credentials_transit,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +71,77 @@ async def _tcp_reachable(ip: str, port: int, timeout: float = 3.0) -> bool:
         return True
     except Exception:
         return False
+
+
+async def validate_routeros_connectivity(
+    ip_address: str,
+    api_port: int,
+    api_ssl_port: int,
+    username: str,
+    password: str,
+    tls_mode: str = "auto",
+) -> device_probe.ProbeOutcome:
+    """Validate a RouterOS device by completing a real protocol handshake.
+
+    Runs the probe in the Go poller -- the same code path polling uses -- so a
+    device that passes here can actually be polled. This replaced a bare TCP
+    connect, which accepted any device with an open port: a device with
+    `api-ssl` enabled and no certificate offers only anonymous-DH ciphers that
+    the poller's TLS stack cannot negotiate, so it onboarded green and then
+    failed every poll.
+
+    Raises HTTPException(422) with the probe's own diagnosis when the device
+    cannot complete a handshake.
+
+    If the poller cannot be reached the probe is skipped and the old TCP check
+    is applied instead, so a poller outage degrades onboarding rather than
+    blocking it. The returned outcome reports ``probe_available=False`` in that
+    case, and the caller must not mark the device online on that basis.
+    """
+    from fastapi import HTTPException, status
+
+    outcome = await device_probe.probe_new_device(
+        ip_address=ip_address,
+        api_port=api_port,
+        api_ssl_port=api_ssl_port,
+        username=username,
+        password=password,
+        tls_mode=tls_mode,
+    )
+
+    if outcome.probe_available:
+        if outcome.ok:
+            return outcome
+
+        detail = outcome.message
+        if outcome.suggested_tls_mode:
+            detail += (
+                f" Verified alternative: this device does answer in "
+                f"'{outcome.suggested_tls_mode}' mode — re-add it with "
+                f"tls_mode='{outcome.suggested_tls_mode}' if that is acceptable to you."
+            )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
+
+    # Degraded: the poller did not answer. Fall back to the weaker TCP check
+    # rather than making onboarding impossible during a poller outage.
+    logger.warning(
+        "Device probe unavailable for %s; falling back to a TCP reachability check: %s",
+        ip_address,
+        outcome.message,
+    )
+    api_reachable = await _tcp_reachable(ip_address, api_port)
+    ssl_reachable = await _tcp_reachable(ip_address, api_ssl_port)
+    if not api_reachable and not ssl_reachable:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Cannot reach {ip_address} on port {api_port} (RouterOS API) or "
+                f"{api_ssl_port} (RouterOS SSL API). Verify the IP address and that "
+                "the RouterOS API is enabled. (The poller was unavailable, so only a "
+                "TCP check was possible — this device has not been verified end to end.)"
+            ),
+        )
+    return outcome
 
 
 def _build_device_response(device: Device) -> DeviceResponse:
@@ -157,22 +232,18 @@ async def create_device(
     """
     is_snmp = data.device_type == "snmp"
 
-    # TCP reachability check — only for RouterOS devices (SNMP uses UDP)
+    # Live handshake validation — only for RouterOS devices (SNMP uses UDP).
+    # A device that cannot complete a RouterOS API handshake must not onboard.
+    probe: device_probe.ProbeOutcome | None = None
     if not is_snmp:
-        api_reachable = await _tcp_reachable(data.ip_address, data.api_port)
-        ssl_reachable = await _tcp_reachable(data.ip_address, data.api_ssl_port)
-
-        if not api_reachable and not ssl_reachable:
-            from fastapi import HTTPException, status
-
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=(
-                    f"Cannot reach {data.ip_address} on port {data.api_port} "
-                    f"(RouterOS API) or {data.api_ssl_port} (RouterOS SSL API). "
-                    "Verify the IP address and that the RouterOS API is enabled."
-                ),
-            )
+        probe = await validate_routeros_connectivity(
+            ip_address=data.ip_address,
+            api_port=data.api_port,
+            api_ssl_port=data.api_ssl_port,
+            username=data.username or "",
+            password=data.password or "",
+            tls_mode=data.tls_mode,
+        )
 
     # Encrypt credentials via OpenBao Transit
     transit_ciphertext = None
@@ -204,7 +275,16 @@ async def create_device(
         snmp_version=data.snmp_version if is_snmp else None,
         snmp_profile_id=snmp_profile_uuid,
         credential_profile_id=credential_profile_uuid,
-        status="unknown",
+        tls_mode=data.tls_mode,
+        # A RouterOS device that completed a live handshake is known to be
+        # online right now, so say so rather than leaving it "unknown" until
+        # the next poll cycle -- up to 120s later. Anything not positively
+        # verified stays "unknown".
+        status=(
+            "online"
+            if (probe is not None and probe.probe_available and probe.ok)
+            else "unknown"
+        ),
     )
     db.add(device)
     await db.flush()  # Get the ID without committing
