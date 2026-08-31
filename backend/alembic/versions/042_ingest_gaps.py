@@ -1,6 +1,6 @@
 """Create ingest_gaps and poller_heartbeats so a hole in the metrics is visible.
 
-Revision ID: 041
+Revision ID: 042
 Revises: 040
 Create Date: 2026-08-30
 
@@ -35,8 +35,8 @@ that a gap not be silently unrecorded, not that the data come back.
 import sqlalchemy as sa
 from alembic import op
 
-revision = "041"
-down_revision = "040"
+revision = "042"
+down_revision = "041"
 branch_labels = None
 depends_on = None
 
