@@ -162,6 +162,9 @@ services:
       context: ./winbox-worker
     platform: linux/amd64
     container_name: tod_winbox_worker
+    # PID-1 init so orphaned session processes (Xvfb after an xpra crash)
+    # are reaped; the worker also sweeps zombies itself as a fallback.
+    init: true
     environment:
       IDLE_TIMEOUT: 600
       MAX_LIFETIME: 7200

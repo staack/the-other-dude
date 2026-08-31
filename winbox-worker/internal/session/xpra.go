@@ -83,6 +83,7 @@ func startPending(cmd *exec.Cmd, logFile *os.File) (*XpraProc, error) {
 		}
 		return nil, err
 	}
+	registerManaged(cmd.Process.Pid)
 	return &XpraProc{Pid: cmd.Process.Pid, done: make(chan struct{})}, nil
 }
 
@@ -92,6 +93,7 @@ func startPending(cmd *exec.Cmd, logFile *os.File) (*XpraProc, error) {
 func (p *XpraProc) beginReaping(cmd *exec.Cmd, logFile *os.File) {
 	go func() {
 		p.waitErr = cmd.Wait()
+		unregisterManaged(p.Pid)
 		if logFile != nil {
 			logFile.Close()
 		}
@@ -199,6 +201,16 @@ func killOrphanXvfb(lockDir, procRoot string, display int) {
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {
 		if syscall.Kill(pid, 0) != nil {
+			return
+		}
+		// kill(pid, 0) succeeds against a zombie, so when the worker is
+		// PID 1 and the corpse reparented to us the loop would otherwise
+		// burn the whole grace and SIGKILL a dead process. A zombie is
+		// done: collect it (harmless if it is not ours) and stop.
+		if st, _, err := procStat(procRoot, pid); err == nil && st == 'Z' {
+			if !isManaged(pid) {
+				reapPids([]int{pid})
+			}
 			return
 		}
 		time.Sleep(50 * time.Millisecond)
@@ -352,7 +364,10 @@ func QueryXpraStatus(display int) XpraStatus {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "xpra", "info", fmt.Sprintf(":%d", display))
-	out, err := cmd.Output()
+	var buf strings.Builder
+	cmd.Stdout = &buf
+	err := runManaged(cmd)
+	out := []byte(buf.String())
 	if err != nil {
 		xpraQueryFailures.Add(1)
 		slog.Warn("xpra info query failed", "display", display, "err", err,

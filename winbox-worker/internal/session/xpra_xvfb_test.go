@@ -103,3 +103,40 @@ func TestKillOrphanXvfbKillsVerifiedXvfb(t *testing.T) {
 func TestKillOrphanXvfbNoLockFileIsNoop(t *testing.T) {
 	killOrphanXvfb(t.TempDir(), t.TempDir(), 100) // must not panic or block
 }
+
+// When the worker is PID 1, a killed Xvfb reparents to us and sits as a
+// zombie until reaped: kill(pid, 0) keeps succeeding, so a liveness loop
+// keyed on it alone burns the full TERM grace and then SIGKILLs a corpse.
+// The wait loop must recognise the zombie state and stop immediately.
+func TestKillOrphanXvfbStopsWaitingOnZombie(t *testing.T) {
+	lockDir, procRoot := t.TempDir(), t.TempDir()
+	// The victim ignores SIGTERM: if the loop treats it as live it will
+	// exhaust the full 2s grace and SIGKILL it. The fake /proc says it is a
+	// zombie, so the sweep must return quickly and send no SIGKILL.
+	ready := filepath.Join(t.TempDir(), "ready")
+	cmd := exec.Command("/bin/sh", "-c", `trap '' TERM; : > `+ready+`; sleep 60; true`)
+	p, err := startReaped(cmd, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { syscall.Kill(p.Pid, syscall.SIGKILL) })
+	pid := p.Pid
+	waitFor(t, 5*time.Second, "victim to install its TERM trap", func() bool {
+		_, err := os.Stat(ready)
+		return err == nil
+	})
+
+	os.WriteFile(filepath.Join(lockDir, ".X100-lock"), []byte(fmt.Sprintf("%10d\n", pid)), 0644)
+	writeFakeProc(t, procRoot, pid, "Xvfb")
+	writeStat(t, procRoot, pid, "Xvfb", 'Z', os.Getpid())
+
+	start := time.Now()
+	killOrphanXvfb(lockDir, procRoot, 100)
+	if elapsed := time.Since(start); elapsed > time.Second {
+		t.Fatalf("burned %s waiting on a zombie", elapsed)
+	}
+	time.Sleep(100 * time.Millisecond)
+	if errors.Is(syscall.Kill(pid, 0), syscall.ESRCH) {
+		t.Fatal("SIGKILL was sent to what /proc reported as a zombie")
+	}
+}

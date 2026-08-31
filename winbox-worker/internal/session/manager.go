@@ -568,7 +568,7 @@ func (m *Manager) CleanupOrphans() {
 		count++
 	}
 
-	exec.Command("xpra", "stop", "--all").Run()
+	runManaged(exec.Command("xpra", "stop", "--all"))
 
 	m.displays.ResetAll()
 	m.wsPorts.ResetAll()

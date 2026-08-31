@@ -59,6 +59,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go mgr.RunCleanupLoop(ctx)
+	// The worker is PID 1 in the shipped container: orphaned corpses
+	// (crashed sessions' Xvfb above all) reparent to us and nothing else
+	// will ever reap them.
+	go session.RunOrphanReaper(ctx)
 
 	mux := http.NewServeMux()
 
