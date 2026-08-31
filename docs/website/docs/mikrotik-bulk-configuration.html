@@ -100,7 +100,7 @@
 
       <h2>Bulk CLI Command Execution</h2>
 
-      <p>The Other Dude lets you run RouterOS CLI commands across multiple devices simultaneously from the web UI. Select a group of devices (by tag, site, or manual selection), enter a command, and execute. Each device gets its own result — success with output, failure with error details, or timeout.</p>
+      <p>The Other Dude lets you run a RouterOS CLI command across a group of devices from the web UI. Select the devices (by tag, site, or manual selection), enter a command, and execute. They run one at a time so you can watch the results arrive, and you can abort the run partway through if the first few outputs aren't what you expected. Each device gets its own result — success with output, failure with error details, or timeout. Offline devices are skipped rather than retried. A blocklist refuses the commands with no safe bulk use: reboot, shutdown, reset-configuration, and changes to users, passwords or certificates.</p>
 
       <p>This is available to users with operator role or above. The RBAC system ensures that viewer-level users can't execute commands, even if they can see the devices.</p>
 
@@ -152,7 +152,9 @@
 
       <h2>Batch Config Push via the Config Editor</h2>
 
-      <p>In addition to templates and CLI commands, the platform's <a href="routeros-configuration-management.html">config editor</a> supports batch operations. You can browse the RouterOS path tree, make a change, and push it to multiple devices at once. This is useful for structured changes that don't warrant a full template — adding a single firewall rule, modifying a DNS setting, or updating an NTP server across a device group.</p>
+      <p>In addition to templates and CLI commands, the platform's <a href="routeros-configuration-management.html">config editor</a> supports batch operations. You can browse the RouterOS path tree, make a change, and apply it to each device in a group in turn. This is convenient for structured changes that don't warrant a full template — a DNS setting or an NTP server across a device group.</p>
+
+      <p><strong>Batch Config has no rollback, and that matters more here than anywhere else in the product.</strong> It runs on the config editor's path, so there is no pre-push backup and no safe-mode session, and it does not stop when a device fails — it continues through the rest of the list. A change that cuts off the management path is therefore applied to every device you selected and reverted on none of them. For anything that could affect reachability, including the firewall rule in the example above, use a template push instead: those are safe-mode protected per device and halt on the first failure.</p>
 
       <h2>How This Differs from SSH Scripts</h2>
 

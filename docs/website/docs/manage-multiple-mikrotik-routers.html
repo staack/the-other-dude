@@ -141,7 +141,7 @@
 
       <p><strong>Fleet dashboard.</strong> A single view shows device count, online/offline ratio, uptime sparklines, and per-device CPU and memory across your entire fleet. The device table is virtual-scrolled and handles hundreds of routers without performance degradation.</p>
 
-      <p><strong>Batch configuration.</strong> Apply a config template to multiple devices simultaneously. Each device gets its own result — success, failure, or partial — and the operation is logged with a timestamp and the identity of who ran it. Config templates support variable substitution, so you can define a standard firewall ruleset once and apply it across sites with different IP ranges without editing the template for each device.</p>
+      <p><strong>Batch configuration.</strong> Apply a config template across a group of devices. Each device gets its own result — success, failure, or partial — and the operation is logged with a timestamp and the identity of who ran it. Config templates support variable substitution, so you can define a standard firewall ruleset once and apply it across sites with different IP ranges without editing the template for each device. Template rollouts run one device at a time and stop at the first failure, and each device's change is applied inside a RouterOS safe-mode session so it reverts itself if the device stops answering.</p>
 
       <p><strong>Bulk command execution.</strong> Run arbitrary RouterOS CLI commands across a device group. Useful for one-off queries (what's the uptime on all devices at site X?) or scripted changes that don't fit a template pattern.</p>
 

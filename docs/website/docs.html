@@ -378,7 +378,7 @@
         <h3>Features</h3>
         <ul>
           <li><strong>Fleet</strong> &mdash; Dashboard with at-a-glance fleet health, virtual-scrolled device table, geographic map, and subnet scanner for device discovery.</li>
-          <li><strong>Configuration</strong> &mdash; Config Editor, batch configuration across devices, bulk CLI commands, reusable templates with safe-mode rollback on push, Simple Config (Linksys/Ubiquiti-style UI), and git-backed config backup with diff viewer.</li>
+          <li><strong>Configuration</strong> &mdash; Config Editor, bulk CLI commands, reusable templates and config restore with safe-mode rollback on push, Simple Config (Linksys/Ubiquiti-style UI), Batch Config (multi-device, <em>no</em> rollback &mdash; see below), and git-backed config backup with diff viewer.</li>
           <li><strong>Monitoring</strong> &mdash; Interactive network topology (ReactFlow + Dagre), real-time metrics via SSE/NATS (including wireless signal, CCQ, and client count), configurable alert rules, notification channels (email, webhook, Slack), audit trail, KMS transparency dashboard, and PDF reports.</li>
           <li><strong>Security</strong> &mdash; 1Password-style zero-knowledge architecture with SRP-6a auth, 2SKD key derivation, Secret Key with Emergency Kit, OpenBao KMS for per-tenant envelope encryption, Internal CA with SFTP cert deployment, WireGuard VPN, and AES-256-GCM credential encryption.</li>
           <li><strong>Remote Access</strong> &mdash; One-click WinBox tunnel launch via NATS request-reply, browser-based SSH terminal (xterm.js over WebSocket), per-device session management with idle timeouts, and full audit logging of remote sessions.</li>
@@ -981,7 +981,7 @@ open http://localhost</code></pre>
           </thead>
           <tbody>
             <tr><td><strong>Config Editor</strong></td><td>Browse and edit RouterOS configuration paths in real-time. Select a device from the header dropdown.</td></tr>
-            <tr><td><strong>Batch Config</strong></td><td>Apply configuration changes across multiple devices simultaneously using templates.</td></tr>
+            <tr><td><strong>Batch Config</strong></td><td>Applies one config-editor change to each selected device in turn. This is the config editor's path, not the template path: there is <strong>no pre-push backup, no safe mode, and no automatic rollback</strong>, and the run does not stop when a device fails &mdash; it carries on through the rest of the list. A change that cuts off the management path will therefore be applied to every device you selected, and reverted on none of them. Use a template push instead for anything that could affect reachability. Not currently linked from the sidebar.</td></tr>
             <tr><td><strong>Bulk Commands</strong></td><td>Execute RouterOS CLI commands across selected devices in bulk.</td></tr>
             <tr><td><strong>Templates</strong></td><td>Create and manage reusable configuration templates.</td></tr>
             <tr><td><strong>Firmware</strong></td><td>Check for RouterOS updates and schedule firmware upgrades across your fleet.</td></tr>
@@ -1111,7 +1111,7 @@ open http://localhost</code></pre>
           <li><strong>Review Changes</strong> &mdash; shows the equivalent RSC script so you can inspect it first, then sends the same commands.</li>
         </ul>
         <p><strong>Neither mode rolls anything back.</strong> The config editor applies changes directly over the RouterOS API, and there is no automatic revert on this path. Until August 2026 this control was labelled &ldquo;Safe Apply (with auto-revert)&rdquo; and this page recommended it for firewall and routing changes on remote devices; that was wrong, and both the control and this page have been corrected. Review Changes is a review step, not a safety net.</p>
-        <p>Automatic rollback does exist, but on a different path: <a href="#config-push-safety">config restore and template push</a> apply their changes inside a RouterOS safe-mode session, so the router reverts itself if the change cuts off the management path. If you are making a firewall or routing change on a remote device and you want that protection, make it as a template push rather than an editor edit &mdash; or arrange out-of-band access before you touch the editor.</p>
+        <p>Automatic rollback does exist, but on a different path: <a href="#config-push-safety">config restore and template push</a> apply their changes inside a RouterOS safe-mode session, so the router reverts itself if the change cuts off the management path. If you are making a firewall or routing change on a remote device and you want that protection, make it as a template push rather than an editor edit &mdash; or arrange out-of-band access before you touch the editor. Templates render to RSC, so anything you can express in the editor you can express in a template. One limit: safe mode can only undo 100 actions, and a push larger than that is refused rather than applied unprotected, so a very large change set has to be split into stages. A refusal there is the safety working, not a fault.</p>
       </section>
 
       <!-- REMOTE ACCESS -->

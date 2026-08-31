@@ -145,7 +145,7 @@
 
       <p><strong>Monitoring and alerts.</strong> CPU, memory, traffic, and wireless metrics stored in TimescaleDB with <a href="mikrotik-router-monitoring.html">threshold-based alerting</a>. Maintenance windows suppress alerts during planned work.</p>
 
-      <p><strong>Bulk operations.</strong> <a href="mikrotik-bulk-configuration.html">Push config changes or run CLI commands</a> across a group of devices simultaneously. Each device gets its own result with success/failure reporting.</p>
+      <p><strong>Bulk operations.</strong> <a href="mikrotik-bulk-configuration.html">Push config changes or run CLI commands</a> across a group of devices, one device at a time, with per-device success/failure reporting. A CLI run can be aborted partway through, and template pushes stop at the first device that fails.</p>
 
       <p><strong>Multi-tenant isolation.</strong> <a href="msp-mikrotik-management.html">MSPs can manage multiple clients</a> from one platform with hard tenant boundaries enforced at the database level.</p>
 

@@ -126,7 +126,7 @@ The Config Editor provides direct access to RouterOS configuration paths (e.g., 
 
 **Neither mode rolls anything back.** The config editor applies changes directly over the RouterOS API. Until August 2026 this control was labelled "Safe Apply (with auto-revert)" and this guide recommended it for firewall and routing changes on remote devices; that was wrong, and both have been corrected. Review Changes is a review step, not a safety net.
 
-Automatic rollback does exist, on a different path. Config restore and template push apply their changes inside a RouterOS safe-mode session, so the router reverts itself if the change cuts off the management path, without rebooting. For a firewall or routing change on a remote device, prefer a template push over an editor edit, or arrange out-of-band access first.
+Automatic rollback does exist, on a different path. Config restore and template push apply their changes inside a RouterOS safe-mode session, so the router reverts itself if the change cuts off the management path, without rebooting. For a firewall or routing change on a remote device, prefer a template push over an editor edit, or arrange out-of-band access first. Templates render to RSC, so anything the editor can express a template can too. One limit: safe mode can only undo 100 actions, and a larger push is refused rather than applied unprotected -- split a big change set into stages. That refusal is the safety working.
 
 ### Simple Config
 

@@ -35,7 +35,7 @@ The Other Dude is a self-hosted, multi-tenant platform (one installation serves 
 ### Configuration
 
 - **Config Editor** -- Browse and edit RouterOS configuration sections with a structured command interface. Edits are applied directly to the device; for automatic rollback, push the change as a template or restore a saved version, which run under safe mode.
-- **Batch Config** -- Apply configuration changes across multiple devices simultaneously with template support.
+- **Batch Config** -- Applies one config-editor change to each selected device in turn. This uses the config editor's path, *not* the template path: no pre-push backup, no safe mode, no automatic rollback, and it does not stop when a device fails. A change that breaks reachability lands on every device you selected and is reverted on none. Prefer a template push for anything that could affect the management path.
 - **Bulk Commands** -- Execute arbitrary RouterOS commands across device groups.
 - **Templates** -- Reusable configuration templates with variable substitution.
 - **Simple Config** -- A Linksys/Ubiquiti-style simplified interface covering Internet, LAN/DHCP, WiFi, Port Forwarding, Firewall, DNS, and System settings. No RouterOS CLI knowledge required.
