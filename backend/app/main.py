@@ -186,6 +186,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 error=str(exc),
             )
 
+    # Regenerate wg0.conf from the database.
+    #
+    # WireGuard's config is derived state: ./docker-data/wireguard holds a file
+    # generated from vpn_configs and vpn_peers, and until now it was only
+    # rewritten when a tenant's VPN settings were saved. That meant a restore
+    # onto a fresh host produced a correct device inventory and a dead VPN,
+    # with nothing to indicate why, until somebody happened to edit a peer.
+    # Regenerating on every start makes the file follow the database.
+    try:
+        from app.services.vpn_service import sync_wireguard_config
+
+        await sync_wireguard_config()
+        logger.info("wireguard config regenerated from database")
+    except Exception as e:
+        logger.warning("wireguard config sync failed (non-fatal): %s", e)
+
     # Recover stale push operations from previous API instance
     try:
         from app.services.restore_service import recover_stale_push_operations
