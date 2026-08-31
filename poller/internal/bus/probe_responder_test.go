@@ -195,11 +195,17 @@ type mockCredentialResolver struct {
 	username string
 	password string
 	err      error
+
+	gotProfileTransit *string
+	gotProfileLegacy  []byte
 }
 
 func (m *mockCredentialResolver) GetCredentials(
 	_, _ string, _ *string, _ []byte,
+	profileTransitCiphertext *string, profileLegacyCiphertext []byte,
 ) (string, string, error) {
+	m.gotProfileTransit = profileTransitCiphertext
+	m.gotProfileLegacy = profileLegacyCiphertext
 	return m.username, m.password, m.err
 }
 
@@ -334,5 +340,39 @@ func storeDevice(id, tenantID, ip string, sslPort, plainPort int, tlsMode string
 		APIPort:    plainPort,
 		TLSMode:    tlsMode,
 		DeviceType: "routeros",
+	}
+}
+
+// A device whose credentials live only on a credential profile must still probe:
+// the resolver needs the profile ciphertexts, not just the device's own.
+func TestProbeResponder_StoredDeviceForwardsProfileCredentials(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	port := closedPort(t)
+	dev := storeDevice("dev-1", "tenant-1", "127.0.0.1", port, port, "insecure")
+	profileTransit := "vault:v1:profile-ciphertext"
+	dev.ProfileEncryptedCredentialsTransit = &profileTransit
+	dev.ProfileEncryptedCredentials = []byte("legacy-profile-blob")
+
+	creds := &mockCredentialResolver{username: "u", password: "p"}
+	pr := NewProbeResponder(nc).WithStore(&mockDeviceStore{device: dev}, creds)
+	if err := pr.Start(); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	defer pr.Stop()
+
+	if _, err := nc.Request("device.probe.stored.dev-1", []byte("{}"), 10*time.Second); err != nil {
+		t.Fatalf("NATS request failed: %v", err)
+	}
+
+	if creds.gotProfileTransit == nil {
+		t.Fatal("profile transit ciphertext was not forwarded to the credential resolver")
+	}
+	if *creds.gotProfileTransit != profileTransit {
+		t.Errorf("profile transit ciphertext = %q, want %q", *creds.gotProfileTransit, profileTransit)
+	}
+	if string(creds.gotProfileLegacy) != "legacy-profile-blob" {
+		t.Errorf("profile legacy ciphertext = %q, want %q", creds.gotProfileLegacy, "legacy-profile-blob")
 	}
 }
