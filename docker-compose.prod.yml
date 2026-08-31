@@ -46,6 +46,12 @@ services:
     volumes:
       - ./docker-data/git-store:/data/git-store
       - ./docker-data/wireguard:/data/wireguard
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/health/ready', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy

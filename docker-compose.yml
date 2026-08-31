@@ -16,6 +16,7 @@ services:
   postgres:
     image: timescale/timescaledb:2.17.2-pg17
     container_name: tod_postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-tod}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -40,6 +41,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: tod_redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
@@ -162,6 +164,7 @@ services:
       context: ./winbox-worker
     platform: linux/amd64
     container_name: tod_winbox_worker
+    restart: unless-stopped
     environment:
       IDLE_TIMEOUT: 600
       MAX_LIFETIME: 7200

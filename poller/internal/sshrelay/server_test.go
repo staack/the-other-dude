@@ -3,6 +3,9 @@ package sshrelay
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -101,4 +104,78 @@ func TestSessionList(t *testing.T) {
 
 	list := s.SessionList("d1")
 	assert.Len(t, list, 2)
+}
+
+// ---------------------------------------------------------------------------
+// /healthz dependency reporting
+//
+// The handler used to write {"status":"ok"} unconditionally, so a poller that
+// had lost NATS and was dropping every metric still passed its container
+// healthcheck. These tests pin the handler to the actual state of its probes.
+// ---------------------------------------------------------------------------
+
+func healthResponse(t *testing.T, s *Server) (int, map[string]any) {
+	t.Helper()
+	rec := httptest.NewRecorder()
+	s.handleHealth(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+
+	var body map[string]any
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	return rec.Code, body
+}
+
+func TestHandleHealth_AllProbesPass(t *testing.T) {
+	s := &Server{probes: map[string]HealthProbe{
+		"redis": func(context.Context) error { return nil },
+		"nats":  func(context.Context) error { return nil },
+	}}
+
+	code, body := healthResponse(t, s)
+	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, "ok", body["status"])
+	assert.Equal(t, "ok", body["checks"].(map[string]any)["redis"])
+	assert.Equal(t, "ok", body["checks"].(map[string]any)["nats"])
+}
+
+func TestHandleHealth_FailingProbeIsReportedAndReturns503(t *testing.T) {
+	s := &Server{probes: map[string]HealthProbe{
+		"redis": func(context.Context) error { return nil },
+		"nats":  func(context.Context) error { return errors.New("not connected") },
+	}}
+
+	code, body := healthResponse(t, s)
+	assert.Equal(t, http.StatusServiceUnavailable, code)
+	assert.Equal(t, "degraded", body["status"])
+
+	checks := body["checks"].(map[string]any)
+	assert.Equal(t, "ok", checks["redis"])
+	assert.Contains(t, checks["nats"], "not connected",
+		"the failing dependency must be named in the body, not just implied by the status code")
+}
+
+// The point of the whole change: the probe has to track the real dependency,
+// not a constant. Same server, same handler, Redis pulled out from under it.
+func TestHandleHealth_RedisProbeTracksRealRedis(t *testing.T) {
+	rc, mr := setupRedis(t)
+	s := &Server{probes: map[string]HealthProbe{
+		"redis": func(ctx context.Context) error { return rc.Ping(ctx).Err() },
+	}}
+
+	code, body := healthResponse(t, s)
+	require.Equal(t, http.StatusOK, code)
+	require.Equal(t, "ok", body["status"])
+
+	mr.Close()
+
+	code, body = healthResponse(t, s)
+	assert.Equal(t, http.StatusServiceUnavailable, code)
+	assert.Equal(t, "degraded", body["status"])
+}
+
+// A Server built without probes (as several tests in this file do) must not
+// start reporting itself unhealthy.
+func TestHandleHealth_NoProbesConfigured(t *testing.T) {
+	code, body := healthResponse(t, &Server{})
+	assert.Equal(t, http.StatusOK, code)
+	assert.Equal(t, "ok", body["status"])
 }
