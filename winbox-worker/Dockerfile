@@ -1,5 +1,11 @@
 # Stage 1: Build Go session manager
-FROM golang:1.22-bookworm AS builder
+# Keep this in step with the Go version CI tests against (ci.yml's
+# winbox-worker-test job) and with poller/Dockerfile. It was pinned at 1.22
+# while CI tested on 1.25, so the shipped binary carried a Go stdlib the test
+# run never exercised — and CVE-2025-68121 (crypto/tls, incorrect certificate
+# validation during TLS session resumption, CRITICAL) with it. A stdlib CVE is
+# fixed by rebuilding on a patched toolchain, so the builder tag is the fix.
+FROM golang:1.25-bookworm AS builder
 
 WORKDIR /build
 COPY go.mod go.sum ./
