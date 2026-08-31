@@ -77,3 +77,47 @@ class TestTlsModeResolution:
         entry = BulkDeviceAdd(ip_address="10.0.0.1")
         req = BulkAddRequest(devices=[entry])
         assert req.tls_mode_for(entry) != "plain"
+
+
+class TestDeviceCreateCarriesTlsMode:
+    """DeviceCreate is what bulk_add actually hands to create_device.
+
+    Regression: tls_mode was added to the bulk schemas but not to DeviceCreate,
+    so the resolved value was silently dropped on the way through and
+    create_device raised AttributeError for every device in the batch. Schema
+    tests alone did not catch it -- this asserts the field the service reads.
+    """
+
+    def test_device_create_accepts_and_exposes_tls_mode(self):
+        from app.schemas.device import DeviceCreate
+
+        d = DeviceCreate(
+            hostname="r1",
+            ip_address="10.0.0.1",
+            username="admin",
+            password="pw",
+            tls_mode="plain",
+        )
+        assert d.tls_mode == "plain"
+
+    def test_device_create_defaults_tls_mode_to_none(self):
+        from app.schemas.device import DeviceCreate
+
+        d = DeviceCreate(
+            hostname="r1", ip_address="10.0.0.1", username="admin", password="pw"
+        )
+        # create_device turns None into "auto"; what matters is the attribute
+        # exists, because it reads data.tls_mode unconditionally.
+        assert d.tls_mode is None
+
+    def test_device_create_rejects_unknown_tls_mode(self):
+        from app.schemas.device import DeviceCreate
+
+        with pytest.raises(ValidationError):
+            DeviceCreate(
+                hostname="r1",
+                ip_address="10.0.0.1",
+                username="admin",
+                password="pw",
+                tls_mode="tls",
+            )

@@ -47,6 +47,14 @@ class DeviceCreate(BaseModel):
     snmp_profile_id: Optional[str] = None
     credential_profile_id: Optional[str] = None
     community: Optional[str] = None  # inline v2c community string
+    # How the poller may reach this device. create_device reads this
+    # unconditionally, so it has to exist here, not only on DeviceUpdate.
+    tls_mode: Optional[str] = None
+
+    @field_validator("tls_mode")
+    @classmethod
+    def validate_tls_mode(cls, v: Optional[str]) -> Optional[str]:
+        return _validate_tls_mode(v)
 
     @field_validator("device_type")
     @classmethod

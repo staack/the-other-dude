@@ -18,6 +18,7 @@ import {
   Download,
   Wrench,
   ClipboardList,
+  Eye,
   BellRing,
   Calendar,
   FileBarChart,
@@ -182,6 +183,11 @@ export function Sidebar() {
     { label: 'Maintenance', href: '/maintenance', icon: Calendar },
     { label: 'Settings', href: '/settings', icon: Settings },
     { label: 'Audit Log', href: '/audit', icon: ClipboardList },
+    // Gated with the same helper the route itself uses (isTenantAdmin, which
+    // is true for tenant_admin AND super_admin) so the two cannot drift apart.
+    ...(tenantAdmin
+      ? [{ label: 'Transparency', href: '/transparency', icon: Eye }]
+      : []),
     { label: 'Reports', href: '/reports', icon: FileBarChart },
   ]
 
