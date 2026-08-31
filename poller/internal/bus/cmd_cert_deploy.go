@@ -112,8 +112,24 @@ func (r *CertDeployResponder) handleRequest(msg *nats.Msg) {
 		return
 	}
 
-	// Create SSH client for SFTP upload
-	sshClient, err := device.NewSSHClient(dev.IPAddress, req.SSHPort, creds.Username, creds.Password, creds.PrivateKey, 30*time.Second)
+	// Create SSH client for SFTP upload, verifying the device host key against
+	// the fingerprint pinned on first connect.
+	var knownFingerprint string
+	if dev.SSHHostKeyFingerprint != nil {
+		knownFingerprint = *dev.SSHHostKeyFingerprint
+	}
+
+	sshClient, observedFP, err := device.NewSSHClient(
+		dev.IPAddress, req.SSHPort,
+		creds.Username, creds.Password, creds.PrivateKey,
+		knownFingerprint, 30*time.Second,
+	)
+	if err == nil && knownFingerprint == "" && observedFP != "" {
+		// TOFU: pin the host key on first connect.
+		if updateErr := r.store.UpdateSSHHostKey(ctx, dev.ID, observedFP); updateErr != nil {
+			slog.Warn("failed to store SSH host key", "device_id", dev.ID, "error", updateErr)
+		}
+	}
 	if err != nil {
 		slog.Warn("SSH connection failed for cert deploy",
 			"device_id", deviceID,
