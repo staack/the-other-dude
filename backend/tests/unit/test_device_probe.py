@@ -237,3 +237,59 @@ async def test_degraded_onboarding_still_rejects_a_closed_port():
                 )
 
     assert exc.value.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Credential-profile onboarding
+#
+# A device may be added with a credential_profile_id and no inline username or
+# password. Probing such a device with empty credentials would fail
+# authentication and block onboarding entirely -- a regression the TCP-only
+# check could not have had, because it never authenticated.
+# ---------------------------------------------------------------------------
+
+
+async def test_probe_credentials_come_from_the_credential_profile():
+    """Profile-based onboarding must probe with the profile's credentials."""
+    from app.services import device as device_service
+
+    with patch.object(
+        device_service,
+        "_decrypt_profile_credentials",
+        AsyncMock(return_value=("profile-user", "profile-pass")),
+    ):
+        username, password = await device_service.resolve_probe_credentials(
+            db=None,
+            tenant_id="t1",
+            username=None,
+            password=None,
+            credential_profile_id="cp-1",
+        )
+
+    assert (username, password) == ("profile-user", "profile-pass")
+
+
+async def test_inline_credentials_take_precedence_over_a_profile():
+    from app.services import device as device_service
+
+    username, password = await device_service.resolve_probe_credentials(
+        db=None,
+        tenant_id="t1",
+        username="inline-user",
+        password="inline-pass",
+        credential_profile_id="cp-1",
+    )
+
+    assert (username, password) == ("inline-user", "inline-pass")
+
+
+async def test_unresolvable_credentials_yield_none_rather_than_empty_strings():
+    """Returning ("", "") would probe as an anonymous login and look like a
+    credential failure. The caller must be able to tell it cannot probe."""
+    from app.services import device as device_service
+
+    result = await device_service.resolve_probe_credentials(
+        db=None, tenant_id="t1", username=None, password=None, credential_profile_id=None
+    )
+
+    assert result is None

@@ -73,6 +73,89 @@ async def _tcp_reachable(ip: str, port: int, timeout: float = 3.0) -> bool:
         return False
 
 
+async def _require_tcp_reachable(ip_address: str, api_port: int, api_ssl_port: int) -> None:
+    """Raise 422 unless one of the RouterOS API ports accepts a TCP connection.
+
+    The degraded check, used only when a real handshake could not be attempted.
+    It is what onboarding used to do on its own, and it is why a device with
+    api-ssl but no certificate could onboard green and never poll.
+    """
+    from fastapi import HTTPException, status
+
+    api_reachable = await _tcp_reachable(ip_address, api_port)
+    ssl_reachable = await _tcp_reachable(ip_address, api_ssl_port)
+    if not api_reachable and not ssl_reachable:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Cannot reach {ip_address} on port {api_port} (RouterOS API) or "
+                f"{api_ssl_port} (RouterOS SSL API). Verify the IP address and that "
+                "the RouterOS API is enabled. (A full handshake check was not "
+                "possible, so this device has not been verified end to end.)"
+            ),
+        )
+
+
+async def _decrypt_profile_credentials(
+    db: AsyncSession,
+    tenant_id,
+    credential_profile_id: str,
+) -> Optional[tuple[str, str]]:
+    """Return (username, password) from a credential profile, or None.
+
+    Used only to run the onboarding probe. The profile id is what gets stored
+    on the device; the poller re-resolves it at poll time.
+    """
+    from app.models.credential_profile import CredentialProfile
+
+    try:
+        row = await db.execute(
+            select(CredentialProfile).where(
+                CredentialProfile.id == uuid.UUID(str(credential_profile_id)),
+                CredentialProfile.tenant_id == tenant_id,
+            )
+        )
+        profile = row.scalar_one_or_none()
+        if profile is None or profile.credential_type != "routeros":
+            return None
+
+        plaintext = await decrypt_credentials_hybrid(
+            profile.encrypted_credentials_transit,
+            profile.encrypted_credentials,
+            str(tenant_id),
+            settings.get_encryption_key_bytes(),
+        )
+        creds = json.loads(plaintext)
+        username, password = creds.get("username"), creds.get("password")
+        if username is None or password is None:
+            return None
+        return username, password
+    except Exception as exc:  # noqa: BLE001 -- probe is best-effort
+        logger.warning("Could not resolve credential profile %s for probing: %s",
+                       credential_profile_id, exc)
+        return None
+
+
+async def resolve_probe_credentials(
+    db: AsyncSession,
+    tenant_id,
+    username: Optional[str],
+    password: Optional[str],
+    credential_profile_id: Optional[str],
+) -> Optional[tuple[str, str]]:
+    """Work out which credentials the onboarding probe should use.
+
+    Returns None when no credentials can be determined. Callers must treat that
+    as "cannot probe" rather than substituting empty strings, which the device
+    would reject as a bad login and which would look like the user's mistake.
+    """
+    if username is not None and password is not None:
+        return username, password
+    if credential_profile_id:
+        return await _decrypt_profile_credentials(db, tenant_id, credential_profile_id)
+    return None
+
+
 async def validate_routeros_connectivity(
     ip_address: str,
     api_port: int,
@@ -129,18 +212,7 @@ async def validate_routeros_connectivity(
         ip_address,
         outcome.message,
     )
-    api_reachable = await _tcp_reachable(ip_address, api_port)
-    ssl_reachable = await _tcp_reachable(ip_address, api_ssl_port)
-    if not api_reachable and not ssl_reachable:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                f"Cannot reach {ip_address} on port {api_port} (RouterOS API) or "
-                f"{api_ssl_port} (RouterOS SSL API). Verify the IP address and that "
-                "the RouterOS API is enabled. (The poller was unavailable, so only a "
-                "TCP check was possible — this device has not been verified end to end.)"
-            ),
-        )
+    await _require_tcp_reachable(ip_address, api_port, api_ssl_port)
     return outcome
 
 
@@ -236,14 +308,31 @@ async def create_device(
     # A device that cannot complete a RouterOS API handshake must not onboard.
     probe: device_probe.ProbeOutcome | None = None
     if not is_snmp:
-        probe = await validate_routeros_connectivity(
-            ip_address=data.ip_address,
-            api_port=data.api_port,
-            api_ssl_port=data.api_ssl_port,
-            username=data.username or "",
-            password=data.password or "",
-            tls_mode=data.tls_mode,
+        credentials = await resolve_probe_credentials(
+            db=db,
+            tenant_id=tenant_id,
+            username=data.username,
+            password=data.password,
+            credential_profile_id=data.credential_profile_id,
         )
+        if credentials is None:
+            # No usable credentials (e.g. an unreadable credential profile).
+            # Probing anonymously would fail the login and blame the user, so
+            # fall back to the old reachability check instead.
+            logger.warning(
+                "No credentials available to probe %s; falling back to a TCP check",
+                data.ip_address,
+            )
+            await _require_tcp_reachable(data.ip_address, data.api_port, data.api_ssl_port)
+        else:
+            probe = await validate_routeros_connectivity(
+                ip_address=data.ip_address,
+                api_port=data.api_port,
+                api_ssl_port=data.api_ssl_port,
+                username=credentials[0],
+                password=credentials[1],
+                tls_mode=data.tls_mode,
+            )
 
     # Encrypt credentials via OpenBao Transit
     transit_ciphertext = None
