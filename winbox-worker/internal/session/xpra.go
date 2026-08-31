@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -33,10 +34,22 @@ type XpraConfig struct {
 // exec.Cmd. Everything else observes the exit through Done(). This is the only
 // safe shape: exec.Cmd.Wait must not be called twice, and os.FindProcess+Wait
 // on an already-reaped pid returns ECHILD (or worse, waits on a recycled pid).
+//
+// The anchor is a tiny helper process we place INTO the leader's process
+// group at launch (see startGroupAnchor). Its whole job is to pin the pgid:
+// POSIX guarantees a process group ID cannot be reused while the group has a
+// live member, so as long as the anchor is alive, kill(-Pid, sig) provably
+// signals OUR group — even long after the leader itself has exited and been
+// reaped. Without it, a post-reap group signal could in principle hit an
+// unrelated process group that recycled the number.
 type XpraProc struct {
 	Pid     int
 	done    chan struct{}
 	waitErr error // written by the reaper goroutine before done is closed
+
+	anchor     *XpraProc // pgid pin; nil if the anchor failed to start
+	anchorW    *os.File  // write end of the pipe the anchor blocks on
+	anchorOnce sync.Once
 }
 
 // Done is closed once the process has exited AND been reaped (Wait returned).
