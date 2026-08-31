@@ -125,14 +125,18 @@ log "Stack is down"
 # unseal key on its very first start against the restored storage.
 # ---------------------------------------------------------------------------
 step "Restoring secrets"
-ENV_TARGET="${PROJECT_ROOT}/.env.prod"
+# Overridable: a deployment whose compose reads .env rather than .env.prod
+# must have its secrets restored to the file its compose actually loads.
+ENV_TARGET="${ENV_TARGET:-${PROJECT_ROOT}/.env.prod}"
 cp "${PAYLOAD}/env" "$ENV_TARGET"
 chmod 600 "$ENV_TARGET"
 log "Wrote $(basename "$ENV_TARGET")"
 
 env_value() { sed -n "s/^${1}=//p" "$ENV_TARGET" | tail -1 | tr -d '\r'; }
-POSTGRES_DB="$(env_value POSTGRES_DB)"; POSTGRES_DB="${POSTGRES_DB:-tod}"
-POSTGRES_USER="$(env_value POSTGRES_USER)"; POSTGRES_USER="${POSTGRES_USER:-postgres}"
+# An already-exported value wins, so a deployment whose env file names the
+# database something other than POSTGRES_DB can still be backed up.
+POSTGRES_DB="${POSTGRES_DB:-$(env_value POSTGRES_DB)}"; POSTGRES_DB="${POSTGRES_DB:-tod}"
+POSTGRES_USER="${POSTGRES_USER:-$(env_value POSTGRES_USER)}"; POSTGRES_USER="${POSTGRES_USER:-postgres}"
 
 # ---------------------------------------------------------------------------
 # Create the containers without starting them, so we can fill OpenBao's

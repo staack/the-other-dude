@@ -152,8 +152,10 @@ if [ -z "$unseal_key" ] || [ "$unseal_key" = "PLACEHOLDER_RUN_SETUP" ]; then
 fi
 log "Unseal key is present"
 
-POSTGRES_DB="$(env_value POSTGRES_DB)"; POSTGRES_DB="${POSTGRES_DB:-tod}"
-POSTGRES_USER="$(env_value POSTGRES_USER)"; POSTGRES_USER="${POSTGRES_USER:-postgres}"
+# An already-exported value wins, so a deployment whose env file names the
+# database something other than POSTGRES_DB can still be backed up.
+POSTGRES_DB="${POSTGRES_DB:-$(env_value POSTGRES_DB)}"; POSTGRES_DB="${POSTGRES_DB:-tod}"
+POSTGRES_USER="${POSTGRES_USER:-$(env_value POSTGRES_USER)}"; POSTGRES_USER="${POSTGRES_USER:-postgres}"
 log "Database: ${POSTGRES_DB} (user ${POSTGRES_USER})"
 
 # Identify OpenBao's storage mount. It may be a named volume (the historical
@@ -320,11 +322,18 @@ ARCHIVE="${OUTPUT_DIR}/${ARCHIVE_NAME}.tar.gz"
 tar czf "$ARCHIVE" -C "$STAGING" "$ARCHIVE_NAME"
 chmod 600 "$ARCHIVE"
 
-tar tzf "$ARCHIVE" >/dev/null || die "The archive did not read back cleanly."
+archive_listing="$(tar tzf "$ARCHIVE")" \
+    || die "The archive did not read back cleanly."
 
+# Matched with `case` rather than a pipe to `grep -q`: grep exits on the first
+# match, tar takes SIGPIPE, and `set -o pipefail` turns that into a failure --
+# so the check only passed for whichever file happened to be last in the
+# archive. It failed safe, but it was checking the wrong thing.
 for required in globals.sql database.dump openbao-data.tar.gz env MANIFEST; do
-    tar tzf "$ARCHIVE" | grep -q "${ARCHIVE_NAME}/${required}$" \
-        || die "The archive is missing ${required}."
+    case "$archive_listing" in
+        *"${ARCHIVE_NAME}/${required}"*) ;;
+        *) die "The archive is missing ${required}." ;;
+    esac
 done
 
 step "Backup complete"
