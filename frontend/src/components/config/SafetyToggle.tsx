@@ -1,8 +1,17 @@
 /**
- * SafetyToggle -- Toggle between Standard Apply and Safe Apply modes.
+ * SafetyToggle -- Toggle between applying immediately and reviewing first.
  *
- * Standard Apply: direct add/set/remove commands, no automatic rollback.
- * Safe Apply (with auto-revert): generates RSC script, executed via two-phase mechanism.
+ * Apply Now:      changes are sent as soon as you confirm.
+ * Review Changes: shows the equivalent RSC script for inspection before the
+ *                 same commands are sent.
+ *
+ * NOTE: neither mode performs an automatic revert. The config editor executes
+ * changes over the binary API and has no rollback mechanism (see
+ * useConfigPanel.ts). This control used to be labelled "Safe Apply (with
+ * auto-revert)", which promised a safety net that did not exist. Automatic
+ * rollback IS implemented for config restore and template push, via RouterOS
+ * safe mode -- see backend/app/services/safe_mode.py. If that is ever wired
+ * into the config editor, this label can change back.
  */
 
 import { Zap, ShieldCheck } from 'lucide-react'
@@ -16,8 +25,8 @@ interface SafetyToggleProps {
 }
 
 const MODE_DESCRIPTIONS: Record<ApplyMode, string> = {
-  quick: 'Changes applied directly. No automatic rollback.',
-  safe: 'Changes applied via RSC script with automatic revert if not confirmed.',
+  quick: 'Changes are applied as soon as you confirm. There is no automatic rollback.',
+  safe: 'Shows the equivalent RSC script to review before applying. There is still no automatic rollback -- the safety is the review step.',
 }
 
 export function SafetyToggle({ mode, onModeChange }: SafetyToggleProps) {
@@ -35,7 +44,7 @@ export function SafetyToggle({ mode, onModeChange }: SafetyToggleProps) {
           )}
         >
           <Zap className="h-3.5 w-3.5" />
-          Standard Apply
+          Apply Now
         </Button>
         <Button
           variant="outline"
@@ -48,7 +57,7 @@ export function SafetyToggle({ mode, onModeChange }: SafetyToggleProps) {
           )}
         >
           <ShieldCheck className="h-3.5 w-3.5" />
-          Safe Apply (with auto-revert)
+          Review Changes
         </Button>
       </div>
       <p className="text-xs text-text-secondary">{MODE_DESCRIPTIONS[mode]}</p>

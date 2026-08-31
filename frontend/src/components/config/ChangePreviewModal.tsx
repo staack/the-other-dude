@@ -1,8 +1,8 @@
 /**
  * ChangePreviewModal — Preview pending config changes before execution.
  *
- * Standard Apply mode: numbered list of human-readable change descriptions.
- * Safe Apply (with auto-revert) mode: generated RSC script in a monospace code block.
+ * Apply Now mode: numbered list of human-readable change descriptions.
+ * Review Changes mode: generated RSC script in a monospace code block.
  */
 
 import {
@@ -29,8 +29,8 @@ interface ChangePreviewModalProps {
 }
 
 const WARNINGS: Record<ApplyMode, string> = {
-  quick: 'These changes will be applied immediately without rollback capability.',
-  safe: 'This RSC script will be executed on the device.',
+  quick: 'These changes will be applied immediately. They cannot be rolled back automatically.',
+  safe: 'These commands will be executed on the device. They cannot be rolled back automatically -- review them before confirming.',
 }
 
 export function ChangePreviewModal({
@@ -57,7 +57,7 @@ export function ChangePreviewModal({
             ) : (
               <Badge className="gap-1 bg-accent/20 text-accent border-accent/40">
                 <ShieldCheck className="h-3 w-3" />
-                Safe (auto-revert)
+                Reviewed
               </Badge>
             )}
           </DialogTitle>

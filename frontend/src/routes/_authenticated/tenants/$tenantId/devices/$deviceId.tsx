@@ -325,10 +325,13 @@ function DeviceDetailPage() {
     enabled: isRouterOS,
   })
 
-  // True if a pre-restore backup was created within the last 30 minutes,
-  // indicating a config push just happened before the device went offline.
+  // True if a pre-push backup was created within the last 30 minutes,
+  // indicating a config push just happened. These are the same trigger types
+  // the emergency-rollback endpoint will look for, so the banner is only shown
+  // when that endpoint would actually find something to roll back to.
+  const ROLLBACKABLE_TRIGGERS = ['pre-restore', 'checkpoint', 'pre-template-push']
   const hasRecentPushAlert = isRouterOS && (backups?.some((b) => {
-    if (b.trigger_type !== 'pre-restore') return false
+    if (!ROLLBACKABLE_TRIGGERS.includes(b.trigger_type)) return false
     // created_at within last 30 minutes — compare timestamps without Date.now()
     const thirtyMinAgo = new Date()
     thirtyMinAgo.setMinutes(thirtyMinAgo.getMinutes() - 30)

@@ -131,3 +131,63 @@ async def test_recovery_skips_recent_ops():
 
     await recover_stale_push_operations(mock_session)
     # No errors, no updates — just returns cleanly
+
+
+@pytest.mark.asyncio
+async def test_recovery_marks_safe_mode_op_reverted_not_committed():
+    """A safe-mode-era op interrupted before commit was reverted by the device.
+
+    Under safe mode a push only becomes permanent when the session explicitly
+    releases it. If the API died mid-push, the session died with it and
+    RouterOS undid the change — so the device being reachable now means it is
+    reachable on its ORIGINAL config. Reporting 'committed' here would tell the
+    operator their change is live when it is not.
+    """
+    push_op = MagicMock()
+    push_op.id = uuid4()
+    push_op.device_id = uuid4()
+    push_op.tenant_id = uuid4()
+    push_op.status = "pending_verification"
+    push_op.scheduler_name = None  # no scheduler is installed any more
+    push_op.started_at = datetime.now(timezone.utc) - timedelta(minutes=10)
+
+    device = MagicMock()
+    device.ip_address = "192.168.1.1"
+
+    mock_result = MagicMock()
+    mock_result.scalars.return_value.all.return_value = [push_op]
+    dev_result = MagicMock()
+    dev_result.scalar_one_or_none.return_value = device
+    mock_session = AsyncMock()
+    mock_session.execute = AsyncMock(side_effect=[mock_result, dev_result])
+
+    with (
+        patch(
+            "app.services.restore_service._check_reachability",
+            new_callable=AsyncMock,
+            return_value=True,
+        ),
+        patch(
+            "app.services.restore_service._remove_panic_scheduler",
+            new_callable=AsyncMock,
+        ) as mock_remove,
+        patch(
+            "app.services.restore_service._update_push_op_status",
+            new_callable=AsyncMock,
+        ) as mock_update,
+        patch(
+            "app.services.restore_service._publish_push_progress",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "app.services.crypto.decrypt_credentials_hybrid",
+            new_callable=AsyncMock,
+            return_value='{"username": "admin", "password": "test123"}',
+        ),
+        patch("app.services.restore_service.settings"),
+    ):
+        await recover_stale_push_operations(mock_session)
+
+    assert mock_update.call_args[0][1] == "reverted"
+    # Nothing to disarm: no scheduler was ever installed.
+    mock_remove.assert_not_called()

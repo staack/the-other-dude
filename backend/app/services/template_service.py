@@ -5,10 +5,10 @@ Provides:
 - render_template: Render a template with device context and custom variables
 - validate_variable: Type-check a variable value against its declared type
 - push_to_devices: Sequential multi-device push with pause-on-failure
-- push_single_device: Two-phase panic-revert push for a single device
+- push_single_device: Two-phase safe-mode-backed push for a single device
 
 The push logic follows the same two-phase pattern as restore_service but uses
-separate scheduler and file names to avoid conflicts with restore operations.
+separate file names to avoid conflicts with restore operations.
 """
 
 import asyncio
@@ -24,6 +24,7 @@ from sqlalchemy import text
 
 from app.config import settings
 from app.database import AdminAsyncSessionLocal
+from app.services.safe_mode import SAFE_MODE_USERNAME_SUFFIX, SafeModeSession
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,10 @@ logger = logging.getLogger(__name__)
 _env = SandboxedEnvironment()
 
 # Names used on the RouterOS device during template push
-_PANIC_REVERT_SCHEDULER = "the-other-dude-template-revert"
 _PRE_PUSH_BACKUP = "portal-template-pre-push"
 _TEMPLATE_RSC = "portal-template.rsc"
+# Seconds to let the pushed config settle before verifying reachability.
+_SETTLE_SECONDS = 60
 
 
 # ---------------------------------------------------------------------------
@@ -219,9 +221,9 @@ async def _run_push_rollout(rollout_id: str) -> dict:
 async def push_single_device(job_id: str) -> None:
     """Push rendered template content to a single device.
 
-    Implements the two-phase panic-revert pattern:
+    Implements the two-phase safe-mode pattern:
     1. Pre-backup (mandatory)
-    2. Install panic-revert scheduler on device
+    2. Apply the config inside a RouterOS safe-mode session
     3. Write template content as RSC file via SFTP
     4. /import the RSC file
     5. Wait 60s for config to settle
@@ -329,9 +331,10 @@ async def _run_single_push(job_id: str) -> None:
         )
         return
 
-    # Step 5: SSH to device - install panic-revert, push config
+    # Step 5: SSH to device - push config under safe mode
+    committed = False
     logger.info(
-        "Pushing template to device %s (%s): installing panic-revert and uploading config",
+        "Pushing template to device %s (%s): uploading config and applying under safe mode",
         hostname,
         ip_address,
     )
@@ -352,45 +355,48 @@ async def _run_single_push(job_id: str) -> None:
             )
             logger.debug("Pre-push binary backup saved on device as %s.backup", _PRE_PUSH_BACKUP)
 
-            # 5b: Install panic-revert RouterOS scheduler
-            await conn.run(
-                f"/system scheduler add "
-                f'name="{_PANIC_REVERT_SCHEDULER}" '
-                f"interval=90s "
-                f'on-event=":delay 0; /system backup load name={_PRE_PUSH_BACKUP}" '
-                f"start-time=startup",
-                check=True,
-            )
-            logger.debug("Panic-revert scheduler installed on device")
-
-            # 5c: Upload rendered template as RSC file via SFTP
+            # 5b: Upload rendered template as RSC file via SFTP. Writing a
+            #     file is not a config action, so it stays outside safe mode
+            #     and leaves the whole undo buffer for the import.
             async with conn.start_sftp_client() as sftp:
                 async with sftp.open(_TEMPLATE_RSC, "wb") as f:
                     await f.write(rendered_content.encode("utf-8"))
             logger.debug("Uploaded %s to device flash", _TEMPLATE_RSC)
 
-            # 5d: /import the config file
-            import_result = await conn.run(
-                f"/import file={_TEMPLATE_RSC}",
-                check=False,
+            # 5c: /import the config file inside a RouterOS safe-mode session.
+            #     If the template severs the management path, the session dies
+            #     and RouterOS undoes the import by itself — without a reboot.
+            #     See app/services/safe_mode.py.
+            safe_conn = await asyncssh.connect(
+                ip_address,
+                port=22,
+                username=ssh_username + SAFE_MODE_USERNAME_SUFFIX,
+                password=ssh_password,
+                known_hosts=None,
+                connect_timeout=30,
             )
-            logger.info(
-                "Template import result for device %s: exit_status=%s stdout=%r",
-                hostname,
-                import_result.exit_status,
-                (import_result.stdout or "")[:200],
-            )
-
-            # 5e: Clean up the uploaded RSC file (best-effort)
-            try:
-                await conn.run(f"/file remove {_TEMPLATE_RSC}", check=True)
-            except Exception as cleanup_err:
-                logger.warning(
-                    "Failed to clean up %s from device %s: %s",
-                    _TEMPLATE_RSC,
-                    ip_address,
-                    cleanup_err,
+            async with SafeModeSession(safe_conn) as session:
+                import_output = await session.import_rsc(rendered_content, filename=_TEMPLATE_RSC)
+                logger.info(
+                    "Template import result for device %s: %r",
+                    hostname,
+                    import_output[-200:],
                 )
+
+                # 5d: Let the config settle, then verify on a NEW connection.
+                #     It has to be a new connection: the safe-mode one is
+                #     already established and would keep answering even if the
+                #     device had stopped accepting anything else.
+                logger.info(
+                    "Template pushed to device %s - waiting %ds for config to settle",
+                    hostname,
+                    _SETTLE_SECONDS,
+                )
+                await asyncio.sleep(_SETTLE_SECONDS)
+                reachable = await _check_reachability(ip_address, ssh_username, ssh_password)
+                if reachable:
+                    await session.commit()
+                    committed = True
 
     except Exception as push_err:
         logger.error(
@@ -406,15 +412,10 @@ async def _run_single_push(job_id: str) -> None:
         )
         return
 
-    # Step 6: Wait 60s for config to settle
-    logger.info("Template pushed to device %s - waiting 60s for config to settle", hostname)
-    await asyncio.sleep(60)
-
-    # Step 7: Reachability check
-    reachable = await _check_reachability(ip_address, ssh_username, ssh_password)
-
-    if reachable:
-        # Step 8a: Device is reachable - remove panic-revert scheduler + cleanup
+    if committed:
+        # Step 6a: Committed - clean up the artefacts left on device flash.
+        #          Best-effort: a leftover file is inert, unlike the scheduler
+        #          this replaced.
         logger.info("Device %s (%s) is reachable after push - committing", hostname, ip_address)
         try:
             async with asyncssh.connect(
@@ -425,17 +426,14 @@ async def _run_single_push(job_id: str) -> None:
                 known_hosts=None,
                 connect_timeout=30,
             ) as conn:
-                await conn.run(
-                    f'/system scheduler remove "{_PANIC_REVERT_SCHEDULER}"',
-                    check=False,
-                )
+                await conn.run(f"/file remove {_TEMPLATE_RSC}", check=False)
                 await conn.run(
                     f"/file remove {_PRE_PUSH_BACKUP}.backup",
                     check=False,
                 )
         except Exception as cleanup_err:
             logger.warning(
-                "Failed to clean up panic-revert scheduler/backup on device %s: %s",
+                "Failed to clean up push artefacts on device %s: %s",
                 hostname,
                 cleanup_err,
             )
@@ -446,10 +444,9 @@ async def _run_single_push(job_id: str) -> None:
             completed_at=datetime.now(timezone.utc),
         )
     else:
-        # Step 8b: Device unreachable - RouterOS is auto-reverting
+        # Step 6b: Not committed - safe mode reverted the push, no reboot
         logger.warning(
-            "Device %s (%s) is unreachable after push - panic-revert scheduler "
-            "will auto-revert to %s.backup",
+            "Device %s (%s) is unreachable after push - safe mode will auto-revert to %s.backup",
             hostname,
             ip_address,
             _PRE_PUSH_BACKUP,
@@ -457,7 +454,7 @@ async def _run_single_push(job_id: str) -> None:
         await _update_job(
             job_id,
             status="reverted",
-            error_message="Device unreachable after push; auto-reverted via panic-revert scheduler",
+            error_message="Device unreachable after push; safe mode reverted it without rebooting",
             completed_at=datetime.now(timezone.utc),
         )
 

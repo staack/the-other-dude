@@ -87,9 +87,17 @@ export function useConfigPanel(
 
   const applyMutation = useMutation({
     mutationFn: async (changes: ConfigChange[]) => {
-      // Both modes execute changes sequentially via the binary API.
-      // "Safe" mode defaults are set per-panel to trigger the review/confirm
-      // dialog before execution — the safety is in the UI review step.
+      // Both modes execute changes sequentially via the binary API. There is
+      // no rollback here: applyMode never leaves the browser, and the
+      // config-editor endpoints reject unknown fields anyway. The "safe" mode
+      // defaults are set per-panel purely to force the review/confirm dialog
+      // before execution — the safety is the review step, nothing more.
+      //
+      // Automatic rollback exists for config restore and template push, where
+      // the push runs inside a RouterOS safe-mode session
+      // (backend/app/services/safe_mode.py). Wiring the config editor into the
+      // same mechanism would mean routing these changes over SSH rather than
+      // the binary API; until that happens, do not describe this as a revert.
       for (const change of changes) {
         let result
         switch (change.operation) {

@@ -113,8 +113,10 @@ export function RestoreButton({
             This will push the config from{' '}
             <span className="text-text-primary font-medium">{backupDate}</span> to{' '}
             <span className="text-text-primary font-medium">{deviceHostname}</span>.
-            The system will create a safety backup and auto-revert if the device
-            becomes unreachable.
+            The system will create a safety backup first. The config is applied
+            inside a RouterOS safe-mode session, so if the device stops
+            answering, it reverts to the previous config on its own — without
+            rebooting.
           </DialogDescription>
         </DialogHeader>
 
