@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MikroTik Centralized Management Platform</title>
-  <meta name="description" content="Open source centralized management for MikroTik RouterOS fleets. Configuration, monitoring, backups, and security from a single self-hosted platform.">
+  <meta name="description" content="Self-hosted, source-available centralized management for MikroTik RouterOS fleets. Configuration, monitoring, backups, and security from a single self-hosted platform.">
   <meta name="keywords" content="mikrotik centralized management, routeros configuration management, mikrotik router fleet management, MSP network management, MikroTik monitoring">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111113">
@@ -139,7 +139,7 @@
 
       <p><strong>Security:</strong> Authentication uses SRP-6a — a zero-knowledge protocol where the server never sees your password. Device credentials are encrypted at rest using AES-256-GCM with per-tenant envelope encryption via OpenBao Transit. Role-based access control supports four roles (super_admin, admin, operator, viewer) with appropriate permission boundaries at each level. PostgreSQL Row-Level Security enforces tenant isolation at the database layer — one tenant's data is never accessible to another's, regardless of application-layer logic. Every management action is recorded in an immutable audit trail.</p>
 
-      <p><strong>Self-Hosted:</strong> The entire platform deploys via Docker Compose. Your device credentials, configuration history, and monitoring data stay on your infrastructure. The platform is open source and available on GitHub.</p>
+      <p><strong>Self-Hosted:</strong> The entire platform deploys via Docker Compose. Your device credentials, configuration history, and monitoring data stay on your infrastructure. The full source is published on GitHub under the BSL 1.1 — source-available rather than open source, converting to Apache 2.0 in March 2030.</p>
 
       <h2>Getting Started</h2>
 

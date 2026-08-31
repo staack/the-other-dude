@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Open Source MikroTik Management — Self-Hosted Fleet Management for RouterOS</title>
-  <meta name="description" content="Open source MikroTik management platform. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support. No cloud dependency.">
+  <title>Source-Available MikroTik Management — Self-Hosted Fleet Management for RouterOS</title>
+  <meta name="description" content="Self-hosted, source-available MikroTik management. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support. No cloud dependency.">
   <meta name="keywords" content="open source MikroTik management, open source RouterOS, self-hosted MikroTik, free MikroTik management, MikroTik fleet management open source, open source network management, MikroTik alternative">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#111113">
@@ -13,8 +13,8 @@
 
   <!-- Open Graph -->
   <meta property="og:type" content="article">
-  <meta property="og:title" content="Open Source MikroTik Management — The Other Dude">
-  <meta property="og:description" content="Open source MikroTik management platform. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support.">
+  <meta property="og:title" content="Source-Available MikroTik Management — The Other Dude">
+  <meta property="og:description" content="Self-hosted, source-available MikroTik management. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support.">
   <meta property="og:url" content="https://theotherdude.net/docs/open-source-mikrotik-management.html">
   <meta property="og:site_name" content="The Other Dude">
   <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
@@ -22,8 +22,8 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Open Source MikroTik Management — The Other Dude">
-  <meta name="twitter:description" content="Open source MikroTik management platform. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support.">
+  <meta name="twitter:title" content="Source-Available MikroTik Management — The Other Dude">
+  <meta name="twitter:description" content="Self-hosted, source-available MikroTik management. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support.">
   <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
 
   <!-- Structured Data -->
@@ -31,8 +31,8 @@
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
-    "headline": "Open Source MikroTik Management",
-    "description": "Open source MikroTik management platform. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support. No cloud dependency.",
+    "headline": "Source-Available MikroTik Management",
+    "description": "Self-hosted, source-available MikroTik management. Self-hosted fleet management for RouterOS with configuration backups, monitoring, and multi-tenant support. No cloud dependency.",
     "datePublished": "2026-03-18",
     "author": {
       "@type": "Organization",
@@ -88,7 +88,7 @@
     <article class="docs-content" style="max-width: 800px; margin: 0 auto; padding: 60px 24px 120px;">
       <a href="../docs.html" class="back-link">&larr; Back to Docs</a>
 
-      <h1>Open Source MikroTik Management</h1>
+      <h1>Open Source MikroTik Management: Where The Other Dude Fits</h1>
 
       <h2>Why Open Source Matters for Network Management</h2>
 
@@ -96,11 +96,25 @@
 
       <p>Open source MikroTik management means you can inspect every line of code that touches your routers. You can audit the credential handling. You can verify that configuration pushes work the way they claim to. You can deploy it on your own hardware, behind your own firewall, with no external dependencies.</p>
 
-      <p>This isn't an ideological argument. It's a practical one. When your management platform has access to every router in your fleet, you need to trust it completely. Open source is the only way to verify that trust.</p>
+      <p>This isn't an ideological argument. It's a practical one. When your management platform has access to every router in your fleet, you need to trust it completely, and reading the code is the only way to verify that trust.</p>
+
+      <h2>Where The Other Dude Sits: Source-Available, Not Open Source</h2>
+
+      <p>Worth being precise about, since this page is about open source and The Other Dude is not open source. It is <strong>source-available</strong> under the <a href="https://github.com/staack/the-other-dude/blob/main/LICENSE">Business Source License 1.1</a>. Every line is published on GitHub and you can read, audit, build and run all of it — but the BSL is not an OSI-approved licence, and calling it open source would be wrong.</p>
+
+      <p>What that means concretely:</p>
+
+      <ul>
+        <li>Free for self-hosted production use up to 250 devices. Above that, a one-time $499 commercial licence.</li>
+        <li>Offering it to third parties as a hosted or managed service needs a separate commercial agreement.</li>
+        <li>On <strong>8 March 2030</strong> the licence converts automatically to Apache 2.0, at which point it becomes open source in the ordinary sense.</li>
+      </ul>
+
+      <p>The auditability argument above applies in full — that comes from the source being published, not from the licence. What the BSL withholds is the right to resell it as a service, and the right to run an unlimited fleet without paying for it.</p>
 
       <h2>What The Other Dude Provides</h2>
 
-      <p>The Other Dude is a self-hosted, open source platform for managing fleets of MikroTik RouterOS devices. The source code is on <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>. You deploy it on your infrastructure. Your data stays with you.</p>
+      <p>The Other Dude is a self-hosted, source-available platform for managing fleets of MikroTik RouterOS devices. The source code is on <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>. You deploy it on your infrastructure. Your data stays with you.</p>
 
       <p><strong>Fleet visibility.</strong> Dashboard with device health, bandwidth utilization, alerts, and wireless metrics across your entire fleet. Virtual-scrolled device tables that handle hundreds of routers. Geographic map and network topology views.</p>
 
@@ -122,7 +136,7 @@
 
       <p>Kubernetes deployment is also supported via the included Helm chart for operators who need container orchestration.</p>
 
-      <h2>What Open Source Means in Practice</h2>
+      <h2>What Published Source Means in Practice</h2>
 
       <p>The source code for the entire platform — backend, frontend, poller, infrastructure — is available on GitHub. You can:</p>
 
@@ -139,7 +153,7 @@
 
       <h2>How It Compares</h2>
 
-      <p>There are other ways to manage MikroTik fleets. Here's how they differ from an open source, self-hosted approach:</p>
+      <p>There are other ways to manage MikroTik fleets. Here's how they differ from a self-hosted approach with published source:</p>
 
       <p><strong>The Dude (MikroTik)</strong> — Good for topology discovery and basic monitoring. Not a configuration management platform. No multi-tenant support. No config versioning.</p>
 
@@ -149,7 +163,7 @@
 
       <p><strong>Scripts and automation (Ansible, SSH scripts)</strong> — Flexible but you're building and maintaining a platform yourself. Error handling, state management, rollback logic, and a UI are all your problem.</p>
 
-      <p>The Other Dude is purpose-built for MikroTik, open source, self-hosted, and covers configuration, monitoring, backups, and security in one platform.</p>
+      <p>The Other Dude is purpose-built for MikroTik, source-available, self-hosted, and covers configuration, monitoring, backups, and security in one platform.</p>
 
       <div class="related-links">
         <h2>Related</h2>

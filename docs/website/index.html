@@ -38,11 +38,22 @@
     "operatingSystem": "Linux, Docker",
     "description": "Network fleet management for MikroTik and SNMP devices. Self-hosted. Source-available under BSL 1.1.",
     "url": "https://theotherdude.net",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "Free tier (BSL 1.1)",
+        "price": "0",
+        "priceCurrency": "USD",
+        "description": "Self-hosted production use managing up to 250 devices."
+      },
+      {
+        "@type": "Offer",
+        "name": "Commercial license",
+        "price": "499",
+        "priceCurrency": "USD",
+        "description": "One-time perpetual commercial license. Unlimited devices. Required for production use above 250 devices, or to offer the software as a hosted service."
+      }
+    ],
     "featureList": [
       "Monitor device state across fleet",
       "Push configuration with automatic rollback (config restore and templates)",
