@@ -187,15 +187,25 @@ func tcpCheck(ip string, port int, timeout time.Duration) error {
 	return conn.Close()
 }
 
-// plainWorks reports whether a plain-text API login to plainPort succeeds. Used
+// plainWorks reports whether plain mode fully works against this device. Used
 // only to verify a suggestion before offering it, never as a silent fallback --
-// auto mode's refusal to downgrade to plain text is deliberate.
+// auto mode's refusal to downgrade to plain text is deliberate, and this
+// function must never change that, only describe an alternative.
+//
+// It applies the same success bar as the main probe path -- connect, log in,
+// and get an answer to a system query -- so that SuggestedTLSMode means exactly
+// what OK means, rather than something weaker. Callers present this to users as
+// a verified alternative, so the two must not drift apart.
 func plainWorks(ip string, plainPort int, username, password string, timeout time.Duration) bool {
 	client, err := ConnectDevice(ip, 0, plainPort, username, password, timeout, nil, "plain")
 	if err != nil {
 		return false
 	}
-	CloseDevice(client)
+	defer CloseDevice(client)
+
+	if _, _, _, qerr := queryIdentity(client); qerr != nil {
+		return false
+	}
 	return true
 }
 
