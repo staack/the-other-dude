@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -126,3 +127,28 @@ type timeoutError struct{}
 func (e *timeoutError) Error() string   { return "i/o timeout" }
 func (e *timeoutError) Timeout() bool   { return true }
 func (e *timeoutError) Temporary() bool { return false }
+
+// x/crypto invokes HostKeyCallback on every key exchange, not just the first:
+// handshakeTransport.enterKeyExchange runs for rekeys too. A long-lived relay
+// session that rekeys must not wedge on a full fingerprint channel.
+func TestTOFUCallback_DoesNotBlockOnRekey(t *testing.T) {
+	key := generateTestPublicKey(t)
+	fp := computeFingerprint(key)
+	cb, _ := tofuHostKeyCallback(fp) // note: nobody drains the channel
+
+	done := make(chan error, 3)
+	go func() {
+		for i := 0; i < 3; i++ {
+			done <- cb("10.0.0.1:22", nil, key)
+		}
+	}()
+
+	for i := 0; i < 3; i++ {
+		select {
+		case err := <-done:
+			assert.NoError(t, err, "key exchange %d should be accepted", i+1)
+		case <-time.After(3 * time.Second):
+			t.Fatalf("host key callback blocked on key exchange %d — a rekey would hang the session", i+1)
+		}
+	}
+}
