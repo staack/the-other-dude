@@ -77,6 +77,11 @@ type StatusResponse struct {
 	WSPort          int       `json:"ws_port"`
 	CreatedAt       time.Time `json:"created_at"`
 	IdleSeconds     int       `json:"idle_seconds"`
+	// AgeSeconds and EverConnected exist so an operator looking at GET
+	// /sessions can tell a leaked or stuck session (old, never connected,
+	// or parked in grace) from a legitimately busy one.
+	AgeSeconds    int  `json:"age_seconds"`
+	EverConnected bool `json:"ever_connected"`
 }
 
 type ErrorResponse struct {

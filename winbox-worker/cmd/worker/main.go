@@ -180,6 +180,10 @@ func main() {
 			"capacity":            cfg.MaxSessions,
 			"available":           cfg.MaxSessions - mgr.SessionCount(),
 			"xpra_query_failures": session.XpraQueryFailureCount(),
+			// Per-reason termination counters: alert on abnormal reasons
+			// (grace_expired, never_connected, worker_failure, max_lifetime)
+			// rather than inferring leaks from the bare session count.
+			"terminations": mgr.TerminationCounts(),
 		})
 	})
 

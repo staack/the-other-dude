@@ -582,3 +582,72 @@ func TestAnchorArmsAgainstDeadUnreapedLeader(t *testing.T) {
 		return p.anchor.Exited() && errors.Is(syscall.Kill(anchorPid, 0), syscall.ESRCH)
 	})
 }
+
+// --- Observability (criterion 11: a leaked/stuck session must be visible) ---
+
+// Every termination increments a per-reason counter surfaced on /healthz, so
+// an operator can alert on abnormal reasons (grace_expired, never_connected,
+// worker_failure, max_lifetime) instead of inferring leaks from a bare count.
+func TestTerminationReasonsCounted(t *testing.T) {
+	fake := &fakeStatus{}
+	fake.set(0, -1)
+	m := newTestManager(t, 10*time.Second, "sleep 60", fake, nil)
+	m.cfg.FirstConnectTimeout = 50 * time.Millisecond
+
+	explicit := mustCreate(t, m)
+	abandoned := mustCreate(t, m)
+
+	if err := m.TerminateSession(explicit); err != nil {
+		t.Fatalf("TerminateSession: %v", err)
+	}
+	time.Sleep(100 * time.Millisecond)
+	m.checkTimeouts() // reclaims the abandoned session as never_connected
+	waitFor(t, 5*time.Second, "abandoned session to be reclaimed", func() bool {
+		_, ok := sessionState(m, abandoned)
+		return !ok
+	})
+
+	counts := m.TerminationCounts()
+	if counts["requested"] != 1 {
+		t.Fatalf("expected requested=1, got %v", counts)
+	}
+	if counts["never_connected"] != 1 {
+		t.Fatalf("expected never_connected=1, got %v", counts)
+	}
+}
+
+// GET /sessions must let an operator see how old a session is and whether a
+// client ever attached: a bare state string cannot distinguish a leaked
+// session from a legitimately busy one.
+func TestSessionStatusReportsAgeAndEverConnected(t *testing.T) {
+	fake := &fakeStatus{}
+	fake.set(1, 0)
+	m := newTestManager(t, 10*time.Second, "sleep 60", fake, nil)
+	id := mustCreate(t, m)
+	defer m.TerminateSession(id)
+
+	m.checkTimeouts() // observes the connect
+
+	// Backdate creation so age is unmistakably computed, not defaulted.
+	m.mu.Lock()
+	sess := m.sessions[id]
+	m.mu.Unlock()
+	sess.mu.Lock()
+	sess.CreatedAt = sess.CreatedAt.Add(-90 * time.Second)
+	sess.mu.Unlock()
+
+	st, err := m.GetSession(id)
+	if err != nil {
+		t.Fatalf("GetSession: %v", err)
+	}
+	if !st.EverConnected {
+		t.Fatal("EverConnected not reported after an observed connect")
+	}
+	if st.AgeSeconds < 90 {
+		t.Fatalf("expected age >= 90s, got %d", st.AgeSeconds)
+	}
+	list := m.ListSessions()
+	if len(list) != 1 || list[0].AgeSeconds < 90 || !list[0].EverConnected {
+		t.Fatalf("ListSessions missing age/ever_connected: %+v", list)
+	}
+}

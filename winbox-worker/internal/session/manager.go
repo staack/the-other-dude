@@ -44,6 +44,12 @@ type Manager struct {
 	wsPorts  *Pool
 	cfg      Config
 
+	// terminations counts completed terminations by reason (guarded by mu).
+	// Surfaced on /healthz so abnormal reasons — grace_expired,
+	// never_connected, worker_failure, max_lifetime — are alertable instead
+	// of inferable only from a bare session count.
+	terminations map[string]int64
+
 	// Seams for tests; set once in NewManager, never mutated afterwards in
 	// production code (tests override them before any session exists).
 	startXpra   func(XpraConfig) (*XpraProc, error)
@@ -60,14 +66,15 @@ func NewManager(cfg Config) *Manager {
 		cfg.FirstConnectTimeout = defaultFirstConnectTimeout
 	}
 	return &Manager{
-		sessions:    make(map[string]*Session),
-		displays:    NewPool(cfg.DisplayMin, cfg.DisplayMax),
-		wsPorts:     NewPool(cfg.WSPortMin, cfg.WSPortMax),
-		cfg:         cfg,
-		startXpra:   StartXpra,
-		waitReady:   WaitForXpraReady,
-		queryStatus: QueryXpraStatus,
-		killXvfb:    KillXvfbForDisplay,
+		sessions:     make(map[string]*Session),
+		terminations: make(map[string]int64),
+		displays:     NewPool(cfg.DisplayMin, cfg.DisplayMax),
+		wsPorts:      NewPool(cfg.WSPortMin, cfg.WSPortMax),
+		cfg:          cfg,
+		startXpra:    StartXpra,
+		waitReady:    WaitForXpraReady,
+		queryStatus:  QueryXpraStatus,
+		killXvfb:     KillXvfbForDisplay,
 	}
 }
 
@@ -235,6 +242,8 @@ func (m *Manager) terminateSession(workerID string, reason string) error {
 	tmpDir := sess.TmpDir
 	display := sess.Display
 	wsPort := sess.WSPort
+	createdAt := sess.CreatedAt
+	everConnected := sess.everConnected
 	if sess.graceTimer != nil {
 		sess.graceTimer.Stop()
 		sess.graceTimer = nil
@@ -243,6 +252,13 @@ func (m *Manager) terminateSession(workerID string, reason string) error {
 	sess.mu.Unlock()
 
 	slog.Info("terminating session", "id", workerID, "reason", reason)
+	if reason != "requested" {
+		// The alertable line: anything other than an explicit request means
+		// the session ended without its owner asking — leak, crash, timeout.
+		slog.Warn("session terminated abnormally", "id", workerID, "reason", reason,
+			"age_seconds", int(time.Since(createdAt).Seconds()),
+			"ever_connected", everConnected)
+	}
 
 	if proc != nil {
 		KillXpraSession(proc)
@@ -269,9 +285,21 @@ func (m *Manager) terminateSession(workerID string, reason string) error {
 
 	m.mu.Lock()
 	delete(m.sessions, workerID)
+	m.terminations[reason]++
 	m.mu.Unlock()
 
 	return nil
+}
+
+// TerminationCounts returns a copy of the per-reason termination counters.
+func (m *Manager) TerminationCounts() map[string]int64 {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make(map[string]int64, len(m.terminations))
+	for k, v := range m.terminations {
+		out[k] = v
+	}
+	return out
 }
 
 func (m *Manager) GetSession(workerID string) (*StatusResponse, error) {
@@ -288,6 +316,7 @@ func (m *Manager) GetSession(workerID string) (*StatusResponse, error) {
 	display := sess.Display
 	wsPort := sess.WSPort
 	createdAt := sess.CreatedAt
+	everConnected := sess.everConnected
 	sess.mu.Unlock()
 
 	idleSec := m.queryStatus(display).IdleSeconds
@@ -299,27 +328,31 @@ func (m *Manager) GetSession(workerID string) (*StatusResponse, error) {
 		WSPort:          wsPort,
 		CreatedAt:       createdAt,
 		IdleSeconds:     idleSec,
+		AgeSeconds:      int(time.Since(createdAt).Seconds()),
+		EverConnected:   everConnected,
 	}, nil
 }
 
 func (m *Manager) ListSessions() []StatusResponse {
 	m.mu.Lock()
 	type sessInfo struct {
-		id        string
-		state     State
-		display   int
-		wsPort    int
-		createdAt time.Time
+		id            string
+		state         State
+		display       int
+		wsPort        int
+		createdAt     time.Time
+		everConnected bool
 	}
 	infos := make([]sessInfo, 0, len(m.sessions))
 	for _, sess := range m.sessions {
 		sess.mu.Lock()
 		infos = append(infos, sessInfo{
-			id:        sess.ID,
-			state:     sess.State,
-			display:   sess.Display,
-			wsPort:    sess.WSPort,
-			createdAt: sess.CreatedAt,
+			id:            sess.ID,
+			state:         sess.State,
+			display:       sess.Display,
+			wsPort:        sess.WSPort,
+			createdAt:     sess.CreatedAt,
+			everConnected: sess.everConnected,
 		})
 		sess.mu.Unlock()
 	}
@@ -334,6 +367,8 @@ func (m *Manager) ListSessions() []StatusResponse {
 			WSPort:          info.wsPort,
 			CreatedAt:       info.createdAt,
 			IdleSeconds:     m.queryStatus(info.display).IdleSeconds,
+			AgeSeconds:      int(time.Since(info.createdAt).Seconds()),
+			EverConnected:   info.everConnected,
 		})
 	}
 	return result
