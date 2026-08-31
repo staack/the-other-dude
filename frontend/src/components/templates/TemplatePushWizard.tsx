@@ -373,8 +373,9 @@ export function TemplatePushWizard({ open, onClose, tenantId, template }: Templa
               <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
               <div className="text-xs text-warning leading-relaxed">
                 This will push configuration to <strong>{selectedDeviceIds.size}</strong> device(s).
-                Each device will be backed up before changes are applied. If a device becomes
-                unreachable after push, it will automatically revert.
+                Each device will be backed up before changes are applied. The push runs inside a
+                RouterOS safe-mode session, so if a device stops answering it reverts to its
+                previous config on its own, without rebooting.
               </div>
             </div>
 
