@@ -142,6 +142,7 @@ func startGroupAnchor(p *XpraProc) {
 	}
 	p.anchor = anchor
 	p.anchorW = w
+	slog.Debug("group anchor armed", "leader_pid", p.Pid, "anchor_pid", anchor.Pid)
 }
 
 // releaseAnchor unpins the process group: closing the pipe's write end EOFs
@@ -151,6 +152,7 @@ func (p *XpraProc) releaseAnchor() {
 	p.anchorOnce.Do(func() {
 		if p.anchorW != nil {
 			p.anchorW.Close()
+			slog.Debug("group anchor released", "leader_pid", p.Pid, "anchor_pid", p.anchor.Pid)
 		}
 	})
 }
@@ -191,10 +193,14 @@ func pidCommIs(procRoot string, pid int, want string) bool {
 func killOrphanXvfb(lockDir, procRoot string, display int) {
 	pid, err := xvfbLockPid(lockDir, display)
 	if err != nil {
-		return // no lock file: no Xvfb, or it already exited cleanly
+		// No lock file: no Xvfb, or it already exited cleanly.
+		slog.Debug("xvfb sweep: no lock file", "display", display, "err", err)
+		return
 	}
 	if !pidCommIs(procRoot, pid, "Xvfb") {
-		return // stale lock / recycled pid: not ours to kill
+		// Stale lock / recycled pid: not ours to kill.
+		slog.Debug("xvfb sweep: lock pid is not Xvfb, skipping", "display", display, "pid", pid)
+		return
 	}
 	slog.Info("killing leftover Xvfb", "display", display, "pid", pid)
 	syscall.Kill(pid, syscall.SIGTERM)
@@ -208,6 +214,7 @@ func killOrphanXvfb(lockDir, procRoot string, display int) {
 		// burn the whole grace and SIGKILL a dead process. A zombie is
 		// done: collect it (harmless if it is not ours) and stop.
 		if st, _, err := procStat(procRoot, pid); err == nil && st == 'Z' {
+			slog.Debug("xvfb sweep: pid is a zombie, reaping instead of waiting", "display", display, "pid", pid)
 			if !isManaged(pid) {
 				reapPids([]int{pid})
 			}

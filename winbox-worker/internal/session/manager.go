@@ -538,6 +538,13 @@ func (m *Manager) checkTimeouts() {
 		}
 
 		st := m.queryStatus(display)
+		// The one line to have when this component misbehaves: the probe
+		// whose parse silently matched nothing for months. All values are
+		// already computed, so this costs nothing when debug is off.
+		slog.Debug("session poll",
+			"id", id, "state", state, "clients", st.Clients,
+			"idle_seconds", st.IdleSeconds, "ever_connected", everConnected,
+			"age_seconds", int(now.Sub(createdAt).Seconds()))
 		switch {
 		case st.Clients < 0:
 			// Query failed (already logged and counted). Don't change state

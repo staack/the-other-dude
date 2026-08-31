@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -138,5 +139,26 @@ func TestKillOrphanXvfbStopsWaitingOnZombie(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	if errors.Is(syscall.Kill(pid, 0), syscall.ESRCH) {
 		t.Fatal("SIGKILL was sent to what /proc reported as a zombie")
+	}
+}
+
+// The sweep's silent decisions — no lock file, or a lock pid that is no
+// longer an Xvfb — must be visible at debug level; "why didn't it kill it"
+// is unanswerable otherwise.
+func TestXvfbSweepDecisionsEmitDebugLines(t *testing.T) {
+	buf := captureDebugLogs(t)
+	lockDir, procRoot := t.TempDir(), t.TempDir()
+
+	killOrphanXvfb(lockDir, procRoot, 100) // no lock file
+	if !strings.Contains(buf.String(), `"msg":"xvfb sweep: no lock file"`) {
+		t.Fatalf("no-lock-file decision not logged:\n%s", buf.String())
+	}
+
+	pid := startVictim(t)
+	os.WriteFile(filepath.Join(lockDir, ".X101-lock"), []byte(fmt.Sprintf("%10d\n", pid)), 0644)
+	writeFakeProc(t, procRoot, pid, "innocent-bystander")
+	killOrphanXvfb(lockDir, procRoot, 101) // pid mismatch
+	if !strings.Contains(buf.String(), `"msg":"xvfb sweep: lock pid is not Xvfb, skipping"`) {
+		t.Fatalf("pid-mismatch decision not logged:\n%s", buf.String())
 	}
 }

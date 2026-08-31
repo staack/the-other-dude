@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -649,5 +650,81 @@ func TestSessionStatusReportsAgeAndEverConnected(t *testing.T) {
 	list := m.ListSessions()
 	if len(list) != 1 || list[0].AgeSeconds < 90 || !list[0].EverConnected {
 		t.Fatalf("ListSessions missing age/ever_connected: %+v", list)
+	}
+}
+
+// --- Debug instrumentation (LOG_LEVEL=debug must actually show something) ---
+
+// syncBuf is a goroutine-safe log sink: watcher/reaper goroutines may log
+// concurrently with the test body.
+type syncBuf struct {
+	mu sync.Mutex
+	b  strings.Builder
+}
+
+func (s *syncBuf) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.b.Write(p)
+}
+
+func (s *syncBuf) String() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.b.String()
+}
+
+// captureDebugLogs redirects the default logger to a buffer at Debug level
+// for the duration of the test.
+func captureDebugLogs(t *testing.T) *syncBuf {
+	t.Helper()
+	buf := &syncBuf{}
+	old := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug})))
+	t.Cleanup(func() { slog.SetDefault(old) })
+	return buf
+}
+
+// The xpra info probe silently matched nothing for months; under
+// LOG_LEVEL=debug the poll loop must emit the parsed clients / idle values
+// per session per tick so the next probe defect is visible in an afternoon,
+// not a quarter.
+func TestPollEmitsDebugStatusLine(t *testing.T) {
+	buf := captureDebugLogs(t)
+	fake := &fakeStatus{}
+	fake.set(1, 7)
+	m := newTestManager(t, 10*time.Second, "sleep 60", fake, nil)
+	id := mustCreate(t, m)
+	defer m.TerminateSession(id)
+
+	m.checkTimeouts()
+
+	out := buf.String()
+	for _, want := range []string{`"msg":"session poll"`, `"clients":1`, `"idle_seconds":7`, `"id":"` + id + `"`} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("debug poll line missing %s in:\n%s", want, out)
+		}
+	}
+}
+
+// Arming and releasing the pgid anchor must be visible at debug level: when
+// a group kill misbehaves at 3am, whether the anchor existed is the first
+// question.
+func TestAnchorLifecycleEmitsDebugLines(t *testing.T) {
+	buf := captureDebugLogs(t)
+	fake := &fakeStatus{}
+	fake.set(1, 0)
+	m := newTestManager(t, 10*time.Second, "sleep 60", fake, nil)
+	id := mustCreate(t, m)
+
+	if !strings.Contains(buf.String(), `"msg":"group anchor armed"`) {
+		t.Fatalf("no anchor-armed debug line in:\n%s", buf.String())
+	}
+
+	if err := m.TerminateSession(id); err != nil {
+		t.Fatalf("TerminateSession: %v", err)
+	}
+	if !strings.Contains(buf.String(), `"msg":"group anchor released"`) {
+		t.Fatalf("no anchor-released debug line in:\n%s", buf.String())
 	}
 }
