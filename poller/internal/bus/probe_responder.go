@@ -18,14 +18,17 @@
 package bus
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/nats-io/nats.go"
 
 	"github.com/staack/the-other-dude/poller/internal/device"
+	"github.com/staack/the-other-dude/poller/internal/store"
 )
 
 // Probe defaults, applied when the caller omits a field.
@@ -59,20 +62,57 @@ type ProbeResponse struct {
 	Error string `json:"error,omitempty"`
 }
 
+// ProbeCredentialResolver is the subset of vault.CredentialCache needed to
+// probe a stored device. It matches the call the poll path makes
+// (poller/internal/poller/worker.go:113), so the probe resolves credentials
+// exactly as polling does.
+type ProbeCredentialResolver interface {
+	GetCredentials(deviceID, tenantID string, transitCiphertext *string, legacyCiphertext []byte) (string, string, error)
+}
+
 // ProbeResponder handles NATS request-reply for RouterOS connectivity probes.
+//
+// It serves two subjects:
+//
+//   - "device.probe.routeros" -- ad-hoc: all parameters in the request, for
+//     onboarding validation, when the device is not in the database yet.
+//   - "device.probe.stored.{device_id}" -- stored: settings and credentials
+//     read from the database, for the test-connection endpoint.
+//
+// The subjects are deliberately different lengths. A single "device.probe.*"
+// wildcard would also match "device.probe.routeros" and the two handlers would
+// answer each other's requests.
 type ProbeResponder struct {
 	nc  *nats.Conn
 	sub *nats.Subscription
+
+	deviceStore ProbeDeviceGetter
+	credentials ProbeCredentialResolver
+	storedSub   *nats.Subscription
 }
 
-// NewProbeResponder creates a probe responder using the given NATS connection.
-// No store or credential cache is needed -- parameters come in the request.
+// ProbeDeviceGetter is the subset of store.DeviceStore needed by the
+// stored-device probe.
+type ProbeDeviceGetter interface {
+	GetDevice(ctx context.Context, deviceID string) (store.Device, error)
+}
+
+// NewProbeResponder creates a probe responder that serves ad-hoc probes.
+// Parameters come in the request, so no store is required.
 func NewProbeResponder(nc *nats.Conn) *ProbeResponder {
 	return &ProbeResponder{nc: nc}
 }
 
-// Start subscribes to "device.probe.routeros" with a queue group for load
-// balancing across multiple poller instances.
+// WithStore additionally enables the stored-device probe subject. Without it,
+// only ad-hoc probes are served.
+func (r *ProbeResponder) WithStore(s ProbeDeviceGetter, creds ProbeCredentialResolver) *ProbeResponder {
+	r.deviceStore = s
+	r.credentials = creds
+	return r
+}
+
+// Start subscribes to the probe subjects with a queue group for load balancing
+// across multiple poller instances.
 func (r *ProbeResponder) Start() error {
 	sub, err := r.nc.QueueSubscribe("device.probe.routeros", "probe-workers", r.handleRequest)
 	if err != nil {
@@ -80,16 +120,112 @@ func (r *ProbeResponder) Start() error {
 	}
 	r.sub = sub
 	slog.Info("probe responder subscribed", "subject", "device.probe.routeros", "queue", "probe-workers")
+
+	if r.deviceStore == nil || r.credentials == nil {
+		return nil
+	}
+
+	storedSub, err := r.nc.QueueSubscribe("device.probe.stored.*", "probe-workers", r.handleStoredRequest)
+	if err != nil {
+		return fmt.Errorf("subscribing to device.probe.stored.*: %w", err)
+	}
+	r.storedSub = storedSub
+	slog.Info("probe responder subscribed", "subject", "device.probe.stored.*", "queue", "probe-workers")
 	return nil
 }
 
 // Stop unsubscribes from NATS.
 func (r *ProbeResponder) Stop() {
-	if r.sub != nil {
-		if err := r.sub.Unsubscribe(); err != nil {
-			slog.Warn("error unsubscribing probe responder", "error", err)
+	for _, sub := range []*nats.Subscription{r.sub, r.storedSub} {
+		if sub == nil {
+			continue
+		}
+		if err := sub.Unsubscribe(); err != nil {
+			slog.Warn("error unsubscribing probe responder", "subject", sub.Subject, "error", err)
 		}
 	}
+}
+
+// handleStoredRequest probes a device that already exists in the database,
+// using its stored connection settings and credentials. This is what makes a
+// test-connection call a faithful rehearsal of the next poll.
+func (r *ProbeResponder) handleStoredRequest(msg *nats.Msg) {
+	parts := strings.Split(msg.Subject, ".")
+	if len(parts) < 4 {
+		r.respond(msg, ProbeResponse{Error: "invalid subject format"})
+		return
+	}
+	deviceID := parts[3]
+
+	// The body is optional; it may carry a timeout override.
+	var req ProbeRequest
+	if len(msg.Data) > 0 {
+		if err := json.Unmarshal(msg.Data, &req); err != nil {
+			r.respond(msg, ProbeResponse{Error: fmt.Sprintf("invalid request: %s", err)})
+			return
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	dev, err := r.deviceStore.GetDevice(ctx, deviceID)
+	if err != nil {
+		r.respond(msg, ProbeResponse{Error: fmt.Sprintf("device not found: %s", err)})
+		return
+	}
+
+	if dev.DeviceType == "snmp" {
+		r.respond(msg, ProbeResponse{Error: "test-connection is only supported for RouterOS devices"})
+		return
+	}
+
+	username, password, err := r.credentials.GetCredentials(
+		dev.ID,
+		dev.TenantID,
+		dev.EncryptedCredentialsTransit,
+		dev.EncryptedCredentials,
+	)
+	if err != nil {
+		// Reported as a transport error, not a probe failure: probing with
+		// empty credentials would masquerade as an authentication failure.
+		r.respond(msg, ProbeResponse{Error: fmt.Sprintf("credential decryption failed: %s", err)})
+		return
+	}
+
+	var caCertPEM []byte
+	if dev.CACertPEM != nil {
+		caCertPEM = []byte(*dev.CACertPEM)
+	}
+
+	timeout := defaultProbeTimeout
+	if req.TimeoutSeconds > 0 {
+		timeout = time.Duration(req.TimeoutSeconds) * time.Second
+		if timeout > maxProbeTimeout {
+			timeout = maxProbeTimeout
+		}
+	}
+
+	slog.Info("stored device probe starting",
+		"device_id", deviceID, "ip", dev.IPAddress, "tls_mode", dev.TLSMode)
+
+	result := device.ProbeRouterOS(
+		dev.IPAddress,
+		dev.APISSLPort,
+		dev.APIPort,
+		username,
+		password,
+		timeout,
+		caCertPEM,
+		dev.TLSMode,
+	)
+
+	slog.Info("stored device probe complete",
+		"device_id", deviceID, "ok", result.OK,
+		"stage", result.Stage, "reason", result.Reason,
+		"elapsed_ms", result.ElapsedMS)
+
+	r.respond(msg, ProbeResponse{ProbeResult: result})
 }
 
 // handleRequest runs a single connectivity probe.

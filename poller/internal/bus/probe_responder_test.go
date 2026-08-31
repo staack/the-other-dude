@@ -2,12 +2,14 @@ package bus
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/staack/the-other-dude/poller/internal/device"
+	"github.com/staack/the-other-dude/poller/internal/store"
 )
 
 func TestProbeResponder_Subscribe(t *testing.T) {
@@ -184,4 +186,153 @@ func closedPort(t *testing.T) int {
 		t.Fatalf("releasing port: %v", err)
 	}
 	return port
+}
+
+// --- stored-device probe (device.probe.stored.{device_id}) --------------------
+
+// mockCredentialResolver stands in for vault.CredentialCache.
+type mockCredentialResolver struct {
+	username string
+	password string
+	err      error
+}
+
+func (m *mockCredentialResolver) GetCredentials(
+	_, _ string, _ *string, _ []byte,
+) (string, string, error) {
+	return m.username, m.password, m.err
+}
+
+func TestProbeResponder_StoredSubscribe(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	pr := NewProbeResponder(nc).WithStore(&mockDeviceStore{}, &mockCredentialResolver{})
+	if err := pr.Start(); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	defer pr.Stop()
+
+	if pr.storedSub == nil {
+		t.Fatal("expected stored-device subscription after Start()")
+	}
+	if pr.storedSub.Subject != "device.probe.stored.*" {
+		t.Errorf("expected subject 'device.probe.stored.*', got %q", pr.storedSub.Subject)
+	}
+	// The two subjects must not overlap, or one responder would answer the
+	// other's requests: "device.probe.*" would swallow "device.probe.routeros".
+	if pr.sub.Subject == pr.storedSub.Subject {
+		t.Error("ad-hoc and stored-device subjects must be distinct")
+	}
+}
+
+// TestProbeResponder_StoredDeviceUsesStoredSettings proves the stored-device
+// probe reads connection settings from the database rather than the request, so
+// a test-connection call exercises exactly what the poller will do.
+func TestProbeResponder_StoredDeviceUsesStoredSettings(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	port := closedPort(t)
+	store := &mockDeviceStore{device: storeDevice("dev-1", "tenant-1", "127.0.0.1", port, port, "insecure")}
+	creds := &mockCredentialResolver{username: "stored-user", password: "stored-pass"}
+
+	pr := NewProbeResponder(nc).WithStore(store, creds)
+	if err := pr.Start(); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	defer pr.Stop()
+
+	reply, err := nc.Request("device.probe.stored.dev-1", []byte("{}"), 10*time.Second)
+	if err != nil {
+		t.Fatalf("NATS request failed: %v", err)
+	}
+
+	var resp ProbeResponse
+	if err := json.Unmarshal(reply.Data, &resp); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+	if resp.Error != "" {
+		t.Fatalf("unexpected error: %s", resp.Error)
+	}
+	if resp.TLSMode != "insecure" {
+		t.Errorf("expected the stored tls_mode 'insecure', got %q", resp.TLSMode)
+	}
+	if resp.Reason != device.ReasonUnreachable {
+		t.Errorf("expected reason %q against a closed stored port, got %q", device.ReasonUnreachable, resp.Reason)
+	}
+}
+
+func TestProbeResponder_StoredDeviceNotFound(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	store := &mockDeviceStore{err: errNotFound}
+	pr := NewProbeResponder(nc).WithStore(store, &mockCredentialResolver{})
+	if err := pr.Start(); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	defer pr.Stop()
+
+	reply, err := nc.Request("device.probe.stored.missing", []byte("{}"), 10*time.Second)
+	if err != nil {
+		t.Fatalf("NATS request failed: %v", err)
+	}
+
+	var resp ProbeResponse
+	if err := json.Unmarshal(reply.Data, &resp); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+	if resp.Error == "" {
+		t.Error("expected an error for an unknown device")
+	}
+}
+
+// TestProbeResponder_StoredDeviceCredentialFailure ensures a decryption failure
+// is reported as such, not silently probed with empty credentials -- which
+// would surface as a misleading "authentication failed".
+func TestProbeResponder_StoredDeviceCredentialFailure(t *testing.T) {
+	nc, cleanup := startTestNATS(t)
+	defer cleanup()
+
+	port := closedPort(t)
+	store := &mockDeviceStore{device: storeDevice("dev-1", "tenant-1", "127.0.0.1", port, port, "auto")}
+	creds := &mockCredentialResolver{err: errNotFound}
+
+	pr := NewProbeResponder(nc).WithStore(store, creds)
+	if err := pr.Start(); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	defer pr.Stop()
+
+	reply, err := nc.Request("device.probe.stored.dev-1", []byte("{}"), 10*time.Second)
+	if err != nil {
+		t.Fatalf("NATS request failed: %v", err)
+	}
+
+	var resp ProbeResponse
+	if err := json.Unmarshal(reply.Data, &resp); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+	if resp.Error == "" {
+		t.Error("expected a credential decryption error to be reported")
+	}
+	if !strings.Contains(strings.ToLower(resp.Error), "credential") {
+		t.Errorf("expected the error to name credentials, got %q", resp.Error)
+	}
+}
+
+var errNotFound = fmt.Errorf("device not found")
+
+// storeDevice builds a minimal store.Device for probe tests.
+func storeDevice(id, tenantID, ip string, sslPort, plainPort int, tlsMode string) store.Device {
+	return store.Device{
+		ID:         id,
+		TenantID:   tenantID,
+		IPAddress:  ip,
+		APISSLPort: sslPort,
+		APIPort:    plainPort,
+		TLSMode:    tlsMode,
+		DeviceType: "routeros",
+	}
 }

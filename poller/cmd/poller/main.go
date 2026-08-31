@@ -302,7 +302,8 @@ func main() {
 	// here rather than in the backend so the probe and the poll share one TLS
 	// implementation and cannot disagree about whether a device is usable.
 	// -----------------------------------------------------------------------
-	probeResponder := bus.NewProbeResponder(publisher.Conn())
+	probeResponder := bus.NewProbeResponder(publisher.Conn()).
+		WithStore(deviceStore, credentialCache)
 	if err := probeResponder.Start(); err != nil {
 		slog.Error("failed to start RouterOS probe responder", "error", err)
 	}
