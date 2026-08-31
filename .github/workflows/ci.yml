@@ -37,6 +37,9 @@ jobs:
   go-lint:
     name: Lint Go (golangci-lint)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [poller, winbox-worker]
     steps:
       - uses: actions/checkout@v4
 
@@ -46,7 +49,7 @@ jobs:
 
       - name: golangci-lint
         # golangci-lint doesn't support Go 1.25 yet — run vet as a stand-in
-        run: cd poller && go vet ./...
+        run: cd ${{ matrix.module }} && go vet ./...
 
   frontend-lint:
     name: Lint Frontend (ESLint + tsc)
