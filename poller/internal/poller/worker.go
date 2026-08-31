@@ -124,6 +124,8 @@ func PollDevice(
 		dev.TenantID,
 		dev.EncryptedCredentialsTransit,
 		dev.EncryptedCredentials,
+		dev.ProfileEncryptedCredentialsTransit,
+		dev.ProfileEncryptedCredentials,
 	)
 	if err != nil {
 		pollStatus = "error"

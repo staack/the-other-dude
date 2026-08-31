@@ -97,12 +97,15 @@ func (r *CertDeployResponder) handleRequest(msg *nats.Msg) {
 		return
 	}
 
-	// Decrypt device credentials via credential cache (Transit preferred, legacy fallback)
-	username, password, err := r.credentialCache.GetCredentials(
+	// Decrypt device credentials via credential cache (Transit preferred, legacy fallback).
+	// May carry an SSH private key as well as a password.
+	creds, err := r.credentialCache.GetSSHCredentials(
 		dev.ID,
 		dev.TenantID,
 		dev.EncryptedCredentialsTransit,
 		dev.EncryptedCredentials,
+		dev.ProfileEncryptedCredentialsTransit,
+		dev.ProfileEncryptedCredentials,
 	)
 	if err != nil {
 		r.respondError(msg, fmt.Sprintf("credential decryption failed: %s", err))
@@ -110,7 +113,7 @@ func (r *CertDeployResponder) handleRequest(msg *nats.Msg) {
 	}
 
 	// Create SSH client for SFTP upload
-	sshClient, err := device.NewSSHClient(dev.IPAddress, req.SSHPort, username, password, 30*time.Second)
+	sshClient, err := device.NewSSHClient(dev.IPAddress, req.SSHPort, creds.Username, creds.Password, creds.PrivateKey, 30*time.Second)
 	if err != nil {
 		slog.Warn("SSH connection failed for cert deploy",
 			"device_id", deviceID,
@@ -131,8 +134,8 @@ func (r *CertDeployResponder) handleRequest(msg *nats.Msg) {
 		dev.IPAddress,
 		dev.APISSLPort,
 		dev.APIPort,
-		username,
-		password,
+		creds.Username,
+		creds.Password, // RouterOS binary API has no public-key auth; password only
 		10*time.Second,
 		nil, // caCertPEM: device has no portal cert yet during deployment
 		dev.TLSMode,

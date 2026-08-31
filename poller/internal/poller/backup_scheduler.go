@@ -346,12 +346,14 @@ func (bs *BackupScheduler) collectAndPublish(ctx context.Context, dev store.Devi
 		observability.ConfigBackupDuration.Observe(time.Since(startTime).Seconds())
 	}()
 
-	// Decrypt credentials.
-	username, password, err := bs.credentialCache.GetCredentials(
+	// Decrypt credentials — may carry an SSH private key as well as a password.
+	creds, err := bs.credentialCache.GetSSHCredentials(
 		dev.ID,
 		dev.TenantID,
 		dev.EncryptedCredentialsTransit,
 		dev.EncryptedCredentials,
+		dev.ProfileEncryptedCredentialsTransit,
+		dev.ProfileEncryptedCredentials,
 	)
 	if err != nil {
 		return "", fmt.Errorf("decrypting credentials for device %s: %w", dev.ID, err)
@@ -371,8 +373,9 @@ func (bs *BackupScheduler) collectAndPublish(ctx context.Context, dev store.Devi
 		cmdCtx,
 		dev.IPAddress,
 		dev.SSHPort,
-		username,
-		password,
+		creds.Username,
+		creds.Password,
+		creds.PrivateKey,
 		bs.commandTimeout,
 		knownFingerprint,
 		"/export show-sensitive",

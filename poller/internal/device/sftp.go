@@ -14,13 +14,17 @@ import (
 )
 
 // NewSSHClient creates an SSH connection to a RouterOS device.
-// Uses password authentication (same credentials as API access).
-func NewSSHClient(ip string, port int, username, password string, timeout time.Duration) (*ssh.Client, error) {
+// privateKey is an unencrypted PEM private key, or empty for password-only auth;
+// when present it is offered before the password.
+func NewSSHClient(ip string, port int, username, password, privateKey string, timeout time.Duration) (*ssh.Client, error) {
+	authMethods, err := SSHAuthMethods(password, privateKey)
+	if err != nil {
+		return nil, err
+	}
+
 	config := &ssh.ClientConfig{
-		User: username,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(password),
-		},
+		User:            username,
+		Auth:            authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(), //nolint:gosec // RouterOS self-signed SSH
 		Timeout:         timeout,
 	}

@@ -17,6 +17,14 @@ type SNMPCredential struct {
 	PrivPass      string // v3
 }
 
+// SSHCredential holds parsed SSH authentication material after decryption.
+// PrivateKey is empty for password-only credentials, which is the common case.
+type SSHCredential struct {
+	Username   string
+	Password   string // may be empty when the profile is key-only
+	PrivateKey string // unencrypted PEM; empty for password-only credentials
+}
+
 // credentialEnvelope is the JSON structure common to all credential types.
 // Used to peek at the type field before choosing a type-specific parser.
 type credentialEnvelope struct {
@@ -28,6 +36,17 @@ type routerosCredentialJSON struct {
 	Type     string `json:"type"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+// sshKeyCredentialJSON is the JSON shape for SSH key credentials.
+// The private key is stored unencrypted inside the envelope; the envelope
+// itself is protected by OpenBao Transit. Any passphrase is stripped by the
+// API at upload time and is never persisted, so the poller never needs one.
+type sshKeyCredentialJSON struct {
+	Type       string `json:"type"`
+	Username   string `json:"username"`
+	Password   string `json:"password,omitempty"`
+	PrivateKey string `json:"private_key,omitempty"`
 }
 
 // snmpCredentialJSON is the JSON shape for all SNMP credential types.
@@ -99,5 +118,38 @@ func ParseSNMPCredentials(raw []byte) (*SNMPCredential, error) {
 		AuthPass:      creds.AuthPassphrase,
 		PrivProtocol:  creds.PrivProtocol,
 		PrivPass:      creds.PrivPassphrase,
+	}, nil
+}
+
+// ParseSSHCredentials extracts SSH authentication material from raw credential JSON.
+//
+// It accepts three envelope shapes:
+//   - {"type":"ssh_key",...}  -- key auth, optionally with a password fallback
+//   - {"type":"routeros",...} -- password auth
+//   - {"username":...}        -- legacy, no type field, password auth
+//
+// SNMP credential types are rejected: they carry no SSH-usable material.
+func ParseSSHCredentials(raw []byte) (*SSHCredential, error) {
+	var env credentialEnvelope
+	if err := json.Unmarshal(raw, &env); err != nil {
+		return nil, fmt.Errorf("unmarshal credential envelope: %w", err)
+	}
+
+	switch env.Type {
+	case "", "routeros", "ssh_key":
+		// SSH-capable envelope shapes.
+	default:
+		return nil, fmt.Errorf("credential type %q is not usable for SSH", env.Type)
+	}
+
+	var creds sshKeyCredentialJSON
+	if err := json.Unmarshal(raw, &creds); err != nil {
+		return nil, fmt.Errorf("unmarshal SSH credentials: %w", err)
+	}
+
+	return &SSHCredential{
+		Username:   creds.Username,
+		Password:   creds.Password,
+		PrivateKey: creds.PrivateKey,
 	}, nil
 }

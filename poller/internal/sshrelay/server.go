@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/staack/the-other-dude/poller/internal/bus"
+	"github.com/staack/the-other-dude/poller/internal/device"
 	"github.com/staack/the-other-dude/poller/internal/store"
 	"github.com/staack/the-other-dude/poller/internal/vault"
 	"golang.org/x/crypto/ssh"
@@ -221,12 +222,14 @@ func (s *Server) handleSSH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decrypt credentials — GetCredentials returns (username, password, error)
-	username, password, err := s.credCache.GetCredentials(
+	// Decrypt credentials — may carry an SSH private key as well as a password.
+	creds, err := s.credCache.GetSSHCredentials(
 		dev.ID,
 		payload.TenantID,
 		dev.EncryptedCredentialsTransit,
 		dev.EncryptedCredentials,
+		dev.ProfileEncryptedCredentialsTransit,
+		dev.ProfileEncryptedCredentials,
 	)
 	if err != nil {
 		slog.Error("ssh: credential decryption failed", "device_id", payload.DeviceID, "err", err)
@@ -234,11 +237,18 @@ func (s *Server) handleSSH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	authMethods, err := device.SSHAuthMethods(creds.Password, creds.PrivateKey)
+	if err != nil {
+		slog.Error("ssh: building auth methods failed", "device_id", payload.DeviceID, "err", err)
+		ws.Close(websocket.StatusInternalError, "credential error")
+		return
+	}
+
 	// SSH dial
 	sshAddr := dev.IPAddress + ":22"
 	sshClient, err := ssh.Dial("tcp", sshAddr, &ssh.ClientConfig{
-		User:            username,
-		Auth:            []ssh.AuthMethod{ssh.Password(password)},
+		User:            creds.Username,
+		Auth:            authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         10 * time.Second,
 	})
