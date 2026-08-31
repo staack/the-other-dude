@@ -10,10 +10,39 @@ import { describe, it, expect, vi } from 'vitest'
 import {
   mapDeviceStatus,
   pollVerifyStatuses,
+  probeVerifyStatuses,
+  resultFromProbe,
   type VerifyStatus,
 } from '../adoptionVerify'
+import type { DeviceConnectionTestResponse } from '@/lib/api'
 
 const noSleep = () => Promise.resolve()
+
+function probeResponse(
+  over: Partial<DeviceConnectionTestResponse> = {},
+): DeviceConnectionTestResponse {
+  return {
+    ok: true,
+    stage: 'done',
+    reason: 'ok',
+    message: 'Connected.',
+    detail: null,
+    tls_mode: 'auto',
+    suggested_tls_mode: null,
+    identity: null,
+    version: null,
+    board_name: null,
+    elapsed_ms: 12,
+    probe_available: true,
+    checked_at: '2026-08-30T00:00:00Z',
+    ...over,
+  }
+}
+
+/** Mimics an axios error, which is what the real client throws. */
+function httpError(status: number) {
+  return Object.assign(new Error(`HTTP ${status}`), { response: { status } })
+}
 
 describe('mapDeviceStatus', () => {
   it('treats "online" as verified', () => {
@@ -181,5 +210,174 @@ describe('pollVerifyStatuses', () => {
 
     expect(result).toEqual({})
     expect(fetchStatuses).not.toHaveBeenCalled()
+  })
+})
+
+describe('resultFromProbe', () => {
+  it('maps a successful probe to online and keeps the identity', () => {
+    const r = resultFromProbe(
+      probeResponse({ ok: true, identity: 'rtr-1', version: '7.23.2' }),
+    )
+    expect(r.status).toBe('online')
+    expect(r.identity).toBe('rtr-1')
+    expect(r.version).toBe('7.23.2')
+  })
+
+  it('maps a failed probe to unreachable and keeps the message', () => {
+    const r = resultFromProbe(
+      probeResponse({
+        ok: false,
+        reason: 'auth_failed',
+        message: 'Login was rejected.',
+      }),
+    )
+    expect(r.status).toBe('unreachable')
+    expect(r.message).toBe('Login was rejected.')
+    expect(r.reason).toBe('auth_failed')
+  })
+
+  it('treats an unavailable probe as uncheckable, NOT as a down device', () => {
+    // The one case where ok:false must not be read as "the device is bad".
+    const r = resultFromProbe(
+      probeResponse({
+        ok: false,
+        probe_available: false,
+        reason: 'probe_unavailable',
+        message: 'The probe did not respond.',
+      }),
+    )
+    expect(r.status).toBe('uncheckable')
+    expect(r.status).not.toBe('unreachable')
+  })
+
+  it('carries a verified suggested mode through', () => {
+    const r = resultFromProbe(
+      probeResponse({ ok: false, suggested_tls_mode: 'plain' }),
+    )
+    expect(r.suggestedTlsMode).toBe('plain')
+  })
+
+  it('does not invent a suggestion when the probe gave none', () => {
+    expect(resultFromProbe(probeResponse()).suggestedTlsMode).toBeNull()
+  })
+})
+
+describe('probeVerifyStatuses', () => {
+  it('probes every device and reports each result', async () => {
+    const probe = vi.fn(async (id: string) =>
+      probeResponse({ ok: id === 'd1' }),
+    )
+    const out = await probeVerifyStatuses({
+      deviceIds: ['d1', 'd2'],
+      probe,
+      onUpdate: vi.fn(),
+      sleep: noSleep,
+    })
+
+    expect(out.results.d1.status).toBe('online')
+    expect(out.results.d2.status).toBe('unreachable')
+    expect(out.unsupported).toBe(false)
+    expect(out.unresolved).toEqual([])
+    expect(probe).toHaveBeenCalledTimes(2)
+  })
+
+  it('reports unsupported and stops when the endpoint 404s', async () => {
+    // Frontend deployed ahead of the backend: fall back, do not error per device.
+    const probe = vi.fn(async () => {
+      throw httpError(404)
+    })
+    const out = await probeVerifyStatuses({
+      deviceIds: ['d1', 'd2', 'd3'],
+      probe,
+      onUpdate: vi.fn(),
+      sleep: noSleep,
+    })
+
+    expect(out.unsupported).toBe(true)
+    expect(out.unresolved).toEqual(['d1', 'd2', 'd3'])
+    expect(probe).toHaveBeenCalledTimes(1)
+  })
+
+  it('stops on a 429 and leaves the remainder unresolved for the poll', async () => {
+    let n = 0
+    const probe = vi.fn(async () => {
+      n++
+      if (n > 2) throw httpError(429)
+      return probeResponse({ ok: true })
+    })
+    const out = await probeVerifyStatuses({
+      deviceIds: ['d1', 'd2', 'd3', 'd4'],
+      probe,
+      onUpdate: vi.fn(),
+      sleep: noSleep,
+    })
+
+    expect(out.unsupported).toBe(false)
+    expect(out.results.d1.status).toBe('online')
+    expect(out.results.d2.status).toBe('online')
+    expect(out.unresolved).toEqual(['d3', 'd4'])
+  })
+
+  it('marks a single failing device uncheckable without aborting the run', async () => {
+    const probe = vi.fn(async (id: string) => {
+      if (id === 'd1') throw httpError(500)
+      return probeResponse({ ok: true })
+    })
+    const out = await probeVerifyStatuses({
+      deviceIds: ['d1', 'd2'],
+      probe,
+      onUpdate: vi.fn(),
+      sleep: noSleep,
+    })
+
+    expect(out.results.d1.status).toBe('uncheckable')
+    expect(out.results.d2.status).toBe('online')
+    expect(probe).toHaveBeenCalledTimes(2)
+  })
+
+  it('spaces calls to respect the rate limit', async () => {
+    const sleep = vi.fn(async () => {})
+    await probeVerifyStatuses({
+      deviceIds: ['d1', 'd2', 'd3'],
+      probe: async () => probeResponse(),
+      onUpdate: vi.fn(),
+      spacingMs: 2000,
+      sleep,
+    })
+
+    // One gap between each pair, none after the last.
+    expect(sleep).toHaveBeenCalledTimes(2)
+    expect(sleep).toHaveBeenCalledWith(2000)
+  })
+
+  it('stops when cancelled', async () => {
+    const signal = { cancelled: false }
+    const probe = vi.fn(async () => {
+      signal.cancelled = true
+      return probeResponse()
+    })
+    await probeVerifyStatuses({
+      deviceIds: ['d1', 'd2', 'd3'],
+      probe,
+      onUpdate: vi.fn(),
+      signal,
+      sleep: noSleep,
+    })
+
+    expect(probe).toHaveBeenCalledTimes(1)
+  })
+
+  it('starts every device waiting', async () => {
+    const seen: Record<string, { status: string }>[] = []
+    await probeVerifyStatuses({
+      deviceIds: ['d1', 'd2'],
+      probe: async () => probeResponse(),
+      onUpdate: (r) => seen.push(r),
+      sleep: noSleep,
+    })
+    expect(seen[0]).toEqual({
+      d1: { status: 'waiting' },
+      d2: { status: 'waiting' },
+    })
   })
 })

@@ -12,12 +12,29 @@
  * endpoint lands, only the caller changes, not this loop.
  */
 
+import type { DeviceConnectionTestResponse } from '@/lib/api'
+
 export type VerifyStatus =
   | 'pending'
   | 'waiting'
   | 'online'
   | 'unreachable'
   | 'timeout'
+  /** The probe itself could not run, so there is no verdict on the device. */
+  | 'uncheckable'
+
+/** What the wizard knows about one device after verification. */
+export interface VerifyResult {
+  status: VerifyStatus
+  /** Safe to render verbatim; comes from the probe. */
+  message?: string
+  detail?: string | null
+  reason?: string
+  /** A mode the probe verified works. Offer it; never apply it silently. */
+  suggestedTlsMode?: string | null
+  identity?: string | null
+  version?: string | null
+}
 
 /** The device statuses the poller actually writes. */
 export function mapDeviceStatus(
@@ -31,6 +48,107 @@ export function mapDeviceStatus(
 
 export const VERIFY_POLL_INTERVAL_MS = 5_000
 export const VERIFY_TIMEOUT_MS = 90_000
+
+/** test-connection is limited to 30/min, and costs one call per device.
+ *  2s spacing sits at that ceiling instead of tripping it. */
+export const PROBE_SPACING_MS = 2_000
+
+/** Turn one probe response into what the wizard should show. */
+export function resultFromProbe(
+  probe: DeviceConnectionTestResponse,
+): VerifyResult {
+  // No verdict at all -- the poller never answered. This is NOT "device down".
+  if (!probe.probe_available) {
+    return {
+      status: 'uncheckable',
+      message: probe.message,
+      detail: probe.detail,
+      reason: probe.reason,
+    }
+  }
+  return {
+    status: probe.ok ? 'online' : 'unreachable',
+    message: probe.message,
+    detail: probe.detail,
+    reason: probe.reason,
+    suggestedTlsMode: probe.suggested_tls_mode,
+    identity: probe.identity,
+    version: probe.version,
+  }
+}
+
+function httpStatusOf(err: unknown): number | undefined {
+  return (err as { response?: { status?: number } })?.response?.status
+}
+
+export interface ProbeVerifyOptions {
+  deviceIds: string[]
+  probe: (deviceId: string) => Promise<DeviceConnectionTestResponse>
+  onUpdate: (results: Record<string, VerifyResult>) => void
+  spacingMs?: number
+  signal?: { cancelled: boolean }
+  sleep?: (ms: number) => Promise<void>
+}
+
+export interface ProbeVerifyOutcome {
+  results: Record<string, VerifyResult>
+  /** The endpoint is not deployed -- the caller should fall back to polling. */
+  unsupported: boolean
+  /** Devices with no verdict yet, because we stopped early (e.g. a 429). */
+  unresolved: string[]
+}
+
+/**
+ * Probe each device in turn, spaced to respect the endpoint's rate limit.
+ *
+ * Stops and reports `unsupported` if the endpoint 404s, so a frontend that is
+ * ahead of its backend degrades to status polling instead of erroring on every
+ * device. A 429 stops the run too, leaving the rest `unresolved` for the poll.
+ */
+export async function probeVerifyStatuses({
+  deviceIds,
+  probe,
+  onUpdate,
+  spacingMs = PROBE_SPACING_MS,
+  signal,
+  sleep = defaultSleep,
+}: ProbeVerifyOptions): Promise<ProbeVerifyOutcome> {
+  const results: Record<string, VerifyResult> = {}
+  for (const id of deviceIds) results[id] = { status: 'waiting' }
+  onUpdate({ ...results })
+
+  for (let i = 0; i < deviceIds.length; i++) {
+    if (signal?.cancelled) break
+    const id = deviceIds[i]
+
+    try {
+      results[id] = resultFromProbe(await probe(id))
+      onUpdate({ ...results })
+    } catch (err) {
+      const status = httpStatusOf(err)
+
+      // Frontend is ahead of the backend: no probe exists at all.
+      if (status === 404) {
+        return { results, unsupported: true, unresolved: deviceIds.slice(i) }
+      }
+      // Out of budget. Leave the rest to the poll rather than hammering.
+      if (status === 429) {
+        return { results, unsupported: false, unresolved: deviceIds.slice(i) }
+      }
+      results[id] = {
+        status: 'uncheckable',
+        message: 'The connection check could not be run for this device.',
+        detail: status ? `HTTP ${status}` : null,
+      }
+      onUpdate({ ...results })
+    }
+
+    if (i < deviceIds.length - 1) await sleep(spacingMs)
+  }
+
+  const unresolved = deviceIds.filter((id) => results[id].status === 'waiting')
+  return { results, unsupported: false, unresolved }
+}
 
 /** A status is settled once the poller has given us a real answer. */
 function isSettled(s: VerifyStatus): boolean {

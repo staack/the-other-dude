@@ -3,7 +3,7 @@
  *
  * Step 1: Enter Subnet (CIDR input, trigger scan)
  * Step 2: Scan Results (select discovered devices)
- * Step 3: Configure Credentials (shared, template, or per-device)
+ * Step 3: Configure Credentials (shared or per-device)
  * Step 4: Assign Groups & Tags
  * Step 5: Import & Verify (bulk-add, then check connectivity)
  */
@@ -34,8 +34,10 @@ import {
 } from '@/lib/api'
 import {
   pollVerifyStatuses,
+  probeVerifyStatuses,
+  resultFromProbe,
   VERIFY_TIMEOUT_MS,
-  type VerifyStatus,
+  type VerifyResult,
 } from './adoptionVerify'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,7 +61,7 @@ interface AdoptionWizardProps {
   tenantId: string
 }
 
-type CredentialMode = 'shared' | 'template' | 'per-device'
+type CredentialMode = 'shared' | 'per-device'
 
 interface PerDeviceCreds {
   username: string
@@ -69,6 +71,11 @@ interface PerDeviceCreds {
 /** RouterOS API ports. Only tls_mode='plain' ever connects on the plain one. */
 const PLAIN_API_PORT = 8728
 const TLS_API_PORT = 8729
+
+/** Group/tag assignment endpoints allow 20/minute; 3s keeps us under it. */
+const ASSIGNMENT_SPACING_MS = 3_000
+
+type ImportPhase = 'idle' | 'importing' | 'assigning' | 'verifying'
 
 // ---------------------------------------------------------------------------
 // Step Indicator
@@ -113,8 +120,12 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
               </div>
               <span
                 className={cn(
-                  'text-xs hidden lg:inline',
-                  isActive ? 'text-text-primary font-medium' : 'text-text-muted',
+                  'text-xs',
+                  // Keep the current step named at every width; only the
+                  // others collapse to bare numbers on narrow screens.
+                  isActive
+                    ? 'inline text-text-primary font-medium'
+                    : 'hidden lg:inline text-text-muted',
                 )}
               >
                 {label}
@@ -165,7 +176,7 @@ export function AdoptionWizard({ tenantId }: AdoptionWizardProps) {
     Array<{ ip_address: string; error: string }>
   >([])
   const [verifyStatuses, setVerifyStatuses] = useState<
-    Record<string, VerifyStatus>
+    Record<string, VerifyResult>
   >({})
 
   // Fetch existing devices to mark already-known IPs
@@ -408,9 +419,14 @@ export function AdoptionWizard({ tenantId }: AdoptionWizardProps) {
       {step === 4 && (
         <div className="rounded-lg border border-border bg-panel p-6 space-y-4">
           <div>
-            <h3 className="text-sm font-semibold">Assign Groups & Tags</h3>
+            <h3 className="text-sm font-semibold">
+              Assign Groups &amp; Tags{' '}
+              <span className="font-normal text-text-muted">(optional)</span>
+            </h3>
             <p className="text-xs text-text-muted mt-0.5">
-              Optionally assign device groups and tags to the imported devices.
+              {(groups?.length ?? 0) === 0 && (tags?.length ?? 0) === 0
+                ? 'This tenant has no groups or tags yet. You can skip this step and organise devices later, or create a group below.'
+                : 'Group and tag the devices you are importing, or skip and do it later.'}
             </p>
           </div>
 
@@ -444,6 +460,11 @@ export function AdoptionWizard({ tenantId }: AdoptionWizardProps) {
                   {g.name}
                 </label>
               ))}
+              {groups?.length === 0 && (
+                <span className="text-xs text-text-muted">
+                  No groups defined yet
+                </span>
+              )}
             </div>
             {/* Create new group */}
             <div className="flex gap-2 items-center">
@@ -518,7 +539,9 @@ export function AdoptionWizard({ tenantId }: AdoptionWizardProps) {
               Back
             </Button>
             <Button size="sm" onClick={() => setStep(5)}>
-              Next
+              {selectedGroupIds.length === 0 && selectedTagIds.length === 0
+                ? 'Skip'
+                : 'Next'}
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -574,12 +597,28 @@ function SubnetStep({
     mutationFn: () => devicesApi.scan(tenantId, cidr),
     onSuccess: onResults,
     onError: (err: unknown) => {
-      const detail =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail ?? 'Scan failed. Check the CIDR format.'
-      setError(detail)
+      const res = (
+        err as { response?: { status?: number; data?: { detail?: string } } }
+      )?.response
+      // A 429 is not a bad CIDR. Saying so sent people off editing a subnet
+      // that was already correct.
+      if (res?.status === 429) {
+        setError(
+          'Too many scans. This endpoint allows 5 per minute -- wait a moment and try again.',
+        )
+        return
+      }
+      setError(res?.data?.detail ?? 'Scan failed. Check the CIDR format.')
     },
   })
+
+  /** Rough wall-clock estimate: 2s connect timeout, 50 hosts in flight. */
+  const estimatedSeconds = (() => {
+    const prefix = parseInt(cidr.split('/')[1] ?? '', 10)
+    if (!Number.isFinite(prefix) || prefix < 20 || prefix > 32) return null
+    const hosts = Math.max(1, 2 ** (32 - prefix) - 2)
+    return Math.max(5, Math.ceil((hosts / 50) * 2))
+  })()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -646,8 +685,17 @@ function SubnetStep({
       )}
 
       {mutation.isPending && (
-        <div className="text-xs text-text-muted animate-pulse">
-          Scanning {cidr}... This may take up to 30 seconds for larger ranges.
+        <div className="space-y-1.5">
+          <div className="text-xs text-text-muted animate-pulse">
+            Scanning {cidr}...
+            {estimatedSeconds !== null &&
+              ` This range can take around ${estimatedSeconds >= 60 ? `${Math.ceil(estimatedSeconds / 60)} minute${estimatedSeconds >= 120 ? 's' : ''}` : `${estimatedSeconds} seconds`}.`}
+          </div>
+          {/* No server-side progress is reported, so this is a running
+              indicator, not a percentage -- do not imply otherwise. */}
+          <div className="h-0.5 w-full overflow-hidden rounded-full bg-elevated">
+            <div className="h-full w-1/3 animate-pulse rounded-full bg-accent" />
+          </div>
         </div>
       )}
     </div>
@@ -858,26 +906,32 @@ function ImportVerifyStep({
   selectedTagIds: string[]
   importedDevices: DeviceResponse[]
   failedImports: Array<{ ip_address: string; error: string }>
-  verifyStatuses: Record<string, VerifyStatus>
+  verifyStatuses: Record<string, VerifyResult>
   setImportedDevices: (d: DeviceResponse[]) => void
   setFailedImports: (f: Array<{ ip_address: string; error: string }>) => void
-  setVerifyStatuses: (s: Record<string, VerifyStatus>) => void
+  setVerifyStatuses: (s: Record<string, VerifyResult>) => void
   onBack: () => void
   onDone: () => void
 }) {
   const [isImporting, setIsImporting] = useState(false)
   const [isImported, setIsImported] = useState(importedDevices.length > 0)
+  const [importPhase, setImportPhase] = useState<ImportPhase>('idle')
+  const [assignmentFailures, setAssignmentFailures] = useState(0)
+  const [retrying, setRetrying] = useState<Record<string, boolean>>({})
   const queryClient = useQueryClient()
 
   const stillWaiting = importedDevices.some(
-    (d) => (verifyStatuses[d.id] ?? 'pending') === 'waiting',
+    (d) => (verifyStatuses[d.id]?.status ?? 'pending') === 'waiting',
   )
   const anyTimedOut = importedDevices.some(
-    (d) => verifyStatuses[d.id] === 'timeout',
+    (d) => verifyStatuses[d.id]?.status === 'timeout',
   )
 
   // Lets the verify poll stop if the user leaves before it finishes.
   const verifySignal = useRef({ cancelled: false })
+  // Probe and poll both write results; this keeps them from clobbering
+  // each other when the poll resolves only part of the batch.
+  const verifyResults = useRef<Record<string, VerifyResult>>({})
   useEffect(() => {
     const signal = verifySignal.current
     return () => {
@@ -885,8 +939,94 @@ function ImportVerifyStep({
     }
   }, [])
 
+  /**
+   * Ask the device directly, and fall back to watching its status.
+   *
+   * The live probe gives an immediate, classified answer, but it costs one
+   * call per device against a 30/min limit and only exists on newer backends.
+   * So: probe what we can, then let the poll resolve whatever is left --
+   * a large batch or an older API degrades instead of failing.
+   */
+  const runVerification = useCallback(
+    async (deviceIds: string[]) => {
+      const merge = (next: Record<string, VerifyResult>) =>
+        setVerifyStatuses({ ...verifyResults.current, ...next })
+
+      const { results, unresolved } = await probeVerifyStatuses({
+        deviceIds,
+        probe: (deviceId) => devicesApi.testConnection(tenantId, deviceId),
+        onUpdate: merge,
+        signal: verifySignal.current,
+      })
+      verifyResults.current = { ...verifyResults.current, ...results }
+
+      if (unresolved.length === 0 || verifySignal.current.cancelled) return
+
+      await pollVerifyStatuses({
+        deviceIds: unresolved,
+        fetchStatuses: async () => {
+          const refreshed = await devicesApi.list(tenantId, { page_size: 100 })
+          return Object.fromEntries(
+            refreshed.items.map((d) => [d.id, d.status]),
+          )
+        },
+        onUpdate: (statuses) => {
+          const asResults: Record<string, VerifyResult> = {}
+          for (const [id, status] of Object.entries(statuses)) {
+            asResults[id] = { status }
+          }
+          verifyResults.current = { ...verifyResults.current, ...asResults }
+          merge(asResults)
+        },
+        signal: verifySignal.current,
+      })
+    },
+    [tenantId, setVerifyStatuses],
+  )
+
+  /**
+   * Apply the mode the probe verified, then re-test once.
+   *
+   * Only offered when the probe confirmed the mode works, and only on an
+   * explicit click. Deliberately does not loop: if the retry still fails we
+   * show that result and stop, rather than bouncing the user round again.
+   */
+  const retryWithSuggestedMode = useCallback(
+    async (deviceId: string, mode: string) => {
+      setRetrying((p) => ({ ...p, [deviceId]: true }))
+      try {
+        await devicesApi.update(tenantId, deviceId, { tls_mode: mode })
+        const probe = await devicesApi.testConnection(tenantId, deviceId)
+        const next = resultFromProbe(probe)
+        // Drop the suggestion either way so the action cannot repeat.
+        verifyResults.current = {
+          ...verifyResults.current,
+          [deviceId]: { ...next, suggestedTlsMode: null },
+        }
+        setVerifyStatuses({ ...verifyResults.current })
+        void queryClient.invalidateQueries({ queryKey: ['devices', tenantId] })
+      } catch {
+        const prev = verifyResults.current[deviceId]
+        verifyResults.current = {
+          ...verifyResults.current,
+          [deviceId]: {
+            ...prev,
+            status: prev?.status ?? 'uncheckable',
+            message: `Could not switch this device to ${mode}. It is still adopted; change the TLS mode on the device page.`,
+            suggestedTlsMode: null,
+          },
+        }
+        setVerifyStatuses({ ...verifyResults.current })
+      } finally {
+        setRetrying((p) => ({ ...p, [deviceId]: false }))
+      }
+    },
+    [tenantId, setVerifyStatuses, queryClient],
+  )
+
   const runImport = useCallback(async () => {
     setIsImporting(true)
+    setImportPhase('importing')
     try {
       const devices = selectedResults.map((d) => {
         const perDev = perDeviceCreds[d.ip_address]
@@ -918,40 +1058,42 @@ function ImportVerifyStep({
       setImportedDevices(result.added)
       setFailedImports(result.failed)
 
-      // Assign groups and tags to imported devices
+      // Assign groups and tags. Both endpoints are limited to 20/minute and
+      // this is one call per device per group/tag, so pace the calls and
+      // report what did not stick -- silently swallowing 429s used to make
+      // assignments vanish with no indication.
+      const assignments: Array<() => Promise<unknown>> = []
       for (const device of result.added) {
         for (const groupId of selectedGroupIds) {
-          try {
-            await devicesApi.addToGroup(tenantId, device.id, groupId)
-          } catch {
-            // Non-critical -- continue
-          }
+          assignments.push(() =>
+            devicesApi.addToGroup(tenantId, device.id, groupId),
+          )
         }
         for (const tagId of selectedTagIds) {
-          try {
-            await devicesApi.addTag(tenantId, device.id, tagId)
-          } catch {
-            // Non-critical -- continue
-          }
+          assignments.push(() => devicesApi.addTag(tenantId, device.id, tagId))
         }
       }
 
-      setIsImported(true)
+      if (assignments.length > 0) {
+        setImportPhase('assigning')
+        let failedAssignments = 0
+        for (let i = 0; i < assignments.length; i++) {
+          try {
+            await assignments[i]()
+          } catch {
+            failedAssignments++
+          }
+          if (i < assignments.length - 1) {
+            await new Promise((r) => setTimeout(r, ASSIGNMENT_SPACING_MS))
+          }
+        }
+        setAssignmentFailures(failedAssignments)
+      }
 
-      // The poller assigns a real status on its own interval (60s by default,
-      // 120s in the dev compose), so poll until it reports rather than
-      // declaring everything unreachable after one short delay.
-      void pollVerifyStatuses({
-        deviceIds: result.added.map((d) => d.id),
-        fetchStatuses: async () => {
-          const refreshed = await devicesApi.list(tenantId, { page_size: 100 })
-          return Object.fromEntries(
-            refreshed.items.map((d) => [d.id, d.status]),
-          )
-        },
-        onUpdate: setVerifyStatuses,
-        signal: verifySignal.current,
-      })
+      setIsImported(true)
+      setImportPhase('verifying')
+
+      void runVerification(result.added.map((d) => d.id))
 
       void queryClient.invalidateQueries({
         queryKey: ['devices', tenantId],
@@ -964,6 +1106,7 @@ function ImportVerifyStep({
       })
     } catch {
       toast({ title: 'Import failed', variant: 'destructive' })
+      setImportPhase('idle')
     } finally {
       setIsImporting(false)
     }
@@ -979,7 +1122,7 @@ function ImportVerifyStep({
     selectedTagIds,
     setImportedDevices,
     setFailedImports,
-    setVerifyStatuses,
+    runVerification,
     queryClient,
   ])
 
@@ -991,10 +1134,18 @@ function ImportVerifyStep({
           {!isImported
             ? `Ready to import ${selectedResults.length} device${selectedResults.length !== 1 ? 's' : ''}`
             : stillWaiting
-              ? 'Import complete -- waiting for the poller to report connectivity'
+              ? 'Import complete -- checking connectivity'
               : 'Import complete'}
         </p>
       </div>
+
+      {isImporting && (
+        <p className="text-[10px] text-text-muted">
+          {importPhase === 'assigning'
+            ? 'Group and tag assignment is paced to stay within the API rate limit, so this takes a few seconds per assignment.'
+            : 'Each device is contacted in turn, so this takes longer with more devices.'}
+        </p>
+      )}
 
       {/* Pre-import summary */}
       {!isImported && (
@@ -1054,54 +1205,127 @@ function ImportVerifyStep({
                 </thead>
                 <tbody>
                   {importedDevices.map((d) => {
-                    const vs = verifyStatuses[d.id] ?? 'pending'
+                    const v = verifyStatuses[d.id] ?? { status: 'pending' }
+                    const vs = v.status
+                    const suggested = v.suggestedTlsMode
                     return (
                       <tr
                         key={d.id}
-                        className="border-b border-border/30"
+                        className="border-b border-border/30 align-top"
                       >
-                        <td className="px-3 py-1.5 text-xs font-medium">
+                        <td className="px-3 py-2 text-xs font-medium">
                           {d.hostname}
+                          {v.identity && v.identity !== d.hostname && (
+                            <span className="block text-[10px] font-normal text-text-muted">
+                              reported as {v.identity}
+                              {v.version ? ` -- RouterOS ${v.version}` : ''}
+                            </span>
+                          )}
                         </td>
-                        <td className="px-3 py-1.5 text-xs font-mono text-text-secondary">
+                        <td className="px-3 py-2 text-xs font-mono text-text-secondary">
                           {d.ip_address}
                         </td>
-                        <td className="px-3 py-1.5">
-                          <div className="flex items-center justify-center gap-1.5">
-                            {vs === 'waiting' && (
-                              <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
-                                <span className="text-[10px] text-text-muted">
-                                  Waiting for first poll
-                                </span>
-                              </>
+                        <td className="px-3 py-2">
+                          <div className="space-y-1.5">
+                            <div className="flex items-center gap-1.5">
+                              {vs === 'waiting' && (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
+                                  <span className="text-[10px] text-text-muted">
+                                    Checking...
+                                  </span>
+                                </>
+                              )}
+                              {vs === 'online' && (
+                                <>
+                                  <Wifi className="h-3.5 w-3.5 text-success" />
+                                  <span className="text-[10px] text-success">
+                                    Online
+                                  </span>
+                                </>
+                              )}
+                              {vs === 'unreachable' && (
+                                <>
+                                  <WifiOff className="h-3.5 w-3.5 text-error" />
+                                  <span className="text-[10px] text-error">
+                                    Unreachable
+                                  </span>
+                                </>
+                              )}
+                              {vs === 'timeout' && (
+                                <>
+                                  <div className="w-2 h-2 rounded-full bg-warning" />
+                                  <span className="text-[10px] text-text-muted">
+                                    Not polled yet
+                                  </span>
+                                </>
+                              )}
+                              {vs === 'uncheckable' && (
+                                <>
+                                  <div className="w-2 h-2 rounded-full bg-warning" />
+                                  <span className="text-[10px] text-text-muted">
+                                    Could not check
+                                  </span>
+                                </>
+                              )}
+                              {vs === 'pending' && (
+                                <div className="w-2 h-2 rounded-full bg-border" />
+                              )}
+                            </div>
+
+                            {v.message && vs !== 'online' && (
+                              <p className="text-[10px] text-text-secondary">
+                                {v.message}
+                              </p>
                             )}
-                            {vs === 'online' && (
-                              <>
-                                <Wifi className="h-3.5 w-3.5 text-success" />
-                                <span className="text-[10px] text-success">
-                                  Online
+
+                            {v.detail && vs !== 'online' && (
+                              <details className="text-[10px] text-text-muted">
+                                <summary className="cursor-pointer hover:text-text-secondary">
+                                  Technical detail
+                                </summary>
+                                <span className="font-mono break-all">
+                                  {v.detail}
                                 </span>
-                              </>
+                              </details>
                             )}
-                            {vs === 'unreachable' && (
-                              <>
-                                <WifiOff className="h-3.5 w-3.5 text-error" />
-                                <span className="text-[10px] text-error">
-                                  Unreachable
-                                </span>
-                              </>
-                            )}
-                            {vs === 'timeout' && (
-                              <>
-                                <div className="w-2 h-2 rounded-full bg-warning" />
-                                <span className="text-[10px] text-text-muted">
-                                  Not polled yet
-                                </span>
-                              </>
-                            )}
-                            {vs === 'pending' && (
-                              <div className="w-2 h-2 rounded-full bg-border" />
+
+                            {suggested && (
+                              <div className="space-y-1.5 rounded-md border border-warning/50 bg-warning/10 p-2">
+                                <p className="text-[10px] text-text-secondary">
+                                  This device answered on{' '}
+                                  <span className="font-medium">
+                                    {suggested}
+                                  </span>
+                                  . Applying it changes the TLS mode from{' '}
+                                  <span className="font-mono">
+                                    {d.tls_mode}
+                                  </span>{' '}
+                                  to{' '}
+                                  <span className="font-mono">{suggested}</span>
+                                  , then re-tests once.
+                                </p>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  disabled={retrying[d.id]}
+                                  onClick={() =>
+                                    void retryWithSuggestedMode(
+                                      d.id,
+                                      suggested,
+                                    )
+                                  }
+                                >
+                                  {retrying[d.id] ? (
+                                    <>
+                                      <Loader2 className="h-3 w-3 animate-spin" />
+                                      Applying...
+                                    </>
+                                  ) : (
+                                    `Switch to ${suggested} and re-test`
+                                  )}
+                                </Button>
+                              </div>
                             )}
                           </div>
                         </td>
@@ -1115,9 +1339,10 @@ function ImportVerifyStep({
 
           {stillWaiting && (
             <p className="text-[10px] text-text-muted">
-              Devices are adopted and saved. Connectivity is reported by the
-              poller on its own schedule, so this can take up to{' '}
-              {Math.round(VERIFY_TIMEOUT_MS / 1000)}s -- you can leave this page
+              Devices are adopted and saved. Each one is contacted in turn; any
+              that cannot be checked directly fall back to the poller's own
+              schedule, which can take up to{' '}
+              {Math.round(VERIFY_TIMEOUT_MS / 1000)}s. You can leave this page
               at any time.
             </p>
           )}
@@ -1128,6 +1353,16 @@ function ImportVerifyStep({
                 The poller has not reported on every device yet. They are
                 adopted and saved -- this is not a failure. Their status will
                 appear on the devices page once the next poll runs.
+              </p>
+            </div>
+          )}
+
+          {assignmentFailures > 0 && (
+            <div className="rounded-md border border-warning/50 bg-warning/10 p-3">
+              <p className="text-xs text-text-secondary">
+                {assignmentFailures} group/tag assignment
+                {assignmentFailures !== 1 ? 's' : ''} did not apply. The devices
+                are adopted; you can set groups and tags from the devices page.
               </p>
             </div>
           )}
@@ -1172,7 +1407,9 @@ function ImportVerifyStep({
               {isImporting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Importing...
+                  {importPhase === 'assigning'
+                    ? 'Assigning groups & tags...'
+                    : `Importing ${selectedResults.length} device${selectedResults.length !== 1 ? 's' : ''}...`}
                 </>
               ) : (
                 'Import'
