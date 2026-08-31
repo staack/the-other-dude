@@ -397,15 +397,35 @@ A plain restart (`docker compose restart`, or `down` without `-v` followed by
 `up -d`) is not expected to lose committed data: devices, credentials, config
 snapshots and license state are all on disk.
 
-> **Measured recovery time: not yet established.** The behaviour above follows
-> from the compose configuration but has not been timed end to end on a
-> populated install. Treat it as the intended design, not as an observed
-> result, until a figure appears here.
+**Measured recovery time: 17 seconds.** Timed on a 10-container single-node
+install by restarting the Docker daemon, which is what a host reboot does to
+the stack:
 
-Note that before v10 this was not true at all: `postgres` and `redis` carried no
-restart policy, so a host reboot left them stopped while the API and poller
-restart-looped against them indefinitely. If you are running an older compose
-file, add `restart: unless-stopped` to both.
+| | |
+|---|---|
+| Docker daemon responsive | +16s |
+| All containers running | +16s |
+| API `/health/ready` returning 200 | **+17s** |
+
+One case is much slower. If the NATS JetStream streams do not yet exist — a
+genuine first boot, or a start after `./docker-data/nats` has been lost — the
+API takes around **220 seconds** to begin serving. Roughly seven NATS
+subscribers each retry the missing stream six times at five-second intervals,
+sequentially, before giving up, and that happens during application startup
+before the API accepts any request. The streams are created by the poller, so
+this resolves itself once the poller has run; on an ordinary reboot the streams
+are already on disk and the 17-second figure applies.
+
+Before v10 the stack did not come back at all. `postgres` and `redis` carried
+no restart policy, so a daemon restart left them stopped along with everything
+that depends on them, and the API never returned. If you are running an older
+compose file, add `restart: unless-stopped` to both.
+
+`restart: on-failure` is **not** sufficient here, which is easy to get wrong. A
+daemon restart stops containers cleanly, so they exit 0, and `on-failure` only
+restarts a container that exited non-zero. Measured on the same host: with
+`on-failure`, postgres, redis, NATS, the API and the frontend all stayed down
+after a daemon restart. `unless-stopped` is the policy that returns.
 
 The poller reconnects to both NATS and PostgreSQL without intervention —
 unlimited reconnects with a 2s backoff for NATS, and a connection pool that
