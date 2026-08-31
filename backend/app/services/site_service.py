@@ -8,9 +8,10 @@ import uuid
 
 import structlog
 from fastapi import HTTPException, status
-from sqlalchemy import func, select, update
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.alert import AlertEvent
 from app.models.device import Device
 from app.models.site import Site
 from app.schemas.site import (
@@ -58,6 +59,44 @@ async def _get_site_or_404(db: AsyncSession, tenant_id: uuid.UUID, site_id: uuid
     if not site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
     return site
+
+
+def _active_alert_filters():
+    """An alert counts as active when it is firing, unresolved and not silenced.
+
+    Same definition as the nav badge at routers/alerts.py:953, so the two never
+    disagree about what a site's alert count means.
+    """
+    return (
+        AlertEvent.status == "firing",
+        AlertEvent.resolved_at.is_(None),
+        or_(AlertEvent.silenced_until.is_(None), AlertEvent.silenced_until < func.now()),
+    )
+
+
+async def _alert_counts_by_site(db: AsyncSession, tenant_id: uuid.UUID) -> dict[uuid.UUID, int]:
+    """Active alert count per site, in a single query (mirrors the health rollup)."""
+    result = await db.execute(
+        select(Device.site_id, func.count(AlertEvent.id))
+        .join(AlertEvent, AlertEvent.device_id == Device.id)
+        .where(
+            Device.site_id.isnot(None),
+            Device.tenant_id == tenant_id,
+            *_active_alert_filters(),
+        )
+        .group_by(Device.site_id)
+    )
+    return {row[0]: row[1] for row in result}
+
+
+async def _alert_count_for_site(db: AsyncSession, site_id: uuid.UUID) -> int:
+    """Active alert count for a single site."""
+    result = await db.execute(
+        select(func.count(AlertEvent.id))
+        .join(Device, AlertEvent.device_id == Device.id)
+        .where(Device.site_id == site_id, *_active_alert_filters())
+    )
+    return result.scalar() or 0
 
 
 async def _get_health_for_site(db: AsyncSession, site_id: uuid.UUID) -> tuple[int, int]:
@@ -108,12 +147,20 @@ async def get_sites(db: AsyncSession, tenant_id: uuid.UUID) -> SiteListResponse:
     )
     unassigned_count = unassigned_result.scalar() or 0
 
+    alert_map = await _alert_counts_by_site(db, tenant_id)
+
     # Build responses
     site_responses = []
     for site in sites:
         dc, oc = health_map.get(site.id, (0, 0))
-        # TODO: alert_count from alert_events table -- set to 0 until alert system integration
-        site_responses.append(_site_response(site, device_count=dc, online_count=oc, alert_count=0))
+        site_responses.append(
+            _site_response(
+                site,
+                device_count=dc,
+                online_count=oc,
+                alert_count=alert_map.get(site.id, 0),
+            )
+        )
 
     return SiteListResponse(sites=site_responses, unassigned_count=unassigned_count)
 
@@ -122,8 +169,8 @@ async def get_site(db: AsyncSession, tenant_id: uuid.UUID, site_id: uuid.UUID) -
     """Fetch a single site with health rollup stats."""
     site = await _get_site_or_404(db, tenant_id, site_id)
     dc, oc = await _get_health_for_site(db, site_id)
-    # TODO: alert_count from alert_events table -- set to 0 until alert system integration
-    return _site_response(site, device_count=dc, online_count=oc, alert_count=0)
+    alert_count = await _alert_count_for_site(db, site_id)
+    return _site_response(site, device_count=dc, online_count=oc, alert_count=alert_count)
 
 
 async def create_site(
@@ -190,7 +237,8 @@ async def update_site(
             details={"updated_fields": list(update_data.keys())},
         )
 
-    return _site_response(site, device_count=dc, online_count=oc, alert_count=0)
+    alert_count = await _alert_count_for_site(db, site_id)
+    return _site_response(site, device_count=dc, online_count=oc, alert_count=alert_count)
 
 
 async def delete_site(
