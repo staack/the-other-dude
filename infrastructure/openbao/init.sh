@@ -7,6 +7,75 @@ set -e
 export BAO_ADDR="http://127.0.0.1:8200"
 
 # ---------------------------------------------------------------------------
+# Guard: refuse to re-initialise over storage that should already exist.
+#
+# Holding a real unseal key for an uninitialised store is never a legitimate
+# first run. It means one of two things, and both need a human:
+#
+#   - the storage was destroyed (`docker compose down -v`, `docker volume
+#     prune`), or
+#   - the container is pointed at the wrong path.
+#
+# Without this guard the script initialises a brand-new store and prints new
+# credentials.  The old ciphertext is still on disk and still recoverable from
+# any backup at that moment -- what makes the loss permanent is the operator
+# seeing 403s from the API, finding fresh credentials in the container log, and
+# pasting them into .env.prod.  At that point the key that opened the data is
+# gone and so is the paper trail to it.  Stopping here breaks that chain.
+#
+# A genuine first run has no unseal key: .env.example ships it empty, and
+# setup.py writes the PLACEHOLDER_RUN_SETUP sentinel (setup.py:1272-1273) until
+# the real value is captured, so both read as "no key yet".
+# ---------------------------------------------------------------------------
+refuse_if_storage_was_lost() {
+    # A padded key is still a key. Unseal keys are base64 with no inner spaces.
+    _unseal_key="$(printf '%s' "${BAO_UNSEAL_KEY:-}" | tr -d '[:space:]')"
+
+    if [ -z "$_unseal_key" ] || [ "$_unseal_key" = "PLACEHOLDER_RUN_SETUP" ]; then
+        return 0
+    fi
+
+    cat >&2 <<'GUARD'
+
+═══════════════════════════════════════════════════════════════════════
+  REFUSING TO INITIALISE — OpenBao storage is empty but you hold a key
+═══════════════════════════════════════════════════════════════════════
+
+BAO_UNSEAL_KEY is set, so this deployment has been initialised before.
+The storage at /openbao/data is empty, so that storage is gone or this
+container is mounted on the wrong path.
+
+Initialising now would create NEW Transit keys. Every device credential,
+config backup body and audit log detail already in your database is
+encrypted with the OLD keys and would become permanently unreadable.
+
+Do NOT copy new credentials out of this log into your .env file.
+
+  Storage destroyed (`docker compose down -v`, `docker volume prune`)?
+      Restore it:  ./scripts/restore.sh <your-backup.tar.gz>
+
+  Wrong mount path?
+      Check the openbao volume in docker-compose.yml against where your
+      data actually lives, then restart.
+
+  Deliberately starting over, and accepting that all existing encrypted
+  data becomes unreadable?
+      Clear BAO_UNSEAL_KEY and OPENBAO_TOKEN in your .env file and
+      restart. Both are meaningless against a new store.
+
+═══════════════════════════════════════════════════════════════════════
+
+GUARD
+    return 1
+}
+
+# Sourcing this file for tests defines the functions above without running the
+# initialisation flow, which needs a live OpenBao.
+if [ -n "${OPENBAO_INIT_SOURCE_ONLY:-}" ]; then
+    return 0 2>/dev/null || exit 0
+fi
+
+# ---------------------------------------------------------------------------
 # Wait for OpenBao HTTP listener to accept connections.
 # We hit /v1/sys/health which returns 200 (unsealed), 429 (standby),
 # 472 (perf-standby), 501 (uninitialized), or 503 (sealed).
@@ -33,6 +102,9 @@ SEALED="$(echo "$STATUS_JSON" | grep '"sealed"' | head -1 | awk -F: '{gsub(/[^a-
 # Scenario 1 – First run (not initialized)
 # ---------------------------------------------------------------------------
 if [ "$INITIALIZED" != "true" ]; then
+    # Never auto-initialise over storage that should already exist.
+    refuse_if_storage_was_lost || exit 1
+
     echo "OpenBao is not initialized — running first-time setup..."
 
     INIT_JSON="$(bao operator init -key-shares=1 -key-threshold=1 -format=json)"

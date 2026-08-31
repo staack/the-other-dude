@@ -162,10 +162,11 @@ The backend exposes 33 route groups under the `/api` prefix:
 ### OpenBao (HashiCorp Vault fork)
 
 - **Image**: `openbao/openbao:2.1`
-- **Mode**: Persistent server with file storage backend (`/openbao/data`), mounted to the `openbao_data` Docker volume. Data survives container restarts.
-- **Transit secrets engine**: Provides envelope encryption for device credentials at rest
-- **Per-tenant keys**: Each tenant gets a dedicated Transit encryption key
-- **Init script**: `infrastructure/openbao/init.sh` enables Transit engine and creates initial keys
+- **Mode**: Persistent server with file storage backend (`/openbao/data`), mounted to the `openbao_data` Docker volume. Data survives container restarts and `docker compose down`.
+- **Data does NOT survive `docker compose down -v` or `docker volume prune`.** `openbao_data` is the only named volume in the stack; everything else is a bind mount under `./docker-data/` and is untouched by those commands. Because the keys below are what make the database readable, losing this volume renders every device credential, config backup body and audit log detail permanently undecryptable while leaving them intact on disk. See [Data Loss Failure Modes](DEPLOYMENT.md#data-loss-failure-modes).
+- **Transit secrets engine**: Provides envelope encryption for device credentials, config backup contents and audit log details at rest
+- **Per-tenant keys**: Each tenant gets a dedicated Transit encryption key (`tenant_{uuid}` for credentials, `tenant_{uuid}_data` for stored content). Keys are created non-exportable, so they cannot be backed up through the Transit API — only by copying the storage.
+- **Init script**: `infrastructure/openbao/init.sh` enables Transit engine and creates initial keys. It refuses to initialise when `BAO_UNSEAL_KEY` is set but the storage is empty, which means the storage was lost rather than that this is a first run.
 - **Token**: Set `OPENBAO_TOKEN` in `.env.prod`. The application rejects known-insecure defaults in production.
 - **Memory limit**: 256MB
 
