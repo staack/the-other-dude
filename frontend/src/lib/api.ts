@@ -400,6 +400,15 @@ export const devicesApi = {
       .post<BulkAddResult>(`/api/tenants/${tenantId}/devices/bulk-add`, data)
       .then((r) => r.data),
 
+  /** Live protocol handshake against a stored device. 200 even when the
+   *  device does not answer -- branch on `reason`, not on the status code. */
+  testConnection: (tenantId: string, deviceId: string) =>
+    api
+      .post<DeviceConnectionTestResponse>(
+        `/api/tenants/${tenantId}/devices/${deviceId}/test-connection`,
+      )
+      .then((r) => r.data),
+
   bulkAddWithProfile: (tenantId: string, data: BulkAddWithProfileRequest) =>
     api
       .post<BulkAddWithProfileResult>(`/api/tenants/${tenantId}/devices/bulk`, data)
@@ -442,6 +451,42 @@ export interface SubnetScanResponse {
   total_discovered: number
 }
 
+/** How the poller may connect. Only 'plain' ever uses api_port. */
+export type TlsMode = 'auto' | 'insecure' | 'plain' | 'portal_ca'
+
+/** Stable classification of a connection probe. Branch on this, not `stage`. */
+export type ConnectionTestReason =
+  | 'ok'
+  | 'unreachable'
+  | 'timeout'
+  | 'tls_cipher_mismatch'
+  | 'tls_cert_untrusted'
+  | 'tls_error'
+  | 'auth_failed'
+  | 'protocol_error'
+  | 'unknown'
+  | 'probe_unavailable'
+
+export interface DeviceConnectionTestResponse {
+  ok: boolean
+  stage: 'tcp' | 'tls' | 'login' | 'query' | 'done'
+  reason: ConnectionTestReason
+  /** Written to be shown to the user verbatim. */
+  message: string
+  /** Raw error text -- put behind a disclosure, not in the main flow. */
+  detail?: string | null
+  tls_mode: string
+  /** Only set to a mode the probe actually verified works on this device. */
+  suggested_tls_mode?: string | null
+  identity?: string | null
+  version?: string | null
+  board_name?: string | null
+  elapsed_ms: number
+  /** False means the poller never answered, so there is no verdict at all. */
+  probe_available: boolean
+  checked_at: string
+}
+
 export interface BulkDeviceAdd {
   ip_address: string
   hostname?: string
@@ -449,12 +494,14 @@ export interface BulkDeviceAdd {
   api_ssl_port?: number
   username?: string
   password?: string
+  tls_mode?: TlsMode
 }
 
 export interface BulkAddRequest {
   devices: BulkDeviceAdd[]
   shared_username?: string
   shared_password?: string
+  tls_mode?: TlsMode
 }
 
 export interface BulkAddResult {

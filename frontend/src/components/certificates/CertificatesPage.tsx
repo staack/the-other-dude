@@ -87,6 +87,9 @@ export function CertificatesPage() {
         <h1 className="text-2xl font-bold text-text-primary">
           Certificate Authority
         </h1>
+        <span className="text-[10px] bg-warning/20 text-warning border border-warning/40 rounded px-1.5 py-0.5">
+          experimental
+        </span>
       </div>
 
       {/* CA Status */}
