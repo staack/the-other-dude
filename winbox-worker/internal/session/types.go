@@ -36,6 +36,13 @@ type Session struct {
 	// authoritative "the process tree leader has exited" signal.
 	proc *XpraProc
 
+	// everConnected is set the first time the poll loop observes an
+	// attached xpra client (guarded by mu). Until then clients=0 means "the
+	// user has not opened the tab yet", not "the client went away", so the
+	// grace machinery must not engage; the first-connect deadline applies
+	// instead.
+	everConnected bool
+
 	// Grace-period bookkeeping (all guarded by mu). graceGen is bumped on
 	// every grace enter/cancel so a stale AfterFunc that lost the race with
 	// Stop() cannot act on a newer grace period (ABA protection).

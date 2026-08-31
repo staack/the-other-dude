@@ -127,11 +127,13 @@ func TestGraceEntersOnZeroClients(t *testing.T) {
 
 func TestGraceCancelledOnReconnect(t *testing.T) {
 	fake := &fakeStatus{}
-	fake.set(0, -1)
+	fake.set(1, 0)
 	m := newTestManager(t, 500*time.Millisecond, "sleep 60", fake, nil)
 	id := mustCreate(t, m)
 	defer m.TerminateSession(id)
 
+	m.checkTimeouts() // observe the connect
+	fake.set(0, -1)   // browser closed
 	m.checkTimeouts()
 	if st, _ := sessionState(m, id); st != StateGrace {
 		t.Fatalf("expected grace, got %s", st)
@@ -153,10 +155,12 @@ func TestGraceCancelledOnReconnect(t *testing.T) {
 
 func TestGraceExpiryTerminatesAndFreesResources(t *testing.T) {
 	fake := &fakeStatus{}
-	fake.set(0, -1)
+	fake.set(1, 0)
 	m := newTestManager(t, 100*time.Millisecond, "sleep 60", fake, nil)
 	id := mustCreate(t, m)
 
+	m.checkTimeouts() // observe the connect
+	fake.set(0, -1)   // browser closed
 	m.checkTimeouts()
 	if st, _ := sessionState(m, id); st != StateGrace {
 		t.Fatalf("expected grace, got %s", st)
@@ -178,11 +182,13 @@ func TestGraceExpiryRequeryCancelsIfClientReturned(t *testing.T) {
 	// A client that reconnects BETWEEN poll ticks must survive the timer
 	// firing: expireGrace re-queries before terminating.
 	fake := &fakeStatus{}
-	fake.set(0, -1)
+	fake.set(1, 0)
 	m := newTestManager(t, 100*time.Millisecond, "sleep 60", fake, nil)
 	id := mustCreate(t, m)
 	defer m.TerminateSession(id)
 
+	m.checkTimeouts() // observe the connect
+	fake.set(0, -1)   // browser closed
 	m.checkTimeouts()
 	if st, _ := sessionState(m, id); st != StateGrace {
 		t.Fatalf("expected grace, got %s", st)
@@ -368,3 +374,78 @@ func TestConcurrentLifecycleRaces(t *testing.T) {
 // double-wait hazard: KillXpraSession must accept the reaped handle, not a
 // bare pid it could FindProcess+Wait on.
 var _ func(*XpraProc) error = KillXpraSession
+
+// --- First-connect handling (a client has never attached) ---
+
+// A freshly created session where the user simply has not opened the browser
+// tab yet must NOT be treated as "the client disconnected": grace is for
+// clients that went away, not clients that never arrived. Regression test for
+// the live-validation finding where every session self-destructed in ~37s
+// unless the tab was opened immediately.
+func TestNeverConnectedSessionDoesNotEnterGrace(t *testing.T) {
+	fake := &fakeStatus{}
+	fake.set(0, -1) // no client has EVER attached
+	m := newTestManager(t, 100*time.Millisecond, "sleep 60", fake, nil)
+	id := mustCreate(t, m)
+	defer m.TerminateSession(id)
+
+	m.checkTimeouts()
+	if st, _ := sessionState(m, id); st != StateActive {
+		t.Fatalf("never-connected session must stay active, got %s", st)
+	}
+
+	// Well past the grace period the session must still exist: no grace
+	// timer may have been armed for it.
+	time.Sleep(300 * time.Millisecond)
+	m.checkTimeouts()
+	if st, ok := sessionState(m, id); !ok || st != StateActive {
+		t.Fatalf("never-connected session destroyed within grace window (state=%q exists=%v)", st, ok)
+	}
+}
+
+func TestNeverConnectedSessionTerminatesAfterFirstConnectDeadline(t *testing.T) {
+	fake := &fakeStatus{}
+	fake.set(0, -1)
+	// Grace is deliberately LONG so that if the session dies quickly it can
+	// only be the first-connect deadline, not the grace machinery.
+	m := newTestManager(t, 10*time.Second, "sleep 60", fake, nil)
+	m.cfg.FirstConnectTimeout = 100 * time.Millisecond
+	id := mustCreate(t, m)
+
+	time.Sleep(200 * time.Millisecond) // past the first-connect deadline
+	m.checkTimeouts()
+
+	waitFor(t, 2*time.Second, "never-connected session to be terminated", func() bool {
+		_, ok := sessionState(m, id)
+		return !ok && poolsFull(m)
+	})
+}
+
+// Once a client HAS attached, a later clients=0 is a real disconnect and the
+// normal grace machinery must engage even if the first-connect deadline has
+// long passed.
+func TestConnectedThenDisconnectedEntersGraceNotNeverConnected(t *testing.T) {
+	fake := &fakeStatus{}
+	fake.set(1, 0)
+	m := newTestManager(t, 10*time.Second, "sleep 60", fake, nil)
+	m.cfg.FirstConnectTimeout = 50 * time.Millisecond
+	id := mustCreate(t, m)
+	defer m.TerminateSession(id)
+
+	m.checkTimeouts()                  // observes the connect
+	time.Sleep(100 * time.Millisecond) // first-connect deadline passes while connected
+
+	fake.set(0, -1) // browser closed
+	m.checkTimeouts()
+	if st, ok := sessionState(m, id); !ok || st != StateGrace {
+		t.Fatalf("expected grace after real disconnect (state=%q exists=%v)", st, ok)
+	}
+}
+
+func TestFirstConnectTimeoutDefaulted(t *testing.T) {
+	m := NewManager(Config{MaxSessions: 1, DisplayMin: 100, DisplayMax: 100,
+		WSPortMin: 10100, WSPortMax: 10100})
+	if m.cfg.FirstConnectTimeout != 5*time.Minute {
+		t.Fatalf("expected 5m default first-connect timeout, got %s", m.cfg.FirstConnectTimeout)
+	}
+}

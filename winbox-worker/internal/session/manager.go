@@ -24,11 +24,18 @@ type Config struct {
 	// GracePeriod is how long a session survives with no attached xpra
 	// client before termination (design: 30s). Zero means the default.
 	GracePeriod time.Duration
-	WinBoxPath  string
-	BindAddr    string
+	// FirstConnectTimeout is how long a session may exist before the FIRST
+	// client ever attaches (the user never opened the tab). Grace does not
+	// apply until a connect has been observed. Zero means the default.
+	FirstConnectTimeout time.Duration
+	WinBoxPath          string
+	BindAddr            string
 }
 
-const defaultGracePeriod = 30 * time.Second
+const (
+	defaultGracePeriod         = 30 * time.Second
+	defaultFirstConnectTimeout = 5 * time.Minute
+)
 
 type Manager struct {
 	mu       sync.Mutex
@@ -47,6 +54,9 @@ type Manager struct {
 func NewManager(cfg Config) *Manager {
 	if cfg.GracePeriod <= 0 {
 		cfg.GracePeriod = defaultGracePeriod
+	}
+	if cfg.FirstConnectTimeout <= 0 {
+		cfg.FirstConnectTimeout = defaultFirstConnectTimeout
 	}
 	return &Manager{
 		sessions:    make(map[string]*Session),
@@ -461,6 +471,7 @@ func (m *Manager) checkTimeouts() {
 		display := sess.Display
 		proc := sess.proc
 		graceStartedAt := sess.graceStartedAt
+		everConnected := sess.everConnected
 		sess.mu.Unlock()
 
 		if state != StateActive && state != StateGrace {
@@ -491,6 +502,18 @@ func (m *Manager) checkTimeouts() {
 			continue
 
 		case st.Clients == 0:
+			if !everConnected {
+				// Nobody has EVER attached: the user simply has not opened
+				// the tab yet. Grace means "the client went away" and does
+				// not apply; instead the session gets FirstConnectTimeout
+				// from creation before it is reclaimed.
+				if now.Sub(createdAt) > m.cfg.FirstConnectTimeout {
+					slog.Info("no client ever connected", "id", id,
+						"timeout", m.cfg.FirstConnectTimeout.String())
+					m.terminateSession(id, "never_connected")
+				}
+				continue
+			}
 			// Disconnected. client.idle_time vanishes in this state, so
 			// clients= is the only reliable signal (verified on xpra 3.1.5).
 			if state == StateActive {
@@ -502,6 +525,9 @@ func (m *Manager) checkTimeouts() {
 			}
 
 		default: // clients attached
+			sess.mu.Lock()
+			sess.everConnected = true
+			sess.mu.Unlock()
 			if state == StateGrace {
 				m.cancelGrace(id, sess)
 			}

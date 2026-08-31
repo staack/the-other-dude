@@ -45,8 +45,12 @@ func main() {
 		IdleTimeout: envInt("IDLE_TIMEOUT_SECONDS", 600),
 		MaxLifetime: envInt("MAX_LIFETIME_SECONDS", 7200),
 		GracePeriod: time.Duration(envInt("DISCONNECT_GRACE_SECONDS", 30)) * time.Second,
-		WinBoxPath:  envStr("WINBOX_PATH", "/opt/winbox/WinBox"),
-		BindAddr:    envStr("BIND_ADDR", "0.0.0.0"),
+		// How long a session may wait for its FIRST client before being
+		// reclaimed (the user never opened the tab). Distinct from the
+		// disconnect grace above, which only applies after a client was seen.
+		FirstConnectTimeout: time.Duration(envInt("FIRST_CONNECT_TIMEOUT_SECONDS", 300)) * time.Second,
+		WinBoxPath:          envStr("WINBOX_PATH", "/opt/winbox/WinBox"),
+		BindAddr:            envStr("BIND_ADDR", "0.0.0.0"),
 	}
 
 	mgr := session.NewManager(cfg)
