@@ -89,9 +89,7 @@ def normalize_private_key(private_key: str, passphrase: str | None) -> tuple[str
         raise SSHKeyError("Could not load the private key.") from None
 
     try:
-        normalized = key.private_bytes(
-            Encoding.PEM, PrivateFormat.OpenSSH, NoEncryption()
-        ).decode()
+        normalized = key.private_bytes(Encoding.PEM, PrivateFormat.OpenSSH, NoEncryption()).decode()
     except Exception:
         raise SSHKeyError("Unsupported private key type.") from None
 
