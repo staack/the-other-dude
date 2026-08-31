@@ -8,7 +8,7 @@
  * Step 5: Import & Verify (bulk-add, then check connectivity)
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import {
@@ -32,6 +32,11 @@ import {
   type SubnetScanResult,
   type DeviceResponse,
 } from '@/lib/api'
+import {
+  pollVerifyStatuses,
+  VERIFY_TIMEOUT_MS,
+  type VerifyStatus,
+} from './adoptionVerify'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -60,8 +65,6 @@ interface PerDeviceCreds {
   username: string
   password: string
 }
-
-type VerifyStatus = 'pending' | 'checking' | 'online' | 'unreachable'
 
 // ---------------------------------------------------------------------------
 // Step Indicator
@@ -852,6 +855,22 @@ function ImportVerifyStep({
   const [isImported, setIsImported] = useState(importedDevices.length > 0)
   const queryClient = useQueryClient()
 
+  const stillWaiting = importedDevices.some(
+    (d) => (verifyStatuses[d.id] ?? 'pending') === 'waiting',
+  )
+  const anyTimedOut = importedDevices.some(
+    (d) => verifyStatuses[d.id] === 'timeout',
+  )
+
+  // Lets the verify poll stop if the user leaves before it finishes.
+  const verifySignal = useRef({ cancelled: false })
+  useEffect(() => {
+    const signal = verifySignal.current
+    return () => {
+      signal.cancelled = true
+    }
+  }, [])
+
   const runImport = useCallback(async () => {
     setIsImporting(true)
     try {
@@ -898,35 +917,22 @@ function ImportVerifyStep({
         }
       }
 
-      // Set initial verify statuses
-      const initialStatuses: Record<string, VerifyStatus> = {}
-      for (const dev of result.added) {
-        initialStatuses[dev.id] = 'checking'
-      }
-      setVerifyStatuses(initialStatuses)
       setIsImported(true)
 
-      // Wait 5s then check connectivity
-      setTimeout(async () => {
-        try {
-          const refreshed = await devicesApi.list(tenantId, {
-            page_size: 100,
-          })
-          const statusMap: Record<string, VerifyStatus> = {}
-          for (const dev of result.added) {
-            const found = refreshed.items.find((d) => d.id === dev.id)
-            statusMap[dev.id] =
-              found?.status === 'online' ? 'online' : 'unreachable'
-          }
-          setVerifyStatuses(statusMap)
-        } catch {
-          const failMap: Record<string, VerifyStatus> = {}
-          for (const dev of result.added) {
-            failMap[dev.id] = 'unreachable'
-          }
-          setVerifyStatuses(failMap)
-        }
-      }, 5000)
+      // The poller assigns a real status on its own interval (60s by default,
+      // 120s in the dev compose), so poll until it reports rather than
+      // declaring everything unreachable after one short delay.
+      void pollVerifyStatuses({
+        deviceIds: result.added.map((d) => d.id),
+        fetchStatuses: async () => {
+          const refreshed = await devicesApi.list(tenantId, { page_size: 100 })
+          return Object.fromEntries(
+            refreshed.items.map((d) => [d.id, d.status]),
+          )
+        },
+        onUpdate: setVerifyStatuses,
+        signal: verifySignal.current,
+      })
 
       void queryClient.invalidateQueries({
         queryKey: ['devices', tenantId],
@@ -965,7 +971,9 @@ function ImportVerifyStep({
         <p className="text-xs text-text-muted mt-0.5">
           {!isImported
             ? `Ready to import ${selectedResults.length} device${selectedResults.length !== 1 ? 's' : ''}`
-            : 'Import complete -- verifying connectivity'}
+            : stillWaiting
+              ? 'Import complete -- waiting for the poller to report connectivity'
+              : 'Import complete'}
         </p>
       </div>
 
@@ -1039,25 +1047,69 @@ function ImportVerifyStep({
                         <td className="px-3 py-1.5 text-xs font-mono text-text-secondary">
                           {d.ip_address}
                         </td>
-                        <td className="px-3 py-1.5 text-center">
-                          {vs === 'checking' && (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-accent mx-auto" />
-                          )}
-                          {vs === 'online' && (
-                            <CheckCircle className="h-3.5 w-3.5 text-success mx-auto" />
-                          )}
-                          {vs === 'unreachable' && (
-                            <XCircle className="h-3.5 w-3.5 text-error mx-auto" />
-                          )}
-                          {vs === 'pending' && (
-                            <div className="w-2 h-2 rounded-full bg-border mx-auto" />
-                          )}
+                        <td className="px-3 py-1.5">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {vs === 'waiting' && (
+                              <>
+                                <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
+                                <span className="text-[10px] text-text-muted">
+                                  Waiting for first poll
+                                </span>
+                              </>
+                            )}
+                            {vs === 'online' && (
+                              <>
+                                <Wifi className="h-3.5 w-3.5 text-success" />
+                                <span className="text-[10px] text-success">
+                                  Online
+                                </span>
+                              </>
+                            )}
+                            {vs === 'unreachable' && (
+                              <>
+                                <WifiOff className="h-3.5 w-3.5 text-error" />
+                                <span className="text-[10px] text-error">
+                                  Unreachable
+                                </span>
+                              </>
+                            )}
+                            {vs === 'timeout' && (
+                              <>
+                                <div className="w-2 h-2 rounded-full bg-warning" />
+                                <span className="text-[10px] text-text-muted">
+                                  Not polled yet
+                                </span>
+                              </>
+                            )}
+                            {vs === 'pending' && (
+                              <div className="w-2 h-2 rounded-full bg-border" />
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {stillWaiting && (
+            <p className="text-[10px] text-text-muted">
+              Devices are adopted and saved. Connectivity is reported by the
+              poller on its own schedule, so this can take up to{' '}
+              {Math.round(VERIFY_TIMEOUT_MS / 1000)}s -- you can leave this page
+              at any time.
+            </p>
+          )}
+
+          {anyTimedOut && (
+            <div className="rounded-md bg-warning/10 border border-warning/50 p-3">
+              <p className="text-xs text-text-secondary">
+                The poller has not reported on every device yet. They are
+                adopted and saved -- this is not a failure. Their status will
+                appear on the devices page once the next poll runs.
+              </p>
             </div>
           )}
 
@@ -1070,7 +1122,9 @@ function ImportVerifyStep({
               </p>
               {failedImports.map((f) => (
                 <p key={f.ip_address} className="text-[10px] text-error/80">
-                  {f.ip_address}: {f.error}
+                  {f.ip_address}:{' '}
+                  {f.error?.trim() ||
+                    'Import failed with no reason given -- check the API logs.'}
                 </p>
               ))}
             </div>
