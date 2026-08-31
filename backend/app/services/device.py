@@ -198,6 +198,9 @@ async def create_device(
         device_type=data.device_type,
         api_port=data.api_port,
         api_ssl_port=data.api_ssl_port,
+        # Without this the caller's choice is discarded and every device falls
+        # to the column default "auto", which never uses api_port at all.
+        tls_mode=data.tls_mode or "auto",
         encrypted_credentials_transit=transit_ciphertext,
         # SNMP fields
         snmp_port=data.snmp_port if is_snmp else 161,

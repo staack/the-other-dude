@@ -66,6 +66,10 @@ interface PerDeviceCreds {
   password: string
 }
 
+/** RouterOS API ports. Only tls_mode='plain' ever connects on the plain one. */
+const PLAIN_API_PORT = 8728
+const TLS_API_PORT = 8729
+
 // ---------------------------------------------------------------------------
 // Step Indicator
 // ---------------------------------------------------------------------------
@@ -145,7 +149,7 @@ export function AdoptionWizard({ tenantId }: AdoptionWizardProps) {
   const [sharedUsername, setSharedUsername] = useState('admin')
   const [sharedPassword, setSharedPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [port, setPort] = useState<number>(8729)
+  const [port, setPort] = useState<number>(TLS_API_PORT)
   const [perDeviceCreds, setPerDeviceCreds] = useState<
     Record<string, PerDeviceCreds>
   >({})
@@ -363,10 +367,20 @@ export function AdoptionWizard({ tenantId }: AdoptionWizardProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="8729">8729 (TLS - default)</SelectItem>
-                <SelectItem value="8728">8728 (Plain)</SelectItem>
+                <SelectItem value={String(TLS_API_PORT)}>
+                  {TLS_API_PORT} (TLS - default)
+                </SelectItem>
+                <SelectItem value={String(PLAIN_API_PORT)}>
+                  {PLAIN_API_PORT} (Plain)
+                </SelectItem>
               </SelectContent>
             </Select>
+            {port === PLAIN_API_PORT && (
+              <p className="text-[10px] text-warning">
+                Plain mode sends the API password unencrypted. Only use it for
+                devices that cannot serve the TLS API on {TLS_API_PORT}.
+              </p>
+            )}
           </div>
 
           {/* Navigation */}
@@ -879,8 +893,10 @@ function ImportVerifyStep({
         return {
           ip_address: d.ip_address,
           hostname: d.hostname ?? d.ip_address,
-          api_ssl_port: port === 8729 ? 8729 : undefined,
-          api_port: port === 8728 ? 8728 : undefined,
+          // Always send both ports. Omitting one used to drop it from the JSON
+          // and let the backend default silently put it back.
+          api_port: PLAIN_API_PORT,
+          api_ssl_port: TLS_API_PORT,
           username:
             credMode === 'per-device' ? perDev?.username : undefined,
           password:
@@ -894,6 +910,9 @@ function ImportVerifyStep({
           credMode === 'shared' ? sharedUsername : undefined,
         shared_password:
           credMode === 'shared' ? sharedPassword : undefined,
+        // The port choice only takes effect through tls_mode: "auto" reaches
+        // the device over TLS on api_ssl_port and never falls back to plain.
+        tls_mode: port === PLAIN_API_PORT ? 'plain' : 'auto',
       })
 
       setImportedDevices(result.added)
@@ -995,7 +1014,7 @@ function ImportVerifyStep({
           <p className="text-xs">
             <span className="text-text-muted">Port:</span>{' '}
             <span className="font-medium">
-              {port} ({port === 8729 ? 'TLS' : 'Plain'})
+              {port} ({port === PLAIN_API_PORT ? 'Plain' : 'TLS'})
             </span>
           </p>
           {selectedGroupIds.length > 0 && (

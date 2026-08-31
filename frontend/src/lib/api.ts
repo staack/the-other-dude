@@ -442,6 +442,9 @@ export interface SubnetScanResponse {
   total_discovered: number
 }
 
+/** How the poller may connect. Only 'plain' ever uses api_port. */
+export type TlsMode = 'auto' | 'insecure' | 'plain' | 'portal_ca'
+
 export interface BulkDeviceAdd {
   ip_address: string
   hostname?: string
@@ -449,12 +452,14 @@ export interface BulkDeviceAdd {
   api_ssl_port?: number
   username?: string
   password?: string
+  tls_mode?: TlsMode
 }
 
 export interface BulkAddRequest {
   devices: BulkDeviceAdd[]
   shared_username?: string
   shared_password?: string
+  tls_mode?: TlsMode
 }
 
 export interface BulkAddResult {

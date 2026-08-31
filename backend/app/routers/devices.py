@@ -364,6 +364,7 @@ async def bulk_add_devices(
             api_ssl_port=dev_data.api_ssl_port,
             username=username,
             password=password,
+            tls_mode=data.tls_mode_for(dev_data),
         )
 
         try:
