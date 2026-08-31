@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>What's in 9.10.0 — The Other Dude Blog</title>
-  <meta name="description" content="A changelog. Mostly things that didn't work the way the documentation said they did: config push rollback, WinBox session cleanup, device onboarding, and a credential leak in validation errors.">
+  <meta name="description" content="A changelog. Mostly things that didn't work the way the documentation said they did: config push rollback, WinBox session cleanup, device onboarding, and a credential leak in validation errors. Plus one known issue that is not fixed yet.">
   <meta name="keywords" content="MikroTik, fleet management, RouterOS, release notes, changelog, The Other Dude">
   <meta name="author" content="The Other Dude">
   <meta name="robots" content="index, follow">
@@ -15,7 +15,7 @@
   <!-- Open Graph -->
   <meta property="og:type" content="article">
   <meta property="og:title" content="What's in 9.10.0 — The Other Dude">
-  <meta property="og:description" content="A changelog. Mostly things that didn't work the way the documentation said they did: config push rollback, WinBox session cleanup, device onboarding, and a credential leak in validation errors.">
+  <meta property="og:description" content="A changelog. Mostly things that didn't work the way the documentation said they did: config push rollback, WinBox session cleanup, device onboarding, and a credential leak in validation errors. Plus one known issue that is not fixed yet.">
   <meta property="og:url" content="https://theotherdude.net/blog/v9-10-0.html">
   <meta property="og:site_name" content="The Other Dude">
   <meta property="article:published_time" content="2026-08-30">
@@ -26,7 +26,7 @@
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": "What's in 9.10.0",
-    "description": "A changelog. Mostly things that didn't work the way the documentation said they did: config push rollback, WinBox session cleanup, device onboarding, and a credential leak in validation errors.",
+    "description": "A changelog. Mostly things that didn't work the way the documentation said they did: config push rollback, WinBox session cleanup, device onboarding, and a credential leak in validation errors. Plus one known issue that is not fixed yet.",
     "datePublished": "2026-08-30",
     "author": {
       "@type": "Organization",
@@ -106,6 +106,31 @@
     .blog-post a:hover {
       color: var(--text-primary);
     }
+    .blog-post pre {
+      background: #f0ede4;
+      border: 1px solid rgba(40, 36, 28, 0.12);
+      border-radius: 4px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #1a1810;
+      margin-bottom: 20px;
+    }
+    .blog-post :not(pre) > code {
+      background: rgba(40, 36, 28, 0.06);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    .blog-post ul {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin: 0 0 20px 0;
+      padding-left: 22px;
+    }
+    .blog-post li { margin-bottom: 8px; }
     .blog-post .back-link {
       display: inline-block;
       margin-bottom: 32px;
@@ -246,6 +271,40 @@
       <p>A pass over the website and docs to bring the claims into line with the code. The config push description was wrong in the ways above. "Orphaned containers" was the wrong explanation for the WinBox leak &mdash; there are no per-session containers. Several pages described the product as open source when the licence is BSL 1.1, which is source-available; it converts to Apache 2.0 in March 2030. And the structured data was advertising the product as free with no mention of the commercial licence.</p>
 
       <p>None of that changed what the software does. It changed what the site claims it does, which had drifted further than I'd like.</p>
+
+      <h2>Known issues</h2>
+
+      <p>One defect found while working on this release that is <strong>not</strong> fixed in it. A proper fix &mdash; a pin-reset action in the product &mdash; is scheduled for the next release.</p>
+
+      <p><strong>A stale SSH host key permanently blocks config backup for that device.</strong> TOD pins a device's SSH host key the first time it connects, and nothing in the product can clear that pin afterwards. There's no endpoint and no UI for it, and the one piece of code that writes the column only runs when no fingerprint is stored yet &mdash; so it will never overwrite a stale one.</p>
+
+      <p>That matters if a device's host key legitimately changed: RouterOS reinstalled, hardware swapped, keys regenerated, or an IP now answered by a different device. Backup for that device stops and never resumes. It doesn't self-heal, and restarting the poller doesn't help &mdash; the block is held in memory, so a restart clears it and the next attempt immediately re-blocks.</p>
+
+      <p><strong>How to spot it.</strong> Config backup for one device goes quiet while everything else keeps working. There's a metric label that means this and nothing else:</p>
+
+      <pre>mikrotik_config_backup_total{status="skipped_hostkey_blocked"}</pre>
+
+      <p>Any non-zero rate on that label is this bug. If you alert on one thing from this post, alert on that.</p>
+
+      <p>To see what the device is presenting now:</p>
+
+      <pre>ssh-keyscan &lt;ip&gt; | ssh-keygen -lf -</pre>
+
+      <p>That prints the same <code>SHA256:</code> format TOD stores, so it's directly comparable to the value in the database.</p>
+
+      <p><strong>Before you clear anything, read this.</strong> A host key mismatch is also exactly what a man-in-the-middle attack looks like. Clearing the pin tells TOD to trust whatever the device presents next. Confirm out-of-band that the device really was reinstalled or replaced. If you can't account for why the key changed, investigate that instead &mdash; the blocked backup is the system working.</p>
+
+      <p><strong>Recovery is manual SQL.</strong> There's no nicer way to say it:</p>
+
+      <pre>UPDATE devices
+SET ssh_host_key_fingerprint   = NULL,
+    ssh_host_key_first_seen    = NULL,
+    ssh_host_key_last_verified = NULL
+WHERE id = '&lt;device-uuid&gt;';</pre>
+
+      <p>Run it as the <code>postgres</code> superuser. The application role has no update privilege on those columns at all &mdash; only the poller does &mdash; and <code>devices</code> carries <code>FORCE ROW LEVEL SECURITY</code>, so a tenant-scoped connection won't do it either. Match on <code>id</code>, not <code>hostname</code>: hostnames aren't unique across tenants and you can silently clear the wrong device's pin.</p>
+
+      <p>Leave the fingerprint <code>NULL</code> rather than pasting in the new value. The poller re-pins it automatically on the next cycle and backups resume with no restart. A typo in a hand-written fingerprint pins a value no device will ever present, which reproduces this same fault in a form that's harder to recognise.</p>
 
       <p style="margin-top: 48px; font-size: 0.9rem; color: var(--text-muted);">The Other Dude is <a href="../index.html">source-available MikroTik fleet management</a> &mdash; <a href="../docs.html">documentation</a> &middot; <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a></p>
     </article>
