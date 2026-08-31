@@ -57,14 +57,20 @@ class TestNormalizePrivateKey:
         assert fingerprint.startswith("SHA256:")
 
     def test_passphrase_is_stripped_from_the_stored_key(self):
-        """The stored key must be usable by the poller without a passphrase."""
-        pem = _ed25519_pem(passphrase=b"hunter2")
-        normalized, _ = normalize_private_key(pem, "hunter2")
+        """The stored key must be usable by the poller without a passphrase.
 
-        assert "ENCRYPTED" not in normalized
-        # Prove it: the normalized key loads with no password at all.
+        Asserted by loading it with password=None, not by looking for an
+        "ENCRYPTED" marker: OpenSSH-format keys keep the same PEM header
+        whether or not they are encrypted, so that check would be vacuous.
+        """
         from cryptography.hazmat.primitives.serialization import load_ssh_private_key
 
+        pem = _ed25519_pem(passphrase=b"hunter2")
+        # The input really is encrypted.
+        with pytest.raises(TypeError):
+            load_ssh_private_key(pem.encode(), password=None)
+
+        normalized, _ = normalize_private_key(pem, "hunter2")
         load_ssh_private_key(normalized.encode(), password=None)
 
     def test_passphrase_protected_key_without_passphrase_is_rejected(self):

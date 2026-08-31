@@ -141,7 +141,11 @@ class TestBuildCredentialJSON:
             key_passphrase="hunter2",
         )
         cred_json, _ = _build_credential_json(data)
-        assert "ENCRYPTED" not in cred_json["private_key"]
+        # Load with no password: OpenSSH keys carry no "ENCRYPTED" marker, so
+        # only an actual load proves the passphrase was stripped.
+        from cryptography.hazmat.primitives.serialization import load_ssh_private_key
+
+        load_ssh_private_key(cred_json["private_key"].encode(), password=None)
 
     def test_optional_password_is_carried_as_a_fallback(self):
         data = CredentialProfileCreate(

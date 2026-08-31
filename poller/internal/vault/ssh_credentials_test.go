@@ -1,14 +1,18 @@
 package vault
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/staack/the-other-dude/poller/internal/device"
 )
 
 // encryptLegacy produces an AES-256-GCM ciphertext in the layout DecryptRaw
@@ -106,4 +110,39 @@ func TestGetCredentials_ResolvesCredentialProfile(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "svc", username)
 	assert.Equal(t, "profilepass", password)
+}
+
+// TestHardware_EnvelopeFromBackendAuthenticates closes the loop across the two
+// languages: the backend writes a credential envelope from a customer's
+// passphrase-protected key, this parser reads it, and the key authenticates to
+// a real RouterOS device. Field-name drift between the Python writer and the Go
+// reader would be invisible to either side's unit tests.
+//
+//	TOD_HW_ENVELOPE=/tmp/sshkeyauth/envelope.json TOD_HW_SSH_HOST=10.101.0.84 \
+//	go test ./internal/vault/ -run TestHardware_Envelope -v
+func TestHardware_EnvelopeFromBackendAuthenticates(t *testing.T) {
+	envelopePath := os.Getenv("TOD_HW_ENVELOPE")
+	host := os.Getenv("TOD_HW_SSH_HOST")
+	if envelopePath == "" || host == "" {
+		t.Skip("TOD_HW_ENVELOPE / TOD_HW_SSH_HOST not set; skipping hardware test")
+	}
+
+	raw, err := os.ReadFile(envelopePath)
+	require.NoError(t, err)
+
+	creds, err := ParseSSHCredentials(raw)
+	require.NoError(t, err)
+	require.NotEmpty(t, creds.PrivateKey, "backend envelope must carry a private key")
+	t.Logf("parsed backend envelope: username=%q private_key=%d bytes password_empty=%v",
+		creds.Username, len(creds.PrivateKey), creds.Password == "")
+
+	result, fp, err := device.RunCommand(
+		context.Background(), host, 22,
+		creds.Username, creds.Password, creds.PrivateKey,
+		15*time.Second, "", "/system/identity/print",
+	)
+	require.NoError(t, err)
+	t.Logf("authenticated to %s with the backend-written key: identity=%q host_key=%s",
+		host, result.Stdout, fp)
+	assert.Contains(t, result.Stdout, "name:")
 }
