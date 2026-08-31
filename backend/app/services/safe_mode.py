@@ -17,6 +17,17 @@ driven by asyncssh — the same library used everywhere else in this service:
   * A second Ctrl-X prints "Releasing Safe Mode... Success!" and KEEPS the
     changes.
 
+  * Both ``conn.abort()`` and a graceful ``conn.close()`` revert an
+    uncommitted session, so the guarantee does not depend on the teardown
+    being ungraceful. ``abort()`` is used anyway because it does not wait
+    for an exchange that a severed management path cannot complete.
+  * ``conn.abort()`` does NOT make the device generate a supout dump —
+    verified over three consecutive abort cycles. Killing the local SSH
+    *client process* mid-session does: that produced a 722 KiB
+    ``autosupout.rif`` and a "service malfunction" log entry on a device
+    with ~95 MiB free. Tear the connection down in-protocol; never reach
+    for a process kill.
+
   * The undo buffer holds 100 actions. A 100-action change set reverted
     correctly; 128, 140 and 150 were all *kept* on session loss while the
     prompt still displayed ``<SAFE>`` and nothing was written to the log.
