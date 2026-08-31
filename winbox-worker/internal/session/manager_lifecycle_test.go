@@ -55,9 +55,10 @@ func newTestManager(t *testing.T, grace time.Duration, childScript string, fake 
 	m.startXpra = func(cfg XpraConfig) (*XpraProc, error) {
 		cmd := exec.Command("/bin/sh", "-c", childScript)
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-		p, err := startReaped(cmd, nil)
+		p, err := startPending(cmd, nil)
 		if err == nil {
-			startGroupAnchor(p) // mirror production StartXpra
+			startGroupAnchor(p) // mirror production StartXpra ordering
+			p.beginReaping(cmd, nil)
 			if pids != nil {
 				pids <- p.Pid
 			}
@@ -544,4 +545,40 @@ func TestTerminateSessionSweepsXvfbDisplay(t *testing.T) {
 	default:
 		t.Fatal("terminateSession did not sweep the session's Xvfb display")
 	}
+}
+
+// The anchor must be armed BEFORE the reaper goroutine starts. While the
+// leader is un-Waited its pid cannot be recycled — even if it is already dead
+// (zombie) — so setpgid into its group is provably joining OUR group. Arming
+// after reaping began had a window where a recycled pid could let the anchor
+// join a stranger's process group and the crash path SIGKILL it.
+func TestAnchorArmsAgainstDeadUnreapedLeader(t *testing.T) {
+	cmd := exec.Command("/bin/sh", "-c", "exit 0")
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	p, err := startPending(cmd, nil)
+	if err != nil {
+		t.Fatalf("startPending: %v", err)
+	}
+
+	// Let the leader die. It is NOT reaped yet (beginReaping not called), so
+	// the pid — and therefore the pgid — is still pinned by the zombie.
+	time.Sleep(300 * time.Millisecond)
+
+	startGroupAnchor(p)
+	if p.anchor == nil {
+		t.Fatal("anchor failed to arm against an un-Waited dead leader (pgid should still be pinned)")
+	}
+	anchorPid := p.anchor.Pid
+
+	p.beginReaping(cmd, nil)
+	<-p.Done()
+
+	// Crash path: leader reaped, anchor alive -> group kill must run and the
+	// anchor must not outlive it.
+	if err := KillXpraSession(p); err != nil {
+		t.Fatalf("KillXpraSession: %v", err)
+	}
+	waitFor(t, 5*time.Second, "anchor to exit and be reaped", func() bool {
+		return p.anchor.Exited() && errors.Is(syscall.Kill(anchorPid, 0), syscall.ESRCH)
+	})
 }

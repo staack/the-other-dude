@@ -71,17 +71,25 @@ func (p *XpraProc) ExitErr() error {
 	return p.waitErr
 }
 
-// startReaped starts cmd and spawns the single reaper goroutine that owns
-// cmd.Wait. logFile (may be nil) is closed once the child has exited so the
-// parent does not leak one fd per session.
-func startReaped(cmd *exec.Cmd, logFile *os.File) (*XpraProc, error) {
+// startPending starts cmd but does NOT begin reaping it: until the caller
+// invokes beginReaping, the child — alive or already dead — stays un-Waited,
+// which pins its pid (and thus its pgid) against recycling. That window is
+// what lets startGroupAnchor join the leader's group provably, not just
+// probably: setpgid against a reaped pid could hit a recycled group.
+func startPending(cmd *exec.Cmd, logFile *os.File) (*XpraProc, error) {
 	if err := cmd.Start(); err != nil {
 		if logFile != nil {
 			logFile.Close()
 		}
 		return nil, err
 	}
-	p := &XpraProc{Pid: cmd.Process.Pid, done: make(chan struct{})}
+	return &XpraProc{Pid: cmd.Process.Pid, done: make(chan struct{})}, nil
+}
+
+// beginReaping spawns the single reaper goroutine that owns cmd.Wait.
+// logFile (may be nil) is closed once the child has exited so the parent
+// does not leak one fd per session.
+func (p *XpraProc) beginReaping(cmd *exec.Cmd, logFile *os.File) {
 	go func() {
 		p.waitErr = cmd.Wait()
 		if logFile != nil {
@@ -89,6 +97,16 @@ func startReaped(cmd *exec.Cmd, logFile *os.File) (*XpraProc, error) {
 		}
 		close(p.done)
 	}()
+}
+
+// startReaped is startPending + beginReaping for children that need no
+// anchor (the anchor itself, one-shot helpers).
+func startReaped(cmd *exec.Cmd, logFile *os.File) (*XpraProc, error) {
+	p, err := startPending(cmd, logFile)
+	if err != nil {
+		return nil, err
+	}
+	p.beginReaping(cmd, logFile)
 	return p, nil
 }
 
@@ -250,11 +268,17 @@ func StartXpra(cfg XpraConfig) (*XpraProc, error) {
 	)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	proc, err := startReaped(cmd, f)
+	proc, err := startPending(cmd, f)
 	if err != nil {
 		return nil, fmt.Errorf("xpra start failed: %w", err)
 	}
+	// Arm the anchor BEFORE the reaper starts: the un-Waited leader (alive
+	// or zombie) pins its own pid, so the pgid startGroupAnchor joins is
+	// provably ours. With reaping already underway there is a window where
+	// the leader is collected, its pid recycled by a new group leader in our
+	// session, and setpgid quietly anchors a stranger's group.
 	startGroupAnchor(proc)
+	proc.beginReaping(cmd, f)
 	return proc, nil
 }
 
