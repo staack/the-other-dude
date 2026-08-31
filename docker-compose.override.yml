@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: infrastructure/docker/Dockerfile.api
     container_name: tod_api
-    restart: on-failure
+    restart: unless-stopped
     ports:
       - "8001:8000"
     env_file: .env
@@ -72,7 +72,7 @@ services:
       context: ./poller
       dockerfile: ./Dockerfile
     container_name: tod_poller
-    restart: on-failure
+    restart: unless-stopped
     env_file: .env
     environment:
       ENVIRONMENT: dev
@@ -130,13 +130,14 @@ services:
       resources:
         limits:
           memory: 512M
-    restart: on-failure
+    restart: unless-stopped
 
   frontend:
     build:
       context: .
       dockerfile: infrastructure/docker/Dockerfile.frontend
     container_name: tod_frontend
+    restart: unless-stopped
     ports:
       - "3000:80"
     volumes:
