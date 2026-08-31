@@ -338,6 +338,7 @@ echo
 log "Bring the rest of the stack up with:"
 log "  docker compose ${COMPOSE_FILES} up -d"
 echo
-warn "VPN peer configuration is regenerated from the database, not restored."
-warn "It is rewritten the next time a tenant's VPN settings are saved; until"
-warn "then WireGuard is serving the config it had before this restore."
+log "WireGuard's wg0.conf is derived state and is not in the archive. The API"
+log "regenerates it from the database on startup, so bringing the stack up"
+log "above completes the restore. On a release before that behaviour existed,"
+log "save any tenant's VPN settings once to force a rewrite."

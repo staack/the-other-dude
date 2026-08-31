@@ -362,11 +362,13 @@ The archive contains your unseal key and credential encryption key in
 cleartext. Anyone holding it can decrypt every device credential and config
 backup in it. Store it encrypted and off this host.
 
-Two things a restore does not bring back:
+Two notes on what is not in the archive:
 
-- **WireGuard peer configuration** is regenerated from the database rather than
-  restored, and is only rewritten when a tenant's VPN settings are next saved.
-  Until then WireGuard serves whatever config was on the host.
+- **WireGuard's `wg0.conf`** is derived state, not backed up. The API
+  regenerates it from the database on every startup, so bringing the stack up
+  after a restore completes it. Before v10 that regeneration only happened when
+  a tenant's VPN settings were saved, so a restore onto a fresh host produced a
+  correct device inventory and a dead VPN with nothing to explain why.
 - **Redis contents** are not backed up at all. See below for what that costs.
 
 ### Data Loss Failure Modes
