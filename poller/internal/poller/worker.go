@@ -33,6 +33,37 @@ func SetRedisClient(c *redis.Client) {
 	redisClientForFirmware = c
 }
 
+// gapRecorder records the intervals during which collected data could not be
+// delivered. Set by main.go before polling starts; nil in tests, which the
+// recorder tolerates.
+var gapRecorder *store.GapRecorder
+
+// SetGapRecorder sets the recorder used to record ingest gaps.
+func SetGapRecorder(r *store.GapRecorder) {
+	gapRecorder = r
+}
+
+// notePublish records the outcome of one publish attempt.
+//
+// It replaces the bare observability counter that used to be incremented at
+// each call site. The counter alone was not enough: it is only visible if the
+// operator opted into docker-compose.observability.yml, so in a default
+// production deployment a dropped sample left no trace anywhere but a log line
+// in a rotating file. This also writes an ingest_gaps row, so the hole in the
+// data is marked in the data.
+//
+// stream doubles as the Prometheus label and keeps the values the call sites
+// already used, so existing series are unaffected.
+func notePublish(ctx context.Context, dev store.Device, stream string, pubErr error) {
+	if pubErr != nil {
+		observability.NATSPublishTotal.WithLabelValues(stream, "error").Inc()
+		gapRecorder.PublishFailed(ctx, dev.ID, dev.TenantID, stream, pubErr)
+		return
+	}
+	observability.NATSPublishTotal.WithLabelValues(stream, "success").Inc()
+	gapRecorder.PublishSucceeded(ctx, dev.ID, stream)
+}
+
 // withTimeout runs fn in a goroutine and returns its result, or a timeout error
 // if ctx expires first. This wraps RouterOS API calls that don't accept a context
 // parameter, enforcing per-command timeouts to prevent indefinite blocking.
@@ -139,12 +170,11 @@ func PollDevice(
 			Status:   "offline",
 			LastSeen: time.Now().UTC().Format(time.RFC3339),
 		}
-		if pubErr := pub.PublishStatus(ctx, offlineEvent); pubErr != nil {
-			slog.Warn("failed to publish offline event", "device_id", dev.ID, "error", pubErr)
-			observability.NATSPublishTotal.WithLabelValues("status", "error").Inc()
-		} else {
-			observability.NATSPublishTotal.WithLabelValues("status", "success").Inc()
+		offlinePubErr := pub.PublishStatus(ctx, offlineEvent)
+		if offlinePubErr != nil {
+			slog.Warn("failed to publish offline event", "device_id", dev.ID, "error", offlinePubErr)
 		}
+		notePublish(ctx, dev, "status", offlinePubErr)
 
 		// Write device status to Redis so the backup scheduler can check
 		// if a device is online before attempting a backup.
@@ -233,12 +263,12 @@ func PollDevice(
 		LastSeen:        time.Now().UTC().Format(time.RFC3339),
 	}
 
-	if pubErr := pub.PublishStatus(ctx, onlineEvent); pubErr != nil {
-		observability.NATSPublishTotal.WithLabelValues("status", "error").Inc()
+	pubErr := pub.PublishStatus(ctx, onlineEvent)
+	notePublish(ctx, dev, "status", pubErr)
+	if pubErr != nil {
 		pollStatus = "error"
 		return fmt.Errorf("publishing online event for device %s: %w", dev.ID, pubErr)
 	}
-	observability.NATSPublishTotal.WithLabelValues("status", "success").Inc()
 
 	// =========================================================================
 	// CONFIG CHANGE DETECTION
@@ -261,17 +291,16 @@ func PollDevice(
 					"old_timestamp", prev,
 					"new_timestamp", info.LastConfigChange,
 				)
-				if pubErr := pub.PublishConfigChanged(ctx, bus.ConfigChangedEvent{
-					DeviceID:    dev.ID,
-					TenantID:    dev.TenantID,
+				pubErr = pub.PublishConfigChanged(ctx, bus.ConfigChangedEvent{
+					DeviceID:     dev.ID,
+					TenantID:     dev.TenantID,
 					OldTimestamp: prev,
 					NewTimestamp: info.LastConfigChange,
-				}); pubErr != nil {
+				})
+				if pubErr != nil {
 					slog.Warn("failed to publish config.changed", "device_id", dev.ID, "error", pubErr)
-					observability.NATSPublishTotal.WithLabelValues("config_changed", "error").Inc()
-				} else {
-					observability.NATSPublishTotal.WithLabelValues("config_changed", "success").Inc()
 				}
+				notePublish(ctx, dev, "config_changed", pubErr)
 			}
 			// Update Redis with current value (24h TTL)
 			if err := redisClientForFirmware.Set(ctx, redisKey, info.LastConfigChange, 24*time.Hour).Err(); err != nil {
@@ -313,18 +342,17 @@ func PollDevice(
 	if err != nil {
 		slog.Warn("failed to collect interface metrics", "device_id", dev.ID, "error", err)
 	}
-	if pubErr := pub.PublishMetrics(ctx, bus.DeviceMetricsEvent{
+	pubErr = pub.PublishMetrics(ctx, bus.DeviceMetricsEvent{
 		DeviceID:    dev.ID,
 		TenantID:    dev.TenantID,
 		CollectedAt: collectedAt,
 		Type:        "interfaces",
 		Interfaces:  interfaces,
-	}); pubErr != nil {
+	})
+	if pubErr != nil {
 		slog.Warn("failed to publish interface metrics", "device_id", dev.ID, "error", pubErr)
-		observability.NATSPublishTotal.WithLabelValues("metrics", "error").Inc()
-	} else {
-		observability.NATSPublishTotal.WithLabelValues("metrics", "success").Inc()
 	}
+	notePublish(ctx, dev, "metrics", pubErr)
 
 	// Interface identity data for link discovery (MAC addresses, types).
 	cmdCtx, cmdCancel = context.WithTimeout(ctx, cmdTimeout)
@@ -336,17 +364,16 @@ func PollDevice(
 		slog.Warn("failed to collect interface info", "device_id", dev.ID, "error", err)
 	}
 	if len(ifaceInfo) > 0 {
-		if pubErr := pub.PublishDeviceInterfaces(ctx, bus.DeviceInterfaceEvent{
+		pubErr = pub.PublishDeviceInterfaces(ctx, bus.DeviceInterfaceEvent{
 			DeviceID:    dev.ID,
 			TenantID:    dev.TenantID,
 			CollectedAt: collectedAt,
 			Interfaces:  ifaceInfo,
-		}); pubErr != nil {
+		})
+		if pubErr != nil {
 			slog.Warn("failed to publish device interfaces", "device_id", dev.ID, "error", pubErr)
-			observability.NATSPublishTotal.WithLabelValues("interfaces_info", "error").Inc()
-		} else {
-			observability.NATSPublishTotal.WithLabelValues("interfaces_info", "success").Inc()
 		}
+		notePublish(ctx, dev, "interfaces_info", pubErr)
 	}
 
 	// System health (CPU, memory, disk, temperature).
@@ -358,18 +385,17 @@ func PollDevice(
 	if err != nil {
 		slog.Warn("failed to collect health metrics", "device_id", dev.ID, "error", err)
 	}
-	if pubErr := pub.PublishMetrics(ctx, bus.DeviceMetricsEvent{
+	pubErr = pub.PublishMetrics(ctx, bus.DeviceMetricsEvent{
 		DeviceID:    dev.ID,
 		TenantID:    dev.TenantID,
 		CollectedAt: collectedAt,
 		Type:        "health",
 		Health:      &health,
-	}); pubErr != nil {
+	})
+	if pubErr != nil {
 		slog.Warn("failed to publish health metrics", "device_id", dev.ID, "error", pubErr)
-		observability.NATSPublishTotal.WithLabelValues("metrics", "error").Inc()
-	} else {
-		observability.NATSPublishTotal.WithLabelValues("metrics", "success").Inc()
 	}
+	notePublish(ctx, dev, "metrics", pubErr)
 
 	// Wireless client stats (only publish if the device has wireless interfaces).
 	cmdCtx, cmdCancel = context.WithTimeout(ctx, cmdTimeout)
@@ -381,18 +407,17 @@ func PollDevice(
 		slog.Warn("failed to collect wireless metrics", "device_id", dev.ID, "error", err)
 	}
 	if len(wireless) > 0 {
-		if pubErr := pub.PublishMetrics(ctx, bus.DeviceMetricsEvent{
+		pubErr = pub.PublishMetrics(ctx, bus.DeviceMetricsEvent{
 			DeviceID:    dev.ID,
 			TenantID:    dev.TenantID,
 			CollectedAt: collectedAt,
 			Type:        "wireless",
 			Wireless:    wireless,
-		}); pubErr != nil {
+		})
+		if pubErr != nil {
 			slog.Warn("failed to publish wireless metrics", "device_id", dev.ID, "error", pubErr)
-			observability.NATSPublishTotal.WithLabelValues("metrics", "error").Inc()
-		} else {
-			observability.NATSPublishTotal.WithLabelValues("metrics", "success").Inc()
 		}
+		notePublish(ctx, dev, "metrics", pubErr)
 	}
 
 	// Per-client wireless registrations (dedicated stream, not DEVICE_EVENTS).
@@ -419,18 +444,17 @@ func PollDevice(
 	}
 
 	if len(registrations) > 0 || len(rfStats) > 0 {
-		if pubErr := pub.PublishWirelessRegistrations(ctx, bus.WirelessRegistrationEvent{
+		pubErr = pub.PublishWirelessRegistrations(ctx, bus.WirelessRegistrationEvent{
 			DeviceID:      dev.ID,
 			TenantID:      dev.TenantID,
 			CollectedAt:   collectedAt,
 			Registrations: registrations,
 			RFStats:       rfStats,
-		}); pubErr != nil {
+		})
+		if pubErr != nil {
 			slog.Warn("failed to publish wireless registrations", "device_id", dev.ID, "error", pubErr)
-			observability.NATSPublishTotal.WithLabelValues("wireless_registrations", "error").Inc()
-		} else {
-			observability.NATSPublishTotal.WithLabelValues("wireless_registrations", "success").Inc()
 		}
+		notePublish(ctx, dev, "wireless_registrations", pubErr)
 	}
 
 	// =========================================================================
@@ -465,11 +489,11 @@ func PollDevice(
 					Status:           fwInfo.Status,
 					Architecture:     fwInfo.Architecture,
 				}
-				if pubErr := pub.PublishFirmware(ctx, fwEvent); pubErr != nil {
+				pubErr = pub.PublishFirmware(ctx, fwEvent)
+				notePublish(ctx, dev, "firmware", pubErr)
+				if pubErr != nil {
 					slog.Warn("failed to publish firmware event", "device_id", dev.ID, "error", pubErr)
-					observability.NATSPublishTotal.WithLabelValues("firmware", "error").Inc()
 				} else {
-					observability.NATSPublishTotal.WithLabelValues("firmware", "success").Inc()
 					// Set Redis key with 24h TTL — firmware checked for today.
 					// If the check succeeded but status is "check-failed",
 					// use shorter cooldown since the device couldn't reach update servers.

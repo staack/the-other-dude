@@ -128,6 +128,30 @@ func main() {
 	poller.SetRedisClient(redisClient)
 
 	// -----------------------------------------------------------------------
+	// Initialize ingest gap recording
+	//
+	// Before this, a metric sample the poller collected but could not publish
+	// left no trace in the database -- a hole in the data that nothing marked.
+	// ReconcileStartup runs first so the window this process was NOT running is
+	// recorded before any new polling begins.
+	// -----------------------------------------------------------------------
+	heartbeatInterval := time.Duration(cfg.HeartbeatSeconds) * time.Second
+	gapRecorder := store.NewGapRecorder(store.NewPgGapWriter(deviceStore.Pool()), hostname)
+
+	if err := gapRecorder.ReconcileStartup(ctx, heartbeatInterval); err != nil {
+		// Non-fatal: failing to record a gap must not stop the poller from
+		// polling. It is logged loudly because the gap is then unrecorded.
+		slog.Error("could not reconcile poller downtime — an ingest gap may be unrecorded",
+			"error", err)
+	}
+	go gapRecorder.RunHeartbeat(ctx, heartbeatInterval)
+	poller.SetGapRecorder(gapRecorder)
+	slog.Info("ingest gap recording enabled",
+		"instance", hostname,
+		"heartbeat_interval", heartbeatInterval,
+	)
+
+	// -----------------------------------------------------------------------
 	// Initialize credential cache (OpenBao Transit + legacy fallback)
 	// -----------------------------------------------------------------------
 	var transitClient *vault.TransitClient

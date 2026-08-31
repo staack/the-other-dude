@@ -94,6 +94,12 @@ type Config struct {
 	// ConfigBackupIntervalSeconds is how often config backups are collected per device (default 6h = 21600s).
 	ConfigBackupIntervalSeconds int
 
+	// HeartbeatSeconds is how often the poller writes a liveness row to
+	// poller_heartbeats. On startup a heartbeat older than three intervals is
+	// recorded as an ingest gap, which is the only way an outage that killed the
+	// process gets into the data -- a dead process cannot record its own absence.
+	HeartbeatSeconds int
+
 	// ConfigBackupMaxConcurrent is the max number of concurrent config backup jobs.
 	ConfigBackupMaxConcurrent int
 
@@ -130,6 +136,7 @@ func Load() (*Config, error) {
 		SSHMaxPerUser:                     getEnvInt("SSH_MAX_PER_USER", 10),
 		SSHMaxPerDevice:                   getEnvInt("SSH_MAX_PER_DEVICE", 20),
 		ConfigBackupIntervalSeconds:       getEnvInt("CONFIG_BACKUP_INTERVAL", 21600),
+		HeartbeatSeconds:                  getEnvInt("POLLER_HEARTBEAT_SECONDS", 30),
 		ConfigBackupMaxConcurrent:         getEnvInt("CONFIG_BACKUP_MAX_CONCURRENT", 10),
 		ConfigBackupCommandTimeoutSeconds: getEnvInt("CONFIG_BACKUP_COMMAND_TIMEOUT", 60),
 	}
