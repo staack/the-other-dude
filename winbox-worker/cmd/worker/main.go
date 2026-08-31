@@ -15,8 +15,6 @@ import (
 	"github.com/the-other-dude/winbox-worker/internal/session"
 )
 
-// envIntSource resolves an int env var and reports where the value came from
-// (stub pending tests).
 // envIntSource resolves an int env var and reports where the value came from, so
 // startup can log what was actually applied. A set-but-unparseable value is a
 // misconfiguration, not a reason to fall back silently, so it is logged.
@@ -57,6 +55,31 @@ func envIntAliased(canonical, alias string, def int) (int, string) {
 	return def, "default"
 }
 
+// envLogLevel resolves the slog level env var (debug/info/warn/error,
+// case-insensitive). LOG_LEVEL was set by every shipped compose file and the
+// test harness but never read — the third ignored knob after IDLE_TIMEOUT
+// and MAX_LIFETIME. As with envIntSource, a set-but-unrecognised value is a
+// misconfiguration and is logged rather than silently defaulted.
+func envLogLevel(key string, def slog.Level) (slog.Level, string) {
+	v := os.Getenv(key)
+	if v == "" {
+		return def, "default"
+	}
+	switch strings.ToLower(strings.TrimSpace(v)) {
+	case "debug":
+		return slog.LevelDebug, key
+	case "info":
+		return slog.LevelInfo, key
+	case "warn":
+		return slog.LevelWarn, key
+	case "error":
+		return slog.LevelError, key
+	}
+	slog.Warn("ignoring unrecognised log level, using default",
+		"var", key, "value", v, "default", def.String())
+	return def, "default"
+}
+
 func envStr(key, def string) string {
 	if v := os.Getenv(key); v != "" {
 		return v
@@ -65,10 +88,16 @@ func envStr(key, def string) string {
 }
 
 func main() {
+	// Start at Info so the effective-config line below is always emitted —
+	// even under LOG_LEVEL=error — then apply the configured level. That
+	// line is what makes an ignored knob self-revealing; it must not be
+	// suppressible by the very knob it reports on.
+	logLevelVar := new(slog.LevelVar)
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: logLevelVar,
 	})))
 
+	logLevel, logLevelSource := envLogLevel("LOG_LEVEL", slog.LevelInfo)
 	idleTimeout, idleSource := envIntAliased("IDLE_TIMEOUT_SECONDS", "IDLE_TIMEOUT", 600)
 	maxLifetime, lifetimeSource := envIntAliased("MAX_LIFETIME_SECONDS", "MAX_LIFETIME", 7200)
 	maxSessions, sessionsSource := envIntSource("MAX_CONCURRENT_SESSIONS", 10)
@@ -92,15 +121,24 @@ func main() {
 		BindAddr:            envStr("BIND_ADDR", "0.0.0.0"),
 	}
 
+	listenAddr := envStr("LISTEN_ADDR", ":9090")
+
 	// Log the effective values and where each came from, so a knob that is not
-	// taking effect is visible in the logs instead of silently ignored.
+	// taking effect is visible in the logs instead of silently ignored. Every
+	// env var the worker consumes appears here; a knob missing from this line
+	// is a knob that can silently die again.
 	slog.Info("worker config",
 		"idle_timeout_seconds", cfg.IdleTimeout, "idle_timeout_source", idleSource,
 		"max_lifetime_seconds", cfg.MaxLifetime, "max_lifetime_source", lifetimeSource,
 		"max_concurrent_sessions", cfg.MaxSessions, "max_sessions_source", sessionsSource,
 		"disconnect_grace_seconds", graceSeconds, "disconnect_grace_source", graceSource,
 		"first_connect_timeout_seconds", firstConnectSeconds, "first_connect_timeout_source", firstConnectSource,
+		"log_level", logLevel.String(), "log_level_source", logLevelSource,
+		"winbox_path", cfg.WinBoxPath,
+		"bind_addr", cfg.BindAddr,
+		"listen_addr", listenAddr,
 	)
+	logLevelVar.Set(logLevel)
 
 	mgr := session.NewManager(cfg)
 	mgr.CleanupOrphans()
@@ -189,7 +227,6 @@ func main() {
 
 	handler := provenanceMiddleware(mux)
 
-	listenAddr := envStr("LISTEN_ADDR", ":9090")
 	srv := &http.Server{
 		Addr:         listenAddr,
 		Handler:      handler,

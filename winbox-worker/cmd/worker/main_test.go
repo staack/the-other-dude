@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"log/slog"
+	"testing"
+)
 
 // Phase 22 criterion 10: the timeout knobs must be real end to end. The
 // shipped compose files historically set IDLE_TIMEOUT / MAX_LIFETIME while
@@ -53,5 +56,61 @@ func TestEnvIntSourceRejectsGarbage(t *testing.T) {
 	got, source := envIntSource("MAX_CONCURRENT_SESSIONS", 10)
 	if got != 10 || source != "default" {
 		t.Fatalf("expected default 10 for garbage value, got %d from %q", got, source)
+	}
+}
+
+// LOG_LEVEL was never read at all — the third ignored knob after
+// IDLE_TIMEOUT and MAX_LIFETIME, and the one that bites during an incident:
+// an operator sets LOG_LEVEL=debug to watch a leaking session, restarts,
+// gets identical output, and concludes the logging is just sparse.
+
+func TestLogLevelComposeKnobIsHonoured(t *testing.T) {
+	t.Setenv("LOG_LEVEL", "debug")
+	lvl, source := envLogLevel("LOG_LEVEL", slog.LevelInfo)
+	if lvl != slog.LevelDebug {
+		t.Fatalf("LOG_LEVEL=debug ignored: got %v", lvl)
+	}
+	if source != "LOG_LEVEL" {
+		t.Fatalf("expected source LOG_LEVEL, got %q", source)
+	}
+}
+
+func TestLogLevelIsCaseInsensitive(t *testing.T) {
+	for _, v := range []string{"DEBUG", "Debug", " debug "} {
+		t.Setenv("LOG_LEVEL", v)
+		if lvl, _ := envLogLevel("LOG_LEVEL", slog.LevelInfo); lvl != slog.LevelDebug {
+			t.Fatalf("LOG_LEVEL=%q not honoured: got %v", v, lvl)
+		}
+	}
+}
+
+func TestLogLevelAllFourNames(t *testing.T) {
+	want := map[string]slog.Level{
+		"debug": slog.LevelDebug,
+		"info":  slog.LevelInfo,
+		"warn":  slog.LevelWarn,
+		"error": slog.LevelError,
+	}
+	for name, lvl := range want {
+		t.Setenv("LOG_LEVEL", name)
+		if got, _ := envLogLevel("LOG_LEVEL", slog.LevelInfo); got != lvl {
+			t.Fatalf("LOG_LEVEL=%q: got %v, want %v", name, got, lvl)
+		}
+	}
+}
+
+func TestLogLevelGarbageFallsBackToDefault(t *testing.T) {
+	t.Setenv("LOG_LEVEL", "loud")
+	lvl, source := envLogLevel("LOG_LEVEL", slog.LevelInfo)
+	if lvl != slog.LevelInfo || source != "default" {
+		t.Fatalf("expected Info/default for garbage, got %v/%q", lvl, source)
+	}
+}
+
+func TestLogLevelUnsetUsesDefault(t *testing.T) {
+	t.Setenv("LOG_LEVEL", "")
+	lvl, source := envLogLevel("LOG_LEVEL", slog.LevelInfo)
+	if lvl != slog.LevelInfo || source != "default" {
+		t.Fatalf("expected Info/default when unset, got %v/%q", lvl, source)
 	}
 }
