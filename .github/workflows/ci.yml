@@ -51,6 +51,16 @@ jobs:
         # golangci-lint doesn't support Go 1.25 yet — run vet as a stand-in
         run: cd ${{ matrix.module }} && go vet ./...
 
+      - name: gofmt check
+        run: |
+          cd ${{ matrix.module }}
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt-clean:"
+            echo "$unformatted"
+            exit 1
+          fi
+
   frontend-lint:
     name: Lint Frontend (ESLint + tsc)
     runs-on: ubuntu-latest
