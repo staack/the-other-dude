@@ -12,6 +12,7 @@ RBAC:
 - admin/tenant_admin: DELETE
 """
 
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -20,7 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, set_tenant_context
 from app.middleware.rate_limit import limiter
 from app.services.audit_service import log_action
 from app.middleware.rbac import (
@@ -45,6 +46,8 @@ from app.schemas.device import (
 from app.services import device as device_service
 from app.services import device_probe
 from app.services.scanner import scan_subnet
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["devices"])
 
@@ -197,6 +200,21 @@ async def update_device(
 ) -> DeviceResponse:
     """Update device fields. Requires operator role or above."""
     await _check_tenant_access(current_user, tenant_id, db)
+
+    # Capture the TLS mode before the change so a downgrade can be recorded as
+    # its own auditable event rather than buried in a generic "changes" dict.
+    previous_tls_mode: Optional[str] = None
+    if data.tls_mode is not None:
+        try:
+            existing = await device_service.get_device(
+                db=db, tenant_id=tenant_id, device_id=device_id
+            )
+            previous_tls_mode = existing.tls_mode
+        except HTTPException:
+            raise
+        except Exception:
+            logger.warning("Could not read the previous tls_mode for device %s", device_id)
+
     result = await device_service.update_device(
         db=db,
         tenant_id=tenant_id,
@@ -218,6 +236,33 @@ async def update_device(
         )
     except Exception:
         pass
+
+    # A weakening of transport security gets its own action name so it can be
+    # alerted on, rather than being one key inside a device_update payload.
+    if previous_tls_mode is not None and device_service.is_tls_downgrade(
+        previous_tls_mode, data.tls_mode
+    ):
+        try:
+            await log_action(
+                db,
+                tenant_id,
+                current_user.user_id,
+                "device_tls_downgrade",
+                resource_type="device",
+                resource_id=str(device_id),
+                device_id=device_id,
+                details={
+                    "from": previous_tls_mode,
+                    "to": data.tls_mode,
+                    "consequence": device_service.describe_tls_downgrade(
+                        previous_tls_mode, data.tls_mode
+                    ),
+                },
+                ip_address=request.client.host if request.client else None,
+            )
+        except Exception:
+            logger.exception("Failed to audit a TLS downgrade for device %s", device_id)
+
     return result
 
 
@@ -376,7 +421,6 @@ async def bulk_add_devices(
                 data=create_data,
                 encryption_key=encryption_key,
             )
-            added.append(device)
             try:
                 await log_action(
                     db,
@@ -393,12 +437,56 @@ async def bulk_add_devices(
                 )
             except Exception:
                 pass
+
+            # Commit this device now rather than at the end of the request.
+            # get_db commits once, at request end, so a batch that overruns
+            # gunicorn's 120s timeout is discarded in full -- including the
+            # devices that already adopted. Validation is a live handshake per
+            # device now, so batches take real time and that ceiling is
+            # reachable. Committing as we go makes a timeout cost the
+            # remainder instead of everything.
+            await db.commit()
+            await _restore_tenant_context(db, tenant_id)
+            added.append(device)
+
         except HTTPException as exc:
+            await _abandon_failed_device(db, tenant_id)
             failed.append({"ip_address": dev_data.ip_address, "error": exc.detail})
         except Exception as exc:
+            await _abandon_failed_device(db, tenant_id)
             failed.append({"ip_address": dev_data.ip_address, "error": str(exc)})
 
     return BulkAddResult(added=added, failed=failed)
+
+
+async def _restore_tenant_context(db: AsyncSession, tenant_id: uuid.UUID) -> None:
+    """Re-establish the RLS tenant context after a transaction ends.
+
+    The context is set with SET LOCAL, which dies with its transaction. The
+    policy reads current_setting('app.current_tenant', true) -- missing_ok --
+    so once it is gone the setting reads NULL and RLS *silently* denies every
+    subsequent write rather than raising. Any commit or rollback inside a
+    request must therefore be followed by this.
+
+    tenant_id is the right value for both callers: a normal user's own tenant
+    must equal it, and _check_tenant_access has already re-pointed a
+    super_admin's context at it.
+    """
+    await set_tenant_context(db, str(tenant_id))
+
+
+async def _abandon_failed_device(db: AsyncSession, tenant_id: uuid.UUID) -> None:
+    """Discard a failed device's partial work without harming the batch.
+
+    A failed flush -- a duplicate hostname, say -- leaves the session needing a
+    rollback before it will accept anything else. Without this, one bad device
+    breaks every device after it.
+    """
+    try:
+        await db.rollback()
+        await _restore_tenant_context(db, tenant_id)
+    except Exception:  # noqa: BLE001 -- never let cleanup mask the real error
+        logger.exception("Failed to reset the session after a bulk-add failure")
 
 
 @router.post(

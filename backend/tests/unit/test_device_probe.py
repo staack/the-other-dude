@@ -293,3 +293,144 @@ async def test_unresolvable_credentials_yield_none_rather_than_empty_strings():
     )
 
     assert result is None
+
+
+# ---------------------------------------------------------------------------
+# bulk_add_with_profile
+#
+# The second bulk path had its own TCP-only check and the same defect. Leaving
+# one of two bulk paths validated is worse than validating neither, because the
+# behaviour then depends on which endpoint the caller happened to use.
+# ---------------------------------------------------------------------------
+
+
+async def test_bulk_profile_device_that_handshakes_is_adopted():
+    from app.services import device as device_service
+
+    ok = _outcome(ok=True, stage="done", reason="ok", message="Connected.",
+                  suggested_tls_mode=None)
+
+    with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=ok)):
+        verdict = await device_service.evaluate_bulk_routeros_device(
+            ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
+            tls_mode="auto", credentials=("admin", "pw"),
+        )
+
+    assert verdict.rejection is None
+    assert verdict.verified is True, "a completed handshake must count as verified"
+
+
+async def test_bulk_profile_device_that_cannot_handshake_is_rejected_with_the_reason():
+    from app.services import device as device_service
+
+    with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=_outcome())):
+        verdict = await device_service.evaluate_bulk_routeros_device(
+            ip_address="10.101.0.84", api_port=8728, api_ssl_port=8729,
+            tls_mode="auto", credentials=("claude", "claude"),
+        )
+
+    assert verdict.rejection is not None
+    assert verdict.verified is False
+    assert "cipher" in verdict.rejection.lower()
+    # The verified alternative must travel with the rejection, as it does on
+    # the single-device path.
+    assert "plain" in verdict.rejection.lower()
+
+
+async def test_bulk_profile_falls_back_to_tcp_when_the_poller_is_down():
+    from app.services import device as device_service
+
+    unavailable = _outcome(probe_available=False, reason="probe_unavailable",
+                           message="The poller did not respond.")
+
+    with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=unavailable)):
+        with patch.object(device_service, "_tcp_reachable", AsyncMock(return_value=True)):
+            verdict = await device_service.evaluate_bulk_routeros_device(
+                ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
+                tls_mode="auto", credentials=("admin", "pw"),
+            )
+
+    assert verdict.rejection is None, "a poller outage must not block a bulk import"
+    # Reachable is not the same as verified: this device must not go green.
+    assert verdict.verified is False
+
+
+async def test_bulk_profile_degraded_mode_still_rejects_an_unreachable_device():
+    from app.services import device as device_service
+
+    unavailable = _outcome(probe_available=False, reason="probe_unavailable",
+                           message="The poller did not respond.")
+
+    with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=unavailable)):
+        with patch.object(device_service, "_tcp_reachable", AsyncMock(return_value=False)):
+            verdict = await device_service.evaluate_bulk_routeros_device(
+                ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
+                tls_mode="auto", credentials=("admin", "pw"),
+            )
+
+    assert verdict.rejection is not None
+    assert verdict.verified is False
+    assert "unreachable" in verdict.rejection.lower()
+
+
+async def test_bulk_profile_without_usable_credentials_degrades_to_tcp():
+    """An unreadable profile must not turn every device into an auth failure."""
+    from app.services import device as device_service
+
+    with patch.object(device_service, "_tcp_reachable", AsyncMock(return_value=True)):
+        verdict = await device_service.evaluate_bulk_routeros_device(
+            ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
+            tls_mode="auto", credentials=None,
+        )
+
+    assert verdict.rejection is None
+    assert verdict.verified is False
+
+
+# ---------------------------------------------------------------------------
+# Persisting what the probe already learned
+#
+# The probe completes a full login and reads identity, version and board name.
+# Discarding them leaves the device page blank until the first poll, up to 120s
+# later, for facts we already have in hand.
+#
+# The column mapping must match what the poll path writes
+# (app/services/nats_subscriber.py:92-94) so the two never disagree.
+# ---------------------------------------------------------------------------
+
+
+def test_verified_probe_facts_map_onto_the_same_columns_the_poller_writes():
+    from app.services import device as device_service
+
+    probe = _outcome(ok=True, stage="done", reason="ok", message="Connected.",
+                     identity="wAP", version="7.23.2 (stable)", board_name="wAP ax",
+                     suggested_tls_mode=None)
+
+    facts = device_service.probe_device_facts(probe)
+
+    assert facts == {"routeros_version": "7.23.2 (stable)", "model": "wAP ax"}
+    # identity is deliberately absent: the poll path does not persist it, and
+    # hostname is the user's choice, not the device's.
+    assert "identity" not in facts
+    assert "hostname" not in facts
+
+
+def test_no_facts_are_taken_from_an_unverified_probe():
+    from app.services import device as device_service
+
+    assert device_service.probe_device_facts(None) == {}
+    assert device_service.probe_device_facts(_outcome()) == {}
+    assert device_service.probe_device_facts(
+        _outcome(probe_available=False, reason="probe_unavailable")
+    ) == {}
+
+
+def test_absent_probe_fields_are_omitted_rather_than_written_as_null():
+    """Matching the poll path's COALESCE: never overwrite a known value with null."""
+    from app.services import device as device_service
+
+    probe = _outcome(ok=True, stage="done", reason="ok", message="Connected.",
+                     identity="wAP", version=None, board_name=None,
+                     suggested_tls_mode=None)
+
+    assert device_service.probe_device_facts(probe) == {}

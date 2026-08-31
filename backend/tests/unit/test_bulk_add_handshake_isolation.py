@@ -119,3 +119,83 @@ async def test_devices_after_a_failure_are_still_attempted():
     assert attempted == ["10.0.0.1", "10.0.0.2", "10.0.0.3"]
     assert len(result.failed) == 3
     assert result.added == []
+
+
+# ---------------------------------------------------------------------------
+# Incremental commit
+#
+# get_db commits once, at the end of the request (app/database.py:64). A batch
+# that exceeds gunicorn's 120s ceiling (gunicorn.conf.py:18) is therefore
+# discarded in full -- including the devices that already adopted. Committing
+# per device makes a timeout cost the remainder rather than everything.
+#
+# The catch: RLS context is set with SET LOCAL, which dies with the
+# transaction, and the policy reads current_setting('app.current_tenant', true)
+# with missing_ok -- so it returns NULL and RLS *silently* denies every
+# subsequent write. Each commit must re-establish the context.
+# ---------------------------------------------------------------------------
+
+
+async def test_each_successful_device_is_committed_as_it_goes():
+    tenant_id = uuid.uuid4()
+    db = AsyncMock()
+
+    async def fake_create_device(db, tenant_id, data, encryption_key):
+        return DeviceResponse(
+            id=uuid.uuid4(), hostname=data.hostname, ip_address=data.ip_address,
+            api_port=data.api_port, api_ssl_port=data.api_ssl_port,
+            status="online", created_at=datetime.now(timezone.utc),
+        )
+
+    with patch.object(devices_router, "_check_tenant_access", AsyncMock()), \
+         patch.object(devices_router.device_service, "create_device", fake_create_device), \
+         patch.object(devices_router, "set_tenant_context", AsyncMock()) as set_ctx, \
+         patch.object(devices_router, "log_action", AsyncMock()):
+        result = await bulk_add_devices(
+            request=_request(), tenant_id=tenant_id,
+            data=_bulk_request("10.0.0.1", "10.0.0.2", "10.0.0.3"),
+            current_user=_user(tenant_id), db=db,
+        )
+
+    assert len(result.added) == 3
+    assert db.commit.await_count == 3, "each adopted device should be committed as it goes"
+    # SET LOCAL died with each commit, so the context must be re-established.
+    assert set_ctx.await_count == 3
+    for call in set_ctx.await_args_list:
+        assert call.args[1] == str(tenant_id)
+
+
+async def test_a_failed_device_rolls_back_and_later_devices_still_adopt():
+    """Guards a latent bug as well as the new one.
+
+    A failed flush (e.g. a duplicate hostname) poisons the session, so without
+    an explicit rollback every device after it fails too -- regardless of the
+    handshake work. Rolling back per failure isolates it.
+    """
+    tenant_id = uuid.uuid4()
+    db = AsyncMock()
+
+    async def fake_create_device(db, tenant_id, data, encryption_key):
+        if data.ip_address == "10.0.0.1":
+            raise HTTPException(status_code=422, detail=CIPHER_ERROR)
+        return DeviceResponse(
+            id=uuid.uuid4(), hostname=data.hostname, ip_address=data.ip_address,
+            api_port=data.api_port, api_ssl_port=data.api_ssl_port,
+            status="online", created_at=datetime.now(timezone.utc),
+        )
+
+    with patch.object(devices_router, "_check_tenant_access", AsyncMock()), \
+         patch.object(devices_router.device_service, "create_device", fake_create_device), \
+         patch.object(devices_router, "set_tenant_context", AsyncMock()) as set_ctx, \
+         patch.object(devices_router, "log_action", AsyncMock()):
+        result = await bulk_add_devices(
+            request=_request(), tenant_id=tenant_id,
+            data=_bulk_request("10.0.0.1", "10.0.0.2"),
+            current_user=_user(tenant_id), db=db,
+        )
+
+    assert len(result.failed) == 1
+    assert len(result.added) == 1, "the device after a failure must still adopt"
+    assert db.rollback.await_count == 1, "a failure must roll back the poisoned transaction"
+    # Context re-established after both the rollback and the commit.
+    assert set_ctx.await_count == 2
