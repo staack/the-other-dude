@@ -15,12 +15,19 @@ from app.models.base import Base  # noqa: F401 — re-exported for backwards com
 
 
 # Primary engine using postgres superuser (for migrations/admin)
+#
+# hide_parameters=True: str(DBAPIError) otherwise embeds bound query parameters,
+# and a device insert binds encrypted_credentials_transit -- so any unhandled
+# DB error would write OpenBao Transit ciphertext straight into the server log.
+# This redacts *parameter values* only; the SQL statement text is still logged
+# in full, so errors stay diagnosable.
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     pool_pre_ping=True,
     pool_size=settings.DB_ADMIN_POOL_SIZE,
     max_overflow=settings.DB_ADMIN_MAX_OVERFLOW,
+    hide_parameters=True,
 )
 
 # App user engine (enforces RLS — no superuser bypass)
@@ -30,6 +37,7 @@ app_engine = create_async_engine(
     pool_pre_ping=True,
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_MAX_OVERFLOW,
+    hide_parameters=True,
 )
 
 # Session factory for the app_user connection (RLS enforced)
