@@ -36,8 +36,17 @@ def _fake_nats(reply_payload: dict) -> AsyncMock:
 
 async def test_probe_new_device_sends_parameters_to_the_adhoc_subject():
     """Onboarding has no stored device, so parameters travel in the request."""
-    nc = _fake_nats({"ok": True, "stage": "done", "reason": "ok", "message": "fine",
-                     "tls_mode": "auto", "identity": "wAP", "elapsed_ms": 12})
+    nc = _fake_nats(
+        {
+            "ok": True,
+            "stage": "done",
+            "reason": "ok",
+            "message": "fine",
+            "tls_mode": "auto",
+            "identity": "wAP",
+            "elapsed_ms": 12,
+        }
+    )
 
     with patch.object(device_probe, "_get_nats", AsyncMock(return_value=nc)):
         result = await device_probe.probe_new_device(
@@ -63,21 +72,26 @@ async def test_probe_new_device_sends_parameters_to_the_adhoc_subject():
 
 async def test_probe_new_device_parses_cipher_mismatch_verdict():
     """The classification and the actionable message must survive the round trip."""
-    nc = _fake_nats({
-        "ok": False,
-        "stage": "tls",
-        "reason": "tls_cipher_mismatch",
-        "message": "TLS handshake failed: no cipher overlap ... try plain mode.",
-        "detail": "remote error: tls: handshake failure",
-        "tls_mode": "auto",
-        "suggested_tls_mode": "plain",
-        "elapsed_ms": 232,
-    })
+    nc = _fake_nats(
+        {
+            "ok": False,
+            "stage": "tls",
+            "reason": "tls_cipher_mismatch",
+            "message": "TLS handshake failed: no cipher overlap ... try plain mode.",
+            "detail": "remote error: tls: handshake failure",
+            "tls_mode": "auto",
+            "suggested_tls_mode": "plain",
+            "elapsed_ms": 232,
+        }
+    )
 
     with patch.object(device_probe, "_get_nats", AsyncMock(return_value=nc)):
         result = await device_probe.probe_new_device(
-            ip_address="10.101.0.84", api_port=8728, api_ssl_port=8729,
-            username="claude", password="claude",
+            ip_address="10.101.0.84",
+            api_port=8728,
+            api_ssl_port=8729,
+            username="claude",
+            password="claude",
         )
 
     assert result.ok is False
@@ -95,8 +109,11 @@ async def test_probe_reports_unavailable_when_the_poller_does_not_answer():
 
     with patch.object(device_probe, "_get_nats", AsyncMock(return_value=nc)):
         result = await device_probe.probe_new_device(
-            ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
-            username="admin", password="pw",
+            ip_address="10.0.0.1",
+            api_port=8728,
+            api_ssl_port=8729,
+            username="admin",
+            password="pw",
         )
 
     assert result.probe_available is False
@@ -106,8 +123,16 @@ async def test_probe_reports_unavailable_when_the_poller_does_not_answer():
 
 async def test_probe_stored_device_uses_the_device_scoped_subject():
     """A stored device is probed by id so the poller resolves its own credentials."""
-    nc = _fake_nats({"ok": True, "stage": "done", "reason": "ok", "message": "fine",
-                     "tls_mode": "plain", "elapsed_ms": 8})
+    nc = _fake_nats(
+        {
+            "ok": True,
+            "stage": "done",
+            "reason": "ok",
+            "message": "fine",
+            "tls_mode": "plain",
+            "elapsed_ms": 8,
+        }
+    )
 
     with patch.object(device_probe, "_get_nats", AsyncMock(return_value=nc)):
         result = await device_probe.probe_stored_device("abc-123")
@@ -136,13 +161,19 @@ async def test_probe_surfaces_a_responder_error():
 
 def _outcome(**kw) -> device_probe.ProbeOutcome:
     base = dict(
-        ok=False, stage="tls", reason="tls_cipher_mismatch",
+        ok=False,
+        stage="tls",
+        reason="tls_cipher_mismatch",
         message="TLS handshake failed: no cipher overlap "
-                "(device has api-ssl enabled without a certificate; try plain mode)",
+        "(device has api-ssl enabled without a certificate; try plain mode)",
         detail="remote error: tls: handshake failure",
-        tls_mode="auto", suggested_tls_mode="plain",
-        identity=None, version=None, board_name=None,
-        elapsed_ms=200, probe_available=True,
+        tls_mode="auto",
+        suggested_tls_mode="plain",
+        identity=None,
+        version=None,
+        board_name=None,
+        elapsed_ms=200,
+        probe_available=True,
     )
     base.update(kw)
     return device_probe.ProbeOutcome(**base)
@@ -155,8 +186,12 @@ async def test_onboarding_rejects_a_device_that_cannot_complete_a_handshake():
     with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=_outcome())):
         with pytest.raises(HTTPException) as exc:
             await device_service.validate_routeros_connectivity(
-                ip_address="10.101.0.84", api_port=8728, api_ssl_port=8729,
-                username="claude", password="claude", tls_mode="auto",
+                ip_address="10.101.0.84",
+                api_port=8728,
+                api_ssl_port=8729,
+                username="claude",
+                password="claude",
+                tls_mode="auto",
             )
 
     assert exc.value.status_code == 422
@@ -169,13 +204,24 @@ async def test_onboarding_rejects_a_device_that_cannot_complete_a_handshake():
 async def test_onboarding_accepts_a_device_that_completes_a_handshake():
     from app.services import device as device_service
 
-    ok = _outcome(ok=True, stage="done", reason="ok", message="Connected.",
-                  identity="wAP", version="7.23.2 (stable)", suggested_tls_mode=None)
+    ok = _outcome(
+        ok=True,
+        stage="done",
+        reason="ok",
+        message="Connected.",
+        identity="wAP",
+        version="7.23.2 (stable)",
+        suggested_tls_mode=None,
+    )
 
     with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=ok)):
         result = await device_service.validate_routeros_connectivity(
-            ip_address="10.101.0.84", api_port=8728, api_ssl_port=8729,
-            username="claude", password="claude", tls_mode="plain",
+            ip_address="10.101.0.84",
+            api_port=8728,
+            api_ssl_port=8729,
+            username="claude",
+            password="claude",
+            tls_mode="plain",
         )
 
     assert result.ok is True
@@ -186,14 +232,22 @@ async def test_onboarding_reports_an_authentication_failure_as_such():
     """Wrong credentials used to pass validation entirely."""
     from app.services import device as device_service
 
-    bad = _outcome(reason="auth_failed", stage="login", suggested_tls_mode=None,
-                   message="Reached 10.0.0.1:8728 but the RouterOS API rejected the login.")
+    bad = _outcome(
+        reason="auth_failed",
+        stage="login",
+        suggested_tls_mode=None,
+        message="Reached 10.0.0.1:8728 but the RouterOS API rejected the login.",
+    )
 
     with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=bad)):
         with pytest.raises(HTTPException) as exc:
             await device_service.validate_routeros_connectivity(
-                ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
-                username="admin", password="wrong", tls_mode="auto",
+                ip_address="10.0.0.1",
+                api_port=8728,
+                api_ssl_port=8729,
+                username="admin",
+                password="wrong",
+                tls_mode="auto",
             )
 
     assert exc.value.status_code == 422
@@ -208,14 +262,19 @@ async def test_onboarding_falls_back_to_a_tcp_check_when_the_poller_is_down():
     """
     from app.services import device as device_service
 
-    unavailable = _outcome(probe_available=False, reason="probe_unavailable",
-                           message="The poller did not respond.")
+    unavailable = _outcome(
+        probe_available=False, reason="probe_unavailable", message="The poller did not respond."
+    )
 
     with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=unavailable)):
         with patch.object(device_service, "_tcp_reachable", AsyncMock(return_value=True)):
             result = await device_service.validate_routeros_connectivity(
-                ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
-                username="admin", password="pw", tls_mode="auto",
+                ip_address="10.0.0.1",
+                api_port=8728,
+                api_ssl_port=8729,
+                username="admin",
+                password="pw",
+                tls_mode="auto",
             )
 
     assert result.probe_available is False
@@ -225,15 +284,20 @@ async def test_onboarding_falls_back_to_a_tcp_check_when_the_poller_is_down():
 async def test_degraded_onboarding_still_rejects_a_closed_port():
     from app.services import device as device_service
 
-    unavailable = _outcome(probe_available=False, reason="probe_unavailable",
-                           message="The poller did not respond.")
+    unavailable = _outcome(
+        probe_available=False, reason="probe_unavailable", message="The poller did not respond."
+    )
 
     with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=unavailable)):
         with patch.object(device_service, "_tcp_reachable", AsyncMock(return_value=False)):
             with pytest.raises(HTTPException) as exc:
                 await device_service.validate_routeros_connectivity(
-                    ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
-                    username="admin", password="pw", tls_mode="auto",
+                    ip_address="10.0.0.1",
+                    api_port=8728,
+                    api_ssl_port=8729,
+                    username="admin",
+                    password="pw",
+                    tls_mode="auto",
                 )
 
     assert exc.value.status_code == 422
@@ -307,13 +371,15 @@ async def test_unresolvable_credentials_yield_none_rather_than_empty_strings():
 async def test_bulk_profile_device_that_handshakes_is_adopted():
     from app.services import device as device_service
 
-    ok = _outcome(ok=True, stage="done", reason="ok", message="Connected.",
-                  suggested_tls_mode=None)
+    ok = _outcome(ok=True, stage="done", reason="ok", message="Connected.", suggested_tls_mode=None)
 
     with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=ok)):
         verdict = await device_service.evaluate_bulk_routeros_device(
-            ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
-            tls_mode="auto", credentials=("admin", "pw"),
+            ip_address="10.0.0.1",
+            api_port=8728,
+            api_ssl_port=8729,
+            tls_mode="auto",
+            credentials=("admin", "pw"),
         )
 
     assert verdict.rejection is None
@@ -325,8 +391,11 @@ async def test_bulk_profile_device_that_cannot_handshake_is_rejected_with_the_re
 
     with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=_outcome())):
         verdict = await device_service.evaluate_bulk_routeros_device(
-            ip_address="10.101.0.84", api_port=8728, api_ssl_port=8729,
-            tls_mode="auto", credentials=("claude", "claude"),
+            ip_address="10.101.0.84",
+            api_port=8728,
+            api_ssl_port=8729,
+            tls_mode="auto",
+            credentials=("claude", "claude"),
         )
 
     assert verdict.rejection is not None
@@ -340,14 +409,18 @@ async def test_bulk_profile_device_that_cannot_handshake_is_rejected_with_the_re
 async def test_bulk_profile_falls_back_to_tcp_when_the_poller_is_down():
     from app.services import device as device_service
 
-    unavailable = _outcome(probe_available=False, reason="probe_unavailable",
-                           message="The poller did not respond.")
+    unavailable = _outcome(
+        probe_available=False, reason="probe_unavailable", message="The poller did not respond."
+    )
 
     with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=unavailable)):
         with patch.object(device_service, "_tcp_reachable", AsyncMock(return_value=True)):
             verdict = await device_service.evaluate_bulk_routeros_device(
-                ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
-                tls_mode="auto", credentials=("admin", "pw"),
+                ip_address="10.0.0.1",
+                api_port=8728,
+                api_ssl_port=8729,
+                tls_mode="auto",
+                credentials=("admin", "pw"),
             )
 
     assert verdict.rejection is None, "a poller outage must not block a bulk import"
@@ -358,14 +431,18 @@ async def test_bulk_profile_falls_back_to_tcp_when_the_poller_is_down():
 async def test_bulk_profile_degraded_mode_still_rejects_an_unreachable_device():
     from app.services import device as device_service
 
-    unavailable = _outcome(probe_available=False, reason="probe_unavailable",
-                           message="The poller did not respond.")
+    unavailable = _outcome(
+        probe_available=False, reason="probe_unavailable", message="The poller did not respond."
+    )
 
     with patch.object(device_probe, "probe_new_device", AsyncMock(return_value=unavailable)):
         with patch.object(device_service, "_tcp_reachable", AsyncMock(return_value=False)):
             verdict = await device_service.evaluate_bulk_routeros_device(
-                ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
-                tls_mode="auto", credentials=("admin", "pw"),
+                ip_address="10.0.0.1",
+                api_port=8728,
+                api_ssl_port=8729,
+                tls_mode="auto",
+                credentials=("admin", "pw"),
             )
 
     assert verdict.rejection is not None
@@ -379,8 +456,11 @@ async def test_bulk_profile_without_usable_credentials_degrades_to_tcp():
 
     with patch.object(device_service, "_tcp_reachable", AsyncMock(return_value=True)):
         verdict = await device_service.evaluate_bulk_routeros_device(
-            ip_address="10.0.0.1", api_port=8728, api_ssl_port=8729,
-            tls_mode="auto", credentials=None,
+            ip_address="10.0.0.1",
+            api_port=8728,
+            api_ssl_port=8729,
+            tls_mode="auto",
+            credentials=None,
         )
 
     assert verdict.rejection is None
@@ -402,9 +482,16 @@ async def test_bulk_profile_without_usable_credentials_degrades_to_tcp():
 def test_verified_probe_facts_map_onto_the_same_columns_the_poller_writes():
     from app.services import device as device_service
 
-    probe = _outcome(ok=True, stage="done", reason="ok", message="Connected.",
-                     identity="wAP", version="7.23.2 (stable)", board_name="wAP ax",
-                     suggested_tls_mode=None)
+    probe = _outcome(
+        ok=True,
+        stage="done",
+        reason="ok",
+        message="Connected.",
+        identity="wAP",
+        version="7.23.2 (stable)",
+        board_name="wAP ax",
+        suggested_tls_mode=None,
+    )
 
     facts = device_service.probe_device_facts(probe)
 
@@ -420,17 +507,27 @@ def test_no_facts_are_taken_from_an_unverified_probe():
 
     assert device_service.probe_device_facts(None) == {}
     assert device_service.probe_device_facts(_outcome()) == {}
-    assert device_service.probe_device_facts(
-        _outcome(probe_available=False, reason="probe_unavailable")
-    ) == {}
+    assert (
+        device_service.probe_device_facts(
+            _outcome(probe_available=False, reason="probe_unavailable")
+        )
+        == {}
+    )
 
 
 def test_absent_probe_fields_are_omitted_rather_than_written_as_null():
     """Matching the poll path's COALESCE: never overwrite a known value with null."""
     from app.services import device as device_service
 
-    probe = _outcome(ok=True, stage="done", reason="ok", message="Connected.",
-                     identity="wAP", version=None, board_name=None,
-                     suggested_tls_mode=None)
+    probe = _outcome(
+        ok=True,
+        stage="done",
+        reason="ok",
+        message="Connected.",
+        identity="wAP",
+        version=None,
+        board_name=None,
+        suggested_tls_mode=None,
+    )
 
     assert device_service.probe_device_facts(probe) == {}

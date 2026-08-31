@@ -49,9 +49,7 @@ async def _post(app, body):
 
 @pytest.mark.asyncio
 async def test_422_body_does_not_echo_a_passphrase(app):
-    response = await _post(
-        app, {"name": "", "key_passphrase": "hunter2", "password": "S3cret!"}
-    )
+    response = await _post(app, {"name": "", "key_passphrase": "hunter2", "password": "S3cret!"})
     assert response.status_code == 422
     assert "hunter2" not in response.text
     assert "S3cret!" not in response.text

@@ -19,9 +19,7 @@ def _validate_tls_mode(v: Optional[str]) -> Optional[str]:
     if v is None:
         return v
     if v not in ALLOWED_TLS_MODES:
-        raise ValueError(
-            f"tls_mode must be one of: {', '.join(sorted(ALLOWED_TLS_MODES))}"
-        )
+        raise ValueError(f"tls_mode must be one of: {', '.join(sorted(ALLOWED_TLS_MODES))}")
     return v
 
 

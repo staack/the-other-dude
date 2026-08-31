@@ -21,12 +21,12 @@ from app.services import device as device_service
 @pytest.mark.parametrize(
     "old,new,expected",
     [
-        ("auto", "plain", True),          # the wizard's one-click path
+        ("auto", "plain", True),  # the wizard's one-click path
         ("portal_ca", "plain", True),
         ("insecure", "plain", True),
         ("portal_ca", "insecure", True),  # loses certificate verification
-        ("portal_ca", "auto", True),      # auto may fall back to no CA check
-        ("auto", "portal_ca", False),     # strengthening
+        ("portal_ca", "auto", True),  # auto may fall back to no CA check
+        ("auto", "portal_ca", False),  # strengthening
         ("plain", "auto", False),
         ("auto", "auto", False),
         ("plain", "plain", False),
@@ -63,13 +63,19 @@ async def test_switching_a_device_to_plain_emits_a_distinct_audit_action():
     request = MagicMock()
     request.client.host = "127.0.0.1"
 
-    with patch.object(devices_router, "_check_tenant_access", AsyncMock()), \
-         patch.object(devices_router.device_service, "get_device", AsyncMock(return_value=before)), \
-         patch.object(devices_router.device_service, "update_device", AsyncMock(return_value=after)), \
-         patch.object(devices_router, "log_action", AsyncMock()) as log:
+    with (
+        patch.object(devices_router, "_check_tenant_access", AsyncMock()),
+        patch.object(devices_router.device_service, "get_device", AsyncMock(return_value=before)),
+        patch.object(devices_router.device_service, "update_device", AsyncMock(return_value=after)),
+        patch.object(devices_router, "log_action", AsyncMock()) as log,
+    ):
         await update_device(
-            request=request, tenant_id=tenant_id, device_id=device_id,
-            data=DeviceUpdate(tls_mode="plain"), current_user=user, db=AsyncMock(),
+            request=request,
+            tenant_id=tenant_id,
+            device_id=device_id,
+            data=DeviceUpdate(tls_mode="plain"),
+            current_user=user,
+            db=AsyncMock(),
         )
 
     actions = [c.args[3] for c in log.await_args_list]
@@ -103,13 +109,19 @@ async def test_strengthening_tls_emits_no_downgrade_event():
     request = MagicMock()
     request.client.host = "127.0.0.1"
 
-    with patch.object(devices_router, "_check_tenant_access", AsyncMock()), \
-         patch.object(devices_router.device_service, "get_device", AsyncMock(return_value=before)), \
-         patch.object(devices_router.device_service, "update_device", AsyncMock(return_value=after)), \
-         patch.object(devices_router, "log_action", AsyncMock()) as log:
+    with (
+        patch.object(devices_router, "_check_tenant_access", AsyncMock()),
+        patch.object(devices_router.device_service, "get_device", AsyncMock(return_value=before)),
+        patch.object(devices_router.device_service, "update_device", AsyncMock(return_value=after)),
+        patch.object(devices_router, "log_action", AsyncMock()) as log,
+    ):
         await update_device(
-            request=request, tenant_id=tenant_id, device_id=uuid.uuid4(),
-            data=DeviceUpdate(tls_mode="portal_ca"), current_user=user, db=AsyncMock(),
+            request=request,
+            tenant_id=tenant_id,
+            device_id=uuid.uuid4(),
+            data=DeviceUpdate(tls_mode="portal_ca"),
+            current_user=user,
+            db=AsyncMock(),
         )
 
     actions = [c.args[3] for c in log.await_args_list]

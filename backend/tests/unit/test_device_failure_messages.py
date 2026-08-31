@@ -55,7 +55,7 @@ def _rls_error() -> DBAPIError:
     ids=["ConnectError", "TimeoutError", "ConnectionResetError", "ValueError"],
 )
 def test_an_exception_with_no_message_still_names_a_cause(exc):
-    """"10.0.0.1: " tells an operator nothing. At minimum, name the failure."""
+    """ "10.0.0.1: " tells an operator nothing. At minimum, name the failure."""
     described = describe_device_failure(exc)
 
     assert described.strip(), "a failure reason must never be empty"

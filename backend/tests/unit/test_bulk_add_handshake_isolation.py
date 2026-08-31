@@ -74,9 +74,11 @@ async def test_one_unhandshakeable_device_does_not_abort_the_batch():
             created_at=datetime.now(timezone.utc),
         )
 
-    with patch.object(devices_router, "_check_tenant_access", AsyncMock()), \
-         patch.object(devices_router.device_service, "create_device", fake_create_device), \
-         patch.object(devices_router, "log_action", AsyncMock()):
+    with (
+        patch.object(devices_router, "_check_tenant_access", AsyncMock()),
+        patch.object(devices_router.device_service, "create_device", fake_create_device),
+        patch.object(devices_router, "log_action", AsyncMock()),
+    ):
         result = await bulk_add_devices(
             request=_request(),
             tenant_id=tenant_id,
@@ -105,9 +107,11 @@ async def test_devices_after_a_failure_are_still_attempted():
         attempted.append(data.ip_address)
         raise HTTPException(status_code=422, detail=CIPHER_ERROR)
 
-    with patch.object(devices_router, "_check_tenant_access", AsyncMock()), \
-         patch.object(devices_router.device_service, "create_device", fake_create_device), \
-         patch.object(devices_router, "log_action", AsyncMock()):
+    with (
+        patch.object(devices_router, "_check_tenant_access", AsyncMock()),
+        patch.object(devices_router.device_service, "create_device", fake_create_device),
+        patch.object(devices_router, "log_action", AsyncMock()),
+    ):
         result = await bulk_add_devices(
             request=_request(),
             tenant_id=tenant_id,
@@ -144,19 +148,27 @@ async def test_each_successful_device_is_committed_as_it_goes():
 
     async def fake_create_device(db, tenant_id, data, encryption_key):
         return DeviceResponse(
-            id=uuid.uuid4(), hostname=data.hostname, ip_address=data.ip_address,
-            api_port=data.api_port, api_ssl_port=data.api_ssl_port,
-            status="online", created_at=datetime.now(timezone.utc),
+            id=uuid.uuid4(),
+            hostname=data.hostname,
+            ip_address=data.ip_address,
+            api_port=data.api_port,
+            api_ssl_port=data.api_ssl_port,
+            status="online",
+            created_at=datetime.now(timezone.utc),
         )
 
-    with patch.object(devices_router, "_check_tenant_access", AsyncMock()), \
-         patch.object(devices_router.device_service, "create_device", fake_create_device), \
-         patch.object(devices_router, "set_tenant_context", AsyncMock()) as set_ctx, \
-         patch.object(devices_router, "log_action", AsyncMock()):
+    with (
+        patch.object(devices_router, "_check_tenant_access", AsyncMock()),
+        patch.object(devices_router.device_service, "create_device", fake_create_device),
+        patch.object(devices_router, "set_tenant_context", AsyncMock()) as set_ctx,
+        patch.object(devices_router, "log_action", AsyncMock()),
+    ):
         result = await bulk_add_devices(
-            request=_request(), tenant_id=tenant_id,
+            request=_request(),
+            tenant_id=tenant_id,
             data=_bulk_request("10.0.0.1", "10.0.0.2", "10.0.0.3"),
-            current_user=_user(tenant_id), db=db,
+            current_user=_user(tenant_id),
+            db=db,
         )
 
     assert len(result.added) == 3
@@ -181,19 +193,27 @@ async def test_a_failed_device_rolls_back_and_later_devices_still_adopt():
         if data.ip_address == "10.0.0.1":
             raise HTTPException(status_code=422, detail=CIPHER_ERROR)
         return DeviceResponse(
-            id=uuid.uuid4(), hostname=data.hostname, ip_address=data.ip_address,
-            api_port=data.api_port, api_ssl_port=data.api_ssl_port,
-            status="online", created_at=datetime.now(timezone.utc),
+            id=uuid.uuid4(),
+            hostname=data.hostname,
+            ip_address=data.ip_address,
+            api_port=data.api_port,
+            api_ssl_port=data.api_ssl_port,
+            status="online",
+            created_at=datetime.now(timezone.utc),
         )
 
-    with patch.object(devices_router, "_check_tenant_access", AsyncMock()), \
-         patch.object(devices_router.device_service, "create_device", fake_create_device), \
-         patch.object(devices_router, "set_tenant_context", AsyncMock()) as set_ctx, \
-         patch.object(devices_router, "log_action", AsyncMock()):
+    with (
+        patch.object(devices_router, "_check_tenant_access", AsyncMock()),
+        patch.object(devices_router.device_service, "create_device", fake_create_device),
+        patch.object(devices_router, "set_tenant_context", AsyncMock()) as set_ctx,
+        patch.object(devices_router, "log_action", AsyncMock()),
+    ):
         result = await bulk_add_devices(
-            request=_request(), tenant_id=tenant_id,
+            request=_request(),
+            tenant_id=tenant_id,
             data=_bulk_request("10.0.0.1", "10.0.0.2"),
-            current_user=_user(tenant_id), db=db,
+            current_user=_user(tenant_id),
+            db=db,
         )
 
     assert len(result.failed) == 1

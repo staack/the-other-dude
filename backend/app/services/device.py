@@ -231,8 +231,9 @@ async def _decrypt_profile_credentials(
             return None
         return username, password
     except Exception as exc:  # noqa: BLE001 -- probe is best-effort
-        logger.warning("Could not resolve credential profile %s for probing: %s",
-                       credential_profile_id, exc)
+        logger.warning(
+            "Could not resolve credential profile %s for probing: %s", credential_profile_id, exc
+        )
         return None
 
 
@@ -378,9 +379,7 @@ async def evaluate_bulk_routeros_device(
             ip_address,
         )
 
-    if await _tcp_reachable(ip_address, api_ssl_port) or await _tcp_reachable(
-        ip_address, api_port
-    ):
+    if await _tcp_reachable(ip_address, api_ssl_port) or await _tcp_reachable(ip_address, api_port):
         return BulkDeviceVerdict(rejection=None, verified=False)
     return BulkDeviceVerdict(
         rejection=(
@@ -548,9 +547,7 @@ async def create_device(
         # the next poll cycle -- up to 120s later. Anything not positively
         # verified stays "unknown".
         status=(
-            "online"
-            if (probe is not None and probe.probe_available and probe.ok)
-            else "unknown"
+            "online" if (probe is not None and probe.probe_available and probe.ok) else "unknown"
         ),
         # Version and model, already learned during the handshake.
         **probe_device_facts(probe),
@@ -967,9 +964,7 @@ async def bulk_add_with_profile(
             )
 
         except Exception as exc:
-            logger.warning(
-                "Bulk profile import failed for %s", entry.ip_address, exc_info=True
-            )
+            logger.warning("Bulk profile import failed for %s", entry.ip_address, exc_info=True)
             results.append(
                 BulkAddDeviceResult(
                     ip_address=entry.ip_address,

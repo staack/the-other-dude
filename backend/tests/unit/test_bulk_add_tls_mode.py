@@ -41,16 +41,12 @@ class TestBulkAddRequestTlsMode:
         assert req.tls_mode is None
 
     def test_accepts_valid_mode(self):
-        req = BulkAddRequest(
-            devices=[BulkDeviceAdd(ip_address="10.0.0.1")], tls_mode="plain"
-        )
+        req = BulkAddRequest(devices=[BulkDeviceAdd(ip_address="10.0.0.1")], tls_mode="plain")
         assert req.tls_mode == "plain"
 
     def test_rejects_unknown_mode(self):
         with pytest.raises(ValidationError):
-            BulkAddRequest(
-                devices=[BulkDeviceAdd(ip_address="10.0.0.1")], tls_mode="nope"
-            )
+            BulkAddRequest(devices=[BulkDeviceAdd(ip_address="10.0.0.1")], tls_mode="nope")
 
 
 class TestTlsModeResolution:
@@ -103,9 +99,7 @@ class TestDeviceCreateCarriesTlsMode:
     def test_device_create_defaults_tls_mode_to_none(self):
         from app.schemas.device import DeviceCreate
 
-        d = DeviceCreate(
-            hostname="r1", ip_address="10.0.0.1", username="admin", password="pw"
-        )
+        d = DeviceCreate(hostname="r1", ip_address="10.0.0.1", username="admin", password="pw")
         # create_device turns None into "auto"; what matters is the attribute
         # exists, because it reads data.tls_mode unconditionally.
         assert d.tls_mode is None

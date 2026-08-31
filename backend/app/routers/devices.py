@@ -456,13 +456,13 @@ async def bulk_add_devices(
             # parameters -- which include the credential ciphertext -- out of
             # the response.
             await _abandon_failed_device(db, tenant_id)
-            logger.warning(
-                "Bulk adoption failed for %s", dev_data.ip_address, exc_info=True
+            logger.warning("Bulk adoption failed for %s", dev_data.ip_address, exc_info=True)
+            failed.append(
+                {
+                    "ip_address": dev_data.ip_address,
+                    "error": device_service.describe_device_failure(exc),
+                }
             )
-            failed.append({
-                "ip_address": dev_data.ip_address,
-                "error": device_service.describe_device_failure(exc),
-            })
 
     return BulkAddResult(added=added, failed=failed)
 
