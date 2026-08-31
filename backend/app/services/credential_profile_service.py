@@ -28,6 +28,7 @@ from app.schemas.credential_profile import (
 )
 from app.services import audit_service
 from app.services.crypto import encrypt_credentials_transit
+from app.services.ssh_key import normalize_private_key
 
 logger = structlog.get_logger("credential_profile_service")
 
@@ -37,30 +38,56 @@ logger = structlog.get_logger("credential_profile_service")
 # ---------------------------------------------------------------------------
 
 
-def _build_credential_json(data: CredentialProfileCreate | CredentialProfileUpdate) -> dict:
-    """Build the credential JSON dict from schema fields based on credential_type."""
+def _build_credential_json(
+    data: CredentialProfileCreate | CredentialProfileUpdate,
+) -> tuple[dict, str | None]:
+    """Build the credential JSON dict and any derived public key fingerprint.
+
+    Returns (credential_json, ssh_public_key_fingerprint). The fingerprint is
+    None for every credential type except ssh_key. It is not secret and is
+    stored in the clear so operators can identify the stored key, which is never
+    readable back through the API.
+
+    For ssh_key, any passphrase is used here to decrypt the key and is then
+    discarded -- it is deliberately absent from the returned dict.
+    """
     ct = data.credential_type
     if ct == "routeros":
-        return {"type": "routeros", "username": data.username, "password": data.password}
-    elif ct == "snmp_v1":
-        return {"type": "snmp_v1", "community": data.community}
-    elif ct == "snmp_v2c":
-        return {"type": "snmp_v2c", "community": data.community}
-    elif ct == "snmp_v3":
+        return {"type": "routeros", "username": data.username, "password": data.password}, None
+    elif ct == "ssh_key":
+        normalized, fingerprint = normalize_private_key(
+            data.private_key.get_secret_value(),
+            data.key_passphrase.get_secret_value() if data.key_passphrase else None,
+        )
         cred: dict = {
+            "type": "ssh_key",
+            "username": data.username,
+            "private_key": normalized,
+        }
+        if data.password:
+            # Retained as a fallback for fleets mid-migration; the poller offers
+            # the key first and falls back to this only if the key is rejected.
+            cred["password"] = data.password
+        return cred, fingerprint
+    elif ct == "snmp_v1":
+        return {"type": "snmp_v1", "community": data.community}, None
+    elif ct == "snmp_v2c":
+        return {"type": "snmp_v2c", "community": data.community}, None
+    elif ct == "snmp_v3":
+        snmp_cred: dict = {
             "type": "snmp_v3",
             "username": data.username,
             "security_level": data.security_level,
         }
         if data.auth_protocol:
-            cred["auth_protocol"] = data.auth_protocol
+            snmp_cred["auth_protocol"] = data.auth_protocol
         if data.auth_passphrase:
-            cred["auth_passphrase"] = data.auth_passphrase
+            snmp_cred["auth_passphrase"] = data.auth_passphrase
         if data.priv_protocol:
-            cred["priv_protocol"] = data.priv_protocol
+            snmp_cred["priv_protocol"] = data.priv_protocol
         if data.priv_passphrase:
-            cred["priv_passphrase"] = data.priv_passphrase
-        return cred
+            snmp_cred["priv_passphrase"] = data.priv_passphrase
+        return snmp_cred, None
     else:
         raise ValueError(f"Unknown credential_type: {ct}")
 
@@ -74,6 +101,7 @@ def _profile_response(
         name=profile.name,
         description=profile.description,
         credential_type=profile.credential_type,
+        ssh_public_key_fingerprint=profile.ssh_public_key_fingerprint,
         device_count=device_count,
         created_at=profile.created_at,
         updated_at=profile.updated_at,
@@ -166,7 +194,7 @@ async def create_profile(
 ) -> CredentialProfileResponse:
     """Create a new credential profile with Transit-encrypted credentials."""
     # Build credential JSON and encrypt via OpenBao Transit
-    cred_json = _build_credential_json(data)
+    cred_json, key_fingerprint = _build_credential_json(data)
     encrypted = await encrypt_credentials_transit(json.dumps(cred_json), str(tenant_id))
 
     profile = CredentialProfile(
@@ -175,6 +203,7 @@ async def create_profile(
         description=data.description,
         credential_type=data.credential_type,
         encrypted_credentials_transit=encrypted,
+        ssh_public_key_fingerprint=key_fingerprint,
         # Do NOT set encrypted_credentials (legacy) -- new writes always use Transit
     )
     db.add(profile)
@@ -230,10 +259,13 @@ async def update_profile(
             profile.credential_type = data.credential_type  # type: ignore[assignment]
 
         # Rebuild and re-encrypt credentials
-        cred_json = _build_credential_json(data if type_changed else _merge_update(data, profile))
+        cred_json, key_fingerprint = _build_credential_json(
+            data if type_changed else _merge_update(data, profile)
+        )
         encrypted = await encrypt_credentials_transit(json.dumps(cred_json), str(tenant_id))
         profile.encrypted_credentials_transit = encrypted
         profile.encrypted_credentials = None  # Clear legacy
+        profile.ssh_public_key_fingerprint = key_fingerprint
 
     await db.flush()
     await db.refresh(profile)

@@ -33,6 +33,10 @@ class CredentialProfile(Base):
     credential_type: Mapped[str] = mapped_column(String(50), nullable=False)
     encrypted_credentials: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     encrypted_credentials_transit: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Public key fingerprint ("SHA256:...") for ssh_key profiles. Not secret:
+    # stored in the clear so operators can identify which key is loaded, since
+    # the key itself is never readable back through the API.
+    ssh_public_key_fingerprint: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
