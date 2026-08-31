@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/bsm/redislock"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/staack/the-other-dude/poller/internal/bus"
@@ -87,52 +86,31 @@ func withTimeout[T any](ctx context.Context, fn func() (T, error)) (T, error) {
 }
 
 // PollDevice performs a single poll cycle for one device:
-//  1. Acquire distributed Redis lock to prevent duplicate polls across pods.
-//  2. Decrypt device credentials.
+//  1. Decrypt device credentials.
 //  3. Attempt TLS connection to the RouterOS binary API (sentence protocol v6.43+).
 //  4. On failure: publish offline event, return ErrDeviceOffline.
 //  5. On success: run /system/resource/print, publish online event with metadata.
 //  6. Collect interface, health, and wireless metrics; publish as separate events.
 //  7. Release lock and close connection via deferred calls.
 //
-// lockTTL should be longer than the expected poll duration to prevent the lock
-// from expiring while the poll is still in progress.
+// The caller must hold the per-device lock; the scheduler does.
 //
 // cmdTimeout is the per-command timeout for individual RouterOS API calls.
 func PollDevice(
 	ctx context.Context,
 	dev store.Device,
-	locker *redislock.Client,
 	pub *bus.Publisher,
 	credentialCache *vault.CredentialCache,
 	connTimeout time.Duration,
 	cmdTimeout time.Duration,
-	lockTTL time.Duration,
 ) error {
 	startTime := time.Now()
 	pollStatus := "success"
 
-	lockKey := fmt.Sprintf("poll:device:%s", dev.ID)
-
-	// Acquire per-device lock. If another pod already holds the lock, skip this cycle.
-	lock, err := locker.Obtain(ctx, lockKey, lockTTL, nil)
-	if err == redislock.ErrNotObtained {
-		slog.Debug("skipping poll — lock held by another pod", "device_id", dev.ID)
-		observability.PollTotal.WithLabelValues("skipped").Inc()
-		observability.RedisLockTotal.WithLabelValues("not_obtained").Inc()
-		return nil
-	}
-	if err != nil {
-		observability.RedisLockTotal.WithLabelValues("error").Inc()
-		return fmt.Errorf("obtaining Redis lock for device %s: %w", dev.ID, err)
-	}
-	observability.RedisLockTotal.WithLabelValues("obtained").Inc()
-
-	defer func() {
-		if releaseErr := lock.Release(ctx); releaseErr != nil && releaseErr != redislock.ErrLockNotHeld {
-			slog.Warn("failed to release Redis lock", "device_id", dev.ID, "error", releaseErr)
-		}
-	}()
+	// No lock is taken here. The scheduler holds "poll:device:{id}" across this
+	// whole call (scheduler.go), so acquiring it again could never succeed --
+	// PollDevice returned nil, the scheduler read that as a successful poll, and
+	// no RouterOS device was contacted between v9.8.0 and v9.9.0.
 
 	// Deferred metric recording — captures poll duration and status at exit.
 	defer func() {
