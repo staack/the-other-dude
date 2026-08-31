@@ -278,9 +278,18 @@ jobs:
       # because of a workflow file issue". PyYAML accepts them happily, so
       # linting the file locally with a general-purpose YAML parser will not
       # catch it. If you change the scan policy, change it in all eight.
+      #
+      # `version:` is pinned deliberately. trivy-action@v0.33.1 defaults to
+      # trivy v0.65.0, and upstream removed that release's assets on
+      # 2026-08-31 — the git tag still resolves, so the installer reports
+      # "found version: 0.65.0" and then exits 1 with no message when the
+      # tarball 404s. Inheriting the action's default means an upstream yank
+      # breaks this build with no change on our side. Bump this pin
+      # deliberately; do not remove it.
       - name: Scan API image (CRITICAL)
         uses: aquasecurity/trivy-action@v0.33.1
         with:
+          version: "v0.74.0"
           image-ref: "tod-api:ci"
           format: "table"
           exit-code: "1"
@@ -291,6 +300,7 @@ jobs:
         uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
+          version: "v0.74.0"
           image-ref: "tod-api:ci"
           format: "table"
           exit-code: "1"
@@ -303,6 +313,7 @@ jobs:
       - name: Scan Poller image (CRITICAL)
         uses: aquasecurity/trivy-action@v0.33.1
         with:
+          version: "v0.74.0"
           image-ref: "tod-poller:ci"
           format: "table"
           exit-code: "1"
@@ -313,6 +324,7 @@ jobs:
         uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
+          version: "v0.74.0"
           image-ref: "tod-poller:ci"
           format: "table"
           exit-code: "1"
@@ -325,6 +337,7 @@ jobs:
       - name: Scan Frontend image (CRITICAL)
         uses: aquasecurity/trivy-action@v0.33.1
         with:
+          version: "v0.74.0"
           image-ref: "tod-frontend:ci"
           format: "table"
           exit-code: "1"
@@ -335,6 +348,7 @@ jobs:
         uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
+          version: "v0.74.0"
           image-ref: "tod-frontend:ci"
           format: "table"
           exit-code: "1"
@@ -347,6 +361,7 @@ jobs:
       - name: Scan WinBox Worker image (CRITICAL)
         uses: aquasecurity/trivy-action@v0.33.1
         with:
+          version: "v0.74.0"
           image-ref: "tod-winbox-worker:ci"
           format: "table"
           exit-code: "1"
@@ -357,6 +372,7 @@ jobs:
         uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
+          version: "v0.74.0"
           image-ref: "tod-winbox-worker:ci"
           format: "table"
           exit-code: "1"
