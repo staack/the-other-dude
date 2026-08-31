@@ -209,16 +209,27 @@ func TOFUHostKeyCallback(knownFingerprint string) (ssh.HostKeyCallback, chan str
 func tofuHostKeyCallback(knownFingerprint string) (ssh.HostKeyCallback, chan string) {
 	fpCh := make(chan string, 1)
 
+	// Non-blocking: x/crypto invokes this callback on every key exchange, and
+	// handshakeTransport rekeys long-lived connections (the SSH relay holds
+	// interactive sessions open). A blocking send would wedge the second rekey
+	// once the caller has taken the fingerprint it wanted.
+	report := func(fp string) {
+		select {
+		case fpCh <- fp:
+		default:
+		}
+	}
+
 	cb := func(hostname string, remote net.Addr, key ssh.PublicKey) error {
 		fp := computeFingerprint(key)
 
 		if knownFingerprint == "" {
 			// First connect: accept and report fingerprint
-			fpCh <- fp
+			report(fp)
 			return nil
 		}
 
-		fpCh <- fp
+		report(fp)
 
 		if fp != knownFingerprint {
 			return &SSHError{
