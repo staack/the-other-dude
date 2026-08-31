@@ -194,6 +194,13 @@ func RunCommand(ctx context.Context, ip string, port int, username, password, pr
 	return result, observedFP, nil
 }
 
+// TOFUHostKeyCallback exposes the Trust-On-First-Use host key policy to SSH
+// callers in other packages (the SSH relay), so there is exactly one host key
+// verification implementation in the poller.
+func TOFUHostKeyCallback(knownFingerprint string) (ssh.HostKeyCallback, chan string) {
+	return tofuHostKeyCallback(knownFingerprint)
+}
+
 // tofuHostKeyCallback returns an SSH host key callback implementing Trust-On-First-Use.
 //
 // If knownFingerprint is empty, any key is accepted and its fingerprint is sent on the channel.

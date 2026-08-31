@@ -14,26 +14,47 @@ import (
 )
 
 // NewSSHClient creates an SSH connection to a RouterOS device.
-// privateKey is an unencrypted PEM private key, or empty for password-only auth;
-// when present it is offered before the password.
-func NewSSHClient(ip string, port int, username, password, privateKey string, timeout time.Duration) (*ssh.Client, error) {
+//
+// privateKey is an unencrypted PEM private key, or empty for password-only
+// auth; when present it is offered before the password.
+//
+// knownFingerprint is a previously pinned "SHA256:base64(...)" host key
+// fingerprint, or empty for a first connect. Host key verification uses the
+// same Trust-On-First-Use policy as RunCommand: a first connect accepts the
+// key and reports it, and a later mismatch is rejected. The observed
+// fingerprint is returned so the caller can persist it on first connect.
+func NewSSHClient(ip string, port int, username, password, privateKey, knownFingerprint string,
+	timeout time.Duration) (*ssh.Client, string, error) {
+
 	authMethods, err := SSHAuthMethods(password, privateKey)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
+
+	cb, fpCh := tofuHostKeyCallback(knownFingerprint)
 
 	config := &ssh.ClientConfig{
 		User:            username,
 		Auth:            authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), //nolint:gosec // RouterOS self-signed SSH
+		HostKeyCallback: cb,
 		Timeout:         timeout,
 	}
 	addr := fmt.Sprintf("%s:%d", ip, port)
 	client, err := ssh.Dial("tcp", addr, config)
-	if err != nil {
-		return nil, fmt.Errorf("SSH dial to %s: %w", addr, err)
+
+	// The callback runs during the handshake, so a fingerprint is available
+	// even when the handshake is then rejected.
+	var observedFP string
+	select {
+	case fp := <-fpCh:
+		observedFP = fp
+	default:
 	}
-	return client, nil
+
+	if err != nil {
+		return nil, observedFP, fmt.Errorf("SSH dial to %s: %w", addr, err)
+	}
+	return client, observedFP, nil
 }
 
 // UploadFile uploads data to a file on the RouterOS device via SFTP.

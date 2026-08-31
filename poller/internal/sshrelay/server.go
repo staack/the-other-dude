@@ -244,18 +244,42 @@ func (s *Server) handleSSH(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// SSH dial
+	// SSH dial, verifying the device host key against the fingerprint pinned on
+	// first connect. This is an operator's interactive terminal onto a
+	// customer's router, so an unverified host key would leave the session open
+	// to transparent interception.
+	var knownFingerprint string
+	if dev.SSHHostKeyFingerprint != nil {
+		knownFingerprint = *dev.SSHHostKeyFingerprint
+	}
+	hostKeyCB, fpCh := device.TOFUHostKeyCallback(knownFingerprint)
+
 	sshAddr := dev.IPAddress + ":22"
 	sshClient, err := ssh.Dial("tcp", sshAddr, &ssh.ClientConfig{
 		User:            creds.Username,
 		Auth:            authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: hostKeyCB,
 		Timeout:         10 * time.Second,
 	})
+
+	var observedFP string
+	select {
+	case fp := <-fpCh:
+		observedFP = fp
+	default:
+	}
+
 	if err != nil {
 		slog.Error("ssh: dial failed", "device_id", payload.DeviceID, "addr", sshAddr, "err", err)
 		ws.Close(websocket.StatusInternalError, "ssh connection failed")
 		return
+	}
+
+	// TOFU: pin the host key on first connect.
+	if knownFingerprint == "" && observedFP != "" {
+		if updateErr := s.deviceStore.UpdateSSHHostKey(r.Context(), dev.ID, observedFP); updateErr != nil {
+			slog.Warn("ssh: failed to store SSH host key", "device_id", dev.ID, "err", updateErr)
+		}
 	}
 
 	sshSess, err := sshClient.NewSession()
