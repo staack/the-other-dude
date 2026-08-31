@@ -114,7 +114,7 @@ export function CredentialProfilesPage({ tenantId }: CredentialProfilesPageProps
     enabled: !!tenantId,
   })
 
-  const profiles = Array.isArray(data) ? data : (data?.profiles ?? [])
+  const profiles = data ?? []
   const routerosProfiles = profiles.filter((p) => p.credential_type === 'routeros')
   const snmpProfiles = profiles.filter((p) => p.credential_type.startsWith('snmp_'))
 

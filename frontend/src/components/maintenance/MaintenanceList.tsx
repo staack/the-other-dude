@@ -288,7 +288,7 @@ function WindowCard({
 
           <div className="flex items-center gap-2 flex-wrap">
             {/* Device count */}
-            <Badge variant="outline" className="text-[10px] gap-1">
+            <Badge className="text-[10px] gap-1">
               <Monitor className="h-3 w-3" />
               {w.device_ids.length === 0
                 ? 'All Devices'
@@ -297,12 +297,12 @@ function WindowCard({
 
             {/* Suppress status */}
             {w.suppress_alerts ? (
-              <Badge variant="outline" className="text-[10px] gap-1 text-warning">
+              <Badge className="text-[10px] gap-1 text-warning">
                 <BellOff className="h-3 w-3" />
                 Alerts Suppressed
               </Badge>
             ) : (
-              <Badge variant="outline" className="text-[10px] gap-1 text-text-muted">
+              <Badge className="text-[10px] gap-1 text-text-muted">
                 <Bell className="h-3 w-3" />
                 Alerts Active
               </Badge>

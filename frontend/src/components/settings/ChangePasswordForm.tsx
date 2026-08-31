@@ -24,7 +24,7 @@ function toHex(bytes: Uint8Array): string {
   return hex
 }
 
-function toBase64(buf: ArrayBuffer): string {
+function toBase64(buf: ArrayBuffer | Uint8Array): string {
   const bytes = new Uint8Array(buf)
   let binary = ''
   for (let i = 0; i < bytes.length; i++) {

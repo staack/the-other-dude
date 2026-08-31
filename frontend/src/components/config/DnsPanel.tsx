@@ -435,7 +435,7 @@ export function DnsPanel({ tenantId, deviceId, active }: ConfigPanelProps) {
                       {entry.address}
                     </td>
                     <td className="py-2 px-3">
-                      <Badge variant="outline" className="text-xs">
+                      <Badge className="text-xs">
                         {entry.type || 'A'}
                       </Badge>
                     </td>

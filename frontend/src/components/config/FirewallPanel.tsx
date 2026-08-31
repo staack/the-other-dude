@@ -17,6 +17,8 @@ import {
   EyeOff,
   Shield,
   Network,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -689,7 +691,6 @@ function FilterRulesTable({
                       <td className="px-3 py-2">{entry.chain || <CellEmpty />}</td>
                       <td className="px-3 py-2">
                         <Badge
-                          variant="outline"
                           className={cn(
                             'text-xs font-medium',
                             getActionBadgeClasses(entry.action),
@@ -880,7 +881,6 @@ function NatRulesTable({
                       <td className="px-3 py-2">{entry.chain || <CellEmpty />}</td>
                       <td className="px-3 py-2">
                         <Badge
-                          variant="outline"
                           className={cn(
                             'text-xs font-medium',
                             getActionBadgeClasses(entry.action),

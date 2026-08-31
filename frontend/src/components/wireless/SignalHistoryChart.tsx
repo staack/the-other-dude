@@ -117,13 +117,14 @@ export function SignalHistoryChart({ tenantId, deviceId, macAddress }: SignalHis
                 fontSize: '11px',
               }}
               labelStyle={{ color: 'rgba(255,255,255,0.6)' }}
-              formatter={(value: number, name: string) => {
+              formatter={(value: number | undefined, name: string | undefined) => {
                 const labels: Record<string, string> = {
                   signal_avg: 'Avg Signal',
                   signal_min: 'Min Signal',
                   signal_max: 'Max Signal',
                 }
-                return [`${value} dBm`, labels[name] ?? name]
+                const label = name != null ? (labels[name] ?? name) : ''
+                return [value != null ? `${value} dBm` : 'N/A', label]
               }}
             />
             <Line

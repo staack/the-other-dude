@@ -2,7 +2,7 @@
 # Stage 1: build — Node.js build environment
 FROM node:20-alpine AS builder
 
-# Cap Node.js heap to 512 MB so tsc + vite build don't OOM a low-RAM server.
+# Cap Node.js heap to 1024 MB so vite build doesn't OOM a low-RAM server.
 # Vite's bundler defaults to using all available heap; on a 2-4 GB machine that
 # competes directly with the Go and Python builds happening in parallel.
 ENV NODE_OPTIONS="--max-old-space-size=1024"

@@ -56,7 +56,7 @@ export function BulkDeployDialog({
     queryKey: ['devices-for-cert', tenantId],
     queryFn: async () => {
       const result = await devicesApi.list(tenantId)
-      return (result as { items?: DeviceResponse[] }).items ?? (result as DeviceResponse[])
+      return result.items
     },
     enabled: !!tenantId && open,
   })
@@ -74,7 +74,7 @@ export function BulkDeployDialog({
       .map((c) => c.device_id),
   )
 
-  const availableDevices = (deviceList as DeviceResponse[]).filter(
+  const availableDevices = deviceList.filter(
     (d) => !deployedDeviceIds.has(d.id),
   )
 

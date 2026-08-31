@@ -73,7 +73,7 @@ jobs:
 
       - name: TypeScript type check
         working-directory: frontend
-        run: npx tsc --noEmit
+        run: npx tsc -b --pretty false
 
   # ---------------------------------------------------------------------------
   # TEST — parallel test suites for all three services

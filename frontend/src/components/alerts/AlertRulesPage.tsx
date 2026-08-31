@@ -240,7 +240,7 @@ function RuleFormDialog({
             </div>
             <div>
               <Label>Severity</Label>
-              <Select value={severity} onValueChange={setSeverity}>
+              <Select value={severity} onValueChange={(v) => setSeverity(v as AlertRule['severity'])}>
                 <SelectTrigger className="h-9 text-xs">
                   <SelectValue />
                 </SelectTrigger>

@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, Zap, ShieldCheck } from 'lucide-react'
 import type { ApplyMode, ConfigChange } from '@/lib/configPanelTypes'
-import { describeChanges, generateRscScript } from '@/lib/configPanelTypes'
+import { generateRscScript } from '@/lib/configPanelTypes'
 
 interface ChangePreviewModalProps {
   open: boolean
@@ -108,15 +108,14 @@ export function ChangePreviewModal({
 // ---------------------------------------------------------------------------
 
 function QuickPreview({ changes }: { changes: ConfigChange[] }) {
-  const descriptions = describeChanges(changes)
   return (
     <ol className="space-y-1.5 text-sm text-text-primary">
-      {descriptions.map((desc, i) => (
+      {changes.map((change, i) => (
         <li key={i} className="flex gap-2">
           <span className="text-text-secondary font-mono shrink-0 w-5 text-right">
             {i + 1}.
           </span>
-          <span>{changes[i].description}</span>
+          <span>{change.description}</span>
         </li>
       ))}
     </ol>

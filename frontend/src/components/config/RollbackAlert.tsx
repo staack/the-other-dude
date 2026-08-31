@@ -28,11 +28,11 @@ export function RollbackAlert({
   const rollbackMutation = useMutation({
     mutationFn: () => configApi.emergencyRollback(tenantId, deviceId),
     onSuccess: () => {
-      toast.success('Emergency rollback successful')
+      toast({ title: 'Emergency rollback successful' })
       queryClient.invalidateQueries({ queryKey: ['config-backups', tenantId, deviceId] })
     },
     onError: () => {
-      toast.error('Emergency rollback failed')
+      toast({ title: 'Emergency rollback failed', variant: 'destructive' })
     },
   })
 
