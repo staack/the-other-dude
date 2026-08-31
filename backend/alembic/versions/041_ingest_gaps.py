@@ -35,8 +35,8 @@ that a gap not be silently unrecorded, not that the data come back.
 import sqlalchemy as sa
 from alembic import op
 
-revision = "042"
-down_revision = "041"
+revision = "041"
+down_revision = "040"
 branch_labels = None
 depends_on = None
 
