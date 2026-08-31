@@ -338,6 +338,32 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.
 
 Database migrations run automatically on API startup via Alembic.
 
+### WinBox Binary Updates
+
+The WinBox binary used by the WinBox Worker is downloaded and checksum-verified **at image build time only** -- never at runtime. Its version and expected SHA256 are pinned as build args in `winbox-worker/Dockerfile`:
+
+```dockerfile
+ARG WINBOX_VERSION=4.0.1
+ARG WINBOX_SHA256=8ec2d08929fd434c4b88881f3354bdf60b057ecd2fb54961dd912df57e326a70
+```
+
+`docker build` downloads `https://download.mikrotik.com/routeros/winbox/${WINBOX_VERSION}/WinBox_Linux.zip` and runs `sha256sum -c` against the pinned hash before unzipping it into the image -- the build fails outright if the archive doesn't match. Nothing the worker container does at runtime touches the network for this; the binary that ships in the image is exactly the one that was built and scanned.
+
+**Automated updates.** `.github/workflows/winbox-version-check.yml` runs weekly (and on manual `workflow_dispatch`). It renders MikroTik's download page (`mikrotik.com/download/winbox` -- there is no version API or feed; MikroTik does not publish one, so this is real browser automation, not a JSON lookup), and if a newer release exists:
+
+1. Downloads that release's `WinBox_Linux.zip.sha256` (MikroTik publishes one alongside every download) and the archive itself, and verifies the archive matches the published checksum -- entirely independent of anything the Dockerfile does. A checksum mismatch aborts the run; no PR is opened for an archive this job couldn't verify itself.
+2. Bumps `WINBOX_VERSION` / `WINBOX_SHA256` in `winbox-worker/Dockerfile` and opens a pull request.
+
+**This PR does not merge itself.** It goes through the normal `ci.yml` pipeline like any other change: the `build` job builds the `winbox-worker` image with the new pin (which independently re-verifies the checksum via the Dockerfile's own `sha256sum -c`) and then runs `winbox-worker/scripts/smoke_test.sh` against the built image, which starts a real WinBox session and confirms the WinBox process is actually running inside the container -- not just that the image built. A version bump that breaks session startup fails that step and blocks the merge. A human still reviews and merges the PR.
+
+**Pinning a version by hand.** If you don't trust the automated pipeline, or want to hold back a release, disable or ignore `winbox-version-check.yml` and edit the two `ARG` lines in `winbox-worker/Dockerfile` yourself. To get the checksum for any WinBox release without running the pipeline:
+
+```bash
+curl -fsSL "https://download.mikrotik.com/routeros/winbox/<version>/WinBox_Linux.zip.sha256"
+```
+
+That prints a single `<sha256>  WinBox_Linux.zip` line straight from MikroTik -- paste the hash into `WINBOX_SHA256` and the version into `WINBOX_VERSION`, then rebuild the `winbox-worker` image. The Dockerfile's own build-time verification catches a typo or a stale hash either way.
+
 ### Logs
 
 ```bash

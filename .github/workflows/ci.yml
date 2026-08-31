@@ -194,6 +194,27 @@ jobs:
         working-directory: poller
         run: go test ./... -v -count=1
 
+  winbox-worker-test:
+    name: Test WinBox Worker (Go)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: go-${{ hashFiles('winbox-worker/go.sum') }}
+          restore-keys: go-
+
+      - name: Run winbox-worker tests
+        working-directory: winbox-worker
+        run: go test ./... -v -count=1
+
   frontend-test:
     name: Test Frontend (Vitest)
     runs-on: ubuntu-latest
@@ -220,7 +241,16 @@ jobs:
   build:
     name: Build & Scan Docker Images
     runs-on: ubuntu-latest
-    needs: [python-lint, go-lint, frontend-lint, backend-test, poller-test, frontend-test]
+    needs:
+      [
+        python-lint,
+        go-lint,
+        frontend-lint,
+        backend-test,
+        poller-test,
+        winbox-worker-test,
+        frontend-test,
+      ]
 
     steps:
       - uses: actions/checkout@v4
@@ -264,3 +294,26 @@ jobs:
           format: "table"
           exit-code: "1"
           severity: "HIGH,CRITICAL"
+
+      # The WinBox binary is baked into this image at build time (see
+      # WINBOX_VERSION / WINBOX_SHA256 in winbox-worker/Dockerfile). The
+      # Dockerfile's own `sha256sum -c` step already fails this build if the
+      # downloaded archive doesn't match the pinned checksum -- that's not
+      # duplicated here. What IS duplicated here, deliberately, is proof the
+      # binary actually runs: see the smoke test step below.
+      - name: Build WinBox Worker image
+        run: docker build -f winbox-worker/Dockerfile -t tod-winbox-worker:ci ./winbox-worker
+
+      - name: Scan WinBox Worker image
+        uses: aquasecurity/trivy-action@v0.33.1
+        continue-on-error: true
+        with:
+          image-ref: "tod-winbox-worker:ci"
+          format: "table"
+          exit-code: "1"
+          severity: "HIGH,CRITICAL"
+
+      # Not continue-on-error: a WinBox version that builds but can't
+      # actually start a session must fail this job, not just get logged.
+      - name: Smoke test WinBox Worker session startup
+        run: winbox-worker/scripts/smoke_test.sh tod-winbox-worker:ci
