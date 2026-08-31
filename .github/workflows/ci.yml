@@ -37,6 +37,9 @@ jobs:
   go-lint:
     name: Lint Go (golangci-lint)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [poller, winbox-worker]
     steps:
       - uses: actions/checkout@v4
 
@@ -46,7 +49,7 @@ jobs:
 
       - name: golangci-lint
         # golangci-lint doesn't support Go 1.25 yet — run vet as a stand-in
-        run: cd poller && go vet ./...
+        run: cd ${{ matrix.module }} && go vet ./...
 
   frontend-lint:
     name: Lint Frontend (ESLint + tsc)
@@ -232,35 +235,60 @@ jobs:
       - name: Build API image
         run: docker build -f infrastructure/docker/Dockerfile.api -t tod-api:ci .
 
-      - name: Scan API image
+      # Two scans per image: CRITICAL blocks the build, HIGH is reported but
+      # never blocks. ignore-unfixed is load-bearing on both — without it, a
+      # CVE in a base image with no available patch would block every build
+      # forever, which is exactly how these scans ended up permanently
+      # continue-on-error in the first place. The `with:` defaults are
+      # defined via YAML anchor on first use and merged+overridden (image-ref
+      # only) on the rest, so each severity's policy lives in one place.
+      - name: Scan API image (CRITICAL)
         uses: aquasecurity/trivy-action@v0.33.1
-        continue-on-error: true
-        with:
+        with: &trivy_critical
           image-ref: "tod-api:ci"
           format: "table"
           exit-code: "1"
-          severity: "HIGH,CRITICAL"
+          ignore-unfixed: true
+          severity: "CRITICAL"
+
+      - name: Scan API image (HIGH)
+        uses: aquasecurity/trivy-action@v0.33.1
+        continue-on-error: true
+        with: &trivy_high
+          image-ref: "tod-api:ci"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: "HIGH"
 
       - name: Build Poller image
         run: docker build -f poller/Dockerfile -t tod-poller:ci ./poller
 
-      - name: Scan Poller image
+      - name: Scan Poller image (CRITICAL)
+        uses: aquasecurity/trivy-action@v0.33.1
+        with:
+          <<: *trivy_critical
+          image-ref: "tod-poller:ci"
+
+      - name: Scan Poller image (HIGH)
         uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
+          <<: *trivy_high
           image-ref: "tod-poller:ci"
-          format: "table"
-          exit-code: "1"
-          severity: "HIGH,CRITICAL"
 
       - name: Build Frontend image
         run: docker build -f infrastructure/docker/Dockerfile.frontend -t tod-frontend:ci .
 
-      - name: Scan Frontend image
+      - name: Scan Frontend image (CRITICAL)
+        uses: aquasecurity/trivy-action@v0.33.1
+        with:
+          <<: *trivy_critical
+          image-ref: "tod-frontend:ci"
+
+      - name: Scan Frontend image (HIGH)
         uses: aquasecurity/trivy-action@v0.33.1
         continue-on-error: true
         with:
+          <<: *trivy_high
           image-ref: "tod-frontend:ci"
-          format: "table"
-          exit-code: "1"
-          severity: "HIGH,CRITICAL"
