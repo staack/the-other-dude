@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>What's in 9.10.0 — The Other Dude Blog</title>
-  <meta name="description" content="A changelog. Mostly things that didn't work the way the documentation said they did: config push rollback, WinBox session cleanup, device onboarding, and a credential leak in validation errors. Plus one known issue that is not fixed yet.">
+  <meta name="description" content="Maintenance release: safe-mode config rollback, faster WinBox session cleanup, stricter device onboarding, and a security fix (GHSA-89xh-5xwx-pvw6). Plus one known issue that is not fixed yet.">
   <meta name="keywords" content="MikroTik, fleet management, RouterOS, release notes, changelog, The Other Dude">
   <meta name="author" content="The Other Dude">
   <meta name="robots" content="index, follow">
@@ -15,7 +15,7 @@
   <!-- Open Graph -->
   <meta property="og:type" content="article">
   <meta property="og:title" content="What's in 9.10.0 — The Other Dude">
-  <meta property="og:description" content="A changelog. Mostly things that didn't work the way the documentation said they did: config push rollback, WinBox session cleanup, device onboarding, and a credential leak in validation errors. Plus one known issue that is not fixed yet.">
+  <meta property="og:description" content="Maintenance release: safe-mode config rollback, faster WinBox session cleanup, stricter device onboarding, and a security fix (GHSA-89xh-5xwx-pvw6). Plus one known issue that is not fixed yet.">
   <meta property="og:url" content="https://theotherdude.net/blog/v9-10-0.html">
   <meta property="og:site_name" content="The Other Dude">
   <meta property="article:published_time" content="2026-08-30">
@@ -26,7 +26,7 @@
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": "What's in 9.10.0",
-    "description": "A changelog. Mostly things that didn't work the way the documentation said they did: config push rollback, WinBox session cleanup, device onboarding, and a credential leak in validation errors. Plus one known issue that is not fixed yet.",
+    "description": "Maintenance release: safe-mode config rollback, faster WinBox session cleanup, stricter device onboarding, and a security fix (GHSA-89xh-5xwx-pvw6). Plus one known issue that is not fixed yet.",
     "datePublished": "2026-08-30",
     "author": {
       "@type": "Organization",
@@ -214,73 +214,60 @@
       <div class="blog-post-meta">August 30, 2026</div>
       <h1>What's in 9.10.0</h1>
 
-      <p>Five months since the last post. I moved house and the day job got loud. That's the whole explanation, and it's a more honest one than "we've been heads-down building."</p>
+      <p>9.10.0 is a maintenance release. It is almost entirely correctness and reliability work: a number of things behaved differently from the way the documentation described them, and this release brings the two back into line. There is one security fix, and one known issue that is <strong>not</strong> fixed here and is worth reading if you use config backup.</p>
 
-      <p>This release is mostly a list of things that didn't work the way the documentation said they did. Not many new features. If you're running 9.9.0, several of these matter.</p>
+      <h2>Config push and rollback</h2>
 
-      <h2>Things that didn't work the way the docs said</h2>
+      <p>Config restores and template pushes now run inside a <strong>RouterOS safe-mode session</strong>. The change is applied inside the session, TOD dials a new connection to confirm the device still answers, and only then commits. If the device does not answer &mdash; or if TOD crashes, or loses its network mid-push &mdash; the session drops and RouterOS reverts every change made in it, on its own, <strong>without rebooting</strong>. This replaces the previous rollback mechanism entirely. Verified on real hardware; device uptime ran continuously through every test.</p>
 
-      <p><strong>Config push could reboot a router on a push that succeeded.</strong> The device-side revert was a RouterOS scheduler on a 90-second timer. It never checked whether the device was reachable &mdash; it just fired, and the only thing stopping it was TOD racing back to delete it first. Because the timer was anchored to the device's last boot rather than to when it was installed, TOD lost that race about 72% of the time, and losing it meant <code>/system backup load</code>: config reverted, device rebooted, on a change that had worked fine.</p>
+      <p>One limit worth knowing: safe mode's undo buffer holds 100 actions, and past that RouterOS silently keeps the changes while still reporting that it is in safe mode. A push over that size is now <strong>refused</strong> rather than applied without a safety net. Split a large template into stages.</p>
 
-      <p>That's gone. Config restores and template pushes now run inside a <strong>RouterOS safe-mode session</strong>. The change is applied inside the session, TOD dials a new connection to check the device still answers, and only then commits. If the device doesn't answer &mdash; or if TOD crashes, or loses its network mid-push &mdash; the session drops and RouterOS reverts every change made in it, by itself, <strong>without rebooting</strong>. Verified on real hardware; device uptime ran continuously through every test.</p>
+      <p>This does not cover direct edits in the config editor. Those still apply immediately with no rollback, and the toggle that implied otherwise has been relabelled.</p>
 
-      <p>One limit worth knowing: safe mode's undo buffer holds 100 actions, and past that RouterOS silently keeps the changes while still reporting it's in safe mode. So a push over that size is now <strong>refused</strong> rather than applied without a safety net. Split a large template into stages.</p>
+      <h2>WinBox sessions</h2>
 
-      <p>This does not cover direct edits in the config editor. Those still apply immediately with no rollback, and the toggle that used to imply otherwise has been relabelled.</p>
+      <p>Abandoned WinBox sessions were not being cleaned up promptly, so they held one of ten concurrency slots &mdash; and an authenticated connection to your router &mdash; far longer than intended. Disconnects are now detected reliably, a disconnected session enters a 30-second grace period, and sweeps run every 30 seconds. A slot comes back in about a minute instead of hours, and a reconnect inside the grace window cancels the teardown. A crashed session also used to leave processes behind while the worker reported its slot free; the worker now reaps its own orphans. Verified against real hardware.</p>
 
-      <p><strong>The WinBox idle timeout had never fired. Not once.</strong> It looked for a field name that this version of xpra doesn't emit, so it matched nothing in every session state and silently gave up. An abandoned session therefore held one of ten concurrency slots &mdash; and an authenticated connection to your router &mdash; for the full two-hour maximum lifetime. Leaks one through nine were invisible; the tenth handed everyone a 503.</p>
+      <h2>Device onboarding</h2>
 
-      <p>Disconnects are now detected directly from the client count, which is present whether or not a client is attached, and a disconnected session enters a 30-second grace period before teardown. Sweeps run every 30 seconds, so a slot comes back in about a minute instead of two hours, and a reconnect inside the grace window cancels it.</p>
+      <p>Onboarding now completes a real protocol handshake &mdash; TCP, then TLS, then an actual API login &mdash; rather than only checking that a port accepts connections. The practical difference: a device that answers on <code>api-ssl</code> but cannot negotiate a usable session used to onboard green and then fail every poll afterwards. It now fails at adoption instead, and says why in those terms rather than "unreachable". There is also a test-connection endpoint so you can re-run the same probe against a device you have already added.</p>
 
-      <p>Separately, a crashed session left roughly 300MB of live processes running while the worker reported the slot free. The worker now reaps its own orphans. Verified against real hardware.</p>
+      <h2>Free tier: 250 devices</h2>
 
-      <p><strong>Device onboarding only checked that a port was open.</strong> A TCP connect, nothing more. A RouterOS device with <code>api-ssl</code> enabled and no certificate installed would onboard green and then fail every single poll afterwards, because there's no cipher overlap and the failure happens during negotiation, not connection. Onboarding now completes a real protocol handshake &mdash; TCP, TLS, then an actual API login &mdash; and when it fails it tells you why, in those terms, instead of "unreachable". There's also a test-connection endpoint now so you can re-run the same probe against a device you've already added.</p>
-
-      <p><strong>The README said the free tier was 1,000 devices. The licence says 250.</strong> The licence has said 250 since March, and the licence is the number that counts. The README was simply never updated, and it's been wrong for five months. Fixed, and there's now a test that fails the build if the licence, the code and the documentation ever disagree again.</p>
+      <p>The free tier is <strong>250 devices</strong>, which is what the licence says. Some documentation quoted a higher number; the licence is the number that counts. The docs are corrected, and there is now a test that fails the build if the licence, the code and the documentation ever disagree.</p>
 
       <h2>Security</h2>
 
-      <p><strong>A validation error could echo your credentials back to you.</strong> Mistype a field while creating a credential profile and the HTTP 422 response contained the entire submitted body &mdash; RouterOS password, SNMP v3 passphrases, SSH key passphrase, whatever you'd sent. Pydantic includes the raw pre-validation input in its error entries and FastAPI serialised it verbatim; <code>SecretStr</code> doesn't help, because the masking applies to the parsed value and this is the raw one. It wasn't new, and it wasn't limited to one field.</p>
+      <p><strong>A validation error could echo submitted credentials back in the response.</strong> Tracked as <a href="https://github.com/staack/the-other-dude/security/advisories/GHSA-89xh-5xwx-pvw6" rel="noopener">GHSA-89xh-5xwx-pvw6</a> &mdash; moderate, affects 9.9.0 and earlier, fixed in this release. An HTTP 422 from a credential-related endpoint could include the request body it was rejecting. It required an authenticated account with permission to create or update credentials, but any validation error would trigger it.</p>
 
-      <p>The 422 handler now strips the submitted input from every error entry and keeps only which field failed and why. If you've been creating credential profiles through the API and logging responses, your logs are worth a look.</p>
+      <p>The 422 handler now keeps only which field failed and why, and drops the submitted input entirely. If you have been calling the API and logging response bodies, those logs are worth a look, and rotating any credential that went through a failed create or update is the safe move.</p>
 
-      <h2>Bugs that were live in 9.9.0</h2>
+      <h2>Bug fixes</h2>
 
       <ul>
-        <li>The Add Device form threw a <code>ReferenceError</code> on several paths &mdash; a state variable had been deleted in a lint cleanup while two call sites were left behind.</li>
-        <li>Emergency rollback threw on both outcomes. Success and failure each hit a <code>TypeError</code> instead of telling you what happened.</li>
-        <li>The firewall panel's row menu threw on open &mdash; two icons used without being imported.</li>
-        <li>The adoption wizard reported every freshly adopted device as unreachable. It waited five seconds and read a status the poller hadn't written yet; the poller's interval is 60 seconds.</li>
-        <li>The adoption wizard's port selector did nothing at all. Picking 8728 or 8729 changed nothing about the request that got sent.</li>
+        <li>Add Device form &mdash; errored on several paths.</li>
+        <li>Firewall panel &mdash; the row menu failed to open.</li>
+        <li>Emergency rollback &mdash; reported neither success nor failure correctly.</li>
+        <li>Adoption wizard &mdash; freshly adopted devices were reported as unreachable, and the port selector had no effect on the request.</li>
       </ul>
 
       <h2>Under the hood</h2>
 
-      <p><strong>CI's TypeScript check was passing while checking zero files.</strong> The config is solution-style, so a bare <code>tsc --noEmit</code> resolves no inputs and exits 0 instantly. The real build reported 60 errors across 25 files &mdash; including the Add Device bug above, which is how it shipped in the first place. The check now follows the project references, and all 60 are fixed rather than silenced.</p>
-
-      <p>Container vulnerability scans were running but couldn't fail a build. They can now, on CRITICAL and HIGH.</p>
-
-      <p>The WinBox worker wasn't being linted in CI at all &mdash; only the poller was. It is now, and it has a test suite for session lifecycle, though wiring that suite into CI is still outstanding.</p>
-
-      <p><strong>Postgres and Redis had no restart policy.</strong> After a host reboot, Docker starts only containers that carry one, so those two stayed down while the API and poller crash-looped against them until somebody logged in and noticed. <code>depends_on</code> doesn't help here; it doesn't apply to daemon-driven restarts. Fixed.</p>
-
-      <p><strong>The poller's health check always said healthy.</strong> It returned <code>{"status":"ok"}</code> unconditionally, so a poller that had lost NATS and was discarding every sample it collected still passed. It now probes each dependency and returns a 503 naming the one that failed. The API had no health check wired up at all, despite already having a readiness probe that checks PostgreSQL, Redis and NATS.</p>
+      <p>Mostly CI and operational plumbing. The TypeScript build now genuinely checks the frontend sources, and the errors that surfaced are fixed rather than silenced. Container vulnerability scans can now fail a build on CRITICAL and HIGH. The WinBox worker is linted and has a session-lifecycle test suite. Postgres and Redis carry a restart policy, so they come back on their own after a host reboot instead of leaving the API and poller retrying against nothing. And the poller's health check probes each dependency and returns a 503 naming the one that failed, instead of always reporting healthy.</p>
 
       <h2>Documentation</h2>
 
-      <p>A pass over the website and docs to bring the claims into line with the code. The config push description was wrong in the ways above. "Orphaned containers" was the wrong explanation for the WinBox leak &mdash; there are no per-session containers. Several pages described the product as open source when the licence is BSL 1.1, which is source-available; it converts to Apache 2.0 in March 2030. And the structured data was advertising the product as free with no mention of the commercial licence.</p>
+      <p>A pass over the website and docs to bring the claims into line with the code &mdash; the config push description most of all. Several pages also described the product as open source; the licence is BSL 1.1, which is source-available, and it converts to Apache 2.0 in March 2030. None of this changed what the software does. It changed what the site claims it does, which had drifted further than I would like.</p>
 
-      <p>None of that changed what the software does. It changed what the site claims it does, which had drifted further than I'd like.</p>
+      <h2>Known issue: a stale SSH host key blocks config backup</h2>
 
-      <h2>Known issues</h2>
+      <p>One defect found while working on this release is <strong>not</strong> fixed in it. A proper fix &mdash; a pin-reset action in the product &mdash; is scheduled for the next release.</p>
 
-      <p>One defect found while working on this release that is <strong>not</strong> fixed in it. A proper fix &mdash; a pin-reset action in the product &mdash; is scheduled for the next release.</p>
+      <p><strong>A stale SSH host key permanently blocks config backup for that device.</strong> TOD pins a device's SSH host key the first time it connects, and nothing in the product can clear that pin afterwards. There is no endpoint and no UI for it, and the one piece of code that writes the column only runs when no fingerprint is stored yet &mdash; so it will never overwrite a stale one.</p>
 
-      <p><strong>A stale SSH host key permanently blocks config backup for that device.</strong> TOD pins a device's SSH host key the first time it connects, and nothing in the product can clear that pin afterwards. There's no endpoint and no UI for it, and the one piece of code that writes the column only runs when no fingerprint is stored yet &mdash; so it will never overwrite a stale one.</p>
+      <p>That matters if a device's host key legitimately changed: RouterOS reinstalled, hardware swapped, keys regenerated, or an IP now answered by a different device. Backup for that device stops and never resumes. It does not self-heal, and restarting the poller does not help &mdash; the block is held in memory, so a restart clears it and the next attempt immediately re-blocks.</p>
 
-      <p>That matters if a device's host key legitimately changed: RouterOS reinstalled, hardware swapped, keys regenerated, or an IP now answered by a different device. Backup for that device stops and never resumes. It doesn't self-heal, and restarting the poller doesn't help &mdash; the block is held in memory, so a restart clears it and the next attempt immediately re-blocks.</p>
-
-      <p><strong>How to spot it.</strong> Config backup for one device goes quiet while everything else keeps working. There's a metric label that means this and nothing else:</p>
+      <p><strong>How to spot it.</strong> Config backup for one device goes quiet while everything else keeps working. There is a metric label that means this and nothing else:</p>
 
       <pre>mikrotik_config_backup_total{status="skipped_hostkey_blocked"}</pre>
 
@@ -290,11 +277,11 @@
 
       <pre>ssh-keyscan &lt;ip&gt; | ssh-keygen -lf -</pre>
 
-      <p>That prints the same <code>SHA256:</code> format TOD stores, so it's directly comparable to the value in the database.</p>
+      <p>That prints the same <code>SHA256:</code> format TOD stores, so it is directly comparable to the value in the database.</p>
 
-      <p><strong>Before you clear anything, read this.</strong> A host key mismatch is also exactly what a man-in-the-middle attack looks like. Clearing the pin tells TOD to trust whatever the device presents next. Confirm out-of-band that the device really was reinstalled or replaced. If you can't account for why the key changed, investigate that instead &mdash; the blocked backup is the system working.</p>
+      <p><strong>Before you clear anything, read this.</strong> A host key mismatch is also exactly what a man-in-the-middle attack looks like. Clearing the pin tells TOD to trust whatever the device presents next. Confirm out-of-band that the device really was reinstalled or replaced. If you cannot account for why the key changed, investigate that instead &mdash; the blocked backup is the system working.</p>
 
-      <p><strong>Recovery is manual SQL.</strong> There's no nicer way to say it:</p>
+      <p><strong>Recovery is manual SQL.</strong> There is no nicer way to say it:</p>
 
       <pre>UPDATE devices
 SET ssh_host_key_fingerprint   = NULL,
@@ -302,9 +289,9 @@ SET ssh_host_key_fingerprint   = NULL,
     ssh_host_key_last_verified = NULL
 WHERE id = '&lt;device-uuid&gt;';</pre>
 
-      <p>Run it as the <code>postgres</code> superuser. The application role has no update privilege on those columns at all &mdash; only the poller does &mdash; and <code>devices</code> carries <code>FORCE ROW LEVEL SECURITY</code>, so a tenant-scoped connection won't do it either. Match on <code>id</code>, not <code>hostname</code>: hostnames aren't unique across tenants and you can silently clear the wrong device's pin.</p>
+      <p>Run it as the <code>postgres</code> superuser. The application role has no update privilege on those columns at all &mdash; only the poller does &mdash; and <code>devices</code> carries <code>FORCE ROW LEVEL SECURITY</code>, so a tenant-scoped connection will not do it either. Match on <code>id</code>, not <code>hostname</code>: hostnames are not unique across tenants and you can silently clear the wrong device's pin.</p>
 
-      <p>Leave the fingerprint <code>NULL</code> rather than pasting in the new value. The poller re-pins it automatically on the next cycle and backups resume with no restart. A typo in a hand-written fingerprint pins a value no device will ever present, which reproduces this same fault in a form that's harder to recognise.</p>
+      <p>Leave the fingerprint <code>NULL</code> rather than pasting in the new value. The poller re-pins it automatically on the next cycle and backups resume with no restart. A typo in a hand-written fingerprint pins a value no device will ever present, which reproduces this same fault in a form that is harder to recognise.</p>
 
       <p style="margin-top: 48px; font-size: 0.9rem; color: var(--text-muted);">The Other Dude is <a href="../index.html">source-available MikroTik fleet management</a> &mdash; <a href="../docs.html">documentation</a> &middot; <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a></p>
     </article>
