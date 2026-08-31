@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/staack/the-other-dude/poller/internal/bus"
 	"github.com/staack/the-other-dude/poller/internal/store"
 	"github.com/staack/the-other-dude/poller/internal/vault"
-	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/ssh"
 	"nhooyr.io/websocket"
 )
@@ -44,7 +44,21 @@ type Server struct {
 	maxPerUser   int
 	maxPerDevice int
 	cancel       context.CancelFunc
+
+	// probes are the dependency checks reported by /healthz, keyed by the name
+	// that appears in the response body.
+	probes map[string]HealthProbe
 }
+
+// HealthProbe reports whether one dependency is currently reachable. A nil
+// error means healthy; the error text is surfaced in the /healthz body so an
+// operator can see which dependency failed without reading container logs.
+type HealthProbe func(context.Context) error
+
+// healthProbeTimeout bounds the whole /healthz check. It is shorter than the
+// container healthcheck's own timeout so a hung dependency reports as down
+// rather than as a timed-out probe.
+const healthProbeTimeout = 3 * time.Second
 
 // Config holds tunable limits for the SSH relay server.
 type Config struct {
@@ -68,7 +82,29 @@ func NewServer(rc *redis.Client, cc *vault.CredentialCache, ds *store.DeviceStor
 		maxPerUser:   cfg.MaxPerUser,
 		maxPerDevice: cfg.MaxPerDevice,
 		cancel:       cancel,
+		probes:       make(map[string]HealthProbe),
 	}
+
+	// Only probe dependencies that were actually supplied, so a Server built
+	// with partial dependencies does not report itself permanently degraded.
+	if rc != nil {
+		s.probes["redis"] = func(ctx context.Context) error { return rc.Ping(ctx).Err() }
+	}
+	if ds != nil && ds.Pool() != nil {
+		s.probes["postgres"] = func(ctx context.Context) error { return ds.Pool().Ping(ctx) }
+	}
+	if pub != nil && pub.Conn() != nil {
+		s.probes["nats"] = func(context.Context) error {
+			// The nats.go client reconnects on its own; what matters for the
+			// health report is whether it is connected right now, because every
+			// JetStream publish attempted while it is not is dropped.
+			if conn := pub.Conn(); !conn.IsConnected() {
+				return fmt.Errorf("not connected (%s)", conn.Status())
+			}
+			return nil
+		}
+	}
+
 	go s.idleLoop(ctx)
 	return s
 }
@@ -91,9 +127,39 @@ func (s *Server) Shutdown() {
 	s.mu.Unlock()
 }
 
+// handleHealth reports the live state of the poller's dependencies.
+//
+// It previously returned {"status":"ok"} unconditionally, which meant the
+// container healthcheck stayed green while the poller was disconnected from
+// NATS and silently discarding every metric sample it collected.
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), healthProbeTimeout)
+	defer cancel()
+
+	checks := make(map[string]string, len(s.probes))
+	healthy := true
+	for name, probe := range s.probes {
+		if err := probe(ctx); err != nil {
+			checks[name] = "down: " + err.Error()
+			healthy = false
+			continue
+		}
+		checks[name] = "ok"
+	}
+
+	status, code := "ok", http.StatusOK
+	if !healthy {
+		status, code = "degraded", http.StatusServiceUnavailable
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok"}`))
+	w.WriteHeader(code)
+	if err := json.NewEncoder(w).Encode(map[string]any{
+		"status": status,
+		"checks": checks,
+	}); err != nil {
+		slog.Warn("failed to write health response", "error", err)
+	}
 }
 
 func (s *Server) handleSSH(w http.ResponseWriter, r *http.Request) {
