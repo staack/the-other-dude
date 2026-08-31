@@ -49,6 +49,7 @@ type Manager struct {
 	startXpra   func(XpraConfig) (*XpraProc, error)
 	waitReady   func(ctx context.Context, bindAddr string, wsPort int, timeout time.Duration) error
 	queryStatus func(display int) XpraStatus
+	killXvfb    func(display int)
 }
 
 func NewManager(cfg Config) *Manager {
@@ -66,6 +67,7 @@ func NewManager(cfg Config) *Manager {
 		startXpra:   StartXpra,
 		waitReady:   WaitForXpraReady,
 		queryStatus: QueryXpraStatus,
+		killXvfb:    KillXvfbForDisplay,
 	}
 }
 
@@ -245,6 +247,12 @@ func (m *Manager) terminateSession(workerID string, reason string) error {
 	if proc != nil {
 		KillXpraSession(proc)
 	}
+
+	// Xvfb sits in its OWN process group (xpra detaches it), so the group
+	// signal inside KillXpraSession can never reach it; on the crash path it
+	// would otherwise survive as a live ~250MB orphan while the slot is
+	// reported free.
+	m.killXvfb(display)
 
 	if tmpDir != "" {
 		if err := CleanupTmpDir(tmpDir); err != nil {

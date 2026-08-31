@@ -92,6 +92,113 @@ func startReaped(cmd *exec.Cmd, logFile *os.File) (*XpraProc, error) {
 	return p, nil
 }
 
+// startGroupAnchor pins p's process group (see the XpraProc doc). Failure is
+// non-fatal: p.anchor stays nil and post-reap group kills are skipped, which
+// is exactly the pre-anchor behavior.
+func startGroupAnchor(p *XpraProc) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		slog.Warn("group anchor: pipe failed; post-reap group kill disabled",
+			"pid", p.Pid, "err", err)
+		return
+	}
+	// The anchor must survive the group SIGTERM that KillXpraSession sends
+	// (otherwise the pgid would be unpinned before the SIGKILL escalation),
+	// so it ignores catchable termination signals and exits only on EOF —
+	// when releaseAnchor closes the write end — or on the final group
+	// SIGKILL. Either way its reaper goroutine (startReaped) collects it.
+	cmd := exec.Command("/bin/sh", "-c", `trap '' TERM INT HUP QUIT; read _; exit 0`)
+	cmd.Stdin = r
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pgid: p.Pid}
+	anchor, err := startReaped(cmd, nil)
+	r.Close() // the child holds its own copy of the read end
+	if err != nil {
+		// A leader that died before the anchor could join its group lands
+		// here: setpgid into an empty group fails.
+		w.Close()
+		slog.Warn("group anchor failed to start; post-reap group kill disabled",
+			"pid", p.Pid, "err", err)
+		return
+	}
+	p.anchor = anchor
+	p.anchorW = w
+}
+
+// releaseAnchor unpins the process group: closing the pipe's write end EOFs
+// the anchor, which exits and is reaped by its own reaper goroutine. Safe to
+// call multiple times and with no anchor armed.
+func (p *XpraProc) releaseAnchor() {
+	p.anchorOnce.Do(func() {
+		if p.anchorW != nil {
+			p.anchorW.Close()
+		}
+	})
+}
+
+// xvfbLockPid reads the X server lock file (<lockDir>/.X<display>-lock,
+// written by Xvfb as a space-padded pid) and returns the pid it names.
+func xvfbLockPid(lockDir string, display int) (int, error) {
+	b, err := os.ReadFile(filepath.Join(lockDir, fmt.Sprintf(".X%d-lock", display)))
+	if err != nil {
+		return 0, err
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(b)))
+	if err != nil {
+		return 0, fmt.Errorf("unparseable X lock file for :%d: %w", display, err)
+	}
+	if pid <= 1 {
+		return 0, fmt.Errorf("implausible pid %d in X lock file for :%d", pid, display)
+	}
+	return pid, nil
+}
+
+// pidCommIs reports whether <procRoot>/<pid>/comm names the expected
+// executable. This is the guard that keeps a stale lock file or a recycled
+// pid from getting an unrelated process killed.
+func pidCommIs(procRoot string, pid int, want string) bool {
+	b, err := os.ReadFile(filepath.Join(procRoot, strconv.Itoa(pid), "comm"))
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(b)) == want
+}
+
+// killOrphanXvfb terminates the Xvfb serving the display, if one is still
+// alive. xpra spawns Xvfb into its OWN process group (observed on live
+// hardware), so the leader's group signal never reaches it; on the crash
+// path it survives as a live ~250MB orphan. The pid comes from the X lock
+// file and is verified against /proc before being signalled.
+func killOrphanXvfb(lockDir, procRoot string, display int) {
+	pid, err := xvfbLockPid(lockDir, display)
+	if err != nil {
+		return // no lock file: no Xvfb, or it already exited cleanly
+	}
+	if !pidCommIs(procRoot, pid, "Xvfb") {
+		return // stale lock / recycled pid: not ours to kill
+	}
+	slog.Info("killing leftover Xvfb", "display", display, "pid", pid)
+	syscall.Kill(pid, syscall.SIGTERM)
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if syscall.Kill(pid, 0) != nil {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	// Re-verify before the hard kill: the pid could in principle have been
+	// recycled while we waited.
+	if !pidCommIs(procRoot, pid, "Xvfb") {
+		return
+	}
+	slog.Warn("Xvfb ignored SIGTERM, escalating to SIGKILL", "display", display, "pid", pid)
+	syscall.Kill(pid, syscall.SIGKILL)
+}
+
+// KillXvfbForDisplay is the production entry point for killOrphanXvfb.
+func KillXvfbForDisplay(display int) {
+	killOrphanXvfb("/tmp", "/proc", display)
+}
+
 func StartXpra(cfg XpraConfig) (*XpraProc, error) {
 	display := fmt.Sprintf(":%d", cfg.Display)
 	bindWS := fmt.Sprintf("%s:%d", cfg.BindAddr, cfg.WSPort)
@@ -147,6 +254,7 @@ func StartXpra(cfg XpraConfig) (*XpraProc, error) {
 	if err != nil {
 		return nil, fmt.Errorf("xpra start failed: %w", err)
 	}
+	startGroupAnchor(proc)
 	return proc, nil
 }
 
@@ -240,7 +348,25 @@ func QueryXpraStatus(display int) XpraStatus {
 // group and waits for the reaper goroutine (via proc.Done()) to confirm the
 // exit. It never calls Wait itself: the single reaper owns that.
 func KillXpraSession(proc *XpraProc) error {
+	// Unpin the process group once we are done, whichever path we took.
+	defer proc.releaseAnchor()
+
 	if proc.Exited() {
+		// Crash path: the leader is already reaped, so its pid alone no
+		// longer proves the group is ours — kill(-pid) could hit a recycled
+		// pgid. The anchor is what makes this safe: while it lives the pgid
+		// is provably still ours. SIGKILL outright: the session is already
+		// dead and the survivors are leaderless leftovers (WinBox et al,
+		// ~300MB live) with no state worth a graceful TERM. Xvfb is not in
+		// this group and is swept separately (killOrphanXvfb).
+		if proc.anchor == nil || proc.anchor.Exited() {
+			return nil // nothing provably safe to signal
+		}
+		slog.Info("leader already reaped; killing surviving process group via anchor", "pid", proc.Pid)
+		if err := syscall.Kill(-proc.Pid, syscall.SIGKILL); err != nil {
+			slog.Warn("SIGKILL to anchored process group failed", "pid", proc.Pid, "err", err)
+			return err
+		}
 		return nil
 	}
 

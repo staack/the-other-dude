@@ -3,7 +3,11 @@ package session
 import (
 	"context"
 	"errors"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"testing"
@@ -52,8 +56,11 @@ func newTestManager(t *testing.T, grace time.Duration, childScript string, fake 
 		cmd := exec.Command("/bin/sh", "-c", childScript)
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		p, err := startReaped(cmd, nil)
-		if err == nil && pids != nil {
-			pids <- p.Pid
+		if err == nil {
+			startGroupAnchor(p) // mirror production StartXpra
+			if pids != nil {
+				pids <- p.Pid
+			}
 		}
 		return p, err
 	}
@@ -447,5 +454,94 @@ func TestFirstConnectTimeoutDefaulted(t *testing.T) {
 		WSPortMin: 10100, WSPortMax: 10100})
 	if m.cfg.FirstConnectTimeout != 5*time.Minute {
 		t.Fatalf("expected 5m default first-connect timeout, got %s", m.cfg.FirstConnectTimeout)
+	}
+}
+
+// --- Crash-path orphan cleanup (the ~300MB leak) ---
+
+// When the leader crashes and is reaped, surviving members of its process
+// group (WinBox et al) must still be killed on teardown. The old
+// `if proc.Exited() { return nil }` guard skipped the group signal entirely,
+// leaking live processes while the concurrency slot was reported free.
+func TestCrashPathKillsSurvivingGroupMembers(t *testing.T) {
+	fake := &fakeStatus{}
+	fake.set(0, -1)
+	pidFile := filepath.Join(t.TempDir(), "survivor.pid")
+	// The leader forks a group member, then crashes immediately.
+	script := "sleep 60 & echo $! > " + pidFile + "; exit 0"
+	m := newTestManager(t, 10*time.Second, script, fake, nil)
+
+	resp, err := m.CreateSession(CreateRequest{TunnelHost: "127.0.0.1", TunnelPort: 1})
+	if err == nil {
+		waitFor(t, 5*time.Second, "watcher to terminate crashed session", func() bool {
+			_, ok := sessionState(m, resp.WorkerSessionID)
+			return !ok
+		})
+	}
+	waitFor(t, 5*time.Second, "session count 0 and pools refilled", func() bool {
+		return m.SessionCount() == 0 && poolsFull(m)
+	})
+
+	b, err := os.ReadFile(pidFile)
+	if err != nil {
+		t.Fatalf("survivor pid file: %v", err)
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(b)))
+	if err != nil {
+		t.Fatalf("survivor pid parse: %v", err)
+	}
+	waitFor(t, 5*time.Second, "surviving group member to be killed", func() bool {
+		return errors.Is(syscall.Kill(pid, 0), syscall.ESRCH)
+	})
+}
+
+// The anchor must be armed for every session, and must not outlive it: after
+// termination the anchor process has to be gone from the process table (no
+// leaked helper, no zombie, no pinned pgid).
+func TestAnchorArmedAndDoesNotOutliveSession(t *testing.T) {
+	fake := &fakeStatus{}
+	fake.set(1, 0)
+	m := newTestManager(t, 10*time.Second, "sleep 60", fake, nil)
+	id := mustCreate(t, m)
+
+	m.mu.Lock()
+	sess := m.sessions[id]
+	m.mu.Unlock()
+	sess.mu.Lock()
+	proc := sess.proc
+	sess.mu.Unlock()
+	if proc.anchor == nil {
+		t.Fatal("group anchor not armed at session start")
+	}
+	anchorPid := proc.anchor.Pid
+
+	if err := m.TerminateSession(id); err != nil {
+		t.Fatalf("TerminateSession: %v", err)
+	}
+	waitFor(t, 5*time.Second, "anchor to exit and be reaped", func() bool {
+		return proc.anchor.Exited() && errors.Is(syscall.Kill(anchorPid, 0), syscall.ESRCH)
+	})
+}
+
+// Xvfb sits in its OWN process group (xpra spawns it detached), so the group
+// signal cannot reach it; terminateSession must sweep it separately.
+func TestTerminateSessionSweepsXvfbDisplay(t *testing.T) {
+	fake := &fakeStatus{}
+	fake.set(1, 0)
+	m := newTestManager(t, 10*time.Second, "sleep 60", fake, nil)
+	swept := make(chan int, 1)
+	m.killXvfb = func(display int) { swept <- display }
+	id := mustCreate(t, m)
+
+	if err := m.TerminateSession(id); err != nil {
+		t.Fatalf("TerminateSession: %v", err)
+	}
+	select {
+	case d := <-swept:
+		if d < 100 || d > 103 {
+			t.Fatalf("swept unexpected display %d", d)
+		}
+	default:
+		t.Fatal("terminateSession did not sweep the session's Xvfb display")
 	}
 }
