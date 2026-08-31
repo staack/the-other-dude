@@ -14,8 +14,9 @@ Credential policy:
 
 import asyncio
 import json
+import logging
 import uuid
-from typing import Optional
+from typing import NamedTuple, Optional
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,10 +45,13 @@ from app.schemas.device import (
     DeviceUpdate,
 )
 from app.config import settings
+from app.services import device_probe
 from app.services.crypto import (
     decrypt_credentials_hybrid,
     encrypt_credentials_transit,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -67,6 +71,325 @@ async def _tcp_reachable(ip: str, port: int, timeout: float = 3.0) -> bool:
         return True
     except Exception:
         return False
+
+
+# How much protection each TLS mode gives, strongest last. Used only to decide
+# whether a change weakens a device's transport security and therefore deserves
+# a distinct audit event.
+#
+#   plain     -- no TLS at all; API traffic and credentials in the clear
+#   insecure  -- TLS, but no certificate verification
+#   auto      -- CA-verified TLS if possible, else insecure; never plain text
+#   portal_ca -- CA-verified TLS only
+_TLS_MODE_STRENGTH = {"plain": 0, "insecure": 1, "auto": 2, "portal_ca": 3}
+
+
+def is_tls_downgrade(old_mode: str, new_mode: str) -> bool:
+    """Return True if moving from old_mode to new_mode weakens transport security.
+
+    An unrecognised mode returns False: a spurious security event is worse than
+    a missing one, because it teaches people to ignore the alert.
+    """
+    old_rank = _TLS_MODE_STRENGTH.get(old_mode)
+    new_rank = _TLS_MODE_STRENGTH.get(new_mode)
+    if old_rank is None or new_rank is None:
+        return False
+    return new_rank < old_rank
+
+
+def describe_tls_downgrade(old_mode: str, new_mode: str) -> str:
+    """Explain, in the audit log, what a downgrade actually costs."""
+    if new_mode == "plain":
+        return (
+            "RouterOS API traffic to this device, including credentials, is no "
+            "longer TLS-protected."
+        )
+    if new_mode == "insecure":
+        return (
+            "TLS is still used but the device certificate is no longer verified, "
+            "so the connection is not protected against interception."
+        )
+    return f"Transport security weakened from '{old_mode}' to '{new_mode}'."
+
+
+def describe_device_failure(exc: BaseException) -> str:
+    """Turn a per-device exception into a reason an operator can act on.
+
+    Bulk adoption records a failure per device rather than aborting, so this
+    string is the only thing the user sees about why a device did not adopt.
+    A bare str(exc) is wrong for it in two measured ways:
+
+    - Several common exceptions stringify to "" -- httpx.ConnectError,
+      asyncio.TimeoutError, ConnectionResetError, a bare ValueError. The
+      device then fails with no visible cause at all.
+
+    - SQLAlchemy's DBAPIError stringifies to the driver message *plus the SQL
+      and its bound parameters*. A device INSERT binds
+      encrypted_credentials_transit, so the raw str() would copy an OpenBao
+      Transit ciphertext into the API response and into the UI -- against this
+      module's own rule that credentials are never returned in a public
+      response. exc.orig carries the same diagnosis without the SQL or params.
+    """
+    from fastapi import HTTPException
+
+    # The probe's own message is already written for the user.
+    if isinstance(exc, HTTPException):
+        return str(exc.detail)
+
+    # SQLAlchemy wraps driver errors; prefer the driver's message so the SQL
+    # and bound parameters stay out of the response.
+    cause = getattr(exc, "orig", None) or exc
+    message = str(cause).strip()
+
+    if not message:
+        return f"{type(exc).__name__} (no further detail available)"
+    return f"{type(cause).__name__}: {message}"
+
+
+def probe_device_facts(probe: Optional[device_probe.ProbeOutcome]) -> dict:
+    """Device columns learned from a verified probe, ready to splat into Device().
+
+    The probe completes a full login and reads the version and board name on
+    the way, so onboarding already knows facts the device page would otherwise
+    show as blank until the first poll.
+
+    The mapping matches what the poll path writes
+    (app/services/nats_subscriber.py:92-94), so the two cannot disagree:
+    version -> routeros_version, board_name -> model. Identity is deliberately
+    not persisted -- the poll path does not either, and hostname is the user's
+    choice rather than the device's.
+
+    Absent values are omitted rather than written as NULL, mirroring the
+    COALESCE the poll path uses so a known value is never blanked.
+    """
+    if probe is None or not probe.probe_available or not probe.ok:
+        return {}
+
+    facts = {}
+    if probe.version:
+        facts["routeros_version"] = probe.version
+    if probe.board_name:
+        facts["model"] = probe.board_name
+    return facts
+
+
+async def _require_tcp_reachable(ip_address: str, api_port: int, api_ssl_port: int) -> None:
+    """Raise 422 unless one of the RouterOS API ports accepts a TCP connection.
+
+    The degraded check, used only when a real handshake could not be attempted.
+    It is what onboarding used to do on its own, and it is why a device with
+    api-ssl but no certificate could onboard green and never poll.
+    """
+    from fastapi import HTTPException, status
+
+    api_reachable = await _tcp_reachable(ip_address, api_port)
+    ssl_reachable = await _tcp_reachable(ip_address, api_ssl_port)
+    if not api_reachable and not ssl_reachable:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Cannot reach {ip_address} on port {api_port} (RouterOS API) or "
+                f"{api_ssl_port} (RouterOS SSL API). Verify the IP address and that "
+                "the RouterOS API is enabled. (A full handshake check was not "
+                "possible, so this device has not been verified end to end.)"
+            ),
+        )
+
+
+async def _decrypt_profile_credentials(
+    db: AsyncSession,
+    tenant_id,
+    credential_profile_id: str,
+) -> Optional[tuple[str, str]]:
+    """Return (username, password) from a credential profile, or None.
+
+    Used only to run the onboarding probe. The profile id is what gets stored
+    on the device; the poller re-resolves it at poll time.
+    """
+    from app.models.credential_profile import CredentialProfile
+
+    try:
+        row = await db.execute(
+            select(CredentialProfile).where(
+                CredentialProfile.id == uuid.UUID(str(credential_profile_id)),
+                CredentialProfile.tenant_id == tenant_id,
+            )
+        )
+        profile = row.scalar_one_or_none()
+        if profile is None or profile.credential_type != "routeros":
+            return None
+
+        plaintext = await decrypt_credentials_hybrid(
+            profile.encrypted_credentials_transit,
+            profile.encrypted_credentials,
+            str(tenant_id),
+            settings.get_encryption_key_bytes(),
+        )
+        creds = json.loads(plaintext)
+        username, password = creds.get("username"), creds.get("password")
+        if username is None or password is None:
+            return None
+        return username, password
+    except Exception as exc:  # noqa: BLE001 -- probe is best-effort
+        logger.warning("Could not resolve credential profile %s for probing: %s",
+                       credential_profile_id, exc)
+        return None
+
+
+async def resolve_probe_credentials(
+    db: AsyncSession,
+    tenant_id,
+    username: Optional[str],
+    password: Optional[str],
+    credential_profile_id: Optional[str],
+) -> Optional[tuple[str, str]]:
+    """Work out which credentials the onboarding probe should use.
+
+    Returns None when no credentials can be determined. Callers must treat that
+    as "cannot probe" rather than substituting empty strings, which the device
+    would reject as a bad login and which would look like the user's mistake.
+    """
+    if username is not None and password is not None:
+        return username, password
+    if credential_profile_id:
+        return await _decrypt_profile_credentials(db, tenant_id, credential_profile_id)
+    return None
+
+
+async def validate_routeros_connectivity(
+    ip_address: str,
+    api_port: int,
+    api_ssl_port: int,
+    username: str,
+    password: str,
+    tls_mode: str = "auto",
+) -> device_probe.ProbeOutcome:
+    """Validate a RouterOS device by completing a real protocol handshake.
+
+    Runs the probe in the Go poller -- the same code path polling uses -- so a
+    device that passes here can actually be polled. This replaced a bare TCP
+    connect, which accepted any device with an open port: a device with
+    `api-ssl` enabled and no certificate offers only anonymous-DH ciphers that
+    the poller's TLS stack cannot negotiate, so it onboarded green and then
+    failed every poll.
+
+    Raises HTTPException(422) with the probe's own diagnosis when the device
+    cannot complete a handshake.
+
+    If the poller cannot be reached the probe is skipped and the old TCP check
+    is applied instead, so a poller outage degrades onboarding rather than
+    blocking it. The returned outcome reports ``probe_available=False`` in that
+    case, and the caller must not mark the device online on that basis.
+    """
+    from fastapi import HTTPException, status
+
+    outcome = await device_probe.probe_new_device(
+        ip_address=ip_address,
+        api_port=api_port,
+        api_ssl_port=api_ssl_port,
+        username=username,
+        password=password,
+        tls_mode=tls_mode,
+    )
+
+    if outcome.probe_available:
+        if outcome.ok:
+            return outcome
+
+        detail = outcome.message
+        if outcome.suggested_tls_mode:
+            detail += (
+                f" Verified alternative: this device does answer in "
+                f"'{outcome.suggested_tls_mode}' mode — re-add it with "
+                f"tls_mode='{outcome.suggested_tls_mode}' if that is acceptable to you."
+            )
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
+
+    # Degraded: the poller did not answer. Fall back to the weaker TCP check
+    # rather than making onboarding impossible during a poller outage.
+    logger.warning(
+        "Device probe unavailable for %s; falling back to a TCP reachability check: %s",
+        ip_address,
+        outcome.message,
+    )
+    await _require_tcp_reachable(ip_address, api_port, api_ssl_port)
+    return outcome
+
+
+class BulkDeviceVerdict(NamedTuple):
+    """Outcome of validating one device in a bulk import.
+
+    `rejection` is None when the device may be adopted. `verified` is True only
+    when a full handshake actually succeeded -- a device that merely passed the
+    degraded TCP fallback is adoptable but unverified, and must not be stored
+    as online on that basis.
+    """
+
+    rejection: Optional[str]
+    verified: bool
+
+
+async def evaluate_bulk_routeros_device(
+    ip_address: str,
+    api_port: int,
+    api_ssl_port: int,
+    tls_mode: str,
+    credentials: Optional[tuple[str, str]],
+) -> BulkDeviceVerdict:
+    """Decide whether a device may be adopted in a bulk import.
+
+    Bulk records failures per device rather than raising, which is why this
+    returns a verdict instead of throwing the way the single-device path does.
+
+    Falls back to the TCP check when the poller is unavailable or the
+    credential profile could not be read -- a bulk import must not become
+    impossible because of an outage, and probing with no credentials would
+    report every device as an authentication failure.
+    """
+    if credentials is not None:
+        outcome = await device_probe.probe_new_device(
+            ip_address=ip_address,
+            api_port=api_port,
+            api_ssl_port=api_ssl_port,
+            username=credentials[0],
+            password=credentials[1],
+            tls_mode=tls_mode,
+        )
+        if outcome.probe_available:
+            if outcome.ok:
+                return BulkDeviceVerdict(rejection=None, verified=True)
+            reason = outcome.message
+            if outcome.suggested_tls_mode:
+                reason += (
+                    f" Verified alternative: this device answers in "
+                    f"'{outcome.suggested_tls_mode}' mode."
+                )
+            return BulkDeviceVerdict(rejection=reason, verified=False)
+        logger.warning(
+            "Device probe unavailable for %s during bulk import; "
+            "falling back to a TCP reachability check: %s",
+            ip_address,
+            outcome.message,
+        )
+    else:
+        logger.warning(
+            "No usable credentials to probe %s during bulk import; "
+            "falling back to a TCP reachability check",
+            ip_address,
+        )
+
+    if await _tcp_reachable(ip_address, api_ssl_port) or await _tcp_reachable(
+        ip_address, api_port
+    ):
+        return BulkDeviceVerdict(rejection=None, verified=False)
+    return BulkDeviceVerdict(
+        rejection=(
+            f"Device unreachable on ports {api_port}/{api_ssl_port}. "
+            "(A full handshake check was not possible, so this device has not "
+            "been verified end to end.)"
+        ),
+        verified=False,
+    )
 
 
 def _build_device_response(device: Device) -> DeviceResponse:
@@ -157,21 +480,34 @@ async def create_device(
     """
     is_snmp = data.device_type == "snmp"
 
-    # TCP reachability check — only for RouterOS devices (SNMP uses UDP)
+    # Live handshake validation — only for RouterOS devices (SNMP uses UDP).
+    # A device that cannot complete a RouterOS API handshake must not onboard.
+    probe: device_probe.ProbeOutcome | None = None
     if not is_snmp:
-        api_reachable = await _tcp_reachable(data.ip_address, data.api_port)
-        ssl_reachable = await _tcp_reachable(data.ip_address, data.api_ssl_port)
-
-        if not api_reachable and not ssl_reachable:
-            from fastapi import HTTPException, status
-
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=(
-                    f"Cannot reach {data.ip_address} on port {data.api_port} "
-                    f"(RouterOS API) or {data.api_ssl_port} (RouterOS SSL API). "
-                    "Verify the IP address and that the RouterOS API is enabled."
-                ),
+        credentials = await resolve_probe_credentials(
+            db=db,
+            tenant_id=tenant_id,
+            username=data.username,
+            password=data.password,
+            credential_profile_id=data.credential_profile_id,
+        )
+        if credentials is None:
+            # No usable credentials (e.g. an unreadable credential profile).
+            # Probing anonymously would fail the login and blame the user, so
+            # fall back to the old reachability check instead.
+            logger.warning(
+                "No credentials available to probe %s; falling back to a TCP check",
+                data.ip_address,
+            )
+            await _require_tcp_reachable(data.ip_address, data.api_port, data.api_ssl_port)
+        else:
+            probe = await validate_routeros_connectivity(
+                ip_address=data.ip_address,
+                api_port=data.api_port,
+                api_ssl_port=data.api_ssl_port,
+                username=credentials[0],
+                password=credentials[1],
+                tls_mode=data.tls_mode,
             )
 
     # Encrypt credentials via OpenBao Transit
@@ -207,7 +543,17 @@ async def create_device(
         snmp_version=data.snmp_version if is_snmp else None,
         snmp_profile_id=snmp_profile_uuid,
         credential_profile_id=credential_profile_uuid,
-        status="unknown",
+        # A RouterOS device that completed a live handshake is known to be
+        # online right now, so say so rather than leaving it "unknown" until
+        # the next poll cycle -- up to 120s later. Anything not positively
+        # verified stays "unknown".
+        status=(
+            "online"
+            if (probe is not None and probe.probe_available and probe.ok)
+            else "unknown"
+        ),
+        # Version and model, already learned during the handshake.
+        **probe_device_facts(probe),
     )
     db.add(device)
     await db.flush()  # Get the ID without committing
@@ -533,6 +879,14 @@ async def bulk_add_with_profile(
     results: list[BulkAddDeviceResult] = []
     defaults = data.defaults or BulkAddDefaults()
 
+    # Decrypt the profile's credentials once, not once per device, so a large
+    # import does not pay for a Transit round trip per entry.
+    bulk_credentials: Optional[tuple[str, str]] = None
+    if data.device_type == "routeros":
+        bulk_credentials = await _decrypt_profile_credentials(
+            db, tenant_id, str(data.credential_profile_id)
+        )
+
     for entry in data.devices:
         try:
             hostname = entry.hostname or entry.ip_address
@@ -553,24 +907,32 @@ async def bulk_add_with_profile(
                 )
                 continue
 
-            # TCP reachability check for RouterOS devices
+            # Live handshake validation for RouterOS devices. A bare TCP check
+            # here would let a device with api-ssl and no certificate import
+            # green and then never poll -- the same defect the single-device
+            # path had.
+            verified = False
             if data.device_type == "routeros":
-                reachable = await _tcp_reachable(entry.ip_address, defaults.api_ssl_port)
-                if not reachable:
-                    reachable = await _tcp_reachable(entry.ip_address, defaults.api_port)
-                if not reachable:
+                verdict = await evaluate_bulk_routeros_device(
+                    ip_address=entry.ip_address,
+                    api_port=defaults.api_port,
+                    api_ssl_port=defaults.api_ssl_port,
+                    tls_mode=defaults.tls_mode,
+                    credentials=bulk_credentials,
+                )
+                if verdict.rejection is not None:
                     results.append(
                         BulkAddDeviceResult(
                             ip_address=entry.ip_address,
                             hostname=hostname,
                             success=False,
-                            error=(
-                                f"Device unreachable on ports "
-                                f"{defaults.api_port}/{defaults.api_ssl_port}"
-                            ),
+                            error=verdict.rejection,
                         )
                     )
                     continue
+                # Only a completed handshake counts; the degraded TCP fallback
+                # does not, so such a device stays "unknown".
+                verified = verdict.verified
 
             # Create device with credential profile reference
             device = Device(
@@ -587,7 +949,10 @@ async def bulk_add_with_profile(
                 snmp_port=defaults.snmp_port if data.device_type == "snmp" else 161,
                 snmp_version=defaults.snmp_version if data.device_type == "snmp" else None,
                 snmp_profile_id=snmp_profile_id,
-                status="unknown",
+                # Only a completed handshake justifies "online"; a device that
+                # merely passed the degraded TCP fallback stays "unknown" until
+                # the poller says otherwise.
+                status="online" if verified else "unknown",
             )
             db.add(device)
             await db.flush()
@@ -602,12 +967,15 @@ async def bulk_add_with_profile(
             )
 
         except Exception as exc:
+            logger.warning(
+                "Bulk profile import failed for %s", entry.ip_address, exc_info=True
+            )
             results.append(
                 BulkAddDeviceResult(
                     ip_address=entry.ip_address,
                     hostname=entry.hostname or entry.ip_address,
                     success=False,
-                    error=str(exc),
+                    error=describe_device_failure(exc),
                 )
             )
 

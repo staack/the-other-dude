@@ -295,6 +295,20 @@ func main() {
 	}
 	defer discoveryResponder.Stop()
 
+	// -----------------------------------------------------------------------
+	// Initialize RouterOS connectivity probe responder (NATS request-reply)
+	//
+	// Backs onboarding validation and the test-connection endpoint. It runs
+	// here rather than in the backend so the probe and the poll share one TLS
+	// implementation and cannot disagree about whether a device is usable.
+	// -----------------------------------------------------------------------
+	probeResponder := bus.NewProbeResponder(publisher.Conn()).
+		WithStore(deviceStore, credentialCache)
+	if err := probeResponder.Start(); err != nil {
+		slog.Error("failed to start RouterOS probe responder", "error", err)
+	}
+	defer probeResponder.Stop()
+
 	slog.Info("starting device scheduler",
 		"poll_interval", pollInterval,
 		"refresh_period", refreshPeriod,

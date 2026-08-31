@@ -451,3 +451,39 @@ class DeviceTagResponse(BaseModel):
     color: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+class DeviceConnectionTestResponse(BaseModel):
+    """Result of a live connectivity probe against a device.
+
+    Always returned with HTTP 200 when the probe ran: a device that cannot be
+    reached is a successful test with a negative result, not a failed request.
+    Callers branch on ``ok`` and ``reason``, and show ``message`` to the user.
+    """
+
+    ok: bool
+    # How far the handshake got: "tcp", "tls", "login", "query", "done".
+    stage: str
+    # Stable classification: "ok", "unreachable", "timeout",
+    # "tls_cipher_mismatch", "tls_cert_untrusted", "tls_error", "auth_failed",
+    # "protocol_error", "unknown", "probe_unavailable".
+    reason: str
+    # Human-readable explanation, safe to display verbatim.
+    message: str
+    # Raw underlying error, for operators and support. May be null.
+    detail: Optional[str] = None
+    # The TLS mode the probe used.
+    tls_mode: str
+    # A mode that was *verified* to work when the configured one did not.
+    # Populated only when the probe actually confirmed it, so it is a tested
+    # recommendation rather than a guess.
+    suggested_tls_mode: Optional[str] = None
+    # Device identity, populated only on success.
+    identity: Optional[str] = None
+    version: Optional[str] = None
+    board_name: Optional[str] = None
+    elapsed_ms: int = 0
+    # False when the poller could not be reached, so no verdict was possible.
+    # Distinguishes "the device is broken" from "we could not ask".
+    probe_available: bool = True
+    checked_at: datetime
