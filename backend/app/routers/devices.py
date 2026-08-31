@@ -449,12 +449,19 @@ async def bulk_add_devices(
             await _restore_tenant_context(db, tenant_id)
             added.append(device)
 
-        except HTTPException as exc:
-            await _abandon_failed_device(db, tenant_id)
-            failed.append({"ip_address": dev_data.ip_address, "error": exc.detail})
         except Exception as exc:
+            # describe_device_failure keeps an empty-message exception from
+            # rendering as "10.0.0.1: ", and keeps a DBAPIError's bound
+            # parameters -- which include the credential ciphertext -- out of
+            # the response.
             await _abandon_failed_device(db, tenant_id)
-            failed.append({"ip_address": dev_data.ip_address, "error": str(exc)})
+            logger.warning(
+                "Bulk adoption failed for %s", dev_data.ip_address, exc_info=True
+            )
+            failed.append({
+                "ip_address": dev_data.ip_address,
+                "error": device_service.describe_device_failure(exc),
+            })
 
     return BulkAddResult(added=added, failed=failed)
 

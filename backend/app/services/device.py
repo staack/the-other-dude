@@ -112,6 +112,40 @@ def describe_tls_downgrade(old_mode: str, new_mode: str) -> str:
     return f"Transport security weakened from '{old_mode}' to '{new_mode}'."
 
 
+def describe_device_failure(exc: BaseException) -> str:
+    """Turn a per-device exception into a reason an operator can act on.
+
+    Bulk adoption records a failure per device rather than aborting, so this
+    string is the only thing the user sees about why a device did not adopt.
+    A bare str(exc) is wrong for it in two measured ways:
+
+    - Several common exceptions stringify to "" -- httpx.ConnectError,
+      asyncio.TimeoutError, ConnectionResetError, a bare ValueError. The
+      device then fails with no visible cause at all.
+
+    - SQLAlchemy's DBAPIError stringifies to the driver message *plus the SQL
+      and its bound parameters*. A device INSERT binds
+      encrypted_credentials_transit, so the raw str() would copy an OpenBao
+      Transit ciphertext into the API response and into the UI -- against this
+      module's own rule that credentials are never returned in a public
+      response. exc.orig carries the same diagnosis without the SQL or params.
+    """
+    from fastapi import HTTPException
+
+    # The probe's own message is already written for the user.
+    if isinstance(exc, HTTPException):
+        return str(exc.detail)
+
+    # SQLAlchemy wraps driver errors; prefer the driver's message so the SQL
+    # and bound parameters stay out of the response.
+    cause = getattr(exc, "orig", None) or exc
+    message = str(cause).strip()
+
+    if not message:
+        return f"{type(exc).__name__} (no further detail available)"
+    return f"{type(cause).__name__}: {message}"
+
+
 def probe_device_facts(probe: Optional[device_probe.ProbeOutcome]) -> dict:
     """Device columns learned from a verified probe, ready to splat into Device().
 
@@ -934,12 +968,15 @@ async def bulk_add_with_profile(
             )
 
         except Exception as exc:
+            logger.warning(
+                "Bulk profile import failed for %s", entry.ip_address, exc_info=True
+            )
             results.append(
                 BulkAddDeviceResult(
                     ip_address=entry.ip_address,
                     hostname=entry.hostname or entry.ip_address,
                     success=False,
-                    error=str(exc),
+                    error=describe_device_failure(exc),
                 )
             )
 
