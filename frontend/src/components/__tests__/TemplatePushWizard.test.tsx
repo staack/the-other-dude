@@ -69,6 +69,10 @@ const testDevices: FleetDevice[] = [
     longitude: null,
     tenant_id: 'tenant-1',
     tenant_name: 'Test Tenant',
+    client_count: null,
+    avg_signal: null,
+    cpe_signal: null,
+    ap_hostname: null,
   },
   {
     id: 'dev-2',
@@ -84,6 +88,10 @@ const testDevices: FleetDevice[] = [
     longitude: null,
     tenant_id: 'tenant-1',
     tenant_name: 'Test Tenant',
+    client_count: null,
+    avg_signal: null,
+    cpe_signal: null,
+    ap_hostname: null,
   },
   {
     id: 'dev-3',
@@ -99,6 +107,10 @@ const testDevices: FleetDevice[] = [
     longitude: null,
     tenant_id: 'tenant-1',
     tenant_name: 'Test Tenant',
+    client_count: null,
+    avg_signal: null,
+    cpe_signal: null,
+    ap_hostname: null,
   },
 ]
 

@@ -170,7 +170,6 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
     })
     setSnmpIp('')
     setSnmpCredProfileId('')
-    setSnmpDiscoverResult(null)
     setRosProfileId('')
     setUseProfile(false)
     setShowBulk(false)
@@ -245,12 +244,10 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
   )
 
   // Helper to get profile list as array (list() already unwraps the wrapper)
-  const rosProfileList: CredentialProfileResponse[] =
-    Array.isArray(rosProfiles) ? rosProfiles : (rosProfiles?.profiles ?? [])
-  const snmpCredProfileList: CredentialProfileResponse[] =
-    (Array.isArray(snmpCredProfiles) ? snmpCredProfiles : (snmpCredProfiles?.profiles ?? [])).filter(
-      (p) => p.credential_type === 'snmp_v2c' || p.credential_type === 'snmp_v3',
-    )
+  const rosProfileList: CredentialProfileResponse[] = rosProfiles ?? []
+  const snmpCredProfileList: CredentialProfileResponse[] = (snmpCredProfiles ?? []).filter(
+    (p) => p.credential_type === 'snmp_v2c' || p.credential_type === 'snmp_v3',
+  )
 
   // ─── RouterOS Tab ───────────────────────────────────────────────────────────
 
@@ -418,7 +415,6 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
               setSnmpIp(e.target.value)
               if (error) setError(null)
               setConnectionStatus('idle')
-              setSnmpDiscoverResult(null)
             }}
             placeholder="192.168.1.1"
             autoFocus

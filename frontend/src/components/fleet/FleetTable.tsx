@@ -55,9 +55,17 @@ function StatusDot({ status }: { status: string }) {
 
 function DeviceTypeIcon({ deviceType }: { deviceType: string }) {
   if (deviceType === 'snmp') {
-    return <Network className="h-3.5 w-3.5 text-text-muted" title="SNMP" />
+    return (
+      <span title="SNMP" className="inline-flex">
+        <Network className="h-3.5 w-3.5 text-text-muted" />
+      </span>
+    )
   }
-  return <Router className="h-3.5 w-3.5 text-text-muted" title="RouterOS" />
+  return (
+    <span title="RouterOS" className="inline-flex">
+      <Router className="h-3.5 w-3.5 text-text-muted" />
+    </span>
+  )
 }
 
 interface SortHeaderProps {

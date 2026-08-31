@@ -169,8 +169,8 @@ function EditDeviceDialog({
           <div className="border-t border-border pt-3">
             <p className="text-xs text-text-muted mb-2">GPS coordinates (optional)</p>
             <div className="grid grid-cols-2 gap-3">
-              {field('latitude', 'Latitude', form.latitude, (v) => setForm((f) => ({ ...f, latitude: v ? parseFloat(v) : undefined })), { type: 'number', placeholder: '0.000000' })}
-              {field('longitude', 'Longitude', form.longitude, (v) => setForm((f) => ({ ...f, longitude: v ? parseFloat(v) : undefined })), { type: 'number', placeholder: '0.000000' })}
+              {field('latitude', 'Latitude', form.latitude ?? undefined, (v) => setForm((f) => ({ ...f, latitude: v ? parseFloat(v) : undefined })), { type: 'number', placeholder: '0.000000' })}
+              {field('longitude', 'Longitude', form.longitude ?? undefined, (v) => setForm((f) => ({ ...f, longitude: v ? parseFloat(v) : undefined })), { type: 'number', placeholder: '0.000000' })}
             </div>
           </div>
 

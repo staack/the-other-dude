@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { MapPin } from 'lucide-react'
-import { metricsApi, tenantsApi } from '@/lib/api'
+import { metricsApi, tenantsApi, type FleetDevice } from '@/lib/api'
 import { useAuth, isSuperAdmin } from '@/lib/auth'
 import { LoadingText } from '@/components/ui/skeleton'
 import { FleetMap } from './FleetMap'
@@ -148,7 +148,7 @@ function FleetMapWithTenantRouting({
   effectiveTenantId,
   superAdmin,
 }: {
-  devices: Array<{ latitude: number | null; longitude: number | null; tenant_id: string } & Record<string, unknown>>
+  devices: FleetDevice[]
   effectiveTenantId: string
   superAdmin: boolean
 }) {
@@ -156,10 +156,5 @@ function FleetMapWithTenantRouting({
   // FleetMap + DeviceMarker handle this by using device.tenant_id when tenantId is empty
   const tenantId = superAdmin && !effectiveTenantId ? '' : effectiveTenantId
 
-  return (
-    <FleetMap
-      devices={devices as unknown as import('@/lib/api').FleetDevice[]}
-      tenantId={tenantId}
-    />
-  )
+  return <FleetMap devices={devices} tenantId={tenantId} />
 }

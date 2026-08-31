@@ -51,7 +51,7 @@ export interface RegistrationResult {
 }
 
 /** Convert an ArrayBuffer or Uint8Array to a base64 string. */
-function toBase64(buf: ArrayBuffer): string {
+function toBase64(buf: ArrayBuffer | Uint8Array): string {
   const bytes = new Uint8Array(buf);
   let binary = '';
   for (let i = 0; i < bytes.length; i++) {
