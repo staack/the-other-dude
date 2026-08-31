@@ -166,13 +166,26 @@ Log in with the `FIRST_ADMIN_EMAIL` and `FIRST_ADMIN_PASSWORD` credentials set i
 
 ## Storage Configuration
 
-Docker volumes mount to the host filesystem. Default locations are configured in `docker-compose.yml`:
+Most state is bind-mounted to the host filesystem under `./docker-data/`. Default locations are configured in `docker-compose.yml`:
 
 - **PostgreSQL data**: `./docker-data/postgres`
 - **Redis data**: `./docker-data/redis`
 - **NATS data**: `./docker-data/nats`
 - **Git store (config backups)**: `./docker-data/git-store`
 - **Firmware cache**: `./docker-data/firmware-cache` (downloaded RouterOS firmware packages)
+
+There is one exception, and it matters more than the rest:
+
+- **OpenBao data**: the `openbao_data` **named Docker volume**, not a bind mount
+
+That volume holds the Transit encryption keys. Device credentials, credential
+profiles, config backup contents and audit log detail bodies are all stored as
+ciphertext that only those keys can open, and the keys cannot be exported
+through the Transit API — copying the storage is the only way to back them up.
+Because it is a named volume rather than a bind mount, **`docker compose down -v`
+and `docker volume prune` both destroy it** while leaving the database and the
+git store fully intact on disk and permanently unreadable. See
+[Data Loss Failure Modes](#data-loss-failure-modes).
 
 To change storage locations, edit the volume mounts in `docker-compose.yml`.
 
@@ -317,17 +330,98 @@ The API and poller export Prometheus metrics:
 
 ## Maintenance
 
-### Backup Strategy
+### Backup and Restore
 
-- **Database**: Use `pg_dump` or configure PostgreSQL streaming replication
-- **Config backups**: Git repositories in the git-store volume (automatic nightly backups)
-- **Encryption key**: Store `CREDENTIAL_ENCRYPTION_KEY` securely -- required to decrypt device credentials
+TOD's data lives in four places. A backup missing any one of them restores a
+portal that looks healthy and cannot read its own data:
+
+| What | Where | Lose it and |
+|------|-------|-------------|
+| Devices, users, license, backup timeline | PostgreSQL | Everything is gone |
+| Config backup **contents** | `./docker-data/git-store` | The timeline survives; every backup in it is unopenable. `config_backup_runs` stores only a commit SHA — the export.rsc and backup.bin are not in PostgreSQL |
+| Transit encryption keys | `openbao_data` volume | Credentials, config backup bodies and audit details are undecryptable ciphertext |
+| `BAO_UNSEAL_KEY`, `CREDENTIAL_ENCRYPTION_KEY` | `.env.prod` (gitignored, in no volume) | The OpenBao data above is a safe with no combination |
+
+Use the supplied scripts rather than a bare `pg_dump`, which captures only the
+first row of that table:
+
+```bash
+# Take a backup. Refuses rather than producing an archive it knows to be
+# unrestorable: aborts if OpenBao is sealed or unreachable, if BAO_UNSEAL_KEY
+# is missing, or if the database records config backups whose git store is not
+# there. Stops OpenBao briefly for a consistent copy of the key store.
+./scripts/backup.sh
+
+# Restore. Ends by Transit-decrypting a real device credential and a real
+# config backup body, and fails loudly if either cannot be read, rather than
+# reporting success on a restore that silently cannot decrypt anything.
+./scripts/restore.sh backups/tod-backup-YYYYmmdd-HHMMSS.tar.gz
+```
+
+The archive contains your unseal key and credential encryption key in
+cleartext. Anyone holding it can decrypt every device credential and config
+backup in it. Store it encrypted and off this host.
+
+Two things a restore does not bring back:
+
+- **WireGuard peer configuration** is regenerated from the database rather than
+  restored, and is only rewritten when a tenant's VPN settings are next saved.
+  Until then WireGuard serves whatever config was on the host.
+- **Redis contents** are not backed up at all. See below for what that costs.
+
+### Data Loss Failure Modes
+
+These lose data. They are listed here so an operator reads them rather than
+discovers them.
+
+| Failure | Effect | Prevention |
+|---------|--------|------------|
+| `docker compose down -v` | Destroys `openbao_data`. Every credential, config backup body and audit detail becomes permanently undecryptable — while the database and git store survive intact, so nothing looks broken until a device fails to poll. On the next start OpenBao initialises a **fresh** key set and the API begins returning 403s against the old token, which reads as a permissions problem rather than as data loss | Never use `-v` on a production stack. Take a backup first |
+| `docker volume prune` while the stack is down | Identical to the above, from a command whose purpose is to be safe | As above |
+| Losing `.env.prod` | OpenBao can never be unsealed again; the Transit keys are unrecoverable even with a perfect volume backup | `backup.sh` includes it. Store the archive off-host |
+| Backing up PostgreSQL only | Loses 100% of config backup contents, silently — the UI still lists every run | Use `backup.sh` |
+| Redis loss or wipe | Redis runs with stock settings: RDB snapshots, no AOF, so a crash loses the most recent writes. WinBox session registry, the recent-push tracker that drives rollback, and alert flap-detection windows are all Redis-only and are all rebuildable. **The JWT revocation list is not**: wiping Redis makes every revoked refresh token valid again for up to 7 days | Rotate `JWT_SECRET_KEY` after any unplanned Redis loss |
+| NATS JetStream retention | `DEVICE_EVENTS` is capped at 24h / 64MB with `DiscardOld`. An API outage that outlasts the backlog silently drops the oldest events while the poller reports success throughout. At roughly 20 devices, 64MB is on the order of ten hours | Restore API service within the retention window; raise `MaxBytes` for larger fleets |
+| Host disk loss | Everything, including `.env.prod` | Off-host backups |
+
+Gaps caused by the poller failing to deliver data — a NATS outage, a PostgreSQL
+outage, or the poller process dying — are **recorded** in the `ingest_gaps`
+table rather than silently absent. TOD does not attempt to recover the lost
+samples; it records that they are missing, with the interval and the reason.
+
+### Restart and Recovery Behaviour
+
+Every production service carries `restart: unless-stopped`, so the stack is
+configured to return on its own after a host reboot or a Docker daemon restart.
+A plain restart (`docker compose restart`, or `down` without `-v` followed by
+`up -d`) is not expected to lose committed data: devices, credentials, config
+snapshots and license state are all on disk.
+
+> **Measured recovery time: not yet established.** The behaviour above follows
+> from the compose configuration but has not been timed end to end on a
+> populated install. Treat it as the intended design, not as an observed
+> result, until a figure appears here.
+
+Note that before v10 this was not true at all: `postgres` and `redis` carried no
+restart policy, so a host reboot left them stopped while the API and poller
+restart-looped against them indefinitely. If you are running an older compose
+file, add `restart: unless-stopped` to both.
+
+The poller reconnects to both NATS and PostgreSQL without intervention —
+unlimited reconnects with a 2s backoff for NATS, and a connection pool that
+re-dials PostgreSQL. Any interval during which it could not deliver what it
+collected is written to `ingest_gaps`, including the window it was not running
+at all, which it reconstructs on startup from the last heartbeat it wrote.
+
+`/health/ready` on the API and `/healthz` on the poller both report real
+dependency state and return 503 when PostgreSQL, Redis or NATS is unreachable.
+Neither returns a fixed value.
 
 ### Updating
 
 ```bash
-# Back up the database before upgrading
-docker compose exec postgres pg_dump -U postgres mikrotik > backup-$(date +%Y%m%d).sql
+# Back up before upgrading -- see Backup and Restore above
+./scripts/backup.sh
 
 git pull
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build api
