@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Other Dude — MikroTik Fleet Management</title>
-  <meta name="description" content="Network fleet management for MikroTik and SNMP devices. Self-hosted. Source-available. Monitor MikroTik routers alongside switches, APs, and UPSes from a single pane of glass.">
+  <title>The Other Dude — Self-Hosted MikroTik Operations for MSPs and WISPs</title>
+  <meta name="description" content="Self-hosted MikroTik fleet operations for MSPs and WISPs. Multi-tenant monitoring, browser-based WinBox, access through NAT, and config pushes that revert themselves if a device stops answering. Free through 250 devices.">
   <meta name="keywords" content="MikroTik, RouterOS, SNMP monitoring, fleet management, network management, WinBox browser, MikroTik monitoring, MikroTik configuration, SNMP poller, multi-vendor NMS, router management, self-hosted, open source, source-available">
   <meta name="author" content="The Other Dude">
   <meta name="robots" content="index, follow">
@@ -15,8 +15,8 @@
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="The Other Dude — MikroTik Fleet Management">
-  <meta property="og:description" content="Network fleet management for MikroTik and SNMP devices. Self-hosted. Source-available.">
+  <meta property="og:title" content="The Other Dude — Self-Hosted MikroTik Operations for MSPs and WISPs">
+  <meta property="og:description" content="Self-hosted MikroTik fleet operations for MSPs and WISPs. Config pushes that revert themselves if a device stops answering. Free through 250 devices.">
   <meta property="og:url" content="https://theotherdude.net/">
   <meta property="og:image" content="https://theotherdude.net/assets/og-image.png">
   <meta property="og:site_name" content="The Other Dude">
@@ -24,8 +24,8 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="The Other Dude — MikroTik Fleet Management">
-  <meta name="twitter:description" content="Network fleet management for MikroTik and SNMP devices. Self-hosted. Source-available.">
+  <meta name="twitter:title" content="The Other Dude — Self-Hosted MikroTik Operations for MSPs and WISPs">
+  <meta name="twitter:description" content="Self-hosted MikroTik fleet operations for MSPs and WISPs. Config pushes that revert themselves if a device stops answering. Free through 250 devices.">
   <meta name="twitter:image" content="https://theotherdude.net/assets/og-image.png">
 
   <!-- Structured Data -->
@@ -348,6 +348,96 @@
       color: #1a1810;
     }
 
+    /* ---- Hero emphasis, CTAs, trust line ---- */
+    .wp-header h1 { font-size: 2.1rem; line-height: 1.15; max-width: 20ch; }
+
+    .wp-hero-problem {
+      font-family: "Manrope", system-ui, sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #1a1810;
+      margin: 0 0 16px;
+      max-width: 30ch;
+    }
+
+    .wp-header .wp-tagline { max-width: 62ch; }
+
+    .wp-cta-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 28px 0 20px;
+    }
+
+    .wp-cta {
+      display: inline-block;
+      padding: 12px 22px;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .wp-cta--primary {
+      background: #8a7a48;
+      color: #f6f4ec;
+      border: 1px solid #8a7a48;
+    }
+    .wp-cta--primary:hover { background: #7a6a38; border-color: #7a6a38; }
+
+    .wp-cta--secondary {
+      color: #1a1810;
+      border: 1px solid rgba(40, 36, 28, 0.25);
+    }
+    .wp-cta--secondary:hover { border-color: #8a7a48; color: #8a7a48; }
+
+    .wp-trustline {
+      font-size: 0.85rem;
+      color: #8a8578;
+      line-height: 1.7;
+      margin: 0;
+    }
+    .wp-trustline strong { color: #5e5a4e; font-weight: 600; }
+
+    /* ---- Outcome blocks ---- */
+    .wp-outcomes {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px 40px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .wp-outcome h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+      color: #1a1810;
+    }
+
+    .wp-outcome p {
+      font-size: 0.92rem;
+      line-height: 1.65;
+      color: #5e5a4e;
+      margin: 0 0 8px;
+    }
+
+    .wp-outcome p:last-child { margin-bottom: 0; }
+
+    .wp-outcome .wp-outcome-caveat { color: #8a8578; font-size: 0.87rem; }
+
+    @media (max-width: 700px) {
+      .wp-outcomes { grid-template-columns: 1fr; gap: 24px; }
+      .wp-header h1 { font-size: 1.7rem; max-width: none; }
+      .wp-hero-problem { font-size: 1.12rem; max-width: none; }
+      .wp-cta { display: block; text-align: center; }
+      .wp-cta-row { gap: 12px; }
+    }
+
     /* ---- Quick start ---- */
     .wp-quickstart {
       background: #f6f4ec;
@@ -472,14 +562,43 @@
     <!-- 1. Header -->
     <div class="container">
       <header class="wp-header">
-        <h1>The Other Dude</h1>
-        <p class="wp-tagline">MikroTik fleet management. Now with SNMP support. Self-hosted. Source-available.</p>
-        <div class="wp-header-links">
-          <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
-          <a href="docs.html">Documentation</a>
-          <a href="blog/">Blog</a>
+        <h1>Self-hosted MikroTik operations for MSPs and WISPs</h1>
+        <p class="wp-hero-problem">Operate your MikroTik fleet without gambling on every configuration change.</p>
+        <p class="wp-tagline">Multi-tenant monitoring, browser-based WinBox, secure access through NAT, and config pushes that revert themselves if a device stops answering &mdash; built by a network engineer who has worked at ISPs and MSPs since 1997.</p>
+        <div class="wp-cta-row">
+          <a class="wp-cta wp-cta--primary" href="docs.html#quickstart">Start free in your lab</a>
+          <a class="wp-cta wp-cta--secondary" href="docs.html">Browse the documentation</a>
         </div>
+        <div class="wp-cta-row" style="margin-top:-8px">
+          <a href="docs.html#guides" style="font-size:0.88rem;color:#8a7a48;text-decoration:none;border-bottom:1px solid rgba(138,122,72,0.3)">Or start with a task-based guide &rarr;</a>
+        </div>
+        <p class="wp-trustline">Built in Wisconsin &middot; <strong>Free through 250 devices</strong> &middot; <strong>$499 one-time</strong>, perpetual, unlimited devices &middot; <a href="#early-access" style="color:#8a7a48">Early access</a> &mdash; production milestone is v11</p>
       </header>
+
+      <!-- 1b. Outcomes -->
+      <section class="wp-section" id="outcomes">
+        <h2>What you get out of it</h2>
+        <ul class="wp-outcomes">
+          <li class="wp-outcome">
+            <h3>Change without lockout</h3>
+            <p>Config restores and template pushes run inside a RouterOS safe-mode session. If a change cuts off your management path, the router reverts itself &mdash; no reboot, no site visit.</p>
+            <p class="wp-outcome-caveat">Direct config-editor edits apply immediately and are not rolled back. A push larger than RouterOS can undo &mdash; 100 actions &mdash; is refused rather than applied without a safety net.</p>
+          </li>
+          <li class="wp-outcome">
+            <h3>Keep clients isolated</h3>
+            <p>Tenancy is enforced in the database with PostgreSQL row-level security, not filtered in the UI. Device credentials are encrypted per tenant through a real KMS, access is role-based, and every change, login and admin action lands in an audit trail.</p>
+          </li>
+          <li class="wp-outcome">
+            <h3>Reach routers behind NAT</h3>
+            <p>WinBox in the browser, an SSH relay, and a WireGuard overlay &mdash; so you can work on a device without exposing its management ports to the internet.</p>
+          </li>
+          <li class="wp-outcome">
+            <h3>See the whole site</h3>
+            <p>MikroTik over the RouterOS API, plus SNMP v1/v2c/v3 for the switches, access points and UPSes sharing the rack. One fleet view, not two tools.</p>
+            <p class="wp-outcome-caveat">SNMP is read-only &mdash; no SET, no traps.</p>
+          </li>
+        </ul>
+      </section>
 
       <!-- 2. What it does -->
       <section class="wp-section" id="what-it-does">
@@ -536,22 +655,27 @@
           <span class="ss-label ss-label-left">light</span>
           <span class="ss-label ss-label-right">dark</span>
         </div>
-
-        </div>
       </div>
     </section>
 
     <div class="container">
 
-      <!-- 4. What it is not -->
-      <section class="wp-section">
-        <h2>What it is not</h2>
+      <!-- 4. Early access -->
+      <section class="wp-section" id="early-access">
+        <h2>Early access</h2>
         <ul class="wp-caveats">
-          <li>Not finished</li>
-          <li>Not stable</li>
-          <li>Not for everyone</li>
-          <li>Things break, APIs change. That is intentional before v11.</li>
+          <li>Recommended for labs and evaluation today. Production readiness is the v11 milestone, and it is a milestone rather than a date.</li>
+          <li>Things break and APIs change before v11. That is deliberate, not neglect &mdash; the schema and API get a stability commitment at v11, and committing earlier would mean either breaking it or slowing down.</li>
+          <li>Support is written and asynchronous. Also deliberate: an answer that lands in the documentation helps whoever hits the same thing next, and an answer in a chat window helps nobody twice.</li>
+          <li>Not for everyone. If you need a finished product with a phone number attached, this is not it yet.</li>
         </ul>
+      </section>
+
+      <!-- 5. Who builds this -->
+      <section class="wp-section" id="who-builds-this">
+        <h2>Who builds this</h2>
+        <p>I have been working at ISPs and MSPs since 1997. I am not a developer by trade &mdash; I am a network engineer who got tired of fifteen WinBox tabs, SSH sessions to three sites, and a firmware spreadsheet that had been wrong since last Tuesday. I have wanted this tool to exist for the better part of two decades and started building it half a dozen times before this one stuck. <a href="blog/why-this-exists.html">The longer version is here.</a></p>
+        <p>Built in Wisconsin. One person writes the code, answers the licensing mail, and handles support &mdash; which is exactly why support is asynchronous and in writing.</p>
       </section>
 
       <!-- 5. Status -->
@@ -564,6 +688,15 @@
           <tr><td>Commercial license</td><td>$499 one time &mdash; unlimited devices, perpetual</td></tr>
           <tr><td>Stability</td><td>Breaking changes expected before v11</td></tr>
         </table>
+      </section>
+
+      <!-- 6b. What the licence covers -->
+      <section class="wp-section" id="pricing">
+        <h2>What the licence covers</h2>
+        <p><strong>Under 250 devices, you do not need to pay, and nothing is held back if you don't.</strong> The free and commercial builds are the same build. There is no feature gating, no &ldquo;Pro&rdquo; tab, no telemetry requirement, and no license server to call home to. Going over 250 devices does not currently disable anything either &mdash; it turns a number red on the About page. Whether you are over the line is between you and the licence.</p>
+        <p><strong>$499 buys the right, once.</strong> One-time, perpetual, unlimited devices, no subscription and no renewal. It is what the BSL 1.1 requires for production use above 250 devices, and it is also what you need if you want to offer The Other Dude to third parties as a hosted or managed service. Updates are the same public repository everyone else gets &mdash; you are not buying a private build.</p>
+        <p><strong>How to buy, honestly:</strong> email <a href="mailto:license@theotherdude.net">license@theotherdude.net</a> and a signed key comes back. There is no checkout page yet. Keys are offline and cryptographically signed, so activation never contacts a server.</p>
+        <p>On 8 March 2030 the licence converts to Apache 2.0 on its own, and all of this stops mattering.</p>
       </section>
 
       <!-- 6. Setup -->

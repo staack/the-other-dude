@@ -359,6 +359,9 @@
         <a href="#env-vars" class="sidebar-link" data-section="env-vars">Environment Variables</a>
         <a href="#docker-compose" class="sidebar-link" data-section="docker-compose">Docker Compose</a>
 
+        <p class="sidebar-section-title">Guides</p>
+        <a href="#guides" class="sidebar-link" data-section="guides">All guides</a>
+
       </nav>
     </aside>
 
@@ -1739,6 +1742,31 @@ open http://localhost</code></pre>
           </tbody>
         </table>
         <p>Build Docker images sequentially (not in parallel) to avoid OOM during builds.</p>
+      </section>
+
+      <!-- GUIDES -->
+      <section id="guides">
+        <h2>Guides</h2>
+        <p>Longer-form pages on specific jobs. These cover the same ground as the reference above, organised around a task rather than a subsystem.</p>
+        <table>
+          <thead>
+            <tr><th>Guide</th><th>Covers</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><a href="docs/routeros-configuration-management.html"><strong>RouterOS configuration management</strong></a></td><td>The config editor, safe-mode rollback on push, version history, and templates.</td></tr>
+            <tr><td><a href="docs/mikrotik-bulk-configuration.html"><strong>Bulk configuration across devices</strong></a></td><td>Templates, batch CLI, and how a sequential rollout limits blast radius.</td></tr>
+            <tr><td><a href="docs/mikrotik-backup-solution.html"><strong>Automated backup solution</strong></a></td><td>Scheduled config capture, the git-backed timeline, diffs, and restore.</td></tr>
+            <tr><td><a href="docs/mikrotik-router-backup-automation.html"><strong>Backup automation</strong></a></td><td>Replacing per-device Scheduler scripts and FTP with a central schedule.</td></tr>
+            <tr><td><a href="docs/mikrotik-configuration-drift.html"><strong>Configuration drift detection</strong></a></td><td>Catching out-of-band changes made in WinBox or over SSH.</td></tr>
+            <tr><td><a href="docs/mikrotik-router-monitoring.html"><strong>Router monitoring at scale</strong></a></td><td>Metric families, alert rules with duration thresholds, and fleet health.</td></tr>
+            <tr><td><a href="docs/mikrotik-centralized-management.html"><strong>Centralized management</strong></a></td><td>What a control plane needs to cover, and how to evaluate one.</td></tr>
+            <tr><td><a href="docs/manage-multiple-mikrotik-routers.html"><strong>Managing multiple routers</strong></a></td><td>Moving off per-device WinBox sessions and firmware spreadsheets.</td></tr>
+            <tr><td><a href="docs/msp-mikrotik-management.html"><strong>MikroTik management for MSPs</strong></a></td><td>Per-client tenancy, operator-level staff, and onboarding a new client.</td></tr>
+            <tr><td><a href="docs/winbox-alternative.html"><strong>A WinBox alternative</strong></a></td><td>What a browser-based fleet tool does that WinBox does not, and vice versa.</td></tr>
+            <tr><td><a href="docs/self-hosted-network-management.html"><strong>Self-hosted network management</strong></a></td><td>Why credentials and config history stay on your own infrastructure.</td></tr>
+            <tr><td><a href="docs/open-source-mikrotik-management.html"><strong>Open source, and where TOD sits</strong></a></td><td>Source-available under BSL 1.1, and what that does and does not permit.</td></tr>
+          </tbody>
+        </table>
       </section>
 
     </main>
