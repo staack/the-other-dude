@@ -14,7 +14,7 @@ The Other Dude is a self-hosted, multi-tenant platform (one installation serves 
 
 - **Router Fleet Monitoring** -- Real-time CPU, memory, disk, traffic, and wireless metrics across every device. Configurable alerts with email, Slack, and webhook notifications.
 - **Configuration Drift Detection** -- Automated config snapshots with full version history and side-by-side diffs. Know when configs change and what changed.
-- **Safe Configuration Pushes** -- Two-phase config push with automatic panic-revert. Push confidently to remote devices without risking lockouts.
+- **Safe Configuration Pushes** -- Config restores and template pushes run inside a RouterOS safe-mode session, so a change that cuts off the management path is reverted by the router itself, without a reboot.
 - **Backup Management** -- Automated configuration backups on a schedule. One-click restore to any previous version.
 - **Network Topology Visibility** -- Interactive topology map showing device interconnections and shared subnets.
 
@@ -34,7 +34,7 @@ The Other Dude is a self-hosted, multi-tenant platform (one installation serves 
 
 ### Configuration
 
-- **Config Editor** -- Browse and edit RouterOS configuration sections with a structured command interface. Two-phase config push with automatic panic-revert ensures you never brick a remote device.
+- **Config Editor** -- Browse and edit RouterOS configuration sections with a structured command interface. Edits are applied directly to the device; for automatic rollback, push the change as a template or restore a saved version, which run under safe mode.
 - **Batch Config** -- Apply configuration changes across multiple devices simultaneously with template support.
 - **Bulk Commands** -- Execute arbitrary RouterOS commands across device groups.
 - **Templates** -- Reusable configuration templates with variable substitution.

@@ -139,7 +139,7 @@
 
       <p><strong>Fleet dashboard.</strong> See all your devices in one view — online/offline status, CPU, memory, bandwidth utilization, uptime, firmware version. Filter by group, site, or alert status. The device table uses virtual scrolling to handle hundreds of routers without performance degradation.</p>
 
-      <p><strong>Configuration management.</strong> Browse and edit the RouterOS config tree from the web UI. Every change is stored in git-backed version history with full diff capability. Templates let you define a config once and push it to a group of devices with per-device variable substitution, rolled out one device at a time so a bad template stops at the first failure. Config push has a known revert defect — read the <a href="routeros-configuration-management.html">config management guide</a> before pushing to production.</p>
+      <p><strong>Configuration management.</strong> Browse and edit the RouterOS config tree from the web UI. Every change is stored in git-backed version history with full diff capability. Templates let you define a config once and push it to a group of devices with per-device variable substitution, and template pushes run inside a <a href="routeros-configuration-management.html">RouterOS safe-mode session</a> so a change that breaks the management path is reverted by the router itself. Direct edits in the config editor are applied immediately, without that protection.</p>
 
       <p><strong>Automated backups.</strong> The platform captures a full config export from every device on a <a href="mikrotik-backup-solution.html">configurable schedule</a>. Navigate the version timeline, compare any two snapshots side by side, restore with one click.</p>
 
@@ -159,7 +159,7 @@
         <h2>Related</h2>
         <ul>
           <li><a href="mikrotik-centralized-management.html">Centralized management for MikroTik router fleets</a></li>
-          <li><a href="routeros-configuration-management.html">RouterOS configuration management, version history, and templates</a></li>
+          <li><a href="routeros-configuration-management.html">RouterOS configuration management with safe rollback</a></li>
           <li><a href="mikrotik-bulk-configuration.html">Bulk configuration across multiple MikroTik devices</a></li>
           <li><a href="self-hosted-network-management.html">Self-hosted network management with no cloud dependency</a></li>
           <li><a href="../blog/what-you-can-do-today.html">What You Can Do With It Today (blog)</a></li>

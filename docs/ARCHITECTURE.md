@@ -105,7 +105,7 @@ The backend exposes 33 route groups under the `/api` prefix:
 | `links` | Wireless link discovery and state tracking |
 | `signal_history` | Per-client signal strength history and trends |
 | `site_alerts` | Geographic-scoped alert rules and events |
-| `config` | Config push operations (two-phase with panic revert) |
+| `config` | Config push operations (safe-mode protected) |
 
 ### Go Poller
 
@@ -208,32 +208,48 @@ Go Poller                   Redis           OpenBao         RouterOS        NATS
 7. API NATS subscriber processes results and upserts into PostgreSQL
 8. Releases Redis lock
 
-### Config Push (Two-Phase with Panic Revert)
+### Config Push (Safe Mode)
+
+Used by config restore and template push. **Not** used by the config editor, whose
+add/set/remove calls go straight over the binary API with no rollback -- see
+`useConfigPanel.ts`.
 
 ```
-Frontend        API           RouterOS
-   │              │               │
-   ├──push config─▶│              │
-   │              ├──apply config─▶│
-   │              ├──set revert timer─▶│
-   │              │◀──ack────────┤
-   │◀──pending────┤              │
-   │              │              │  (timer counting down)
-   ├──confirm─────▶│              │
-   │              ├──cancel timer─▶│
-   │              │◀──ack────────┤
-   │◀──confirmed──┤              │
+API                                    RouterOS
+ │                                        │
+ ├──/system backup save──────────────────▶│  pre-push copy on device flash
+ ├──ssh: enter safe mode (Ctrl-A)────────▶│  prompt becomes [user@host] <SAFE>
+ ├──count actions, refuse if > 100        │
+ ├──sftp upload + /import ───────────────▶│  applied inside the session
+ │            (wait 60s to settle)        │
+ ├──dial a NEW connection to verify──────▶│
+ │                                        │
+ ├──reachable:   Ctrl-X, release─────────▶│  changes kept
+ └──unreachable: drop the session         │  RouterOS reverts, no reboot
 ```
 
-1. Frontend sends config commands to the API
-2. API connects to the device and applies the configuration
-3. Sets a revert timer on the device (RouterOS safe mode / scheduler)
-4. Returns pending status to the frontend
-5. User confirms the change works (e.g., connectivity still up)
-6. If confirmed: API cancels the revert timer, config is permanent
-7. If timeout or rejected: device automatically reverts to the previous configuration
+1. A binary `/system backup` is written to device flash as an independent recovery point
+2. API opens SSH and enters RouterOS safe mode, confirmed by the `<SAFE>` prompt
+3. The change set is counted; the push is refused if it exceeds `SAFE_MODE_MAX_ACTIONS`
+4. Config is uploaded over SFTP and `/import`ed **inside** the safe-mode session
+5. After a 60s settle, a **new, independent** connection is dialled to verify reachability
+   -- reusing the safe-mode connection would prove nothing, as it is already established
+6. Reachable: the session is committed (Ctrl-X) and the changes are kept
+7. Unreachable, or the session is lost for any reason: RouterOS reverts every action taken
+   in the session, on its own, **without rebooting**
 
-This pattern prevents lockouts from misconfigured firewall rules or IP changes.
+The revert trigger is loss of the safe-mode session, not a timeout and not a user
+confirmation. An API crash mid-push reverts the device for the same reason a broken
+management path does.
+
+**Overflow is refused, not risked.** RouterOS's undo buffer holds 100 actions and fails
+open past that -- it silently keeps the changes while still displaying `<SAFE>`, with
+nothing written to the log. Hardware-verified at 128, 140 and 150 actions. The pre-flight
+count in `app/services/safe_mode.py` exists because of this: a push that cannot be
+protected does not run.
+
+This pattern prevents lockouts from misconfigured firewall rules or IP changes, on the
+paths it covers.
 
 ### Authentication (SRP-6a Zero-Knowledge Proof)
 

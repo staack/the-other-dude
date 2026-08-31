@@ -138,7 +138,7 @@
         <li><strong>Version-controlled storage.</strong> Config exports are stored in PostgreSQL with complete version history. Every backup is a timestamped snapshot. Nothing is overwritten.</li>
         <li><strong>Change detection.</strong> The poller can detect configuration changes via NATS events in addition to scheduled polling, so a change pushed through WinBox or the CLI shows up in the history within minutes rather than waiting for the next scheduled run.</li>
         <li><strong>Diff viewer.</strong> The web UI shows a timeline of config changes per device. Select any two versions and get a side-by-side diff — additions in green, removals in red, unchanged lines in grey. This works the same way whether you're comparing yesterday to today or last year to last month.</li>
-        <li><strong>One-click restore.</strong> Select a previous backup from the history and push it back to the device. The restore writes a fresh pre-push backup to the device's flash first, applies the config, waits, and then checks the device is still reachable. It also installs an on-device revert timer, and that timer is currently defective — it can revert and reboot the device after a restore that worked. See the <a href="routeros-configuration-management.html">config management guide</a> before running a restore against production.</li>
+        <li><strong>One-click restore.</strong> Select a previous backup from the history and push it back to the device. The restore is applied inside a RouterOS safe-mode session and only committed once the device answers a fresh connection, which means a restore that breaks connectivity is reverted by the router itself — without a reboot.</li>
         <li><strong>Batch operations.</strong> You can pull the current config from multiple devices and compare them to identify inconsistencies — useful when you want to verify that a template change was applied uniformly across a group of devices.</li>
       </ul>
 
@@ -154,7 +154,7 @@
           <li><a href="mikrotik-router-monitoring.html">How to monitor MikroTik routers at scale</a> — metrics collection, alerting, and health dashboards</li>
           <li><a href="mikrotik-centralized-management.html">MikroTik centralized management</a> — multi-site visibility, bulk operations, and unified access</li>
           <li><a href="mikrotik-backup-solution.html">MikroTik backup solution</a> — overview of the backup system with git-backed history and one-click restore</li>
-          <li><a href="routeros-configuration-management.html">RouterOS configuration management</a> — the config editor, version history, and what config push actually does</li>
+          <li><a href="routeros-configuration-management.html">RouterOS configuration management</a> — safe config pushes with RouterOS safe-mode rollback</li>
           <li><a href="https://github.com/staack/the-other-dude" rel="noopener">The Other Dude on GitHub</a> — source code, issue tracker, and release notes</li>
         </ul>
       </div>

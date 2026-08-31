@@ -133,9 +133,9 @@
 
       <h3>One-Click Restore</h3>
 
-      <p>Select any previous backup from the timeline and push it back to the device. The restore writes a fresh binary backup to the device's own flash first, applies the config, waits 60 seconds, and then checks that the device is still reachable. It also installs an on-device revert timer — and that timer is <a href="routeros-configuration-management.html">currently defective</a>: it fires unconditionally rather than on unreachability, and about 72% of the time it reverts and reboots the device after a restore that had worked. Until that is fixed, don't run a restore against production equipment.</p>
+      <p>Select any previous backup from the timeline and push it back to the device. The restore is applied inside a <a href="routeros-configuration-management.html">RouterOS safe-mode session</a>: a fresh binary backup is written to the device's flash first, the config is applied, and the platform then dials a new connection to check the device still answers. If it does, the session is released and the restore stands. If it doesn't, the session is dropped and RouterOS reverts the restore by itself, without rebooting.</p>
 
-      <p>What that gives you today is a reliable copy to go back to, not a hands-off restore. The pre-restore state is captured on the device and in git before anything changes, so recovery is always possible — but until the revert timer is fixed, plan on being able to reach the device yourself if a remote restore goes wrong.</p>
+      <p>This means you can restore a previous config to a remote device without betting the management path on it. If the restored config breaks connectivity, the device returns to its pre-restore state on its own, and stays up while it does.</p>
 
       <h3>Binary Export Download</h3>
 
@@ -145,9 +145,9 @@
 
       <p>The backup system doesn't only run on the scheduled interval. The poller detects configuration changes via NATS events, so a change made through WinBox or SSH between scheduled backup cycles will trigger an additional snapshot capture. This means the version timeline reflects actual change events, not just periodic snapshots that might miss intermediate states.</p>
 
-      <h2>Backups as the Safety Net</h2>
+      <h2>Config Push Rollback as a Safety Net</h2>
 
-      <p>Backups and <a href="routeros-configuration-management.html">config management</a> are meant to work together. The backup system gives you a timeline of every previous state, and a push writes a fresh pre-push backup to the device's own flash before it changes anything. The automatic revert that was supposed to complete the picture does not currently work — it fires unconditionally rather than on unreachability, and can revert and reboot a device after a successful push. Until that is fixed, treat the backup history as the real safety net and the manual restore as the real undo.</p>
+      <p>Backups and <a href="routeros-configuration-management.html">config management</a> work together as complementary safety mechanisms. The backup system gives you a timeline of every previous state. Safe mode gives you an automatic undo on a restore or template push that breaks the management path. Together, they mean you have both a change that undoes itself when it goes wrong and a full history to restore from when you decide it went wrong later.</p>
 
       <p>For MSPs managing multiple clients, the backup system is <a href="msp-mikrotik-management.html">tenant-scoped</a>. Each client's backup history is isolated. Backup schedules, retention policies, and restore operations all operate within tenant boundaries.</p>
 
@@ -161,7 +161,7 @@
         <h2>Related</h2>
         <ul>
           <li><a href="mikrotik-router-backup-automation.html">Detailed guide to RouterOS backup automation</a></li>
-          <li><a href="routeros-configuration-management.html">RouterOS configuration management, version history, and templates</a></li>
+          <li><a href="routeros-configuration-management.html">RouterOS configuration management with safe rollback</a></li>
           <li><a href="mikrotik-configuration-drift.html">Detecting configuration drift across your fleet</a></li>
           <li><a href="mikrotik-bulk-configuration.html">Bulk configuration across multiple devices</a></li>
           <li><a href="../blog/what-you-can-do-today.html">What You Can Do With It Today (blog)</a></li>

@@ -15,7 +15,7 @@ real-time monitoring, and zero-knowledge security, all self-hosted on your infra
 ## Key Features
 
 - **Fleet Management** -- Dashboard with device health, uptime sparklines, virtual-scrolled fleet table, geographic map, and subnet discovery.
-- **Configuration Push with Panic-Revert** -- Two-phase config deployment ensures you never brick a remote device. Batch config, templates, and git-backed version history with one-click restore.
+- **Configuration Push with Safe-Mode Rollback** -- Config restores and template pushes are applied inside a RouterOS safe-mode session: if the device stops answering, the router reverts the change itself, without rebooting. Batch config, templates, and git-backed version history with one-click restore. (Direct edits in the config editor are applied immediately and are not rolled back automatically.)
 - **Real-Time Monitoring** -- Live CPU, memory, disk, and interface traffic via Server-Sent Events backed by NATS JetStream. Configurable alert rules with email, webhook, and Slack notifications.
 - **Zero-Knowledge Security** -- 1Password-style architecture. SRP-6a authentication (server never sees your password), per-tenant envelope encryption via Transit KMS, Emergency Kit export.
 - **Multi-Tenant with PostgreSQL RLS** -- Full organization isolation enforced at the database layer. Four roles: super_admin, admin, operator, viewer.

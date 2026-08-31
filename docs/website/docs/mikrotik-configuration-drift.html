@@ -114,7 +114,7 @@
 
       <p>Config changes pushed through the platform are recorded in an audit trail with full user attribution. If someone pushes a new firewall ruleset or modifies an interface address, that action is logged with the user, timestamp, and the exact config diff applied. Out-of-band changes made directly via WinBox or SSH will show up in the next polling cycle as an unexpected diff.</p>
 
-      <p>For safe config pushes, The Other Dude uses a two-phase approach: changes are applied to the device, and the platform waits for a confirmation that the device is still reachable. If the device goes silent after the change — which can happen if a firewall or routing change cuts off the management path — the platform automatically reverts to the previous config. This significantly reduces the risk of locking yourself out of a remote device.</p>
+      <p>For safe config pushes, The Other Dude uses RouterOS safe mode. A config restore or template push is applied inside a safe-mode session; the platform then dials a new connection to check the device still answers, and only then releases the session. If the device goes silent — which can happen if a firewall or routing change cuts off the management path — the session is dropped and the router reverts the change by itself, without rebooting. Note that this covers restores and template pushes; edits made directly in the config editor are applied immediately and are not rolled back automatically.</p>
 
       <p>For fleet-scale work, the platform supports config templates with variable substitution. You can define a template for a class of site (branch office, retail location, distribution hub) and push it across a batch of devices with per-device values filled in. This makes it easier to maintain consistency across similar sites and to identify which devices have diverged from that common baseline. To be clear: the current implementation detects config changes between snapshots. Full desired-state compliance checking — where the system continuously validates each device against a canonical template and flags deviations — is not yet implemented, but the snapshot and diff infrastructure is designed to support it.</p>
 
@@ -125,7 +125,7 @@
         <li><a href="manage-multiple-mikrotik-routers.html">Manage multiple MikroTik routers</a></li>
         <li><a href="mikrotik-router-monitoring.html">Monitor MikroTik routers at scale</a></li>
         <li><a href="mikrotik-centralized-management.html">MikroTik centralized management</a></li>
-        <li><a href="routeros-configuration-management.html">RouterOS configuration management, version history, and templates</a></li>
+        <li><a href="routeros-configuration-management.html">RouterOS configuration management with safe rollback</a></li>
         <li><a href="mikrotik-backup-solution.html">Automated MikroTik backup solution</a></li>
         <li><a href="https://github.com/staack/the-other-dude" rel="noopener">View on GitHub</a></li>
       </ul>
