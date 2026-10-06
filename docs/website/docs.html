@@ -1674,10 +1674,19 @@ open http://localhost</code></pre>
             <tr><th>Variable</th><th>Default</th><th>Description</th></tr>
           </thead>
           <tbody>
-            <tr><td><code>FIRMWARE_CACHE_DIR</code></td><td><code>/data/firmware-cache</code></td><td>Path to firmware download cache (PVC mount in production)</td></tr>
+            <tr><td><code>FIRMWARE_CACHE_DIR</code></td><td><code>/data/firmware-cache</code></td><td>Path to firmware download cache; production Compose bind-mounts <code>./docker-data/firmware-cache</code></td></tr>
             <tr><td><code>FIRMWARE_CHECK_INTERVAL_HOURS</code></td><td><code>24</code></td><td>Hours between automatic RouterOS version checks</td></tr>
           </tbody>
         </table>
+
+        <h3 id="firmware-upgrades">Firmware upgrades and extra packages (9.11.0)</h3>
+        <p>Start a device upgrade or staged fleet rollout from the Firmware page. TOD inventories installed packages and automatically downloads the target RouterOS NPK and matching extras from MikroTik's official <code>all_packages-{architecture}-{version}.zip</code> archive. No extra-package setting or manual archive extraction is required. Disabled installed packages are included; available but uninstalled packages are excluded.</p>
+        <p>For example, an arm64 device with <code>routeros</code>, <code>container</code> and <code>wifi-qcom</code> receives all three NPKs for the target version. RouterOS 6 bundled subpackages are covered by the main bundle; separately installed packages retain their separate layout.</p>
+        <p>TOD creates a mandatory configuration backup, validates downloads and rechecks the inventory. Transfers reserve <code>/.tod-firmware-upgrade</code>, use temporary non-NPK filenames and check byte counts before promoting the complete set. TOD then reboots the device. After reconnecting, success requires the exact target RouterOS version and every originally installed package at that version. Use a maintenance window.</p>
+        <p>Backup failures, missing required packages, ambiguous or changed inventories and scheduled package changes stop the job. Root-level NPK files or another staging reservation stop the transfer. Inspect the job error and existing files before retrying; failed transfers attempt to remove their own files and report incomplete cleanup.</p>
+        <p>Cross-major package-layout migrations and upgrades crossing the RouterOS 7.13 wireless split require the RouterOS updater. TOD does not select replacement wireless drivers or install optional packages that were not installed.</p>
+        <p>The API needs outbound HTTPS access to MikroTik's download server and a writable cache. Device credentials need package inventory, configuration backup, SFTP upload and reboot access. Production Compose mounts <code>./docker-data/firmware-cache:/data/firmware-cache</code> in the API. The installer creates the host directory for UID 1001. Existing installations must update Compose and recreate the API with their existing Compose and environment files; pulling images alone does not add the mount.</p>
+        <p>See the <a href="https://github.com/staack/the-other-dude/blob/main/docs/FIRMWARE.md" rel="noopener">firmware guide</a> and <a href="blog/v9-11-0.html">9.11.0 release report</a> for verification results and hardware-test limits.</p>
 
         <h3>Storage Paths</h3>
         <table>
