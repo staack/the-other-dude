@@ -94,8 +94,19 @@ def upgrade_mocks(monkeypatch, tmp_path):
     download = AsyncMock(return_value=str(npk))
     monkeypatch.setattr(firmware, "download_firmware", download)
     conn = AsyncMock()
-    conn.run.return_value = SimpleNamespace(stdout="routeros\n", stderr="", exit_status=0)
+    conn.run.return_value = SimpleNamespace(
+        stdout="routeros|7.16.1|false|false|\n", stderr="", exit_status=0
+    )
+    conn.run.side_effect = lambda command, **kwargs: SimpleNamespace(
+        stdout="routeros|7.24.5|false|false|\n"
+        if "package find" in command and conn.run.await_count > 2
+        else "routeros|7.16.1|false|false|\n",
+        stderr="",
+        exit_status=0,
+    )
     sftp = AsyncMock()
+    sftp.listdir.return_value = []
+    sftp.stat.return_value = SimpleNamespace(size=len(b"test-package"))
     file = AsyncMock()
     sftp.open = MagicMock(return_value=file)
     conn.start_sftp_client = MagicMock(return_value=sftp)
@@ -112,12 +123,13 @@ def upgrade_mocks(monkeypatch, tmp_path):
 
 @pytest.mark.parametrize(
     "inventory",
-    ["routeros\nwifi-qcom\n", "routeros\ncontainer\nzerotier\n", "", "routeros\nwireless\n"],
+    ["", "bad inventory", "routeros|7.16.1|false|false|scheduled for uninstall\n"],
 )
-async def test_extra_or_unknown_packages_never_upload_or_reboot(
+async def test_unknown_or_scheduled_packages_never_upload_or_reboot(
     monkeypatch, upgrade_mocks, inventory
 ):
     mocks = upgrade_mocks
+    mocks.conn.run.side_effect = None
     mocks.conn.run.return_value.stdout = inventory
     await upgrade.start_upgrade("job")
     mocks.download.assert_not_awaited()
