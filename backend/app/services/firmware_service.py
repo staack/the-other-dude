@@ -156,6 +156,12 @@ async def download_firmware(architecture: str, channel: str, version: str) -> st
     return str(local_path)
 
 
+def normalize_routeros_version(version: str | None) -> str | None:
+    """Strip RouterOS's channel suffix while retaining release qualifiers (rc/beta)."""
+    parts = (version or "").split()
+    return parts[0] if parts else None
+
+
 async def get_firmware_overview(tenant_id: str) -> dict:
     """Return fleet firmware status for a tenant.
 
@@ -199,12 +205,12 @@ async def get_firmware_overview(tenant_id: str) -> dict:
     for dev in devices:
         dev_id = str(dev[0])
         hostname = dev[1]
-        current_version = dev[3]
+        current_version = normalize_routeros_version(dev[3])
         arch = dev[4]
         channel = dev[5] or "stable"
 
         latest = latest_versions.get((arch, channel)) if arch else None
-        latest_version = latest["version"] if latest else None
+        latest_version = normalize_routeros_version(latest["version"]) if latest else None
 
         is_up_to_date = False
         if not current_version or not arch:
@@ -241,8 +247,8 @@ async def get_firmware_overview(tenant_id: str) -> dict:
     # Build version groups with is_latest flag
     groups = []
     for ver, devs in sorted(version_groups.items()):
-        # A version is "latest" if it matches the latest for any arch/channel combo
-        is_latest = any(v["version"] == ver for v in latest_versions.values())
+        # A group is current only when every device matches its own architecture/channel.
+        is_latest = all(d["is_up_to_date"] for d in devs)
         groups.append(
             {
                 "version": ver,

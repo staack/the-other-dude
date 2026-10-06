@@ -172,9 +172,9 @@ async def _insert_wireless_metrics(session, data: dict) -> None:
                 "tenant_id": tenant_id,
                 "interface": wif.get("interface"),
                 "client_count": wif.get("client_count"),
-                "avg_signal": wif.get("avg_signal"),
-                "ccq": wif.get("ccq"),
-                "frequency": wif.get("frequency"),
+                "avg_signal": wif.get("avg_signal") or None if wif.get("client_count") else None,
+                "ccq": wif.get("ccq") if wif.get("client_count") else None,
+                "frequency": wif.get("frequency") or None,
             },
         )
 

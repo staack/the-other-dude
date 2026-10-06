@@ -24,6 +24,7 @@ from sqlalchemy import text
 from app.config import settings
 from app.database import AdminAsyncSessionLocal
 from app.services.event_publisher import publish_event
+from app.services.firmware_service import normalize_routeros_version
 
 logger = logging.getLogger(__name__)
 
@@ -193,42 +194,6 @@ async def _run_upgrade(job_id: str) -> None:
         )
         return
 
-    # Step 5: Download NPK
-    logger.info("Downloading firmware %s for %s/%s", target_version, architecture, channel)
-    try:
-        from app.services.firmware_service import download_firmware
-
-        npk_path = await download_firmware(architecture, channel, target_version)
-        logger.info("Firmware cached at %s", npk_path)
-    except Exception as dl_err:
-        logger.error("Firmware download failed: %s", dl_err)
-        await _update_job(
-            job_id,
-            status="failed",
-            error_message=f"Firmware download failed: {dl_err}",
-        )
-        await _publish_upgrade_progress(
-            tenant_id,
-            device_id,
-            job_id,
-            "failed",
-            target_version,
-            f"Firmware download failed for {hostname}",
-            error=str(dl_err),
-        )
-        return
-
-    # Step 6: Upload NPK to device via SFTP
-    await _update_job(job_id, status="uploading")
-    await _publish_upgrade_progress(
-        tenant_id,
-        device_id,
-        job_id,
-        "uploading",
-        target_version,
-        f"Uploading firmware to {hostname}",
-    )
-
     # Decrypt device credentials (dual-read: Transit preferred, legacy fallback)
     if not encrypted_credentials_transit and not encrypted_credentials:
         await _update_job(job_id, status="failed", error_message="Device has no stored credentials")
@@ -272,6 +237,60 @@ async def _run_upgrade(job_id: str) -> None:
             error=str(cred_err),
         )
         return
+
+    # Refuse incomplete package upgrades before downloading, uploading or rebooting.
+    # RouterOS requires matching versions for every installed package, even disabled ones.
+    try:
+        await _check_package_coverage(ip_address, ssh_username, ssh_password, architecture)
+    except Exception as package_err:
+        message = f"Firmware package pre-flight failed: {package_err}"
+        await _update_job(job_id, status="failed", error_message=message)
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"Firmware upgrade refused for {hostname}",
+            error=message,
+        )
+        return
+
+    # Step 5: Download NPK
+    logger.info("Downloading firmware %s for %s/%s", target_version, architecture, channel)
+    try:
+        from app.services.firmware_service import download_firmware
+
+        npk_path = await download_firmware(architecture, channel, target_version)
+        logger.info("Firmware cached at %s", npk_path)
+    except Exception as dl_err:
+        logger.error("Firmware download failed: %s", dl_err)
+        await _update_job(
+            job_id,
+            status="failed",
+            error_message=f"Firmware download failed: {dl_err}",
+        )
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"Firmware download failed for {hostname}",
+            error=str(dl_err),
+        )
+        return
+
+    # Step 6: Upload NPK to device via SFTP
+    await _update_job(job_id, status="uploading")
+    await _publish_upgrade_progress(
+        tenant_id,
+        device_id,
+        job_id,
+        "uploading",
+        target_version,
+        f"Uploading firmware to {hostname}",
+    )
 
     try:
         npk_data = Path(npk_path).read_bytes()
@@ -378,7 +397,9 @@ async def _run_upgrade(job_id: str) -> None:
     )
     try:
         actual_version = await _get_device_version(ip_address, ssh_username, ssh_password)
-        if actual_version and target_version in actual_version:
+        if normalize_routeros_version(actual_version) == normalize_routeros_version(
+            target_version
+        ) and normalize_routeros_version(actual_version):
             logger.info(
                 "Firmware upgrade verified for %s: %s",
                 hostname,
@@ -654,6 +675,41 @@ async def _update_job(job_id: str, **kwargs) -> None:
             params,
         )
         await session.commit()
+
+
+async def _check_package_coverage(ip: str, username: str, password: str, architecture: str) -> None:
+    """Fail closed when the single main NPK cannot cover the installed packages.
+
+    Query names using RouterOS scripting to avoid parsing print-table columns or
+    excluding disabled packages. Extra-package downloads are not yet supported;
+    operators must use RouterOS's updater or supply all packages manually.
+    """
+    async with asyncssh.connect(
+        ip,
+        port=22,
+        username=username,
+        password=password,
+        known_hosts=None,
+        connect_timeout=30,
+    ) as conn:
+        result = await conn.run(
+            ":foreach p in=[/system package find] do={:put [/system package get $p name]}",
+            check=True,
+            timeout=30,
+        )
+    packages = {line.strip() for line in result.stdout.splitlines() if line.strip()}
+    if not packages:
+        raise ValueError(
+            "Could not determine installed packages; no files uploaded or reboot issued"
+        )
+    supported = {"routeros", f"routeros-{architecture}"}
+    uncovered = sorted(packages - supported)
+    if uncovered:
+        raise ValueError(
+            f"Installed packages not covered by the main RouterOS NPK: {', '.join(uncovered)}. "
+            "Use the RouterOS package updater or a manual upgrade with all matching packages. "
+            "No files uploaded or reboot issued."
+        )
 
 
 async def _check_ssh_reachable(ip: str, username: str, password: str) -> bool:
