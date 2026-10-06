@@ -1215,6 +1215,26 @@ def show_summary(config: dict, args: argparse.Namespace) -> bool:
 
 def write_env_prod(config: dict) -> None:
     """Write the .env.prod file."""
+    # Re-running setup must not discard the keys for persistent OpenBao storage.
+    bao_credentials = {
+        "OPENBAO_TOKEN": "PLACEHOLDER_RUN_SETUP",
+        "BAO_UNSEAL_KEY": "PLACEHOLDER_RUN_SETUP",
+    }
+    if ENV_PROD.exists():
+        for line in ENV_PROD.read_text().splitlines():
+            name, sep, value = line.partition("=")
+            name = name.strip()
+            value = value.strip()
+            if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                value = value[1:-1]
+            if (
+                sep
+                and name in bao_credentials
+                and value
+                and value != "PLACEHOLDER_RUN_SETUP"
+            ):
+                bao_credentials[name] = value
+
     db = config["postgres_db"]
     pg_pw = config["postgres_password"]
     app_pw = config["app_user_password"]
@@ -1269,8 +1289,8 @@ CREDENTIAL_ENCRYPTION_KEY={config["encryption_key"]}
 
 # --- OpenBao (KMS) ---
 OPENBAO_ADDR=http://openbao:8200
-OPENBAO_TOKEN=PLACEHOLDER_RUN_SETUP
-BAO_UNSEAL_KEY=PLACEHOLDER_RUN_SETUP
+OPENBAO_TOKEN={bao_credentials["OPENBAO_TOKEN"]}
+BAO_UNSEAL_KEY={bao_credentials["BAO_UNSEAL_KEY"]}
 
 # --- Admin Bootstrap ---
 FIRST_ADMIN_EMAIL={config["admin_email"]}
@@ -1489,21 +1509,26 @@ def run_compose(
 
 def bootstrap_openbao(config: dict) -> bool:
     """Start OpenBao, capture credentials, update .env.prod."""
+    config.pop("openbao_error", None)
     section("OpenBao Bootstrap")
     info("Starting PostgreSQL and OpenBao containers...")
 
     try:
         run_compose("up", "-d", "postgres", "openbao")
-    except subprocess.CalledProcessError as e:
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+        config["openbao_error"] = (
+            f"Starting OpenBao containers failed ({type(e).__name__})"
+        )
         fail("Failed to start OpenBao containers.")
         info(str(e))
         return False
 
-    info("Waiting for OpenBao to initialize (up to 60s)...")
+    info("Waiting for OpenBao health after container startup (up to 60s)...")
 
     # Wait for the container to be healthy
     deadline = time.time() + 60
     healthy = False
+    status = "unknown"
     while time.time() < deadline:
         result = subprocess.run(
             [
@@ -1524,7 +1549,10 @@ def bootstrap_openbao(config: dict) -> bool:
         time.sleep(2)
 
     if not healthy:
-        fail("OpenBao did not become healthy within 60 seconds.")
+        config["openbao_error"] = (
+            f"OpenBao health check timed out 60 seconds after container startup (last status: {status or 'unknown'})"
+        )
+        fail(config["openbao_error"])
         warn("Your .env.prod has placeholder tokens. To fix manually:")
         info("  docker compose logs openbao")
         info("  Look for BAO_UNSEAL_KEY and OPENBAO_TOKEN lines")
@@ -1564,6 +1592,9 @@ def bootstrap_openbao(config: dict) -> bool:
         # OpenBao was already initialized — check if .env.prod has real values
         env_content = ENV_PROD.read_text()
         if "PLACEHOLDER_RUN_SETUP" in env_content:
+            config["openbao_error"] = (
+                "OpenBao is healthy but bootstrap credentials are missing"
+            )
             warn(
                 "Could not find credentials in logs (OpenBao may already be initialized)."
             )
@@ -1940,7 +1971,7 @@ def main() -> int:
             "openbao_bootstrap",
             "failure",
             duration_ms=duration_ms,
-            error_message="OpenBao did not become healthy or credentials not found",
+            error_message=config.get("openbao_error", "OpenBao bootstrap failed"),
         )
         if not ask_yes_no(
             "Continue without OpenBao credentials? (stack will need manual fix)",
