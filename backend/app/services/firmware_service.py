@@ -13,6 +13,9 @@ Version discovery comes from two sources:
 """
 
 import logging
+import re
+import tempfile
+import zipfile
 from pathlib import Path
 
 import httpx
@@ -22,6 +25,101 @@ from app.config import settings
 from app.database import AdminAsyncSessionLocal
 
 logger = logging.getLogger(__name__)
+
+_MAX_DOWNLOAD_BYTES = 256 * 1024 * 1024
+_MAX_PACKAGE_BYTES = 128 * 1024 * 1024
+_NPK_MAGIC = b"\x1e\xf1\xd0\xba"
+
+
+def _validate_package_target(architecture: str, version: str) -> None:
+    if architecture not in _V7_ARCHITECTURES or not re.fullmatch(
+        r"[67]\.\d+(?:\.\d+)*(?:(?:rc|beta)\d+)?", version
+    ):
+        raise ValueError("Unsupported RouterOS architecture or version")
+
+
+def _valid_npk(path: Path) -> bool:
+    if not path.is_file() or not 8 <= path.stat().st_size <= _MAX_PACKAGE_BYTES:
+        return False
+    with path.open("rb") as package:
+        header = package.read(8)
+    return header[:4] == _NPK_MAGIC and int.from_bytes(header[4:8], "little") == (
+        path.stat().st_size - 8
+    )
+
+
+async def _download_to_cache(url: str, path: Path) -> None:
+    """Publish only a complete download; interrupted jobs never poison shared cache."""
+    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False, suffix=".part") as output:
+        temporary = Path(output.name)
+        try:
+            async with httpx.AsyncClient(timeout=300.0, follow_redirects=True) as client:
+                async with client.stream("GET", url) as response:
+                    response.raise_for_status()
+                    size = 0
+                    async for chunk in response.aiter_bytes(chunk_size=65536):
+                        size += len(chunk)
+                        if size > _MAX_DOWNLOAD_BYTES:
+                            raise ValueError("Firmware download exceeds size limit")
+                        output.write(chunk)
+                    length = response.headers.get("content-length")
+                    if not size or (length is not None and size != int(length)):
+                        raise ValueError("Incomplete firmware download")
+            output.close()
+            temporary.replace(path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
+async def download_extra_packages(architecture: str, version: str, packages: set[str]) -> list[str]:
+    """Extract only requested, exact-release NPKs from MikroTik's official archive.
+
+    Never extract arbitrary archive paths. Check every member before publishing any
+    package, and let ZIP CRC checks reject truncated/corrupt payloads.
+    """
+    _validate_package_target(architecture, version)
+    if not packages or any(not re.fullmatch(r"[a-z][a-z0-9-]*", p) for p in packages):
+        raise ValueError("Invalid extra-package inventory")
+    cache = Path(settings.FIRMWARE_CACHE_DIR) / version
+    cache.mkdir(parents=True, exist_ok=True)
+    archive = cache / f"all_packages-{architecture}-{version}.zip"
+    if not archive.exists():
+        await _download_to_cache(
+            f"https://download.mikrotik.com/routeros/{version}/{archive.name}", archive
+        )
+    filenames = [f"{p}-{version}-{architecture}.npk" for p in sorted(packages)]
+    prepared: list[tuple[Path, Path]] = []
+    try:
+        with zipfile.ZipFile(archive) as bundle:
+            names = bundle.namelist()
+            missing = [name for name in filenames if names.count(name) != 1]
+            if missing:
+                raise ValueError(
+                    "Target release does not supply required packages: " + ", ".join(missing)
+                )
+            for name in filenames:
+                info = bundle.getinfo(name)
+                if info.is_dir() or not 8 <= info.file_size <= _MAX_PACKAGE_BYTES:
+                    raise ValueError(f"Invalid package size: {name}")
+                with tempfile.NamedTemporaryFile(dir=cache, delete=False, suffix=".part") as output:
+                    temporary = Path(output.name)
+                    prepared.append((temporary, cache / name))
+                    with bundle.open(info) as source:
+                        while chunk := source.read(65536):
+                            output.write(chunk)
+                if not _valid_npk(temporary):
+                    raise ValueError(f"Invalid NPK payload: {name}")
+        for temporary, destination in prepared:
+            temporary.replace(destination)
+    except (zipfile.BadZipFile, EOFError):
+        # A corrupt cached ZIP must not prevent a fresh download on retry.
+        archive.unlink(missing_ok=True)
+        raise
+    finally:
+        for temporary, _ in prepared:
+            temporary.unlink(missing_ok=True)
+    return [str(cache / name) for name in filenames]
+
 
 # Architectures supported by RouterOS v7 and v6
 _V7_ARCHITECTURES = ["arm", "arm64", "mipsbe", "mmips", "smips", "tile", "ppc", "x86"]
@@ -111,6 +209,7 @@ async def download_firmware(architecture: str, channel: str, version: str) -> st
     Returns the local file path. Skips download if file already exists
     and size matches.
     """
+    _validate_package_target(architecture, version)
     cache_dir = Path(settings.FIRMWARE_CACHE_DIR) / version
     cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -119,18 +218,16 @@ async def download_firmware(architecture: str, channel: str, version: str) -> st
     npk_url = f"https://download.mikrotik.com/routeros/{version}/{filename}"
 
     # Check if already cached
-    if local_path.exists() and local_path.stat().st_size > 0:
+    if _valid_npk(local_path):
         logger.info("Firmware already cached: %s", local_path)
         return str(local_path)
 
     logger.info("Downloading firmware: %s", npk_url)
 
-    async with httpx.AsyncClient(timeout=300.0) as client:
-        async with client.stream("GET", npk_url) as response:
-            response.raise_for_status()
-            with open(local_path, "wb") as f:
-                async for chunk in response.aiter_bytes(chunk_size=65536):
-                    f.write(chunk)
+    await _download_to_cache(npk_url, local_path)
+    if not _valid_npk(local_path):
+        local_path.unlink(missing_ok=True)
+        raise ValueError("Invalid main RouterOS NPK payload")
 
     file_size = local_path.stat().st_size
     logger.info("Firmware downloaded: %s (%d bytes)", local_path, file_size)
@@ -154,6 +251,12 @@ async def download_firmware(architecture: str, channel: str, version: str) -> st
         await session.commit()
 
     return str(local_path)
+
+
+def normalize_routeros_version(version: str | None) -> str | None:
+    """Strip RouterOS's channel suffix while retaining release qualifiers (rc/beta)."""
+    parts = (version or "").split()
+    return parts[0] if parts else None
 
 
 async def get_firmware_overview(tenant_id: str) -> dict:
@@ -199,12 +302,12 @@ async def get_firmware_overview(tenant_id: str) -> dict:
     for dev in devices:
         dev_id = str(dev[0])
         hostname = dev[1]
-        current_version = dev[3]
+        current_version = normalize_routeros_version(dev[3])
         arch = dev[4]
         channel = dev[5] or "stable"
 
         latest = latest_versions.get((arch, channel)) if arch else None
-        latest_version = latest["version"] if latest else None
+        latest_version = normalize_routeros_version(latest["version"]) if latest else None
 
         is_up_to_date = False
         if not current_version or not arch:
@@ -241,8 +344,8 @@ async def get_firmware_overview(tenant_id: str) -> dict:
     # Build version groups with is_latest flag
     groups = []
     for ver, devs in sorted(version_groups.items()):
-        # A version is "latest" if it matches the latest for any arch/channel combo
-        is_latest = any(v["version"] == ver for v in latest_versions.values())
+        # A group is current only when every device matches its own architecture/channel.
+        is_latest = all(d["is_up_to_date"] for d in devs)
         groups.append(
             {
                 "version": ver,

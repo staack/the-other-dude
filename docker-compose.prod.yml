@@ -45,6 +45,7 @@ services:
       - "8001:8000"
     volumes:
       - ./docker-data/git-store:/data/git-store
+      - ./docker-data/firmware-cache:/data/firmware-cache
       - ./docker-data/wireguard:/data/wireguard
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:8000/health/ready', timeout=5)"]

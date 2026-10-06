@@ -15,6 +15,9 @@ jobs may span multiple tenants and run in background asyncio tasks.
 import asyncio
 import json
 import logging
+import re
+import uuid
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -24,6 +27,7 @@ from sqlalchemy import text
 from app.config import settings
 from app.database import AdminAsyncSessionLocal
 from app.services.event_publisher import publish_event
+from app.services.firmware_service import normalize_routeros_version
 
 logger = logging.getLogger(__name__)
 
@@ -193,42 +197,6 @@ async def _run_upgrade(job_id: str) -> None:
         )
         return
 
-    # Step 5: Download NPK
-    logger.info("Downloading firmware %s for %s/%s", target_version, architecture, channel)
-    try:
-        from app.services.firmware_service import download_firmware
-
-        npk_path = await download_firmware(architecture, channel, target_version)
-        logger.info("Firmware cached at %s", npk_path)
-    except Exception as dl_err:
-        logger.error("Firmware download failed: %s", dl_err)
-        await _update_job(
-            job_id,
-            status="failed",
-            error_message=f"Firmware download failed: {dl_err}",
-        )
-        await _publish_upgrade_progress(
-            tenant_id,
-            device_id,
-            job_id,
-            "failed",
-            target_version,
-            f"Firmware download failed for {hostname}",
-            error=str(dl_err),
-        )
-        return
-
-    # Step 6: Upload NPK to device via SFTP
-    await _update_job(job_id, status="uploading")
-    await _publish_upgrade_progress(
-        tenant_id,
-        device_id,
-        job_id,
-        "uploading",
-        target_version,
-        f"Uploading firmware to {hostname}",
-    )
-
     # Decrypt device credentials (dual-read: Transit preferred, legacy fallback)
     if not encrypted_credentials_transit and not encrypted_credentials:
         await _update_job(job_id, status="failed", error_message="Device has no stored credentials")
@@ -273,22 +241,76 @@ async def _run_upgrade(job_id: str) -> None:
         )
         return
 
+    # Refuse incomplete package upgrades before downloading, uploading or rebooting.
+    # RouterOS requires matching versions for every installed package, even disabled ones.
     try:
-        npk_data = Path(npk_path).read_bytes()
-        npk_filename = Path(npk_path).name
+        installed_packages = await _get_installed_packages(ip_address, ssh_username, ssh_password)
+        use_main, extra_names = _package_plan(installed_packages, architecture, target_version)
+    except Exception as package_err:
+        message = f"Firmware package pre-flight failed: {package_err}"
+        await _update_job(job_id, status="failed", error_message=message)
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"Firmware upgrade refused for {hostname}",
+            error=message,
+        )
+        return
 
-        async with asyncssh.connect(
-            ip_address,
-            port=22,
-            username=ssh_username,
-            password=ssh_password,
-            known_hosts=None,
-            connect_timeout=30,
-        ) as conn:
-            async with conn.start_sftp_client() as sftp:
-                async with sftp.open(f"/{npk_filename}", "wb") as f:
-                    await f.write(npk_data)
-            logger.info("Uploaded %s to %s", npk_filename, hostname)
+    # Step 5: Download NPK
+    logger.info("Downloading firmware %s for %s/%s", target_version, architecture, channel)
+    try:
+        from app.services.firmware_service import download_extra_packages, download_firmware
+
+        npk_paths = []
+        if use_main:
+            npk_paths.append(await download_firmware(architecture, channel, target_version))
+        if extra_names:
+            npk_paths.extend(
+                await download_extra_packages(architecture, target_version, extra_names)
+            )
+        logger.info("Firmware package set cached: %s", npk_paths)
+    except Exception as dl_err:
+        logger.error("Firmware download failed: %s", dl_err)
+        await _update_job(
+            job_id,
+            status="failed",
+            error_message=f"Firmware download failed: {dl_err}",
+        )
+        await _publish_upgrade_progress(
+            tenant_id,
+            device_id,
+            job_id,
+            "failed",
+            target_version,
+            f"Firmware download failed for {hostname}",
+            error=str(dl_err),
+        )
+        return
+
+    # Step 6: Upload NPK to device via SFTP
+    await _update_job(job_id, status="uploading")
+    await _publish_upgrade_progress(
+        tenant_id,
+        device_id,
+        job_id,
+        "uploading",
+        target_version,
+        f"Uploading firmware to {hostname}",
+    )
+
+    try:
+        if (
+            await _get_installed_packages(ip_address, ssh_username, ssh_password)
+            != installed_packages
+        ):
+            raise ValueError(
+                "Installed package inventory changed during download; retry the upgrade"
+            )
+        await _upload_packages(ip_address, ssh_username, ssh_password, npk_paths)
     except Exception as upload_err:
         logger.error("NPK upload failed for %s: %s", hostname, upload_err)
         await _update_job(
@@ -378,7 +400,19 @@ async def _run_upgrade(job_id: str) -> None:
     )
     try:
         actual_version = await _get_device_version(ip_address, ssh_username, ssh_password)
-        if actual_version and target_version in actual_version:
+        if normalize_routeros_version(actual_version) == normalize_routeros_version(
+            target_version
+        ) and normalize_routeros_version(actual_version):
+            actual_packages = await _get_installed_packages(ip_address, ssh_username, ssh_password)
+            mismatches = [
+                name
+                for name in installed_packages
+                if name not in actual_packages or actual_packages[name].version != target_version
+            ]
+            if mismatches:
+                raise ValueError(
+                    "Installed packages did not reach the target release: " + ", ".join(mismatches)
+                )
             logger.info(
                 "Firmware upgrade verified for %s: %s",
                 hostname,
@@ -654,6 +688,180 @@ async def _update_job(job_id: str, **kwargs) -> None:
             params,
         )
         await session.commit()
+
+
+@dataclass(frozen=True)
+class InstalledPackage:
+    version: str
+    bundled: bool | None = False
+
+
+async def _get_installed_packages(
+    ip: str, username: str, password: str
+) -> dict[str, InstalledPackage]:
+    """Include disabled installed packages, exclude server-only available entries.
+
+    Older RouterOS releases lack `available`; the fallback is false. RouterOS 6
+    bundled subpackages must be covered by the main NPK, not uploaded twice.
+    Refuse scheduled package changes rather than silently applying them on reboot.
+    """
+    command = (
+        ":foreach p in=[/system package find] do={"
+        ':local a false; :local b "unknown"; '
+        ":do {:set a [/system package get $p available]} on-error={}; "
+        ":do {:set b [/system package get $p bundled]} on-error={}; "
+        ':put ([/system package get $p name]."|".[/system package get $p version]."|".'
+        '$a."|".$b."|".[/system package get $p scheduled])}'
+    )
+    async with asyncssh.connect(
+        ip,
+        port=22,
+        username=username,
+        password=password,
+        known_hosts=None,
+        connect_timeout=30,
+    ) as conn:
+        result = await conn.run(command, check=True, timeout=30)
+    packages = {}
+    for line in result.stdout.splitlines():
+        if not line.strip():
+            continue
+        fields = line.strip().split("|")
+        if len(fields) != 5:
+            raise ValueError("Could not parse installed package inventory")
+        name, version, available, bundled, scheduled = fields
+        if (
+            not re.fullmatch(r"[a-z][a-z0-9-]*", name)
+            or available not in ("true", "false")
+            or bundled not in ("true", "false", "unknown")
+        ):
+            raise ValueError("Invalid installed package inventory")
+        if available == "true":
+            continue
+        if not normalize_routeros_version(version) or name in packages:
+            raise ValueError("Unknown or duplicate installed package")
+        if scheduled:
+            raise ValueError(f"Package {name} has a scheduled change; resolve it before upgrading")
+        packages[name] = InstalledPackage(
+            normalize_routeros_version(version),
+            None if bundled == "unknown" else bundled == "true",
+        )
+    if not packages:
+        raise ValueError(
+            "Could not determine installed packages; no files uploaded or reboot issued"
+        )
+    return packages
+
+
+def _package_plan(
+    packages: dict[str, InstalledPackage], architecture: str, target: str
+) -> tuple[bool, set[str]]:
+    from app.services.firmware_service import _validate_package_target
+
+    _validate_package_target(architecture, target)
+    main_names = {"routeros", f"routeros-{architecture}"}
+    main = set(packages) & main_names
+    if not main and "system" not in packages:
+        raise ValueError("Installed inventory has no RouterOS system package")
+    for name, package in packages.items():
+        _validate_package_target(architecture, package.version)
+        if package.version.startswith("6.") and name not in main and package.bundled is None:
+            raise ValueError(f"Could not determine whether RouterOS 6 package {name} is bundled")
+    if any(p.version.split(".")[0] != target.split(".")[0] for p in packages.values()):
+        raise ValueError(
+            "Package-layout migration across major releases requires the RouterOS updater"
+        )
+    current = packages[next(iter(main))].version if main else packages["system"].version
+    # 7.13 split wireless out of the main package. A names-only inventory cannot
+    # choose a driver for hardware which previously used the bundled driver.
+    current_minor = int(current.split(".")[1].split("rc")[0].split("beta")[0])
+    target_minor = int(target.split(".")[1].split("rc")[0].split("beta")[0])
+    if target.startswith("7.") and current_minor < 13 <= target_minor:
+        raise ValueError("The 7.13 wireless package migration requires the RouterOS updater")
+    extras = {name for name, p in packages.items() if name not in main and not p.bundled}
+    if not main and any(p.bundled for p in packages.values()):
+        raise ValueError("Bundled packages have no matching main package")
+    return bool(main), extras
+
+
+async def _upload_packages(ip: str, username: str, password: str, paths: list[str]) -> None:
+    """Stage a complete set under non-NPK names before making it installable.
+
+    Never overwrite pre-existing NPKs. On failure remove only files created by this
+    attempt, and surface cleanup failures so a later reboot cannot silently install
+    an incomplete set left behind by a broken transfer.
+    """
+    attempt = uuid.uuid4().hex
+    async with asyncssh.connect(
+        ip,
+        port=22,
+        username=username,
+        password=password,
+        known_hosts=None,
+        connect_timeout=30,
+    ) as conn:
+        async with conn.start_sftp_client() as sftp:
+            lock = "/.tod-firmware-upgrade"
+            try:
+                await sftp.mkdir(lock)
+            except Exception as exc:
+                raise ValueError(
+                    "Could not reserve the firmware staging directory; another upgrade may be "
+                    "running, or a previous attempt needs cleanup"
+                ) from exc
+            created = set()
+            staged = []
+            try:
+                existing = await sftp.listdir("/")
+                if any(name.endswith(".npk") for name in existing):
+                    raise ValueError(
+                        "Router already contains NPK files; remove or install them before upgrading"
+                    )
+                for index, path in enumerate(paths):
+                    source = Path(path)
+                    temporary = f"/.tod-{attempt}-{index}.part"
+                    destination = f"/{source.name}"
+                    created.add(temporary)
+                    async with sftp.open(temporary, "wb") as remote:
+                        with source.open("rb") as local:
+                            while chunk := local.read(65536):
+                                await remote.write(chunk)
+                    if (await sftp.stat(temporary)).size != source.stat().st_size:
+                        raise ValueError(f"Incomplete package upload: {source.name}")
+                    staged.append((temporary, destination))
+                for temporary, destination in staged:
+                    # The server may rename successfully before the connection
+                    # drops. Track both names before awaiting its acknowledgement.
+                    created.add(destination)
+                    try:
+                        await sftp.rename(temporary, destination)
+                    except asyncssh.SFTPFileAlreadyExists:
+                        # An operator placed a file after our inventory. It isn't ours.
+                        created.remove(destination)
+                        raise
+                    created.remove(temporary)
+                await sftp.rmdir(lock)
+            except BaseException as exc:
+                failures = []
+                for remote_path in sorted(created):
+                    try:
+                        await sftp.remove(remote_path)
+                    except asyncssh.SFTPNoSuchFile:
+                        pass
+                    except Exception:
+                        failures.append(remote_path)
+                try:
+                    await sftp.rmdir(lock)
+                except asyncssh.SFTPNoSuchFile:
+                    pass
+                except Exception:
+                    failures.append(lock)
+                if failures:
+                    raise RuntimeError(
+                        "Upload failed and cleanup was incomplete; remove these files before "
+                        "rebooting: " + ", ".join(failures)
+                    ) from exc
+                raise
 
 
 async def _check_ssh_reachable(ip: str, username: str, password: str) -> bool:
