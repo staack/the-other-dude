@@ -102,6 +102,8 @@ Full documentation is available at [theotherdude.net](https://theotherdude.net).
 
 See the documentation site for screenshots and feature walkthroughs.
 
+See [Firmware upgrades](docs/FIRMWARE.md) for automatic extra-package downloads, cache setup and upgrade limits.
+
 ---
 
 ## License

@@ -174,6 +174,14 @@ Most state is bind-mounted to the host filesystem under `./docker-data/`. Defaul
 - **Git store (config backups)**: `./docker-data/git-store`
 - **Firmware cache**: `./docker-data/firmware-cache` (downloaded RouterOS firmware packages)
 
+### Firmware cache in 9.11.0
+
+The production API service in `docker-compose.prod.yml` mounts `./docker-data/firmware-cache:/data/firmware-cache`. The directory must be writable by container UID 1001; the installer creates it with that ownership. It stores main NPKs and extra-package archives.
+
+Existing installations must update the Compose files from v9.11.0 and recreate the API container using their existing Compose and environment files. Pulling images alone does not add the mount. See [Firmware upgrades](FIRMWARE.md) for automatic package downloads and upgrade limits.
+
+### OpenBao storage
+
 There is one exception, and it matters more than the rest:
 
 - **OpenBao data**: the `openbao_data` **named Docker volume**, not a bind mount

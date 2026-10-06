@@ -81,8 +81,10 @@ OpenBao is the key management service used to encrypt device credentials on a pe
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `FIRMWARE_CACHE_DIR` | `/data/firmware-cache` | Path to firmware download cache (PVC mount in production) |
+| `FIRMWARE_CACHE_DIR` | `/data/firmware-cache` | Path to firmware download cache; production Compose bind-mounts `./docker-data/firmware-cache` |
 | `FIRMWARE_CHECK_INTERVAL_HOURS` | `24` | Hours between automatic RouterOS version checks |
+
+Automatic extra-package downloads require no additional setting. The API needs a writable cache and outbound HTTPS access to MikroTik's download server. See [Firmware upgrades](FIRMWARE.md) for package selection, transfer behavior and migration limits.
 
 ### Signal Trending & Site Alerting
 
