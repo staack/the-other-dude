@@ -1680,8 +1680,11 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
-        <h3 id="updating-tod">Updating TOD (9.11.1)</h3>
-        <p>Existing installations can update without reinstalling. Keep the current environment file and data directories, back up, then pull or rebuild the API and frontend images and recreate those containers using the same Compose and environment options. Version 9.11.1 adds no database migration or configuration setting compared with 9.11.0. See the <a href="https://github.com/staack/the-other-dude/blob/main/docs/DEPLOYMENT.md#updating" rel="noopener">update commands</a>. Installations older than 9.11.0 also need the firmware-cache Compose mount below; pulling images alone does not add it.</p>
+        <h3 id="wireless-monitoring-states">Wireless monitoring states</h3>
+        <p>Monitor &gt; Wireless retains radio cards and client-count charts for zero-client readings. It says &ldquo;No wireless clients connected&rdquo; only when every latest radio reading reports zero. Empty telemetry says &ldquo;No wireless monitoring data available yet&rdquo;; a failed request shows a loading error. Missing telemetry does not establish that a device has no radios or clients. If no readings arrive, check that the running poller is updated and inspect its wireless collection errors.</p>
+
+        <h3 id="updating-tod">Updating TOD (9.11.2)</h3>
+        <p>Existing installations can update without reinstalling. Keep the current environment file and data directories, back up, then pull or rebuild the API and frontend images and recreate those containers using the same Compose and environment options. Version 9.11.2 adds no database migration or configuration setting compared with 9.11.1. See the <a href="https://github.com/staack/the-other-dude/blob/main/docs/DEPLOYMENT.md#updating" rel="noopener">update commands</a>. Installations older than 9.11.0 also need the firmware-cache Compose mount below; pulling images alone does not add it.</p>
 
         <h3 id="firmware-upgrades">Firmware upgrades and extra packages (9.11.0)</h3>
         <p>Start a device upgrade or staged fleet rollout from the Firmware page. TOD inventories installed packages and automatically downloads the target RouterOS NPK and matching extras from MikroTik's official <code>all_packages-{architecture}-{version}.zip</code> archive. No extra-package setting or manual archive extraction is required. Disabled installed packages are included; available but uninstalled packages are excluded.</p>

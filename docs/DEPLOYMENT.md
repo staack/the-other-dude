@@ -449,17 +449,17 @@ Neither returns a fixed value.
 
 ### Updating
 
-9.11.1 can update an existing installation without reinstalling. Retain the existing environment file and `docker-data` directories. This patch adds no database migration or configuration setting compared with 9.11.0. Back up before updating.
+9.11.2 can update an existing installation without reinstalling. Retain the existing environment file and `docker-data` directories. This patch adds no database migration or configuration setting compared with 9.11.1. Back up before updating.
 
 For prebuilt production images, use the same Compose and environment files as your installation. For the standard production layout:
 
 ```bash
 ./scripts/backup.sh
-TOD_VERSION=9.11.1 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod pull api frontend
-TOD_VERSION=9.11.1 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d api frontend
+TOD_VERSION=9.11.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod pull api frontend
+TOD_VERSION=9.11.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d api frontend
 ```
 
-If your environment file pins `TOD_VERSION`, update that value to `9.11.1` for future Compose commands. Installations older than 9.11.0 must also update Compose to add the firmware-cache mount described under [Storage Configuration](#storage-configuration); pulling images does not add the mount. Do not rerun the installation wizard to apply this patch.
+If your environment file pins `TOD_VERSION`, update that value to `9.11.2` for future Compose commands. Installations older than 9.11.0 must also update Compose to add the firmware-cache mount described under [Storage Configuration](#storage-configuration); pulling images does not add the mount. Do not rerun the installation wizard to apply this patch.
 
 For builds from source:
 
