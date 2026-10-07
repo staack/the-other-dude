@@ -89,7 +89,7 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
     mutationFn: () => {
       if (useProfile) {
         return devicesApi.create(tenantId, {
-          hostname: form.hostname || form.ip_address,
+          hostname: form.hostname.trim() || undefined,
           ip_address: form.ip_address,
           device_type: 'routeros',
           credential_profile_id: rosProfileId,
@@ -98,7 +98,7 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
         })
       }
       return devicesApi.create(tenantId, {
-        hostname: form.hostname || form.ip_address,
+        hostname: form.hostname.trim() || undefined,
         ip_address: form.ip_address,
         device_type: 'routeros',
         api_port: parseInt(form.api_port) || 8728,
@@ -306,7 +306,7 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
             id="ros-hostname"
             value={form.hostname}
             onChange={updateRos('hostname')}
-            placeholder="router-01 (optional)"
+            placeholder="Uses router identity when blank"
           />
         </div>
 

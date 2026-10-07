@@ -31,7 +31,7 @@ def _validate_tls_mode(v: Optional[str]) -> Optional[str]:
 class DeviceCreate(BaseModel):
     """Schema for creating a new device (RouterOS or SNMP)."""
 
-    hostname: str
+    hostname: Optional[str] = None
     ip_address: str
     api_port: int = 8728
     api_ssl_port: int = 8729
@@ -297,7 +297,7 @@ class BulkAddDeviceEntry(BaseModel):
     """One device entry in the credential-profile bulk add."""
 
     ip_address: str
-    hostname: Optional[str] = None  # defaults to IP if not provided
+    hostname: Optional[str] = None  # use RouterOS identity, then IP if unavailable
 
     @field_validator("ip_address")
     @classmethod

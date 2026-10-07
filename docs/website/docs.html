@@ -1058,6 +1058,7 @@ open http://localhost</code></pre>
           <li><strong>API Port</strong> &mdash; default is 8729 (TLS). The portal connects via the RouterOS binary API protocol.</li>
           <li><strong>Credentials</strong> &mdash; username and password for the device. Credentials are encrypted at rest with AES-256-GCM.</li>
         </ul>
+        <p><strong>Display Name</strong> is optional for RouterOS devices. Leave it blank to use the system identity returned by the authenticated adoption probe. If identity is unavailable, TOD uses the IP address. A name you provide takes precedence. This also applies to subnet imports and credential-profile imports; later polls do not replace the chosen name.</p>
 
         <h3>Device Detail Tabs</h3>
         <table>

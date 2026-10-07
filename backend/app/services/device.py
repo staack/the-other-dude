@@ -328,6 +328,7 @@ class BulkDeviceVerdict(NamedTuple):
 
     rejection: Optional[str]
     verified: bool
+    identity: Optional[str] = None
 
 
 async def evaluate_bulk_routeros_device(
@@ -358,7 +359,7 @@ async def evaluate_bulk_routeros_device(
         )
         if outcome.probe_available:
             if outcome.ok:
-                return BulkDeviceVerdict(rejection=None, verified=True)
+                return BulkDeviceVerdict(rejection=None, verified=True, identity=outcome.identity)
             reason = outcome.message
             if outcome.suggested_tls_mode:
                 reason += (
@@ -464,6 +465,11 @@ def _device_with_relations():
 # ---------------------------------------------------------------------------
 
 
+def initial_hostname(supplied: Optional[str], identity: Optional[str], ip_address: str) -> str:
+    """Keep explicit names; use the verified RouterOS identity for unnamed devices."""
+    return (supplied or "").strip() or (identity or "").strip() or ip_address
+
+
 async def create_device(
     db: AsyncSession,
     tenant_id: uuid.UUID,
@@ -528,7 +534,11 @@ async def create_device(
 
     device = Device(
         tenant_id=tenant_id,
-        hostname=data.hostname,
+        hostname=initial_hostname(
+            data.hostname,
+            probe.identity if probe is not None and probe.probe_available and probe.ok else None,
+            data.ip_address,
+        ),
         ip_address=data.ip_address,
         device_type=data.device_type,
         api_port=data.api_port,
@@ -886,7 +896,7 @@ async def bulk_add_with_profile(
 
     for entry in data.devices:
         try:
-            hostname = entry.hostname or entry.ip_address
+            hostname = initial_hostname(entry.hostname, None, entry.ip_address)
 
             # Check for duplicate IP in tenant
             dup_check = await db.execute(
@@ -930,6 +940,7 @@ async def bulk_add_with_profile(
                 # Only a completed handshake counts; the degraded TCP fallback
                 # does not, so such a device stays "unknown".
                 verified = verdict.verified
+                hostname = initial_hostname(entry.hostname, verdict.identity, entry.ip_address)
 
             # Create device with credential profile reference
             device = Device(
@@ -951,8 +962,11 @@ async def bulk_add_with_profile(
                 # the poller says otherwise.
                 status="online" if verified else "unknown",
             )
-            db.add(device)
-            await db.flush()
+            # A duplicate identity/name must fail only this entry, not abort
+            # the surrounding transaction and discard the rest of the import.
+            async with db.begin_nested():
+                db.add(device)
+                await db.flush()
 
             results.append(
                 BulkAddDeviceResult(

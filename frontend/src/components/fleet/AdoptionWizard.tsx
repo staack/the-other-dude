@@ -1033,7 +1033,8 @@ function ImportVerifyStep({
         const perDev = perDeviceCreds[d.ip_address]
         return {
           ip_address: d.ip_address,
-          hostname: d.hostname ?? d.ip_address,
+          // The scan's reverse-DNS label is not an operator-supplied name.
+          // Let adoption use the authenticated RouterOS identity.
           // Always send both ports. Omitting one used to drop it from the JSON
           // and let the backend default silently put it back.
           api_port: PLAIN_API_PORT,
