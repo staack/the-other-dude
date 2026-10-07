@@ -158,7 +158,7 @@ async def create_device(
             "device_create",
             resource_type="device",
             resource_id=str(result.id),
-            details={"hostname": data.hostname, "ip_address": data.ip_address},
+            details={"hostname": result.hostname, "ip_address": data.ip_address},
             ip_address=request.client.host if request.client else None,
         )
     except Exception:
@@ -231,6 +231,7 @@ async def update_device(
             resource_type="device",
             resource_id=str(device_id),
             device_id=device_id,
+            transactional=True,
             details={"changes": data.model_dump(exclude_unset=True)},
             ip_address=request.client.host if request.client else None,
         )
@@ -251,6 +252,7 @@ async def update_device(
                 resource_type="device",
                 resource_id=str(device_id),
                 device_id=device_id,
+                transactional=True,
                 details={
                     "from": previous_tls_mode,
                     "to": data.tls_mode,
@@ -406,7 +408,7 @@ async def bulk_add_devices(
             continue
 
         create_data = DeviceCreate(
-            hostname=dev_data.hostname or dev_data.ip_address,
+            hostname=dev_data.hostname,
             ip_address=dev_data.ip_address,
             api_port=dev_data.api_port,
             api_ssl_port=dev_data.api_ssl_port,
@@ -431,7 +433,7 @@ async def bulk_add_devices(
                     resource_type="device",
                     resource_id=str(device.id),
                     details={
-                        "hostname": create_data.hostname,
+                        "hostname": device.hostname,
                         "ip_address": create_data.ip_address,
                     },
                     ip_address=request.client.host if request.client else None,

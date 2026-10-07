@@ -11,10 +11,10 @@ Phase 30: When details are non-empty, they are encrypted via OpenBao Transit
 column is set to '{}' for column compatibility. If Transit encryption fails
 (e.g., OpenBao unavailable), details are stored in plaintext as a fallback.
 
-IMPORTANT: log_action always opens its own AdminAsyncSessionLocal session and
-commits internally. This guarantees the audit INSERT is persisted regardless of
-whether the caller's DB session has already been committed or rolled back.  The
-``db`` parameter is kept for backward compatibility but is intentionally unused.
+By default log_action uses an independent admin session for calls made after a
+commit. Callers holding resource row locks must pass transactional=True to write
+in their own transaction. A savepoint keeps a failed audit insert from aborting
+the edit. Independent inserts use a bounded lock wait.
 """
 
 import uuid
@@ -28,7 +28,7 @@ logger = structlog.get_logger("audit")
 
 
 async def log_action(
-    db: AsyncSession,  # kept for backward compat — not used internally
+    db: AsyncSession,
     tenant_id: uuid.UUID,
     user_id: uuid.UUID,
     action: str,
@@ -37,11 +37,12 @@ async def log_action(
     device_id: Optional[uuid.UUID] = None,
     details: Optional[dict[str, Any]] = None,
     ip_address: Optional[str] = None,
+    transactional: bool = False,
 ) -> None:
-    """Insert a row into audit_logs using a dedicated session.
+    """Best-effort audit insert, optionally atomic with the caller's edit.
 
-    Always self-commits so the INSERT is never dependent on the caller's
-    transaction lifecycle.  Swallows all exceptions on failure.
+    Transactional entries persist only if the caller commits. Default entries
+    self-commit for callers that already completed their operation.
     """
     try:
         import json as _json
@@ -69,10 +70,7 @@ async def log_action(
                 )
                 encrypted_details = None
 
-        # Use a dedicated session so this commit is independent of the
-        # caller's transaction (fixes dropped audit logs in routers that
-        # call log_action after their own db.commit()).
-        async with AdminAsyncSessionLocal() as audit_db:
+        async def insert(audit_db: AsyncSession) -> None:
             await audit_db.execute(
                 text(
                     "INSERT INTO audit_logs "
@@ -94,7 +92,15 @@ async def log_action(
                     "ip_address": ip_address,
                 },
             )
-            await audit_db.commit()
+
+        if transactional:
+            async with db.begin_nested():
+                await insert(db)
+        else:
+            async with AdminAsyncSessionLocal() as audit_db:
+                await audit_db.execute(text("SET LOCAL lock_timeout = '5s'"))
+                await insert(audit_db)
+                await audit_db.commit()
     except Exception:
         logger.warning(
             "audit_log_insert_failed",

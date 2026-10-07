@@ -327,7 +327,7 @@ export interface DeviceListResponse {
 }
 
 export interface DeviceCreate {
-  hostname: string
+  hostname?: string
   ip_address: string
   device_type?: 'routeros' | 'snmp'
   api_port?: number
