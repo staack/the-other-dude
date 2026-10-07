@@ -1680,6 +1680,9 @@ open http://localhost</code></pre>
           </tbody>
         </table>
 
+        <h3 id="updating-tod">Updating TOD (9.11.1)</h3>
+        <p>Existing installations can update without reinstalling. Keep the current environment file and data directories, back up, then pull or rebuild the API and frontend images and recreate those containers using the same Compose and environment options. Version 9.11.1 adds no database migration or configuration setting compared with 9.11.0. See the <a href="https://github.com/staack/the-other-dude/blob/main/docs/DEPLOYMENT.md#updating" rel="noopener">update commands</a>. Installations older than 9.11.0 also need the firmware-cache Compose mount below; pulling images alone does not add it.</p>
+
         <h3 id="firmware-upgrades">Firmware upgrades and extra packages (9.11.0)</h3>
         <p>Start a device upgrade or staged fleet rollout from the Firmware page. TOD inventories installed packages and automatically downloads the target RouterOS NPK and matching extras from MikroTik's official <code>all_packages-{architecture}-{version}.zip</code> archive. No extra-package setting or manual archive extraction is required. Disabled installed packages are included; available but uninstalled packages are excluded.</p>
         <p>For example, an arm64 device with <code>routeros</code>, <code>container</code> and <code>wifi-qcom</code> receives all three NPKs for the target version. RouterOS 6 bundled subpackages are covered by the main bundle; separately installed packages retain their separate layout.</p>

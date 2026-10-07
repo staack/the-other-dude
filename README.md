@@ -60,6 +60,8 @@ Web UI
 
 ---
 
+Existing installations can update without reinstalling. See [Updating](docs/DEPLOYMENT.md#updating), including the firmware-cache Compose requirement when upgrading from before 9.11.0.
+
 ## Quick Start
 
 ```bash
