@@ -112,14 +112,14 @@ export function WirelessTab({ tenantId, deviceId, active = true }: WirelessTabPr
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
 
-  const { data: latestWireless } = useQuery({
+  const { data: latestWireless, isLoading: latestLoading, isError: latestError } = useQuery({
     queryKey: ['metrics', 'wireless-latest', deviceId],
     queryFn: () => metricsApi.wirelessLatest(tenantId, deviceId),
     refetchInterval: 60_000,
     enabled: active,
   })
 
-  const { data: historicalWireless, isLoading } = useQuery({
+  const { data: historicalWireless, isLoading: historyLoading, isError: historyError } = useQuery({
     queryKey: ['metrics', 'wireless', deviceId, timeRange, customStart, customEnd],
     queryFn: () => {
       const { start, end } = getTimeRange(timeRange, customStart, customEnd)
@@ -145,8 +145,12 @@ export function WirelessTab({ tenantId, deviceId, active = true }: WirelessTabPr
     history: historicalWireless?.filter((w) => w.interface === ifaceName) ?? [],
   }))
 
-  const hasNoWireless =
-    !isLoading && latestWireless?.length === 0 && (!historicalWireless || historicalWireless.length === 0)
+  const isLoading = latestLoading || historyLoading
+  const hasError = latestError || historyError
+  const hasNoData = !isLoading && !hasError && sections.length === 0
+  const hasNoClients =
+    !latestError && latestWireless != null && latestWireless.length > 0 &&
+    latestWireless.every((radio) => radio.client_count === 0)
 
   return (
     <div className="space-y-4 mt-4">
@@ -158,16 +162,25 @@ export function WirelessTab({ tenantId, deviceId, active = true }: WirelessTabPr
         onCustomRangeChange={handleCustomRangeChange}
       />
 
+      {hasError && (
+        <div role="alert" className="rounded-lg border border-border bg-panel p-4 text-sm text-text-muted">
+          Unable to load wireless monitoring data.
+        </div>
+      )}
+
       {isLoading ? (
         <div className="py-8 text-center">
           <span className="text-[9px] text-text-muted">Loading&hellip;</span>
         </div>
-      ) : hasNoWireless ? (
+      ) : hasNoData ? (
         <div className="rounded-lg border border-border bg-panel p-8 text-center text-sm text-text-muted">
-          No wireless interfaces detected on this device.
+          No wireless monitoring data available yet.
         </div>
       ) : (
         <div className="space-y-4">
+          {hasNoClients && (
+            <p className="text-sm text-text-muted">No wireless clients connected.</p>
+          )}
           {sections.map((section) => (
             <WirelessInterfaceCard key={section.interfaceName} section={section} />
           ))}
