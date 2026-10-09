@@ -138,3 +138,63 @@ func TestWirelessLegacyZeroCCQIsMeasured(t *testing.T) {
 		t.Fatalf("measured zero CCQ lost: %#v", got)
 	}
 }
+
+// RouterOS 7.18+ answers a print with no rows with "!empty" before "!done"
+// (GitHub issue #11 follow-up). The collector must treat that as zero
+// registrations, and the next command on the same connection must still
+// receive its own reply rather than the leftover "!done".
+func TestWirelessEmptyRegistrationTableProtocol(t *testing.T) {
+	clientConn, serverConn := net.Pipe()
+	defer serverConn.Close()
+	clientConn.SetDeadline(time.Now().Add(3 * time.Second))
+	client, err := routeros.NewClient(clientConn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+	go func() {
+		reader, writer := proto.NewReader(serverConn), proto.NewWriter(serverConn)
+		for {
+			command, err := reader.ReadSentence()
+			if err != nil {
+				return
+			}
+			switch command.Word {
+			case "/interface/wifi/print":
+				writer.BeginSentence()
+				writer.WriteWord("!re")
+				writer.WriteWord("=name=wifi1")
+				writer.WriteWord("=disabled=true")
+				if writer.EndSentence() != nil {
+					return
+				}
+			case "/interface/wifi/registration-table/print":
+				writer.BeginSentence()
+				writer.WriteWord("!empty")
+				if writer.EndSentence() != nil {
+					return
+				}
+			case "/system/resource/print":
+				writer.BeginSentence()
+				writer.WriteWord("!re")
+				writer.WriteWord("=version=7.24.5")
+				if writer.EndSentence() != nil {
+					return
+				}
+			}
+			writer.BeginSentence()
+			writer.WriteWord("!done")
+			if writer.EndSentence() != nil {
+				return
+			}
+		}
+	}()
+	result, err := CollectWireless(client, 7)
+	if err != nil || len(result) != 1 || result[0].Interface != "wifi1" || result[0].ClientCount != 0 {
+		t.Fatalf("empty registration table not treated as zero clients: %#v, %v", result, err)
+	}
+	next, err := client.Run("/system/resource/print")
+	if err != nil || len(next.Re) != 1 || next.Re[0].Map["version"] != "7.24.5" {
+		t.Fatalf("command after !empty got the wrong reply: %#v, %v", next, err)
+	}
+}
