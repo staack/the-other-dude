@@ -1,11 +1,31 @@
 package session
 
 import (
+	"errors"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 )
 
 type State string
+
+// Typed errors so the HTTP layer maps outcomes without matching on text.
+var (
+	ErrCapacity         = errors.New("capacity")
+	ErrDuplicateSession = errors.New("session id already exists")
+	ErrInvalidSessionID = errors.New("invalid session id")
+)
+
+// sessionIDPattern bounds the caller-supplied id: it names a directory under
+// /tmp/winbox-sessions and a map key, so no separators, no dots-only names,
+// and a sane length.
+var sessionIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$`)
+
+// ValidSessionID reports whether id is safe to use as a session identifier.
+func ValidSessionID(id string) bool {
+	return sessionIDPattern.MatchString(id) && id != "." && id != ".." && !strings.Contains(id, "..")
+}
 
 const (
 	StateCreating    State = "creating"

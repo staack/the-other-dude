@@ -91,10 +91,22 @@ func (m *Manager) SessionCount() int {
 }
 
 func (m *Manager) CreateSession(req CreateRequest) (*CreateResponse, error) {
+	workerID := req.SessionID
+	if workerID == "" {
+		workerID = uuid.New().String()
+	}
+	if !ValidSessionID(workerID) {
+		return nil, fmt.Errorf("%w: %q", ErrInvalidSessionID, workerID)
+	}
+
 	m.mu.Lock()
+	if _, exists := m.sessions[workerID]; exists {
+		m.mu.Unlock()
+		return nil, fmt.Errorf("%w: %s", ErrDuplicateSession, workerID)
+	}
 	if len(m.sessions) >= m.cfg.MaxSessions {
 		m.mu.Unlock()
-		return nil, fmt.Errorf("capacity")
+		return nil, ErrCapacity
 	}
 
 	display, err := m.displays.Allocate()
@@ -110,10 +122,6 @@ func (m *Manager) CreateSession(req CreateRequest) (*CreateResponse, error) {
 		return nil, fmt.Errorf("no ws ports available: %w", err)
 	}
 
-	workerID := req.SessionID
-	if workerID == "" {
-		workerID = uuid.New().String()
-	}
 	idleTimeout := time.Duration(req.IdleTimeoutSec) * time.Second
 	if idleTimeout == 0 {
 		idleTimeout = time.Duration(m.cfg.IdleTimeout) * time.Second
