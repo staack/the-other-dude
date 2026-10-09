@@ -157,3 +157,36 @@ func TestDeviceStore_FetchDevices_Empty_Integration(t *testing.T) {
 	// this is acceptable Go behavior. The important thing is no error.
 	assert.Empty(t, devices, "should return empty result for empty database")
 }
+
+// A host-key pin is written once.  A later connection that presents a
+// different key must not be able to overwrite the pin by re-running the
+// first-connect path.
+func TestDeviceStore_UpdateSSHHostKey_PinsOnce_Integration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+
+	connStr, cleanup := testutil.SetupPostgres(t)
+	defer cleanup()
+	ctx := context.Background()
+
+	id := testutil.InsertTestDevice(t, connStr, store.Device{
+		TenantID:             "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+		IPAddress:            "192.168.1.50",
+		APIPort:              8728,
+		APISSLPort:           8729,
+		EncryptedCredentials: []byte("dummy"),
+	})
+	ds, err := store.NewDeviceStore(ctx, connStr)
+	require.NoError(t, err)
+	defer ds.Close()
+
+	require.NoError(t, ds.UpdateSSHHostKey(ctx, id, "SHA256:first"))
+	require.Error(t, ds.UpdateSSHHostKey(ctx, id, "SHA256:second"), "a different key must not replace the pin")
+	require.NoError(t, ds.UpdateSSHHostKey(ctx, id, "SHA256:first")) // re-verification of the pin is fine
+
+	dev, err := ds.GetDevice(ctx, id)
+	require.NoError(t, err)
+	require.NotNil(t, dev.SSHHostKeyFingerprint)
+	assert.Equal(t, "SHA256:first", *dev.SSHHostKeyFingerprint)
+}
