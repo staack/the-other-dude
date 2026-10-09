@@ -90,7 +90,7 @@ async def _run_upgrade(job_id: str) -> None:
                        d.ip_address, d.hostname, d.encrypted_credentials,
                        d.routeros_version, d.encrypted_credentials_transit
                 FROM firmware_upgrade_jobs j
-                JOIN devices d ON d.id = j.device_id
+                JOIN devices d ON d.id = j.device_id AND d.tenant_id = j.tenant_id
                 WHERE j.id = CAST(:job_id AS uuid)
             """),
             {"job_id": job_id},

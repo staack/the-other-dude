@@ -37,6 +37,31 @@ async def _check_tenant_access(
         )
 
 
+async def _require_tenant_devices(db: AsyncSession, device_ids: list[str]) -> dict[str, str]:
+    """Return {device_id: architecture} for ids visible in this tenant; 404 for any other.
+
+    ``db`` is the RLS-scoped session, so a device of another tenant simply does
+    not come back.  Checked before any job row is written: the jobs table only
+    constrains tenant_id, and the upgrade runner would otherwise load the
+    foreign device with the admin session.
+    """
+    if not device_ids:
+        return {}
+    try:
+        wanted = [uuid.UUID(d) for d in device_ids]
+    except ValueError:
+        raise HTTPException(422, "device_ids must be UUIDs")
+    result = await db.execute(
+        text("SELECT id, architecture FROM devices WHERE id = ANY(:ids)"),
+        {"ids": wanted},
+    )
+    found = {str(row[0]): row[1] for row in result.fetchall()}
+    missing = [str(d) for d in wanted if str(d) not in found]
+    if missing:
+        raise HTTPException(404, f"Device not found: {', '.join(missing)}")
+    return found
+
+
 class PreferredChannelRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     preferred_channel: str  # "stable", "long-term", "testing"
@@ -287,17 +312,12 @@ async def start_firmware_upgrade(
     if current_user.role == "viewer":
         raise HTTPException(403, "Viewers cannot initiate upgrades")
 
-    # Look up device architecture if not provided
-    architecture = body.architecture
+    # The device must belong to this tenant whether or not the caller
+    # supplied an architecture.
+    known = await _require_tenant_devices(db, [body.device_id])
+    architecture = body.architecture or known[str(uuid.UUID(body.device_id))]
     if not architecture:
-        dev_result = await db.execute(
-            text("SELECT architecture FROM devices WHERE id = CAST(:id AS uuid)"),
-            {"id": body.device_id},
-        )
-        dev_row = dev_result.fetchone()
-        if not dev_row or not dev_row[0]:
-            raise HTTPException(422, "Device architecture unknown — cannot upgrade")
-        architecture = dev_row[0]
+        raise HTTPException(422, "Device architecture unknown — cannot upgrade")
 
     # Create upgrade job
     job_id = str(uuid.uuid4())
@@ -374,14 +394,12 @@ async def start_mass_firmware_upgrade(
     rollout_group_id = str(uuid.uuid4())
     jobs = []
 
+    # Every device must belong to this tenant; one unknown id rejects the
+    # whole batch before any job row exists.
+    architectures = await _require_tenant_devices(db, body.device_ids)
+
     for device_id in body.device_ids:
-        # Look up architecture per device
-        dev_result = await db.execute(
-            text("SELECT architecture FROM devices WHERE id = CAST(:id AS uuid)"),
-            {"id": device_id},
-        )
-        dev_row = dev_result.fetchone()
-        architecture = dev_row[0] if dev_row and dev_row[0] else "unknown"
+        architecture = architectures.get(str(uuid.UUID(device_id))) or "unknown"
 
         job_id = str(uuid.uuid4())
         await db.execute(
