@@ -99,11 +99,15 @@ async def validate_api_key(raw_key: str) -> Optional[dict]:
     key_hash_value = hash_key(raw_key)
 
     async with AdminAsyncSessionLocal() as session:
+        # Joined to the owning user so a key follows that user's active state,
+        # the same as the refresh-token path.
         result = await session.execute(
             text("""
-                SELECT id, tenant_id, user_id, scopes, expires_at, revoked_at
-                FROM api_keys
-                WHERE key_hash = :key_hash
+                SELECT k.id, k.tenant_id, k.user_id, k.scopes, k.expires_at, k.revoked_at
+                FROM api_keys k
+                JOIN users u ON u.id = k.user_id
+                WHERE k.key_hash = :key_hash
+                  AND u.is_active = true
             """),
             {"key_hash": key_hash_value},
         )
