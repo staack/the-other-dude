@@ -606,6 +606,7 @@ def wizard_security(config: dict) -> None:
     print()
 
     config["jwt_secret"] = generate_jwt_secret()
+    config["winbox_worker_token"] = secrets.token_urlsafe(32)
     config["encryption_key"] = generate_encryption_key()
 
     ok("JWT signing key generated")
@@ -1286,6 +1287,7 @@ POLLER_DATABASE_URL=postgres://poller_user:{poll_pw_url}@postgres:5432/{db}?sslm
 # --- Security ---
 JWT_SECRET_KEY={config["jwt_secret"]}
 CREDENTIAL_ENCRYPTION_KEY={config["encryption_key"]}
+WINBOX_WORKER_TOKEN={config.get("winbox_worker_token") or secrets.token_urlsafe(32)}
 
 # --- OpenBao (KMS) ---
 OPENBAO_ADDR=http://openbao:8200

@@ -657,21 +657,32 @@ async def proxy_xpra_html(
         logger.error("Xpra HTTP proxy error: %s", exc)
         raise HTTPException(status_code=502, detail="Xpra server unreachable")
 
-    # Forward the response with correct content type
+    # httpx hands back the decoded body, so only type and caching are forwarded.
     return Response(
         content=proxy_resp.content,
         status_code=proxy_resp.status_code,
-        headers={
-            k: v
-            for k, v in proxy_resp.headers.items()
-            if k.lower() in ("content-type", "cache-control", "content-encoding")
-        },
+        headers=_proxied_response_headers(proxy_resp.headers),
     )
+
+
+def _proxied_response_headers(upstream) -> dict[str, str]:
+    """Headers to forward from xpra's HTTP server.  The body is already
+    decoded by httpx, so Content-Encoding and Content-Length must not be."""
+    return {
+        k.lower(): v for k, v in upstream.items() if k.lower() in ("content-type", "cache-control")
+    }
 
 
 # ---------------------------------------------------------------------------
 # WebSocket — Proxy browser <-> Xpra worker
 # ---------------------------------------------------------------------------
+
+
+def _requested_subprotocols(header: str | None) -> list[str]:
+    """Parse a Sec-WebSocket-Protocol header into the list the client offered."""
+    if not header:
+        return []
+    return [p.strip() for p in header.split(",") if p.strip()]
 
 
 @router.websocket("/tenants/{tenant_id}/devices/{device_id}/winbox-remote-sessions/{session_id}/ws")
@@ -765,16 +776,19 @@ async def winbox_remote_ws_proxy(
     except Exception:
         pass
 
-    # Accept browser WebSocket
-    await websocket.accept()
-
-    # Connect to worker Xpra WebSocket
+    # Connect to worker Xpra WebSocket, carrying the browser's requested
+    # subprotocol (the xpra HTML5 client speaks "binary"), then accept the
+    # browser with whatever xpra negotiated.
     import websockets
 
     worker_ws_url = f"ws://tod_winbox_worker:{xpra_ws_port}"
+    requested = _requested_subprotocols(websocket.headers.get("sec-websocket-protocol"))
 
     try:
-        async with websockets.connect(worker_ws_url) as worker_ws:
+        async with websockets.connect(
+            worker_ws_url, subprotocols=requested or None, max_size=None
+        ) as worker_ws:
+            await websocket.accept(subprotocol=worker_ws.subprotocol)
 
             async def browser_to_worker() -> None:
                 try:

@@ -178,14 +178,16 @@ services:
       MAX_CONCURRENT_SESSIONS: 10
       LOG_LEVEL: info
       XDG_RUNTIME_DIR: /run/user/1001
-    ports:
-      - "10100-10119:10100-10119"
+      # Shared secret the API presents on every control request.
+      WINBOX_WORKER_TOKEN: ${WINBOX_WORKER_TOKEN:?WINBOX_WORKER_TOKEN is missing; run python3 scripts/upgrade_env.py}
+    # No host port publish: the xpra HTML5 client and its WebSocket are
+    # reached only through the API, which proxies them on the internal
+    # network after checking the session cookie and session owner.
     deploy:
       resources:
         limits:
           memory: 1G
     networks:
-      - tod
       - tod_remote_worker
 
 volumes:

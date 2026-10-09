@@ -236,13 +236,35 @@ func KillXvfbForDisplay(display int) {
 	killOrphanXvfb("/tmp", "/proc", display)
 }
 
-func StartXpra(cfg XpraConfig) (*XpraProc, error) {
+// shellQuote wraps s in single quotes for /bin/sh, escaping embedded quotes.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// writeLauncher writes an owner-only script in the session directory that
+// execs WinBox with its arguments.  xpra is given the script path, so the
+// device credentials are not in xpra's argv (readable by every process in
+// the container) and are not subject to xpra's whitespace splitting.  The
+// script and its directory are 0700; both are removed with the session.
+func writeLauncher(cfg XpraConfig) (string, error) {
+	path := filepath.Join(cfg.TmpDir, "launch.sh")
+	// The script unlinks itself first: sh already holds it open, and every
+	// session runs as the same uid, so the file must not outlive its one use.
+	body := "#!/bin/sh\nrm -f -- \"$0\"\nexec " + shellQuote(cfg.WinBoxPath) + " " +
+		shellQuote(fmt.Sprintf("%s:%d", cfg.TunnelHost, cfg.TunnelPort)) + " " +
+		shellQuote(cfg.Username) + " " + shellQuote(cfg.Password) + "\n"
+	if err := os.WriteFile(path, []byte(body), 0o700); err != nil {
+		return "", fmt.Errorf("write launcher: %w", err)
+	}
+	return path, nil
+}
+
+// xpraArgs builds the xpra command line; launcher is the script WinBox is
+// started through.
+func xpraArgs(cfg XpraConfig, launcher string) []string {
 	display := fmt.Sprintf(":%d", cfg.Display)
 	bindWS := fmt.Sprintf("%s:%d", cfg.BindAddr, cfg.WSPort)
-	winboxCmd := fmt.Sprintf("%s %s:%d %s %s",
-		cfg.WinBoxPath, cfg.TunnelHost, cfg.TunnelPort, cfg.Username, cfg.Password)
-
-	args := []string{
+	return []string{
 		"start", display,
 		"--bind-ws=" + bindWS,
 		"--html=on",
@@ -259,12 +281,21 @@ func StartXpra(cfg XpraConfig) (*XpraProc, error) {
 		"--opengl=off",
 		"--env=XPRA_CLIENT_CAN_SHUTDOWN=0",
 		"--xvfb=Xvfb +extension GLX +extension Composite -screen 0 1280x800x24+32 -dpi 96 -nolisten tcp -noreset -auth /home/worker/.Xauthority",
-		"--start-child=" + winboxCmd,
+		"--start-child=" + launcher,
 		// When WinBox exits (quit, crash, segfault) the xpra server exits
 		// too. With --daemon=no that exit is our own child exiting, so the
 		// reaper goroutine sees it and session cleanup runs immediately.
 		"--exit-with-children",
 	}
+}
+
+func StartXpra(cfg XpraConfig) (*XpraProc, error) {
+	display := fmt.Sprintf(":%d", cfg.Display)
+	launcher, err := writeLauncher(cfg)
+	if err != nil {
+		return nil, err
+	}
+	args := xpraArgs(cfg, launcher)
 
 	logFile := filepath.Join(cfg.TmpDir, "xpra.log")
 

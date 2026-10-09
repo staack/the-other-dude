@@ -96,6 +96,10 @@ class Settings(BaseSettings):
     OPENBAO_ADDR: str = "http://localhost:8200"
     OPENBAO_TOKEN: str = ""
 
+    # Shared secret the API presents to the WinBox worker's control API.
+    # The worker refuses to start without one; keep the two in step.
+    WINBOX_WORKER_TOKEN: str = ""
+
     # First admin bootstrap
     FIRST_ADMIN_EMAIL: Optional[str] = None
     FIRST_ADMIN_PASSWORD: Optional[str] = None

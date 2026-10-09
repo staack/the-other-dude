@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -123,6 +125,16 @@ func main() {
 
 	listenAddr := envStr("LISTEN_ADDR", ":9090")
 
+	// Shared secret presented by the API on every control request.  The
+	// control API creates sessions with device credentials and terminates
+	// them, and it is reachable by every container on the network, so it
+	// does not run without one.
+	workerToken := os.Getenv("WINBOX_WORKER_TOKEN")
+	if workerToken == "" {
+		slog.Error("WINBOX_WORKER_TOKEN is not set; refusing to start without a control-API secret")
+		os.Exit(1)
+	}
+
 	// Log the effective values and where each came from, so a knob that is not
 	// taking effect is visible in the logs instead of silently ignored. Every
 	// env var the worker consumes appears here; a knob missing from this line
@@ -137,6 +149,7 @@ func main() {
 		"winbox_path", cfg.WinBoxPath,
 		"bind_addr", cfg.BindAddr,
 		"listen_addr", listenAddr,
+		"worker_token_set", true,
 	)
 	logLevelVar.Set(logLevel)
 
@@ -151,20 +164,61 @@ func main() {
 	// will ever reap them.
 	go session.RunOrphanReaper(ctx)
 
+	handler := buildHandler(mgr, cfg, workerToken)
+
+	srv := &http.Server{
+		Addr:         listenAddr,
+		Handler:      handler,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 30 * time.Second,
+	}
+
+	go func() {
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
+		<-sigCh
+		slog.Info("shutting down worker")
+		cancel()
+
+		for _, s := range mgr.ListSessions() {
+			mgr.TerminateSession(s.WorkerSessionID)
+		}
+
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer shutdownCancel()
+		srv.Shutdown(shutdownCtx)
+	}()
+
+	slog.Info("winbox-worker starting", "addr", listenAddr, "max_sessions", cfg.MaxSessions)
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		slog.Error("server error", "err", err)
+		os.Exit(1)
+	}
+}
+
+func writeJSON(w http.ResponseWriter, code int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(v)
+}
+
+// maxCreateBody bounds a create request; a real one is a few hundred bytes.
+const maxCreateBody = 64 << 10
+
+// buildHandler wires the control API.  Every route except /healthz requires
+// the shared secret in X-Worker-Token.
+func buildHandler(mgr *session.Manager, cfg session.Config, token string) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /sessions", func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, maxCreateBody)
 		var req session.CreateRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, session.ErrorResponse{Error: "invalid request body"})
 			return
 		}
-
-		if !mgr.HasCapacity() {
-			writeJSON(w, http.StatusServiceUnavailable, session.ErrorResponse{
-				Error:       "capacity",
-				MaxSessions: cfg.MaxSessions,
-			})
+		if err := validateCreate(req); err != nil {
+			writeJSON(w, http.StatusBadRequest, session.ErrorResponse{Error: err.Error()})
 			return
 		}
 
@@ -174,14 +228,19 @@ func main() {
 
 		if err != nil {
 			slog.Error("create session failed", "err", err)
-			if strings.Contains(err.Error(), "capacity") {
+			switch {
+			case errors.Is(err, session.ErrCapacity):
 				writeJSON(w, http.StatusServiceUnavailable, session.ErrorResponse{
 					Error:       "capacity",
 					MaxSessions: cfg.MaxSessions,
 				})
-				return
+			case errors.Is(err, session.ErrDuplicateSession):
+				writeJSON(w, http.StatusConflict, session.ErrorResponse{Error: "session id already exists"})
+			case errors.Is(err, session.ErrInvalidSessionID):
+				writeJSON(w, http.StatusBadRequest, session.ErrorResponse{Error: "invalid session id"})
+			default:
+				writeJSON(w, http.StatusInternalServerError, session.ErrorResponse{Error: "launch failed"})
 			}
-			writeJSON(w, http.StatusInternalServerError, session.ErrorResponse{Error: "launch failed"})
 			return
 		}
 
@@ -225,49 +284,46 @@ func main() {
 		})
 	})
 
-	handler := provenanceMiddleware(mux)
-
-	srv := &http.Server{
-		Addr:         listenAddr,
-		Handler:      handler,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-	}
-
-	go func() {
-		sigCh := make(chan os.Signal, 1)
-		signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
-		<-sigCh
-		slog.Info("shutting down worker")
-		cancel()
-
-		for _, s := range mgr.ListSessions() {
-			mgr.TerminateSession(s.WorkerSessionID)
-		}
-
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer shutdownCancel()
-		srv.Shutdown(shutdownCtx)
-	}()
-
-	slog.Info("winbox-worker starting", "addr", listenAddr, "max_sessions", cfg.MaxSessions)
-	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		slog.Error("server error", "err", err)
-		os.Exit(1)
-	}
+	return authMiddleware(token, mux)
 }
 
-func writeJSON(w http.ResponseWriter, code int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(v)
+// validateCreate rejects requests the manager would otherwise act on blindly.
+func validateCreate(req session.CreateRequest) error {
+	if req.SessionID != "" && !session.ValidSessionID(req.SessionID) {
+		return errors.New("invalid session id")
+	}
+	if strings.TrimSpace(req.TunnelHost) == "" {
+		return errors.New("tunnel_host is required")
+	}
+	if req.TunnelPort < 1 || req.TunnelPort > 65535 {
+		return errors.New("tunnel_port must be 1-65535")
+	}
+	if req.IdleTimeoutSec < 0 || req.MaxLifetimeSec < 0 {
+		return errors.New("timeouts must not be negative")
+	}
+	if req.IdleTimeoutSec > maxTimeoutSeconds || req.MaxLifetimeSec > maxTimeoutSeconds {
+		return errors.New("timeouts must not exceed 30 days")
+	}
+	return nil
 }
 
-func provenanceMiddleware(next http.Handler) http.Handler {
+// maxTimeoutSeconds bounds the per-session timeouts well below the point where
+// seconds*time.Second overflows time.Duration.
+const maxTimeoutSeconds = 30 * 24 * 60 * 60
+
+// authMiddleware requires the shared secret on every route except /healthz,
+// which the container healthcheck polls.
+func authMiddleware(token string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		svc := r.Header.Get("X-Internal-Service")
-		if svc == "" && !strings.HasPrefix(r.URL.Path, "/healthz") {
-			slog.Warn("request missing X-Internal-Service header", "path", r.URL.Path, "remote", r.RemoteAddr)
+		if strings.HasPrefix(r.URL.Path, "/healthz") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		got := r.Header.Get("X-Worker-Token")
+		if got == "" || subtle.ConstantTimeCompare([]byte(got), []byte(token)) != 1 {
+			slog.Warn("control request rejected: bad or missing X-Worker-Token", "path", r.URL.Path, "remote", r.RemoteAddr)
+			writeJSON(w, http.StatusUnauthorized, session.ErrorResponse{Error: "unauthorized"})
+			return
 		}
 		next.ServeHTTP(w, r)
 	})

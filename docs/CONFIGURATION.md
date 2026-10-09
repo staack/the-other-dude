@@ -114,6 +114,7 @@ Automatic extra-package downloads require no additional setting. The API needs a
 | `TUNNEL_PORT_MIN` | `49000` | Start of WinBox tunnel port range |
 | `TUNNEL_PORT_MAX` | `49100` | End of WinBox tunnel port range |
 | `TUNNEL_IDLE_TIMEOUT` | `300` | WinBox tunnel idle timeout (seconds) |
+| `WINBOX_WORKER_TOKEN` | *(none; required)* | Shared secret the API presents to the WinBox worker's control API. Set the same value for `api` and `winbox-worker`; `setup.py` generates it. Generate with: `python -c "import secrets; print(secrets.token_urlsafe(32))"` |
 | `SSH_RELAY_PORT` | `8080` | SSH relay HTTP server port |
 | `SSH_IDLE_TIMEOUT` | `900` | SSH session idle timeout (seconds) |
 | `SSH_MAX_SESSIONS` | `200` | Maximum concurrent SSH sessions |

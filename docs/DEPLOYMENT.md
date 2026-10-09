@@ -130,6 +130,13 @@ Log in with the `FIRST_ADMIN_EMAIL` and `FIRST_ADMIN_PASSWORD` credentials set i
 | `POSTGRES_PASSWORD` | PostgreSQL superuser password | `<strong-password>` |
 | `FIRST_ADMIN_EMAIL` | Initial admin account email | `admin@example.com` |
 | `FIRST_ADMIN_PASSWORD` | Initial admin account password | `<strong-password>` |
+| `WINBOX_WORKER_TOKEN` | Shared secret between the API and the WinBox worker (same value for both) | `<generated>` |
+
+When a release adds a required variable, existing installs can add it without editing by hand:
+
+```bash
+python3 scripts/upgrade_env.py          # appends what is missing to .env.prod, backs the file up first
+```
 
 ### Optional Variables
 
