@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import {
   Eye,
   EyeOff,
@@ -49,21 +49,24 @@ import { formatUptime, formatDateTime, formatDate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { DetailPageSkeleton } from '@/components/ui/page-skeleton'
 import { TableSkeleton } from '@/components/ui/page-skeleton'
-import { InterfaceGauges } from '@/components/network/InterfaceGauges'
-import { ConfigHistorySection } from '@/components/config/ConfigHistorySection'
+const InterfaceGauges = lazy(() => import('@/components/network/InterfaceGauges').then(m => ({default:m.InterfaceGauges})))
+const ConfigHistorySection = lazy(() => import('@/components/config/ConfigHistorySection').then(m => ({default:m.ConfigHistorySection})))
 // Phase 27: Simple Configuration Interface
 import { useSimpleConfigMode } from '@/hooks/useSimpleConfig'
 import { SimpleModeToggle } from '@/components/simple-config/SimpleModeToggle'
-import { SimpleConfigView } from '@/components/simple-config/SimpleConfigView'
+const SimpleConfigView = lazy(() => import('@/components/simple-config/SimpleConfigView').then(m => ({ default: m.SimpleConfigView })))
+import { DeviceInvestigation } from '@/components/investigation/DeviceInvestigation'
+import { operationsPreviewEnabled } from '@/lib/features'
 import { WinBoxButton } from '@/components/fleet/WinBoxButton'
 import { RemoteWinBoxButton } from '@/components/fleet/RemoteWinBoxButton'
-import { SSHTerminal } from '@/components/fleet/SSHTerminal'
+const SSHTerminal = lazy(() => import('@/components/fleet/SSHTerminal').then(m => ({default:m.SSHTerminal})))
 import { RollbackAlert } from '@/components/config/RollbackAlert'
-import { SNMPMetricsSection } from '@/components/fleet/SNMPMetricsSection'
+const SNMPMetricsSection = lazy(() => import('@/components/fleet/SNMPMetricsSection').then(m => ({default:m.SNMPMetricsSection})))
 
 export const Route = createFileRoute(
   '/_authenticated/tenants/$tenantId/devices/$deviceId',
 )({
+  validateSearch: (search: Record<string, unknown>): { view?: string; issue?: string; period?: string } => ({ view: search.view === 'manage' ? 'manage' : undefined, issue: typeof search.issue === 'string' ? search.issue : undefined, period: ['1h','6h','24h'].includes(String(search.period)) ? String(search.period) : undefined }),
   component: DeviceDetailPage,
 })
 
@@ -300,6 +303,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 function DeviceDetailPage() {
   const { tenantId, deviceId } = Route.useParams()
   const navigate = useNavigate()
+  const search = Route.useSearch()
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const [showCreds, setShowCreds] = useState(false)
@@ -316,13 +320,14 @@ function DeviceDetailPage() {
 
   const isRouterOS = (device?.device_type ?? 'routeros') === 'routeros'
   const isSNMP = device?.device_type === 'snmp'
+  const investigation = operationsPreviewEnabled && search.view !== 'manage' && isRouterOS
 
   const { mode, toggleMode } = useSimpleConfigMode(isRouterOS ? deviceId : '__snmp__')
 
   const { data: backups } = useQuery({
     queryKey: ['config-backups', tenantId, deviceId],
     queryFn: () => configApi.listBackups(tenantId, deviceId),
-    enabled: isRouterOS,
+    enabled: isRouterOS && !investigation,
   })
 
   // True if a pre-push backup was created within the last 30 minutes,
@@ -341,18 +346,19 @@ function DeviceDetailPage() {
   const { data: groups } = useQuery({
     queryKey: ['device-groups', tenantId],
     queryFn: () => deviceGroupsApi.list(tenantId),
-    enabled: canWrite(user),
+    enabled: canWrite(user) && !investigation,
   })
 
   const { data: tags } = useQuery({
     queryKey: ['device-tags', tenantId],
     queryFn: () => deviceTagsApi.list(tenantId),
-    enabled: canWrite(user),
+    enabled: canWrite(user) && !investigation,
   })
 
   const { data: sitesData } = useQuery({
     queryKey: ['sites', tenantId],
     queryFn: () => sitesApi.list(tenantId),
+    enabled: !investigation,
   })
 
   const siteAssignMutation = useMutation({
@@ -430,6 +436,8 @@ function DeviceDetailPage() {
     return <div className="text-text-muted text-sm">Device not found</div>
   }
 
+  if (investigation) return <DeviceInvestigation device={device} tenantId={tenantId} issue={search.issue} userId={user?.id ?? ''} range={search.period ?? '6h'} onRange={period => { void navigate({ to: '/tenants/$tenantId/devices/$deviceId', params: {tenantId,deviceId}, search: {...search,period}, replace:true, resetScroll:false }) }} />
+
   const deviceGroupIds = new Set(device.groups.map((g) => g.id))
   const deviceTagIds = new Set(device.tags.map((t) => t.id))
 
@@ -437,7 +445,8 @@ function DeviceDetailPage() {
   const availableTags = tags?.filter((t) => !deviceTagIds.has(t.id)) ?? []
 
   return (
-    <div className={cn('space-y-4', mode === 'simple' ? 'max-w-5xl' : 'max-w-3xl')} data-testid="device-detail">
+    <Suspense fallback={<DetailPageSkeleton />}><div className={cn('space-y-4', mode === 'simple' ? 'max-w-5xl' : 'max-w-3xl')} data-testid="device-detail">
+      {operationsPreviewEnabled && isRouterOS && <Link to="/tenants/$tenantId/devices/$deviceId" params={{tenantId,deviceId}} search={{issue:search.issue,period:search.period}} className="text-sm text-info">← Investigation</Link>}
       {/* Device workspace header */}
       <div className="bg-sidebar border border-border-default rounded-sm px-3 py-1.5">
         {/* Top row: device identity */}
@@ -878,7 +887,7 @@ function DeviceDetailPage() {
           onOpenChange={setEditOpen}
         />
       )}
-    </div>
+    </div></Suspense>
   )
 }
 

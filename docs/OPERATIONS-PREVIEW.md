@@ -74,3 +74,26 @@ Before promoting this preview: check real installation polling intervals and
 alert volume, test with operators, and measure cold/warm browser loads on agreed
 hardware and network conditions. The remaining device/settings bundles are large;
 a smaller entry bundle does not make every device tab inexpensive.
+
+## Device investigation
+
+In enabled RouterOS previews, Inspect device opens a read-only investigation with
+health averages, recent alert records and interface traffic. The selected
+Operations issue and health period are URL parameters, so browser Back restores
+them. Configuration & tools opens the existing device workspace; SNMP devices
+retain their existing view.
+
+CPU and memory graphs use actual bucket times and a fixed 0–100% scale. Null,
+invalid and out-of-range readings break the line; gaps longer than three times
+the median returned bucket interval also break it. The API does not supply an
+expected collection interval, so this is a visual gap heuristic, not a completeness
+claim. Exact returned readings are available beneath the graphs. Missing evidence
+and failed refreshes are stated explicitly; retained data does not imply freshness.
+
+Alert records are limited to the latest 20 returned by the existing device-filtered
+endpoint, with truncation stated. They are not router logs or complete change
+history. Interface traffic loads only when expanded and displays the most recent
+returned bucket per interface, without inferred link speed or utilization.
+Queries are scoped to user, tenant, device and selected period. Configuration
+panels and the SSH terminal load separately when needed in the existing workspace;
+no router command is issued by the investigation screen.

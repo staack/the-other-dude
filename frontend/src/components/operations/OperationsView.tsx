@@ -19,7 +19,7 @@ export interface OperationsViewProps {
   selected: string
   onSelect: (id: string) => void
   onRefresh: () => void
-  deviceHref: (id: string) => string
+  deviceHref: (id: string, issue?: string) => string
   fleetHref: string
 }
 export function OperationsView(props: OperationsViewProps) {
@@ -155,7 +155,7 @@ export function OperationsView(props: OperationsViewProps) {
             </p>
             <nav aria-label="Investigation tools">
               {selected.device &&
-                link(props.deviceHref(selected.deviceId), 'Inspect device →', 'ops-primary')}
+                link(props.deviceHref(selected.deviceId, selected.id), 'Inspect device →', 'ops-primary')}
               {link('/alerts', 'Review alerts')}
             </nav>
             <details>

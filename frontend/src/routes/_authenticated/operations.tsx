@@ -89,11 +89,10 @@ function TenantOperations({ tenantId, userId }: { tenantId: string; userId: stri
                   ? 'Only the first 200 firing and 200 flapping alerts are included. Review Alerts for the complete list.'
                   : undefined
       }
-      renderLink={(href, label, className) => (
-        <Link to={href} className={className}>
-          {label}
-        </Link>
-      )}
+      renderLink={(href, label, className) => {
+        const [to, query] = href.split('?')
+        return <Link to={to} search={query ? { issue: new URLSearchParams(query).get('issue') ?? '' } : undefined} className={className}>{label}</Link>
+      }}
       refreshing={fleet.isFetching || alerts.isFetching}
       selected={search.issue}
       onSelect={(issue) => {
@@ -103,8 +102,8 @@ function TenantOperations({ tenantId, userId }: { tenantId: string; userId: stri
         void fleet.refetch()
         void alerts.refetch()
       }}
-      deviceHref={(id) =>
-        `/tenants/${encodeURIComponent(tenantId)}/devices/${encodeURIComponent(id)}`
+      deviceHref={(id, issue) =>
+        `/tenants/${encodeURIComponent(tenantId)}/devices/${encodeURIComponent(id)}?issue=${encodeURIComponent(issue ?? '')}`
       }
       fleetHref={`/tenants/${encodeURIComponent(tenantId)}/devices`}
     />
