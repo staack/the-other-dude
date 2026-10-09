@@ -89,41 +89,48 @@ func TestAggregateWirelessMissingSignalAndFrequencyList(t *testing.T) {
 	}
 }
 
+// newFakeRouterOS speaks the real RouterOS API protocol over net.Pipe.  Each
+// entry in replies maps a command word to the sentences sent before "!done";
+// every sentence is a list of words such as {"!re", "=name=wifi1"}.  Commands
+// not in the map get a bare "!done".
+func newFakeRouterOS(t *testing.T, replies map[string][][]string) *routeros.Client {
+	t.Helper()
+	clientConn, serverConn := net.Pipe()
+	t.Cleanup(func() { serverConn.Close() })
+	clientConn.SetDeadline(time.Now().Add(3 * time.Second))
+	client, err := routeros.NewClient(clientConn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { client.Close() })
+	go func() {
+		reader, writer := proto.NewReader(serverConn), proto.NewWriter(serverConn)
+		for {
+			command, err := reader.ReadSentence()
+			if err != nil {
+				return
+			}
+			for _, sentence := range append(replies[command.Word], []string{"!done"}) {
+				writer.BeginSentence()
+				for _, word := range sentence {
+					writer.WriteWord(word)
+				}
+				if writer.EndSentence() != nil {
+					return
+				}
+			}
+		}
+	}()
+	return client
+}
+
 // Exercise the real RouterOS protocol, including against the original collector.
 func TestWirelessIdleRadiosProtocol(t *testing.T) {
 	for _, path := range []string{"/interface/wifi", "/interface/wireless"} {
 		t.Run(path, func(t *testing.T) {
-			clientConn, serverConn := net.Pipe()
-			defer serverConn.Close()
-			clientConn.SetDeadline(time.Now().Add(3 * time.Second))
-			client, err := routeros.NewClient(clientConn)
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer client.Close()
-			go func() {
-				reader, writer := proto.NewReader(serverConn), proto.NewWriter(serverConn)
-				for {
-					command, err := reader.ReadSentence()
-					if err != nil {
-						return
-					}
-					if command.Word == path+"/print" {
-						writer.BeginSentence()
-						writer.WriteWord("!re")
-						writer.WriteWord("=name=idle-radio")
-						writer.WriteWord("=disabled=true")
-						if writer.EndSentence() != nil {
-							return
-						}
-					}
-					writer.BeginSentence()
-					writer.WriteWord("!done")
-					if writer.EndSentence() != nil {
-						return
-					}
-				}
-			}()
+			client := newFakeRouterOS(t, map[string][][]string{
+				path + "/print": {{"!re", "=name=idle-radio", "=disabled=true"}},
+			})
 			result, err := CollectWireless(client, 7)
 			if err != nil || len(result) != 1 || result[0].Interface != "idle-radio" || result[0].ClientCount != 0 {
 				t.Fatalf("idle interface lost: %#v, %v", result, err)
@@ -144,51 +151,11 @@ func TestWirelessLegacyZeroCCQIsMeasured(t *testing.T) {
 // registrations, and the next command on the same connection must still
 // receive its own reply rather than the leftover "!done".
 func TestWirelessEmptyRegistrationTableProtocol(t *testing.T) {
-	clientConn, serverConn := net.Pipe()
-	defer serverConn.Close()
-	clientConn.SetDeadline(time.Now().Add(3 * time.Second))
-	client, err := routeros.NewClient(clientConn)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer client.Close()
-	go func() {
-		reader, writer := proto.NewReader(serverConn), proto.NewWriter(serverConn)
-		for {
-			command, err := reader.ReadSentence()
-			if err != nil {
-				return
-			}
-			switch command.Word {
-			case "/interface/wifi/print":
-				writer.BeginSentence()
-				writer.WriteWord("!re")
-				writer.WriteWord("=name=wifi1")
-				writer.WriteWord("=disabled=true")
-				if writer.EndSentence() != nil {
-					return
-				}
-			case "/interface/wifi/registration-table/print":
-				writer.BeginSentence()
-				writer.WriteWord("!empty")
-				if writer.EndSentence() != nil {
-					return
-				}
-			case "/system/resource/print":
-				writer.BeginSentence()
-				writer.WriteWord("!re")
-				writer.WriteWord("=version=7.24.5")
-				if writer.EndSentence() != nil {
-					return
-				}
-			}
-			writer.BeginSentence()
-			writer.WriteWord("!done")
-			if writer.EndSentence() != nil {
-				return
-			}
-		}
-	}()
+	client := newFakeRouterOS(t, map[string][][]string{
+		"/interface/wifi/print":                    {{"!re", "=name=wifi1", "=disabled=true"}},
+		"/interface/wifi/registration-table/print": {{"!empty"}},
+		"/system/resource/print":                   {{"!re", "=version=7.24.5"}},
+	})
 	result, err := CollectWireless(client, 7)
 	if err != nil || len(result) != 1 || result[0].Interface != "wifi1" || result[0].ClientCount != 0 {
 		t.Fatalf("empty registration table not treated as zero clients: %#v, %v", result, err)
