@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { xpraIframeSrc } from '@/lib/xpraIframe'
+import { keepXpraKeyboardFocus, xpraIframeSrc } from '@/lib/xpraIframe'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Globe, X, Loader2, RefreshCw, Maximize2, Minimize2 } from 'lucide-react'
 import { remoteWinboxApi, type RemoteWinBoxSession } from '@/lib/api'
@@ -157,6 +157,15 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
   // session routes; see xpraIframeSrc.
   const iframeSrc = session?.session_id ? xpraIframeSrc(tenantId, deviceId, session.session_id) : null
 
+  // Keyboard focus has to be put into the xpra frame by this page; the
+  // client cannot take it on click. See keepXpraKeyboardFocus.
+  const iframeRef = useRef<HTMLIFrameElement | null>(null)
+  useEffect(() => {
+    const iframe = iframeRef.current
+    if (state !== 'active' || !iframe) return
+    return keepXpraKeyboardFocus(iframe)
+  }, [state, iframeSrc])
+
   // Idle / Failed / Terminated states — show button
   if (state === 'idle' || state === 'failed' || state === 'terminated') {
     return (
@@ -267,6 +276,7 @@ export function RemoteWinBoxButton({ tenantId, deviceId }: RemoteWinBoxButtonPro
         </div>
         {/* Xpra iframe */}
         <iframe
+          ref={iframeRef}
           src={iframeSrc}
           className={expanded ? 'flex-1 w-full' : 'w-full h-[600px]'}
           style={{ border: 'none' }}
