@@ -1,9 +1,4 @@
-"""A tenant admin must not be able to assign super_admin through the update endpoint.
-
-UserCreate already refuses it; UserUpdate did not, so PUT /users/{id} with
-{"role": "super_admin"} promoted anyone (including the caller) to a role whose
-token opens every tenant via RLS.
-"""
+"""The user update schema applies the same role policy as the create schema."""
 
 import pytest
 from pydantic import ValidationError
