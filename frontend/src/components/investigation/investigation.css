@@ -267,3 +267,12 @@
 .inv-trends circle {
   fill: #3479bd;
 }
+.inv-selected-alert {
+  margin-top: 12px;
+  border-left: 3px solid #3479bd;
+  padding: 8px 16px;
+  background: var(--inv-panel);
+}
+.inv-selected-alert strong {
+  font-weight: 500;
+}

@@ -88,4 +88,17 @@ describe("Investigation evidence", () => {
     fireEvent.click(toggle);
     expect(props.onTraffic).toHaveBeenCalledOnce();
   });
+  it("evaluates contact against current time even when a cached health window is older", () => {
+    const seen = Date.parse("2026-10-09T12:00:00Z");
+    render(
+      <InvestigationView
+        {...props}
+        device={{ ...props.device, last_seen: new Date(seen).toISOString() }}
+        windowEnd={seen + 60000}
+        now={seen + 10 * 60000}
+        healthError
+      />,
+    );
+    expect(screen.getByText(/Contact needs review/)).toBeInTheDocument();
+  });
 });

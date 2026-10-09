@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { metricsApi, type DeviceResponse } from "@/lib/api";
@@ -21,6 +21,11 @@ export function DeviceInvestigation({
   onRange: (range: string) => void;
 }) {
   const [initialEnd] = useState(() => Date.now());
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
   const [trafficOpen, setTrafficOpen] = useState(false);
   const key = ["investigation", userId, tenantId, device.id];
   const window = () => {
@@ -50,6 +55,18 @@ export function DeviceInvestigation({
       alertsApi.getAlerts(tenantId, { device_id: device.id, per_page: 20 }),
     refetchInterval: 30000,
   });
+  const selectedId = issue?.startsWith("alert:") ? issue.slice(6) : undefined;
+  const selectedAlert = useQuery({
+    queryKey: [...key, "selected-alert", selectedId],
+    queryFn: () =>
+      alertsApi.getAlerts(tenantId, {
+        device_id: device.id,
+        alert_id: selectedId,
+        per_page: 1,
+      }),
+    enabled: !!selectedId,
+    refetchInterval: selectedId ? 30000 : false,
+  });
   const traffic = useQuery({
     queryKey: [...key, "traffic", range],
     queryFn: () => metricsApi.interfaces(tenantId, device.id, ...window()),
@@ -59,6 +76,13 @@ export function DeviceInvestigation({
   return (
     <InvestigationView
       device={device}
+      now={now}
+      selectedAlertId={selectedId}
+      selectedAlert={selectedAlert.data?.items.find(
+        (event) => event.id === selectedId && event.device_id === device.id,
+      )}
+      selectedAlertLoading={!!selectedId && selectedAlert.isPending}
+      selectedAlertError={selectedAlert.isError}
       range={range}
       onRange={onRange}
       windowEnd={health.data?.end ?? initialEnd}
@@ -77,11 +101,13 @@ export function DeviceInvestigation({
       refreshing={
         health.isFetching ||
         events.isFetching ||
+        (!!selectedId && selectedAlert.isFetching) ||
         (trafficOpen && traffic.isFetching)
       }
       onRefresh={() => {
         void health.refetch();
         void events.refetch();
+        if (selectedId) void selectedAlert.refetch();
         if (trafficOpen) void traffic.refetch();
       }}
       renderNavigation={() => (

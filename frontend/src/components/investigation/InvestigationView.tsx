@@ -1,5 +1,6 @@
-import '@fontsource/ibm-plex-sans/latin-400.css'
-import '@fontsource/ibm-plex-sans/latin-500.css'
+import { contactIsRecent } from "@/lib/operations";
+import "@fontsource/ibm-plex-sans/latin-400.css";
+import "@fontsource/ibm-plex-sans/latin-500.css";
 import { trendSegments } from "./trend";
 import type { ReactNode } from "react";
 import type {
@@ -11,6 +12,11 @@ import type { AlertEvent } from "@/lib/alertsApi";
 import "./investigation.css";
 
 interface Props {
+  now?: number;
+  selectedAlertId?: string;
+  selectedAlert?: AlertEvent;
+  selectedAlertLoading?: boolean;
+  selectedAlertError?: boolean;
   device: DeviceResponse;
   windowEnd: number;
   range: string;
@@ -85,6 +91,54 @@ export function InvestigationView(p: Props) {
         Last device contact <strong>{date(p.device.last_seen)}</strong>
         <span>Contact time does not establish metric freshness.</span>
       </div>
+      {!contactIsRecent(p.device.last_seen, p.now ?? p.windowEnd) && (
+        <p className="inv-notice" role="status">
+          Contact needs review. Last contact is outside the five-minute preview
+          window or is not recorded. The reported status does not establish
+          current reachability.
+        </p>
+      )}
+      {p.selectedAlertId && (
+        <section aria-labelledby="selected-alert-title">
+          <h2 id="selected-alert-title">Alert under investigation</h2>
+          {p.selectedAlertLoading ? (
+            <p role="status">Loading selected alert…</p>
+          ) : p.selectedAlertError ? (
+            <p role="alert" className="inv-notice">
+              The selected alert could not be refreshed. Any retained record is
+              from an earlier request.
+            </p>
+          ) : !p.selectedAlert ? (
+            <p className="inv-notice">
+              The selected alert is unavailable for this device. This does not
+              establish that it resolved.
+            </p>
+          ) : null}
+          {p.selectedAlert && (
+            <div className="inv-selected-alert">
+              <strong>
+                {p.selectedAlert.message ??
+                  p.selectedAlert.rule_name ??
+                  p.selectedAlert.metric ??
+                  "Configured alert"}
+              </strong>
+              <p>
+                {p.selectedAlert.status} · {p.selectedAlert.severity}
+              </p>
+              <p>
+                Recorded value {number(p.selectedAlert.value)} · Threshold{" "}
+                {number(p.selectedAlert.threshold)}
+              </p>
+              <p>
+                Fired {date(p.selectedAlert.fired_at)}
+                {p.selectedAlert.resolved_at
+                  ? ` · Resolved ${date(p.selectedAlert.resolved_at)}`
+                  : ""}
+              </p>
+            </div>
+          )}
+        </section>
+      )}
       <section aria-labelledby="health-title">
         <div className="inv-section-heading">
           <div>
@@ -139,7 +193,7 @@ export function InvestigationView(p: Props) {
             </div>
             <p className="inv-sampled">
               Latest returned bucket: {date(latest.bucket)} · {health.length}{" "}
-              buckets
+              {health.length === 1 ? "bucket" : "buckets"}
             </p>
             <div className="inv-trends">
               {(["avg_cpu", "avg_mem_pct"] as const).map((metric) => (

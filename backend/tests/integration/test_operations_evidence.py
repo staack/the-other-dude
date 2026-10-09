@@ -93,3 +93,66 @@ async def test_operations_fleet_1000_devices(client, admin_session, auth_headers
     print(
         f"Operations 1000-device ASGI request ms (first, repeat, repeat): {times}; bytes: {len(response.content)}"
     )
+
+
+@pytest.mark.asyncio
+async def test_investigation_selected_alert_older_than_recent_page(
+    client, admin_session, auth_headers_factory, create_test_device, create_test_tenant
+):
+    auth = await auth_headers_factory(admin_session)
+    tenant_id = uuid.UUID(auth["tenant_id"])
+    device = await create_test_device(admin_session, tenant_id)
+    another_device = await create_test_device(admin_session, tenant_id)
+    other_tenant = await create_test_tenant(admin_session)
+    other_device = await create_test_device(admin_session, other_tenant.id)
+    selected = uuid.uuid4()
+    foreign = uuid.uuid4()
+    await admin_session.execute(
+        text(
+            "INSERT INTO alert_events(id,tenant_id,device_id,status,severity,value,threshold,fired_at) VALUES (:id,:t,:d,'firing','critical',0,0,NOW()-INTERVAL '2 days')"
+        ),
+        [
+            {"id": selected, "t": tenant_id, "d": device.id},
+            {"id": foreign, "t": other_tenant.id, "d": other_device.id},
+        ],
+    )
+    await admin_session.execute(
+        text(
+            "INSERT INTO alert_events(id,tenant_id,device_id,status,severity,fired_at) VALUES (:id,:t,:d,'resolved','warning',NOW())"
+        ),
+        [{"id": uuid.uuid4(), "t": tenant_id, "d": device.id} for _ in range(21)],
+    )
+    await admin_session.commit()
+    url = f"/api/tenants/{tenant_id}/alerts"
+    recent = await client.get(
+        url, params={"device_id": str(device.id), "per_page": 20}, headers=auth["headers"]
+    )
+    assert recent.status_code == 200
+    assert recent.json()["total"] == 22
+    assert str(selected) not in [row["id"] for row in recent.json()["items"]]
+    exact = await client.get(
+        url,
+        params={"device_id": str(device.id), "alert_id": str(selected), "per_page": 1},
+        headers=auth["headers"],
+    )
+    assert exact.status_code == 200
+    assert exact.json()["total"] == 1
+    assert exact.json()["items"][0]["id"] == str(selected)
+    assert exact.json()["items"][0]["value"] == 0
+    for event, target in [
+        (selected, another_device.id),
+        (foreign, device.id),
+        (uuid.uuid4(), device.id),
+    ]:
+        response = await client.get(
+            url, params={"device_id": str(target), "alert_id": str(event)}, headers=auth["headers"]
+        )
+        assert response.status_code == 200 and response.json()["total"] == 0
+    denied = await client.get(
+        f"/api/tenants/{other_tenant.id}/alerts",
+        params={"alert_id": str(foreign)},
+        headers=auth["headers"],
+    )
+    assert denied.status_code == 403
+    invalid = await client.get(url, params={"alert_id": "not-a-uuid"}, headers=auth["headers"])
+    assert invalid.status_code == 422

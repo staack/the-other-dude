@@ -97,3 +97,10 @@ returned bucket per interface, without inferred link speed or utilization.
 Queries are scoped to user, tenant, device and selected period. Configuration
 panels and the SSH terminal load separately when needed in the existing workspace;
 no router command is issued by the investigation screen.
+
+The alert opened from Operations is fetched separately by alert ID and device ID,
+so it remains visible even when more than 20 newer records exist. An unavailable
+record is not assumed resolved; failed refreshes explicitly label retained evidence.
+The API list endpoint accepts an optional UUID `alert_id` filter, with existing
+tenant/RLS authorization unchanged. Device detail keeps missed-contact warnings
+visible and evaluates contact against a current clock even if health refreshes fail.
