@@ -456,17 +456,22 @@ Neither returns a fixed value.
 
 ### Updating
 
-9.11.2 can update an existing installation without reinstalling. Retain the existing environment file and `docker-data` directories. This patch adds no database migration or configuration setting compared with 9.11.1. Back up before updating.
+9.12.0 can update an existing installation without reinstalling. Retain the existing environment file and `docker-data` directories. This release adds one required configuration setting, `WINBOX_WORKER_TOKEN`, shared by the `api` and `winbox-worker` services, and no database migration. Add it before pulling:
 
-For prebuilt production images, use the same Compose and environment files as your installation. For the standard production layout:
+```bash
+python3 scripts/upgrade_env.py          # appends WINBOX_WORKER_TOKEN to .env.prod with a generated value; backs the file up first
+```
+
+All four images change in 9.12.0, so pull and recreate all of them. For prebuilt production images, use the same Compose and environment files as your installation. For the standard production layout:
 
 ```bash
 ./scripts/backup.sh
-TOD_VERSION=9.11.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod pull api frontend
-TOD_VERSION=9.11.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d api frontend
+python3 scripts/upgrade_env.py
+TOD_VERSION=9.12.0 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod pull
+TOD_VERSION=9.12.0 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
 
-If your environment file pins `TOD_VERSION`, update that value to `9.11.2` for future Compose commands. Installations older than 9.11.0 must also update Compose to add the firmware-cache mount described under [Storage Configuration](#storage-configuration); pulling images does not add the mount. Do not rerun the installation wizard to apply this patch.
+If your environment file pins `TOD_VERSION`, update that value to `9.12.0` for future Compose commands. The frontend no longer proxies `/xpra/` to the worker: Remote WinBox is served through `/api/`, so a custom reverse proxy needs no `/xpra/` route and must forward WebSocket upgrades on `/api/`; the examples in `infrastructure/reverse-proxy-examples/` are updated. Installations older than 9.11.0 must also update Compose to add the firmware-cache mount described under [Storage Configuration](#storage-configuration); pulling images alone does not add that mount.
 
 For builds from source:
 
@@ -478,6 +483,7 @@ git pull
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build api
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build poller
 docker compose -f docker-compose.yml -f docker-compose.prod.yml build frontend
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build winbox-worker
 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
 
