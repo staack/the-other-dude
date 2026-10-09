@@ -53,16 +53,8 @@ async def _check_tenant_access(
         )
 
 
-def _require_write(current_user: CurrentUser) -> None:
-    """Raise 403 if user is a viewer (read-only)."""
-    if current_user.role == "viewer":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Viewers have read-only access.",
-        )
-
-
 def _can_write(current_user: CurrentUser) -> bool:
+    """Viewers are read-only; API keys need the alerts:write scope."""
     if current_user.role == "viewer":
         return False
     if current_user.role == "api_key":
@@ -70,22 +62,63 @@ def _can_write(current_user: CurrentUser) -> bool:
     return True
 
 
+def _require_write(current_user: CurrentUser) -> None:
+    """Raise 403 for read-only callers (viewer role, API key without alerts:write)."""
+    if not _can_write(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Read-only access: alert changes need an operator role or the alerts:write scope.",
+        )
+
+
 def _mask_url(url: Optional[str]) -> Optional[str]:
-    """Keep scheme and host, drop the path: webhook URLs are bearer tokens."""
+    """Keep scheme, host and port only: webhook URLs are secrets.
+
+    Userinfo (user:secret@host) is dropped with the path, and a stored value
+    that does not parse is shown as a constant placeholder rather than failing
+    the whole list.
+    """
     if not url:
         return url
-    parts = urlsplit(url)
-    if not parts.scheme or not parts.netloc:
+    try:
+        parts = urlsplit(url)
+        host = parts.hostname
+        port = parts.port
+    except ValueError:
         return "…"
-    return f"{parts.scheme}://{parts.netloc}/…"
+    if not parts.scheme or not host:
+        return "…"
+    return f"{parts.scheme}://{host}{f':{port}' if port else ''}/…"
+
+
+async def _require_tenant_targets(
+    db: AsyncSession, device_id: Optional[str], group_id: Optional[str]
+) -> None:
+    """404 unless the rule's device/group target is visible in this tenant (RLS session)."""
+    checks = (
+        ("devices", "device_id", "Device", device_id),
+        ("device_groups", "group_id", "Device group", group_id),
+    )
+    for table, field, label, value in checks:
+        if not value:
+            continue
+        try:
+            wanted = uuid.UUID(value)
+        except ValueError:
+            raise HTTPException(422, f"{field} must be a UUID")
+        result = await db.execute(
+            text(f"SELECT 1 FROM {table} WHERE id = :id"),  # noqa: S608 - table from a fixed tuple
+            {"id": wanted},
+        )
+        if result.scalar_one_or_none() is None:
+            raise HTTPException(404, f"{label} not found: {wanted}")
 
 
 async def _require_tenant_channels(db: AsyncSession, channel_ids: list[str]) -> None:
-    """404 unless every id is a notification channel of this tenant.
+    """404 unless every id is a notification channel visible in this tenant.
 
-    ``db`` is the RLS-scoped session, so another tenant's channel does not
-    come back.  The alert_rule_channels policy only constrains the rule side,
-    so without this check a rule could deliver to a foreign Slack/webhook.
+    ``db`` is the RLS-scoped session; the alert_rule_channels policy constrains
+    the rule side, so the channel side is checked here.
     """
     if not channel_ids:
         return
@@ -300,6 +333,7 @@ async def create_alert_rule(
             422, f"severity must be one of: {', '.join(sorted(ALLOWED_SEVERITIES))}"
         )
     await _require_tenant_channels(db, body.channel_ids)
+    await _require_tenant_targets(db, body.device_id, body.group_id)
 
     rule_id = str(uuid.uuid4())
 
@@ -392,6 +426,8 @@ async def update_alert_rule(
         raise HTTPException(
             422, f"severity must be one of: {', '.join(sorted(ALLOWED_SEVERITIES))}"
         )
+    await _require_tenant_channels(db, body.channel_ids)
+    await _require_tenant_targets(db, body.device_id, body.group_id)
 
     result = await db.execute(
         text("""
@@ -419,8 +455,7 @@ async def update_alert_rule(
     if not result.fetchone():
         raise HTTPException(404, "Alert rule not found")
 
-    # Replace channel associations (checked first so a bad id leaves the old ones)
-    await _require_tenant_channels(db, body.channel_ids)
+    # Replace channel associations (ids were checked above, before any write)
     await db.execute(
         text("DELETE FROM alert_rule_channels WHERE rule_id = CAST(:rule_id AS uuid)"),
         {"rule_id": str(rule_id)},
@@ -607,9 +642,8 @@ async def list_notification_channels(
         """)
     )
 
-    # Webhook URLs are bearer-equivalent (anyone holding one can post to the
-    # channel).  Writers need them to edit; readers get host only, like the
-    # SMTP password which is never returned at all.
+    # Webhook URLs are secrets.  Writers need them to edit; readers get host
+    # only, like the SMTP password which is never returned at all.
     reveal = _mask_url if not _can_write(current_user) else (lambda u: u)
 
     return [

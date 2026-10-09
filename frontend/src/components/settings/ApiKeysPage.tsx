@@ -25,6 +25,7 @@ const AVAILABLE_SCOPES = [
   { id: 'config:read', label: 'Config: Read' },
   { id: 'config:write', label: 'Config: Write' },
   { id: 'alerts:read', label: 'Alerts: Read' },
+  { id: 'alerts:write', label: 'Alerts: Write' },
   { id: 'firmware:write', label: 'Firmware: Write' },
 ] as const
 

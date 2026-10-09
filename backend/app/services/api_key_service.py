@@ -23,6 +23,7 @@ ALLOWED_SCOPES: set[str] = {
     "config:read",
     "config:write",
     "alerts:read",
+    "alerts:write",
     "firmware:write",
 }
 
