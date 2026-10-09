@@ -15,6 +15,7 @@ import redis.asyncio as aioredis
 import structlog
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
+from starlette.background import BackgroundTask
 
 from app.services.sse_manager import SSEConnectionManager
 
@@ -143,4 +144,11 @@ async def event_stream(
             await manager.disconnect()
             logger.info("sse.stream_closed", connection_id=connection_id)
 
-    return EventSourceResponse(event_generator())
+    # The generator's finally runs inside a cancelled scope once the client
+    # disconnects; the background task runs after that scope has exited, so
+    # the connection is released even if the finally is interrupted.
+    # disconnect() is idempotent, so running it twice is harmless.
+    return EventSourceResponse(
+        event_generator(),
+        background=BackgroundTask(manager.disconnect),
+    )

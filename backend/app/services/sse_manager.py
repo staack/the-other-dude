@@ -28,6 +28,11 @@ _DEVICE_EVENT_SUBJECTS = [
 _ALERT_EVENT_SUBJECTS = ["alert.fired.>", "alert.resolved.>"]
 _OPERATION_EVENT_SUBJECTS = ["firmware.progress.>"]
 
+# Teardown tasks run shielded from the caller's cancellation (sse-starlette
+# cancels the stream's anyio scope when the browser disconnects).  Keep a
+# strong reference so the loop cannot garbage-collect them mid-close.
+_teardown_tasks: set[asyncio.Task] = set()
+
 
 def _map_subject_to_event_type(subject: str) -> str:
     """Map a NATS subject prefix to an SSE event type string."""
@@ -98,6 +103,8 @@ class SSEConnectionManager:
         self._queue: Optional[asyncio.Queue] = None
         self._tenant_id: Optional[str] = None
         self._connection_id: Optional[str] = None
+        self._pump_task: Optional[asyncio.Task] = None
+        self._closed = False
 
     async def connect(
         self,
@@ -126,6 +133,20 @@ class SSEConnectionManager:
             max_reconnect_attempts=5,
             reconnect_time_wait=2,
         )
+        try:
+            await self._subscribe(last_event_id)
+        except BaseException:
+            # The socket is open; never leave it behind (issue #18).
+            self._closed = True
+            await asyncio.shield(self._start_teardown())
+            raise
+
+        return self._queue
+
+    async def _subscribe(self, last_event_id: Optional[str]) -> None:
+        """Create the JetStream subscriptions and start the pump task."""
+        connection_id = self._connection_id
+        tenant_id = self._tenant_id
         js = self._nc.jetstream()
 
         logger.info(
@@ -239,15 +260,13 @@ class SSEConnectionManager:
                     )
 
         # Start background task to pull messages from subscriptions into the queue
-        asyncio.create_task(self._pump_messages())
+        self._pump_task = asyncio.create_task(self._pump_messages())
 
         logger.info(
             "sse.connected",
             connection_id=connection_id,
             subscription_count=len(self._subscriptions),
         )
-
-        return self._queue
 
     async def _pump_messages(self) -> None:
         """Read messages from all NATS push subscriptions and push them onto the asyncio queue.
@@ -315,24 +334,62 @@ class SSEConnectionManager:
         await msg.ack()
 
     async def disconnect(self) -> None:
-        """Unsubscribe from all NATS subscriptions and close the connection."""
+        """Stop the pump, unsubscribe, and close the NATS connection.
+
+        Safe to call more than once.  The real work runs in a separate task
+        behind ``asyncio.shield`` because the SSE generator's ``finally`` runs
+        inside an anyio scope that sse-starlette has already cancelled: every
+        await there raises ``CancelledError`` again, which used to abort this
+        method before ``close()`` and leak one NATS connection per browser
+        reconnect (issue #18).  The caller may still see ``CancelledError``;
+        the teardown completes regardless.
+        """
+        if self._closed:
+            return
+        self._closed = True
         logger.info("sse.disconnecting", connection_id=self._connection_id)
 
-        for sub in self._subscriptions:
+        await asyncio.shield(self._start_teardown())
+
+    def _start_teardown(self) -> asyncio.Task:
+        """Run _teardown() in its own task, held alive by the module registry."""
+        task = asyncio.get_running_loop().create_task(self._teardown())
+        _teardown_tasks.add(task)
+        task.add_done_callback(_teardown_tasks.discard)
+        return task
+
+    async def _teardown(self) -> None:
+        """Release every resource held by this connection.  Must not be cancelled."""
+        pump, self._pump_task = self._pump_task, None
+        if pump is not None and not pump.done():
+            pump.cancel()
             try:
-                await sub.unsubscribe()
+                await pump
+            except (asyncio.CancelledError, Exception):
+                pass
+
+        subscriptions, self._subscriptions = self._subscriptions, []
+        nc, self._nc = self._nc, None
+        if nc is None:
+            return
+
+        for sub in subscriptions:
+            try:
+                await asyncio.wait_for(sub.unsubscribe(), timeout=2.0)
             except Exception:
                 pass
-        self._subscriptions.clear()
 
-        if self._nc:
-            try:
-                await self._nc.drain()
-            except Exception:
-                try:
-                    await self._nc.close()
-                except Exception:
-                    pass
-            self._nc = None
+        # close(), not drain(): drain() waits up to 30s for a client that has
+        # already gone away, and close() is idempotent and cancels any pending
+        # next_msg() futures itself.
+        try:
+            await asyncio.wait_for(nc.close(), timeout=5.0)
+        except Exception as exc:
+            logger.warning(
+                "sse.close_failed",
+                connection_id=self._connection_id,
+                error=str(exc) or exc.__class__.__name__,
+            )
+            return
 
         logger.info("sse.disconnected", connection_id=self._connection_id)
