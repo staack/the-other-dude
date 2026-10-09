@@ -15,6 +15,8 @@ CSP directives:
 - Dev mode adds 'unsafe-inline' and 'unsafe-eval' for Vite HMR
 """
 
+import re
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -52,6 +54,15 @@ _CSP_DEV = "; ".join(
 )
 
 
+# The xpra HTML5 client is served through the API and shown in an iframe by
+# the SPA; it needs same-origin framing and inline scripts.  Only that route.
+_XPRA_ROUTE = re.compile(r"/winbox-remote-sessions/[^/]+/xpra(?:/|$)")
+_CSP_XPRA = (
+    "default-src 'self' 'unsafe-inline' 'unsafe-eval' ws: wss: data: blob:; "
+    "frame-ancestors 'self'; base-uri 'self'; form-action 'self'"
+)
+
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to every API response."""
 
@@ -62,16 +73,20 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         response = await call_next(request)
 
+        xpra_route = _XPRA_ROUTE.search(request.url.path) is not None
+
         # Always-on security headers
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN" if xpra_route else "DENY"
         response.headers["X-DNS-Prefetch-Control"] = "on"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)"
         response.headers["Cache-Control"] = "no-store"
 
-        # Content-Security-Policy (environment-aware)
-        if self.is_production:
+        # Content-Security-Policy (environment-aware; relaxed only for the xpra client)
+        if xpra_route:
+            response.headers["Content-Security-Policy"] = _CSP_XPRA
+        elif self.is_production:
             response.headers["Content-Security-Policy"] = _CSP_PRODUCTION
         else:
             response.headers["Content-Security-Policy"] = _CSP_DEV

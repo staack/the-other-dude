@@ -13,8 +13,14 @@ import httpx
 logger = logging.getLogger(__name__)
 
 WORKER_BASE_URL = "http://tod_winbox_worker:9090"
-_HEADERS = {"X-Internal-Service": "api"}
 _TIMEOUT = httpx.Timeout(15.0, connect=5.0)
+
+
+def _headers() -> dict[str, str]:
+    """Headers for every worker control call, including the shared secret."""
+    from app.config import settings
+
+    return {"X-Internal-Service": "api", "X-Worker-Token": settings.WINBOX_WORKER_TOKEN}
 
 
 class WorkerCapacityError(Exception):
@@ -50,7 +56,7 @@ async def create_session(
     }
     try:
         async with httpx.AsyncClient(
-            base_url=WORKER_BASE_URL, headers=_HEADERS, timeout=_TIMEOUT
+            base_url=WORKER_BASE_URL, headers=_headers(), timeout=_TIMEOUT
         ) as client:
             resp = await client.post("/sessions", json=payload)
     finally:
@@ -73,7 +79,7 @@ async def terminate_session(session_id: str) -> bool:
     Returns True if the worker acknowledged termination, False if 404.
     """
     async with httpx.AsyncClient(
-        base_url=WORKER_BASE_URL, headers=_HEADERS, timeout=_TIMEOUT
+        base_url=WORKER_BASE_URL, headers=_headers(), timeout=_TIMEOUT
     ) as client:
         resp = await client.delete(f"/sessions/{session_id}")
 
@@ -88,7 +94,7 @@ async def terminate_session(session_id: str) -> bool:
 async def get_session(session_id: str) -> Optional[dict[str, Any]]:
     """GET /sessions/{session_id} — returns None if 404."""
     async with httpx.AsyncClient(
-        base_url=WORKER_BASE_URL, headers=_HEADERS, timeout=_TIMEOUT
+        base_url=WORKER_BASE_URL, headers=_headers(), timeout=_TIMEOUT
     ) as client:
         resp = await client.get(f"/sessions/{session_id}")
 
@@ -103,7 +109,7 @@ async def get_session(session_id: str) -> Optional[dict[str, Any]]:
 async def list_sessions() -> list[dict[str, Any]]:
     """GET /sessions — return all sessions known to the worker."""
     async with httpx.AsyncClient(
-        base_url=WORKER_BASE_URL, headers=_HEADERS, timeout=_TIMEOUT
+        base_url=WORKER_BASE_URL, headers=_headers(), timeout=_TIMEOUT
     ) as client:
         resp = await client.get("/sessions")
 
@@ -118,7 +124,7 @@ async def health_check() -> bool:
     """GET /healthz — returns True if the worker is healthy."""
     try:
         async with httpx.AsyncClient(
-            base_url=WORKER_BASE_URL, headers=_HEADERS, timeout=httpx.Timeout(5.0)
+            base_url=WORKER_BASE_URL, headers=_headers(), timeout=httpx.Timeout(5.0)
         ) as client:
             resp = await client.get("/healthz")
         return resp.status_code == 200
