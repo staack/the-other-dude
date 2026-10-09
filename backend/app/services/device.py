@@ -300,8 +300,8 @@ async def validate_routeros_connectivity(
         detail = outcome.message
         if outcome.suggested_tls_mode:
             detail += (
-                f" Verified alternative: this device does answer in "
-                f"'{outcome.suggested_tls_mode}' mode — re-add it with "
+                f" The device's API does answer in '{outcome.suggested_tls_mode}' mode "
+                f"(checked without your credentials) — re-add it with "
                 f"tls_mode='{outcome.suggested_tls_mode}' if that is acceptable to you."
             )
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=detail)
@@ -363,8 +363,8 @@ async def evaluate_bulk_routeros_device(
             reason = outcome.message
             if outcome.suggested_tls_mode:
                 reason += (
-                    f" Verified alternative: this device answers in "
-                    f"'{outcome.suggested_tls_mode}' mode."
+                    f" The device's API does answer in '{outcome.suggested_tls_mode}' mode "
+                    f"(checked without your credentials)."
                 )
             return BulkDeviceVerdict(rejection=reason, verified=False)
         logger.warning(
