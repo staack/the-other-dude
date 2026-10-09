@@ -18,6 +18,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 import re
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict, model_validator
 from sqlalchemy import text
@@ -59,6 +60,46 @@ def _require_write(current_user: CurrentUser) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Viewers have read-only access.",
         )
+
+
+def _can_write(current_user: CurrentUser) -> bool:
+    if current_user.role == "viewer":
+        return False
+    if current_user.role == "api_key":
+        return "alerts:write" in (current_user.scopes or [])
+    return True
+
+
+def _mask_url(url: Optional[str]) -> Optional[str]:
+    """Keep scheme and host, drop the path: webhook URLs are bearer tokens."""
+    if not url:
+        return url
+    parts = urlsplit(url)
+    if not parts.scheme or not parts.netloc:
+        return "…"
+    return f"{parts.scheme}://{parts.netloc}/…"
+
+
+async def _require_tenant_channels(db: AsyncSession, channel_ids: list[str]) -> None:
+    """404 unless every id is a notification channel of this tenant.
+
+    ``db`` is the RLS-scoped session, so another tenant's channel does not
+    come back.  The alert_rule_channels policy only constrains the rule side,
+    so without this check a rule could deliver to a foreign Slack/webhook.
+    """
+    if not channel_ids:
+        return
+    try:
+        wanted = [uuid.UUID(c) for c in channel_ids]
+    except ValueError:
+        raise HTTPException(422, "channel_ids must be UUIDs")
+    result = await db.execute(
+        text("SELECT id FROM notification_channels WHERE id = ANY(:ids)"), {"ids": wanted}
+    )
+    found = {str(row[0]) for row in result.fetchall()}
+    missing = [str(c) for c in wanted if str(c) not in found]
+    if missing:
+        raise HTTPException(404, f"Notification channel not found: {', '.join(missing)}")
 
 
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
@@ -258,6 +299,7 @@ async def create_alert_rule(
         raise HTTPException(
             422, f"severity must be one of: {', '.join(sorted(ALLOWED_SEVERITIES))}"
         )
+    await _require_tenant_channels(db, body.channel_ids)
 
     rule_id = str(uuid.uuid4())
 
@@ -377,7 +419,8 @@ async def update_alert_rule(
     if not result.fetchone():
         raise HTTPException(404, "Alert rule not found")
 
-    # Replace channel associations
+    # Replace channel associations (checked first so a bad id leaves the old ones)
+    await _require_tenant_channels(db, body.channel_ids)
     await db.execute(
         text("DELETE FROM alert_rule_channels WHERE rule_id = CAST(:rule_id AS uuid)"),
         {"rule_id": str(rule_id)},
@@ -564,6 +607,11 @@ async def list_notification_channels(
         """)
     )
 
+    # Webhook URLs are bearer-equivalent (anyone holding one can post to the
+    # channel).  Writers need them to edit; readers get host only, like the
+    # SMTP password which is never returned at all.
+    reveal = _mask_url if not _can_write(current_user) else (lambda u: u)
+
     return [
         {
             "id": str(row[0]),
@@ -576,9 +624,9 @@ async def list_notification_channels(
             "smtp_use_tls": row[7],
             "from_address": row[8],
             "to_address": row[9],
-            "webhook_url": row[10],
+            "webhook_url": reveal(row[10]),
             "created_at": row[11].isoformat() if row[11] else None,
-            "slack_webhook_url": row[12],
+            "slack_webhook_url": reveal(row[12]),
         }
         for row in result.fetchall()
     ]
