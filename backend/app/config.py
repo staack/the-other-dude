@@ -153,7 +153,7 @@ class Settings(BaseSettings):
 
     # App settings
     APP_NAME: str = "TOD - The Other Dude"
-    APP_VERSION: str = "9.11.2"
+    APP_VERSION: str = "9.12.0"
     DEBUG: bool = False
 
     @field_validator("CREDENTIAL_ENCRYPTION_KEY")
