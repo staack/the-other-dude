@@ -1,9 +1,6 @@
 package device
 
 import (
-	"errors"
-	"strings"
-
 	routeros "github.com/go-routeros/routeros/v3"
 )
 
@@ -29,15 +26,10 @@ func ExecuteCommand(client *routeros.Client, command string, args []string) Comm
 	cmdParts = append(cmdParts, command)
 	cmdParts = append(cmdParts, args...)
 
+	// RouterOS 7.18+ answers an empty print with "!empty"; go-routeros v3.0.1
+	// ignores it, so an empty result is simply a reply with no rows.
 	reply, err := client.Run(cmdParts...)
 	if err != nil {
-		// RouterOS 7.x returns !empty for empty results (e.g., no firewall rules).
-		// go-routeros/v3 doesn't recognize this word and returns UnknownReplyError.
-		// Treat !empty as a successful empty response.
-		var unkErr *routeros.UnknownReplyError
-		if errors.As(err, &unkErr) && strings.TrimPrefix(unkErr.Sentence.Word, "!") == "empty" {
-			return CommandResponse{Success: true, Data: []map[string]string{}}
-		}
 		return CommandResponse{Success: false, Data: nil, Error: err.Error()}
 	}
 

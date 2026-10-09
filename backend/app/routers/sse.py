@@ -11,10 +11,12 @@ import json
 import uuid
 from typing import AsyncGenerator, Optional
 
+import nats.errors
 import redis.asyncio as aioredis
 import structlog
 from fastapi import APIRouter, HTTPException, Query, Request, status
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
+from starlette.background import BackgroundTask
 
 from app.services.sse_manager import SSEConnectionManager
 
@@ -80,8 +82,9 @@ async def event_stream(
     Event types: device_status, alert_fired, alert_resolved, config_push,
     firmware_progress, metric_update.
 
-    Supports Last-Event-ID header for reconnection replay.
-    Sends heartbeat comments every 15 seconds on idle connections.
+    Sends heartbeat comments every 15 seconds on idle connections.  The
+    stream ends (and the browser reconnects) when the NATS connection is
+    lost for good.  Last-Event-ID is logged but not replayed.
     """
     # Validate exchange token from query parameter (single-use, 30s TTL)
     user_context = await _validate_sse_token(token)
@@ -104,7 +107,7 @@ async def event_stream(
     # Generate unique connection ID
     connection_id = f"sse-{uuid.uuid4().hex[:12]}"
 
-    # Check for Last-Event-ID header (reconnection replay)
+    # Logged for diagnostics; see SSEConnectionManager.connect for why it is not replayed.
     last_event_id = request.headers.get("Last-Event-ID")
 
     logger.info(
@@ -117,11 +120,24 @@ async def event_stream(
     )
 
     manager = SSEConnectionManager()
-    queue = await manager.connect(
-        connection_id=connection_id,
-        tenant_id=filter_tenant_id,
-        last_event_id=last_event_id,
-    )
+    try:
+        queue = await manager.connect(
+            connection_id=connection_id,
+            tenant_id=filter_tenant_id,
+            last_event_id=last_event_id,
+        )
+    except (nats.errors.Error, OSError, RuntimeError) as exc:
+        # Broker outage: a 503 lets the browser retry with back-off instead
+        # of a traceback-producing 500 per attempt.
+        logger.warning(
+            "sse.unavailable",
+            connection_id=connection_id,
+            error=str(exc) or exc.__class__.__name__,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Event stream unavailable",
+        ) from exc
 
     async def event_generator() -> AsyncGenerator[ServerSentEvent, None]:
         """Yield SSE events from the queue with 15s heartbeat on idle."""
@@ -129,18 +145,37 @@ async def event_stream(
             while True:
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=15.0)
-                    yield ServerSentEvent(
-                        data=event["data"],
-                        event=event["event"],
-                        id=event["id"],
-                    )
                 except asyncio.TimeoutError:
                     # Send heartbeat comment to keep connection alive
                     yield ServerSentEvent(comment="heartbeat")
-                except asyncio.CancelledError:
+                    continue
+                if event is None:
+                    # NATS gone for good: end the stream so the browser
+                    # reconnects (see SSEConnectionManager).
                     break
+                yield ServerSentEvent(
+                    data=event["data"],
+                    event=event["event"],
+                    id=event["id"],
+                )
         finally:
-            await manager.disconnect()
-            logger.info("sse.stream_closed", connection_id=connection_id)
+            try:
+                await manager.disconnect()
+            finally:
+                # disconnect() may re-raise CancelledError under sse-starlette's
+                # cancelled scope; the teardown itself completes regardless.
+                logger.info("sse.stream_closed", connection_id=connection_id)
 
-    return EventSourceResponse(event_generator())
+    async def on_client_close(_message: dict) -> None:
+        # sse-starlette runs this on http.disconnect before cancelling the
+        # stream's scope, so the teardown gets an un-cancelled context.
+        await manager.disconnect()
+
+    # Three idempotent triggers: the close hook above (client disconnect), the
+    # generator's finally (normal end, errors, shutdown) and the background
+    # task, which sse-starlette awaits after the cancelled scope has exited.
+    return EventSourceResponse(
+        event_generator(),
+        client_close_handler_callable=on_client_close,
+        background=BackgroundTask(manager.disconnect),
+    )

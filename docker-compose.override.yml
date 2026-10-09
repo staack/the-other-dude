@@ -7,6 +7,10 @@ services:
       context: .
       dockerfile: infrastructure/docker/Dockerfile.api
     container_name: tod_api
+    ulimits:
+      nofile:
+        soft: 8192
+        hard: 8192
     restart: unless-stopped
     ports:
       - "8001:8000"
