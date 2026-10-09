@@ -70,6 +70,8 @@ describe('useEventStream', () => {
     })
     await flush()
     expect(FakeEventSource.instances.length).toBe(attemptsSoFar + 1)
+    // Past the budget, an attempt in flight must not flash the badge back to "connecting".
+    expect(result.current.connectionState).toBe('disconnected')
   })
 
   it('does not reconnect a healthy stream on a timer', async () => {

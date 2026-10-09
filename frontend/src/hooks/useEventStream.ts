@@ -99,7 +99,11 @@ export function useEventStream(
       eventSourceRef.current = null
     }
 
-    setConnectionState('connecting')
+    // Past the retry budget the badge stays "disconnected" until a stream
+    // actually opens, instead of flashing "connecting" every 30 seconds.
+    if (retryCountRef.current < MAX_RETRIES) {
+      setConnectionState('connecting')
+    }
 
     // Exchange session cookie for a short-lived SSE token
     let sseToken: string
@@ -158,7 +162,7 @@ export function useEventStream(
       INITIAL_RETRY_DELAY_MS * Math.pow(RETRY_MULTIPLIER, retryCountRef.current),
       MAX_RETRY_DELAY_MS,
     )
-    retryCountRef.current += 1
+    retryCountRef.current = Math.min(retryCountRef.current + 1, MAX_RETRIES)
 
     reconnectTimerRef.current = setTimeout(() => {
       reconnectTimerRef.current = null
