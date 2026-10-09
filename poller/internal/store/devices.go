@@ -3,6 +3,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -205,13 +206,30 @@ func (s *DeviceStore) GetDevice(ctx context.Context, deviceID string) (Device, e
 	return d, nil
 }
 
+// ErrHostKeyConflict is returned when a different fingerprint is already pinned.
+var ErrHostKeyConflict = errors.New("SSH host key already pinned to a different fingerprint")
+
 // UpdateSSHHostKey stores the SSH host key fingerprint for TOFU verification.
 // Called after a successful first-connect to persist the observed fingerprint.
+//
+// A pin is written once: the update only applies when no fingerprint is
+// stored yet (NULL or empty, both of which the SSH callback treats as
+// unpinned) or the stored one matches (re-verification).  A different key
+// never replaces an existing pin here; clearing a pin is an explicit
+// operator action.
 func (s *DeviceStore) UpdateSSHHostKey(ctx context.Context, deviceID string, fingerprint string) error {
-	const query = `UPDATE devices SET ssh_host_key_fingerprint = $1, ssh_host_key_first_seen = COALESCE(ssh_host_key_first_seen, NOW()), ssh_host_key_last_verified = NOW() WHERE id = $2`
-	_, err := s.pool.Exec(ctx, query, fingerprint, deviceID)
+	const query = `UPDATE devices
+		SET ssh_host_key_fingerprint = $1,
+		    ssh_host_key_first_seen = COALESCE(ssh_host_key_first_seen, NOW()),
+		    ssh_host_key_last_verified = NOW()
+		WHERE id = $2
+		  AND (ssh_host_key_fingerprint IS NULL OR ssh_host_key_fingerprint = '' OR ssh_host_key_fingerprint = $1)`
+	tag, err := s.pool.Exec(ctx, query, fingerprint, deviceID)
 	if err != nil {
 		return fmt.Errorf("updating SSH host key for device %s: %w", deviceID, err)
+	}
+	if tag.RowsAffected() == 0 {
+		return fmt.Errorf("%w: device %s", ErrHostKeyConflict, deviceID)
 	}
 	return nil
 }

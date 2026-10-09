@@ -30,6 +30,7 @@ type backupDeviceState struct {
 	consecutiveFailures int
 	backoffUntil        time.Time
 	lastErrorKind       device.SSHErrorKind // tracks whether error is auth/hostkey (blocks retry)
+	pinnedFingerprint   string              // pin this loop wrote; survives a failed row refresh
 }
 
 // BackupScheduler manages periodic SSH config collection from RouterOS devices.
@@ -37,6 +38,7 @@ type backupDeviceState struct {
 // goroutines, concurrency control, and retry logic.
 type BackupScheduler struct {
 	store           DeviceFetcher
+	devices         DeviceGetter // nil when the store cannot re-read rows (tests)
 	hostKeyStore    SSHHostKeyUpdater
 	locker          *redislock.Client
 	publisher       *bus.Publisher
@@ -64,8 +66,10 @@ func NewBackupScheduler(
 	refreshPeriod time.Duration,
 	maxConcurrent int,
 ) *BackupScheduler {
+	getter, _ := store.(DeviceGetter)
 	return &BackupScheduler{
 		store:           store,
+		devices:         getter,
 		hostKeyStore:    hostKeyStore,
 		locker:          locker,
 		publisher:       publisher,
@@ -177,6 +181,7 @@ func (bs *BackupScheduler) runBackupLoop(ctx context.Context, dev store.Device, 
 	}
 
 	// Run initial backup immediately after jitter.
+	dev = bs.refreshDevice(ctx, dev, state)
 	bs.executeBackupTick(ctx, dev, state)
 
 	ticker := time.NewTicker(bs.backupInterval)
@@ -188,9 +193,50 @@ func (bs *BackupScheduler) runBackupLoop(ctx context.Context, dev store.Device, 
 			slog.Debug("backup loop stopping", "device_id", dev.ID)
 			return
 		case <-ticker.C:
+			dev = bs.refreshDevice(ctx, dev, state)
 			bs.executeBackupTick(ctx, dev, state)
 		}
 	}
+}
+
+// pinWriteError maps a failed pin write: a conflicting pin is a host-key
+// failure (blocks retries like a mismatch would); anything else is a storage
+// error that fails this run but stays retryable.
+func pinWriteError(deviceID string, err error) error {
+	if errors.Is(err, store.ErrHostKeyConflict) {
+		return &device.SSHError{Kind: device.ErrHostKeyMismatch, Err: err}
+	}
+	return fmt.Errorf("storing SSH host key for %s: %w", deviceID, err)
+}
+
+// refreshDevice returns the current row for dev, or dev itself if it cannot
+// be re-read.  The loop otherwise runs on the snapshot taken when it started,
+// which would keep using a credential ciphertext or an empty host-key pin
+// long after the database changed.
+func (bs *BackupScheduler) refreshDevice(ctx context.Context, dev store.Device, state *backupDeviceState) store.Device {
+	if bs.devices != nil {
+		fresh, err := bs.devices.GetDevice(ctx, dev.ID)
+		if err == nil {
+			// The row is authoritative: remember its pin (or that it was
+			// cleared) so a later failed refresh cannot resurrect a stale one.
+			if state != nil {
+				state.pinnedFingerprint = ""
+				if fresh.SSHHostKeyFingerprint != nil {
+					state.pinnedFingerprint = *fresh.SSHHostKeyFingerprint
+				}
+			}
+			return fresh
+		}
+		slog.Debug("could not refresh device row; using snapshot", "device_id", dev.ID, "error", err)
+	}
+	// A pin this loop already wrote must not be forgotten just because the
+	// row could not be re-read: that would re-open first-connect trust.
+	if state != nil && state.pinnedFingerprint != "" &&
+		(dev.SSHHostKeyFingerprint == nil || *dev.SSHHostKeyFingerprint == "") {
+		pin := state.pinnedFingerprint
+		dev.SSHHostKeyFingerprint = &pin
+	}
+	return dev
 }
 
 // executeBackupTick runs a single backup tick for a device, handling all
@@ -384,16 +430,22 @@ func (bs *BackupScheduler) collectAndPublish(ctx context.Context, dev store.Devi
 		return "", err
 	}
 
-	// TOFU: store fingerprint on first connection.
+	// TOFU: store fingerprint on first connection.  The store refuses to
+	// replace a pin another connection established in the meantime; treat
+	// that like a host-key mismatch rather than publishing a backup taken
+	// over an unverified key.
 	if knownFingerprint == "" && observedFP != "" {
 		if updateErr := bs.hostKeyStore.UpdateSSHHostKey(ctx, dev.ID, observedFP); updateErr != nil {
 			slog.Warn("failed to store SSH host key", "device_id", dev.ID, "error", updateErr)
-		} else {
-			slog.Info("stored TOFU SSH host key",
-				"device_id", dev.ID,
-				"fingerprint", observedFP,
-			)
+			return "", pinWriteError(dev.ID, updateErr)
 		}
+		if state != nil {
+			state.pinnedFingerprint = observedFP
+		}
+		slog.Info("stored TOFU SSH host key",
+			"device_id", dev.ID,
+			"fingerprint", observedFP,
+		)
 	}
 
 	// Validate output: non-empty and looks like RouterOS config.

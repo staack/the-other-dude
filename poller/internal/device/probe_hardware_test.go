@@ -77,7 +77,7 @@ func TestHardwareProbe_AnonymousDHDeviceCannotOnboardGreen(t *testing.T) {
 		t.Errorf("expected failure at stage %q, got %q", StageTLS, res.Stage)
 	}
 	if res.SuggestedTLSMode != "plain" {
-		t.Errorf("expected a verified suggestion of plain mode, got %q", res.SuggestedTLSMode)
+		t.Errorf("expected a plain-mode suggestion (API answered without credentials), got %q", res.SuggestedTLSMode)
 	}
 }
 

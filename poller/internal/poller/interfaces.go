@@ -13,6 +13,13 @@ type DeviceFetcher interface {
 	FetchDevices(ctx context.Context) ([]store.Device, error)
 }
 
+// DeviceGetter re-reads one device row.  The backup loop uses it so a
+// host-key pin or rotated credentials written after the loop started are
+// seen on the next tick instead of after a poller restart.
+type DeviceGetter interface {
+	GetDevice(ctx context.Context, deviceID string) (store.Device, error)
+}
+
 // SSHHostKeyUpdater is the subset of store.DeviceStore used by the BackupScheduler
 // to persist TOFU SSH host key fingerprints after first successful connection.
 type SSHHostKeyUpdater interface {

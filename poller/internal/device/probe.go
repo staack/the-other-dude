@@ -18,6 +18,9 @@
 package device
 
 import (
+	"crypto/rand"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -68,8 +71,10 @@ type ProbeResult struct {
 
 	// TLSMode is the mode the probe was asked to use.
 	TLSMode string `json:"tls_mode"`
-	// SuggestedTLSMode is a mode that was *verified* to work when the
-	// requested one did not. Empty when there is nothing to suggest.
+	// SuggestedTLSMode is an alternative mode whose API answered when the
+	// requested one did not.  It is learned without the real credentials, so
+	// it means "the device speaks the API in this mode", not "login was
+	// verified".  Empty when there is nothing to suggest.
 	SuggestedTLSMode string `json:"suggested_tls_mode,omitempty"`
 
 	// Identity fields, populated only on success.
@@ -130,8 +135,12 @@ func ProbeRouterOS(
 
 		// When TLS is the obstacle, find out whether the documented
 		// workaround actually applies before recommending it.
-		if res.Reason == ReasonTLSCipherMismatch || res.Reason == ReasonTLSOther {
-			if plainPort > 0 && plainWorks(ip, plainPort, username, password, timeout) {
+		// Offer the plain-mode hint only for modes that are not pinned to CA
+		// verification, and never with the real credentials: a throwaway login
+		// is enough to learn that the plain API answers (see plainAPIAnswers).
+		if (tlsMode == "auto" || tlsMode == "insecure") &&
+			(res.Reason == ReasonTLSCipherMismatch || res.Reason == ReasonTLSOther) {
+			if plainPort > 0 && plainAPIAnswers(ip, plainPort, timeout) {
 				res.SuggestedTLSMode = "plain"
 			}
 		}
@@ -187,26 +196,35 @@ func tcpCheck(ip string, port int, timeout time.Duration) error {
 	return conn.Close()
 }
 
-// plainWorks reports whether plain mode fully works against this device. Used
-// only to verify a suggestion before offering it, never as a silent fallback --
-// auto mode's refusal to downgrade to plain text is deliberate, and this
-// function must never change that, only describe an alternative.
+// plainAPIAnswers reports whether the plain RouterOS API is listening on
+// plainPort.  It is used only to describe an alternative, never as a silent
+// fallback: auto mode's refusal to downgrade to plain text is deliberate.
 //
-// It applies the same success bar as the main probe path -- connect, log in,
-// and get an answer to a system query -- so that SuggestedTLSMode means exactly
-// what OK means, rather than something weaker. Callers present this to users as
-// a verified alternative, so the two must not drift apart.
-func plainWorks(ip string, plainPort int, username, password string, timeout time.Duration) bool {
-	client, err := ConnectDevice(ip, 0, plainPort, username, password, timeout, nil, "plain")
-	if err != nil {
+// It logs in with throwaway credentials.  The device's auth-failure trap
+// proves the port speaks the API, which is all the hint needs, and the
+// operator's real username and password never cross the network in clear
+// text unless they chose plain mode themselves.  SuggestedTLSMode therefore
+// means "the plain API answered", not "plain mode was verified with your
+// credentials"; the backend wording reflects that.
+func plainAPIAnswers(ip string, plainPort int, timeout time.Duration) bool {
+	token := make([]byte, 12)
+	if _, err := rand.Read(token); err != nil {
 		return false
 	}
-	defer CloseDevice(client)
+	throwaway := "tod-probe-" + hex.EncodeToString(token)
+	client, err := ConnectDevice(ip, 0, plainPort, throwaway, throwaway, timeout, nil, "plain")
+	if err == nil {
+		// An API that accepts anything still proves the port.
+		CloseDevice(client)
+		return true
+	}
+	_, reason, _ := classifyConnectError(err, ip, plainPort, "plain")
+	return reason == ReasonAuthFailed
+}
 
-	if _, _, _, qerr := queryIdentity(client); qerr != nil {
-		return false
-	}
-	return true
+func isTimeout(err error) bool {
+	var ne net.Error
+	return errors.As(err, &ne) && ne.Timeout()
 }
 
 // queryIdentity fetches identity and version to confirm the API is usable.
@@ -273,20 +291,17 @@ func classifyConnectError(err error, ip string, port int, tlsMode string) (Probe
 				"Check the device certificate, or use a TLS mode that does not require CA verification.",
 			ip, port, err)
 
-	case strings.Contains(s, "cannot log in") || strings.Contains(s, "invalid user") ||
+	case strings.Contains(s, "cannot log in") || strings.Contains(s, "incorrect login") || strings.Contains(s, "invalid user") ||
 		strings.Contains(s, "invalid username") || strings.Contains(s, "password") ||
 		strings.Contains(s, "not logged in") || strings.Contains(s, "login failed"):
 		return StageLogin, ReasonAuthFailed, fmt.Sprintf(
 			"Reached %s:%d but the RouterOS API rejected the login. Check the username and password, "+
 				"and that the account has API access.", ip, port)
 
-	case strings.Contains(s, "tls") || strings.Contains(s, "protocol version") ||
-		strings.Contains(s, "record header") || strings.Contains(s, "first record does not look like"):
-		return StageTLS, ReasonTLSOther, fmt.Sprintf(
-			"TLS negotiation with %s:%d failed: %s. If this device does not have api-ssl configured with a "+
-				"certificate, try plain mode.", ip, port, err)
-
-	case strings.Contains(s, "timeout") || strings.Contains(s, "deadline exceeded"):
+	// Every TLS-mode connect error is wrapped in text that contains "TLS", so
+	// the specific causes (timeout, reset) are checked before the generic TLS
+	// match or they would all be reported as TLS negotiation failures.
+	case isTimeout(err) || strings.Contains(s, "timeout") || strings.Contains(s, "deadline exceeded"):
 		return StageTLS, ReasonTimeout, fmt.Sprintf(
 			"Connected to %s:%d but the handshake timed out before completing.", ip, port)
 
@@ -296,6 +311,12 @@ func classifyConnectError(err error, ip string, port int, tlsMode string) (Probe
 			"%s:%d accepted the connection then closed it without completing a handshake. "+
 				"This port may not be the RouterOS API, or the service may be restricted by an "+
 				"address list on the device.", ip, port)
+
+	case strings.Contains(s, "tls") || strings.Contains(s, "protocol version") ||
+		strings.Contains(s, "record header") || strings.Contains(s, "first record does not look like"):
+		return StageTLS, ReasonTLSOther, fmt.Sprintf(
+			"TLS negotiation with %s:%d failed: %s. If this device does not have api-ssl configured with a "+
+				"certificate, try plain mode.", ip, port, err)
 
 	default:
 		return StageLogin, ReasonUnknown, fmt.Sprintf(
