@@ -30,7 +30,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -707,6 +707,11 @@ async def update_schedule(
     Returns the updated schedule.
     """
     await _check_tenant_access(current_user, tenant_id, db)
+
+    # Resolve the device through the tenant-scoped session before writing a schedule row.
+    owned = await db.execute(text("SELECT 1 FROM devices WHERE id = :id"), {"id": device_id})
+    if owned.scalar_one_or_none() is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
 
     # Look for existing device-specific schedule
     result = await db.execute(
