@@ -53,13 +53,14 @@ class FakeNATS:
 
     def __init__(self, jetstream_error: Exception | None = None) -> None:
         self.closed = False
+        self.connected = True
         self.close_calls = 0
         self.js = FakeJetStream()
         self._jetstream_error = jetstream_error
 
     @property
     def is_connected(self) -> bool:
-        return not self.closed
+        return self.connected and not self.closed
 
     @property
     def is_closed(self) -> bool:
@@ -168,3 +169,51 @@ async def test_connect_failure_after_nats_connect_closes_connection(monkeypatch)
         await manager.connect(connection_id="sse-test", tenant_id=str(uuid.uuid4()))
 
     assert fake.closed, "NATS connection left open after connect() failed"
+
+
+@pytest.mark.asyncio
+async def test_broker_loss_ends_stream_and_closes_connection(monkeypatch):
+    """When NATS drops, the stream must end so the browser reconnects.
+
+    The pump stops reading once the broker connection is gone.  If the stream
+    kept sending heartbeats the browser would stay "connected" and never see
+    another event.
+    """
+    fake = FakeNATS()
+    _install_fake_nats(monkeypatch, fake)
+    tenant_id = uuid.uuid4()
+    monkeypatch.setattr(
+        sse_router,
+        "_validate_sse_token",
+        AsyncMock(return_value={"role": "admin", "tenant_id": str(tenant_id), "user_id": "u"}),
+    )
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": f"/api/tenants/{tenant_id}/events/stream",
+        "headers": [],
+        "query_string": b"",
+    }
+    response = await sse_router.event_stream(Request(scope), tenant_id, token="t")
+
+    messages = [{"type": "http.request"}]
+
+    async def receive():
+        if messages:
+            return messages.pop()
+        await asyncio.sleep(30)  # the client never disconnects on its own
+        return {"type": "http.disconnect"}
+
+    async def send(message):
+        pass
+
+    async def drop_broker():
+        await asyncio.sleep(0.2)
+        fake.connected = False
+
+    asyncio.create_task(drop_broker())
+    await asyncio.wait_for(response(scope, receive, send), timeout=5)
+    await asyncio.sleep(0.1)
+
+    assert fake.closed
+    assert _manager_pending_tasks() == []

@@ -294,6 +294,19 @@ class SSEConnectionManager:
             # Brief yield to avoid tight-looping
             await asyncio.sleep(0.1)
 
+        # The broker connection is gone (reconnecting or closed) and nothing
+        # restarts the pump.  End the stream so the browser reconnects and gets
+        # fresh consumers; otherwise heartbeats would keep it looking healthy
+        # while no event ever arrives again.
+        if not self._closed and self._queue is not None:
+            logger.warning("sse.broker_lost", connection_id=self._connection_id)
+            try:
+                self._queue.put_nowait(None)
+            except asyncio.QueueFull:
+                # The generator will hit the sentinel once it drains the queue.
+                self._queue._queue.clear()  # type: ignore[attr-defined]
+                self._queue.put_nowait(None)
+
     async def _handle_message(self, msg) -> None:
         """Parse a NATS message, apply tenant filter, and enqueue as SSE event."""
         try:
@@ -381,9 +394,11 @@ class SSEConnectionManager:
 
         # close(), not drain(): drain() waits up to 30s for a client that has
         # already gone away, and close() is idempotent and cancels any pending
-        # next_msg() futures itself.
+        # next_msg() futures itself.  No timeout: cancelling nats-py's _close()
+        # part-way leaves the client marked CLOSED with the socket still open,
+        # and this task is already detached from the request.
         try:
-            await asyncio.wait_for(nc.close(), timeout=5.0)
+            await nc.close()
         except Exception as exc:
             logger.warning(
                 "sse.close_failed",

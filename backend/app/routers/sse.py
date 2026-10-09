@@ -130,6 +130,10 @@ async def event_stream(
             while True:
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=15.0)
+                    if event is None:
+                        # Broker connection lost: end the stream so the
+                        # browser reconnects (see SSEConnectionManager).
+                        break
                     yield ServerSentEvent(
                         data=event["data"],
                         event=event["event"],
