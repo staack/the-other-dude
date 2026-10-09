@@ -18,6 +18,7 @@ services:
       ENVIRONMENT: staging
       LOG_LEVEL: info
       GUNICORN_WORKERS: "2"
+      WINBOX_WORKER_TOKEN: ${WINBOX_WORKER_TOKEN:?WINBOX_WORKER_TOKEN is missing; run python3 scripts/upgrade_env.py .env.staging}
     command: ["gunicorn", "app.main:app", "--config", "gunicorn.conf.py"]
     volumes:
       - ./docker-data/staging-git-store:/data/git-store
@@ -40,6 +41,7 @@ services:
         max-file: "3"
     networks:
       - tod
+      - tod_remote_worker
 
   poller:
     build:
@@ -69,6 +71,7 @@ services:
         max-file: "3"
     networks:
       - tod
+      - tod_remote_worker
 
   frontend:
     build:

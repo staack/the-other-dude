@@ -27,6 +27,7 @@ services:
       GUNICORN_WORKERS: "2"
       WIREGUARD_CONFIG_PATH: /data/wireguard
       WIREGUARD_GATEWAY: wireguard
+      WINBOX_WORKER_TOKEN: ${WINBOX_WORKER_TOKEN:?Set WINBOX_WORKER_TOKEN in .env}
     cap_add:
       - NET_ADMIN
     user: root

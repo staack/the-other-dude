@@ -27,6 +27,8 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
       OPENBAO_ADDR: http://openbao:8200
       OPENBAO_TOKEN: dev-openbao-token
+      # Explicit mapping so the API and the worker always read the same value.
+      WINBOX_WORKER_TOKEN: ${WINBOX_WORKER_TOKEN:?WINBOX_WORKER_TOKEN is missing; copy .env.example to .env or run python3 scripts/upgrade_env.py .env}
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
       SMTP_USE_TLS: "false"

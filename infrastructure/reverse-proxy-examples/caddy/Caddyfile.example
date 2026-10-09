@@ -3,7 +3,6 @@
 # This config assumes:
 #   - TOD frontend runs on FRONTEND_HOST:3000
 #   - TOD API runs on API_HOST:8001
-#   - WinBox worker Xpra ports are on WORKER_HOST:10100-10119
 #
 # Replace tod.example.com and the upstream IPs with your values.
 # Caddy handles TLS automatically via Let's Encrypt.
@@ -27,27 +26,8 @@ tod.example.com {
         -Server
     }
 
-    # ── Xpra (Remote WinBox) ──────────────────────────────────────────
-    # Proxies the Xpra HTML5 client to winbox-worker Xpra ports.
-    # Port range 10100-10119 (up to 20 concurrent sessions).
-    # Uses scoped compression to avoid corrupting WebSocket binary frames.
-    @xpra path_regexp xpra ^/xpra/(101[0-1][0-9])/(.*)$
-    handle @xpra {
-        # Override parent encode — only compress text assets, NOT WebSocket frames
-        encode {
-            gzip
-            match {
-                header Content-Type text/*
-                header Content-Type application/javascript*
-                header Content-Type application/json*
-            }
-        }
-        uri strip_prefix /xpra/{re.xpra.1}
-        reverse_proxy {$WORKER_HOST:YOUR_TOD_HOST}:{re.xpra.1} {
-            header_up Host {host}
-            header_up X-Real-IP {remote_host}
-        }
-    }
+    # Remote WinBox (xpra HTML5 client and its WebSocket) is served through
+    # the API under /api/...; no separate proxy route to the worker is needed.
 
     # ── API ───────────────────────────────────────────────────────────
     handle /api/* {
