@@ -114,13 +114,15 @@ async def _load_effective_schedules() -> list:
         sched_result = await session.execute(select(ConfigBackupSchedule))
         schedules = sched_result.scalars().all()
 
-    # Index: device-specific and tenant defaults
-    device_schedules = {}  # device_id -> schedule
+    # Index: device-specific overrides keyed by (tenant, device) so a row from
+    # a different tenant can neither apply to nor shadow a device's own
+    # override; tenant defaults keyed by tenant.
+    device_schedules = {}  # (tenant_id, device_id) -> schedule
     tenant_defaults = {}  # tenant_id -> schedule
 
     for s in schedules:
         if s.device_id:
-            device_schedules[str(s.device_id)] = s
+            device_schedules[(str(s.tenant_id), str(s.device_id))] = s
         else:
             tenant_defaults[str(s.tenant_id)] = s
 
@@ -129,8 +131,8 @@ async def _load_effective_schedules() -> list:
         dev_id = str(dev.id)
         tenant_id = str(dev.tenant_id)
 
-        if dev_id in device_schedules:
-            sched = device_schedules[dev_id]
+        if (tenant_id, dev_id) in device_schedules:
+            sched = device_schedules[(tenant_id, dev_id)]
         elif tenant_id in tenant_defaults:
             sched = tenant_defaults[tenant_id]
         else:

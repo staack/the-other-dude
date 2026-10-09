@@ -9,6 +9,17 @@ from pydantic import BaseModel, EmailStr, field_validator
 from app.models.user import UserRole
 
 
+# Roles assignable through the tenant user endpoints (create and update).
+# super_admin is granted only through the separate super-admin flow.
+ASSIGNABLE_ROLES = {UserRole.TENANT_ADMIN, UserRole.OPERATOR, UserRole.VIEWER}
+
+
+def _validate_assignable_role(v: UserRole) -> UserRole:
+    if v not in ASSIGNABLE_ROLES:
+        raise ValueError(f"Role must be one of: {', '.join(r.value for r in ASSIGNABLE_ROLES)}")
+    return v
+
+
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
@@ -25,13 +36,7 @@ class UserCreate(BaseModel):
     @field_validator("role")
     @classmethod
     def validate_role(cls, v: UserRole) -> UserRole:
-        """Tenant admins can only create operator/viewer roles; super_admin via separate flow."""
-        allowed_tenant_roles = {UserRole.TENANT_ADMIN, UserRole.OPERATOR, UserRole.VIEWER}
-        if v not in allowed_tenant_roles:
-            raise ValueError(
-                f"Role must be one of: {', '.join(r.value for r in allowed_tenant_roles)}"
-            )
-        return v
+        return _validate_assignable_role(v)
 
 
 class UserResponse(BaseModel):
@@ -51,3 +56,8 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v: Optional[UserRole]) -> Optional[UserRole]:
+        return v if v is None else _validate_assignable_role(v)

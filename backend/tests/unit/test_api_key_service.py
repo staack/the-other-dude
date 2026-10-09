@@ -71,6 +71,7 @@ class TestAllowedScopes:
             "config:read",
             "config:write",
             "alerts:read",
+            "alerts:write",
             "firmware:write",
         }
         assert expected == ALLOWED_SCOPES

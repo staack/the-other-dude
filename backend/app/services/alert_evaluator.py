@@ -449,6 +449,8 @@ async def _get_channels_for_rule(rule_id: str) -> list[dict]:
                        nc.smtp_password_transit, nc.slack_webhook_url, nc.tenant_id
                 FROM notification_channels nc
                 JOIN alert_rule_channels arc ON arc.channel_id = nc.id
+                JOIN alert_rules ar ON ar.id = arc.rule_id
+                                   AND ar.tenant_id = nc.tenant_id
                 WHERE arc.rule_id = CAST(:rule_id AS uuid)
             """),
             {"rule_id": rule_id},

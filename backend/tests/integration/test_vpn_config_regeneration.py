@@ -64,7 +64,9 @@ async def _seed_vpn(session, *, enabled: bool = True) -> str:
 
 
 @pytest.mark.asyncio
-async def test_sync_rebuilds_wg0_conf_from_the_database_alone(admin_session, tmp_path, monkeypatch):
+async def test_sync_rebuilds_wg0_conf_from_the_database_alone(
+    admin_engine, admin_session, tmp_path, monkeypatch
+):
     """The restore case: the database has the peers, the host has no config file.
 
     Both assertions share one sync call because sync_wireguard_config opens its own
@@ -72,6 +74,18 @@ async def test_sync_rebuilds_wg0_conf_from_the_database_alone(admin_session, tmp
     uses it; a second call from another test's loop fails on engine reuse.
     """
     monkeypatch.setenv("WIREGUARD_CONFIG_PATH", str(tmp_path))
+    # sync_wireguard_config opens its own session from app.database; bind that
+    # factory to this test's engine so it runs on this test's event loop
+    # regardless of which tests touched the module-level engine before.
+    from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+    from app import database
+
+    monkeypatch.setattr(
+        database,
+        "AdminAsyncSessionLocal",
+        async_sessionmaker(admin_engine, class_=AsyncSession, expire_on_commit=False),
+    )
     live_key = await _seed_vpn(admin_session, enabled=True)
     disabled_key = await _seed_vpn(admin_session, enabled=False)
 
