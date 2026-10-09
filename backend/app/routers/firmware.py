@@ -40,10 +40,8 @@ async def _check_tenant_access(
 async def _require_tenant_devices(db: AsyncSession, device_ids: list[str]) -> dict[str, str]:
     """Return {device_id: architecture} for ids visible in this tenant; 404 for any other.
 
-    ``db`` is the RLS-scoped session, so a device of another tenant simply does
-    not come back.  Checked before any job row is written: the jobs table only
-    constrains tenant_id, and the upgrade runner would otherwise load the
-    foreign device with the admin session.
+    ``db`` is the RLS-scoped session.  Checked before any job row is written,
+    because the upgrade runner itself uses the admin session.
     """
     if not device_ids:
         return {}
@@ -60,6 +58,25 @@ async def _require_tenant_devices(db: AsyncSession, device_ids: list[str]) -> di
     if missing:
         raise HTTPException(404, f"Device not found: {', '.join(missing)}")
     return found
+
+
+async def _require_tenant_job(db: AsyncSession, job_id: uuid.UUID) -> None:
+    """404 unless the job is visible in this tenant (the control services use the admin session)."""
+    result = await db.execute(
+        text("SELECT 1 FROM firmware_upgrade_jobs WHERE id = :id"), {"id": job_id}
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(404, "Upgrade job not found")
+
+
+async def _require_tenant_rollout(db: AsyncSession, rollout_group_id: uuid.UUID) -> None:
+    """404 unless at least one job of the rollout is visible in this tenant."""
+    result = await db.execute(
+        text("SELECT 1 FROM firmware_upgrade_jobs WHERE rollout_group_id = :g LIMIT 1"),
+        {"g": rollout_group_id},
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(404, "Rollout not found")
 
 
 class PreferredChannelRequest(BaseModel):
@@ -312,8 +329,7 @@ async def start_firmware_upgrade(
     if current_user.role == "viewer":
         raise HTTPException(403, "Viewers cannot initiate upgrades")
 
-    # The device must belong to this tenant whether or not the caller
-    # supplied an architecture.
+    # Resolve the device whether or not the caller supplied an architecture.
     known = await _require_tenant_devices(db, [body.device_id])
     architecture = body.architecture or known[str(uuid.UUID(body.device_id))]
     if not architecture:
@@ -394,8 +410,7 @@ async def start_mass_firmware_upgrade(
     rollout_group_id = str(uuid.uuid4())
     jobs = []
 
-    # Every device must belong to this tenant; one unknown id rejects the
-    # whole batch before any job row exists.
+    # One unknown id rejects the whole batch before any job row exists.
     architectures = await _require_tenant_devices(db, body.device_ids)
 
     for device_id in body.device_ids:
@@ -670,6 +685,7 @@ async def cancel_upgrade_endpoint(
 
     from app.services.upgrade_service import cancel_upgrade
 
+    await _require_tenant_job(db, job_id)
     await cancel_upgrade(str(job_id))
     return {"status": "ok", "message": "Upgrade cancelled"}
 
@@ -694,6 +710,7 @@ async def retry_upgrade_endpoint(
 
     from app.services.upgrade_service import retry_failed_upgrade
 
+    await _require_tenant_job(db, job_id)
     await retry_failed_upgrade(str(job_id))
     return {"status": "ok", "message": "Upgrade retry started"}
 
@@ -718,6 +735,7 @@ async def resume_rollout_endpoint(
 
     from app.services.upgrade_service import resume_mass_upgrade
 
+    await _require_tenant_rollout(db, rollout_group_id)
     await resume_mass_upgrade(str(rollout_group_id))
     return {"status": "ok", "message": "Rollout resumed"}
 
@@ -742,5 +760,6 @@ async def abort_rollout_endpoint(
 
     from app.services.upgrade_service import abort_mass_upgrade
 
+    await _require_tenant_rollout(db, rollout_group_id)
     aborted = await abort_mass_upgrade(str(rollout_group_id))
     return {"status": "ok", "aborted_count": aborted}
