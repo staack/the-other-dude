@@ -97,6 +97,7 @@ export interface ChannelCreateData {
 }
 
 export interface AlertsFilterParams {
+  alert_id?: string
   status?: string
   severity?: string
   device_id?: string

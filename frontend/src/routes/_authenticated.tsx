@@ -1,7 +1,6 @@
 import { useCallback } from 'react'
 import { createFileRoute, Outlet, Navigate, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useQueryClient } from '@tanstack/react-query'
-import { AnimatePresence } from 'framer-motion'
 // toast import removed — alert toasts were noisy at fleet scale
 import { useAuth } from '@/lib/auth'
 import { useUIStore } from '@/lib/store'
@@ -187,11 +186,9 @@ function AuthenticatedLayout() {
           <Outlet />
         ) : (
           <AppLayout data-app-scope="fleet">
-            <AnimatePresence mode="wait">
-              <PageTransition pageKey={pageKey}>
-                <Outlet />
-              </PageTransition>
-            </AnimatePresence>
+            <PageTransition pageKey={pageKey}>
+              <Outlet />
+            </PageTransition>
           </AppLayout>
         )}
       </ErrorBoundary>

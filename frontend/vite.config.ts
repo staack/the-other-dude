@@ -25,33 +25,8 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1800,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          // Topology chunk: reactflow + dagre
-          if (id.includes('reactflow') || id.includes('@dagrejs/dagre')) {
-            return 'topology'
-          }
-          // Config panels chunk: config + config-editor + network components
-          // These are co-loaded in the device detail route
-          if (
-            id.includes('/components/config/') ||
-            id.includes('/components/config-editor/') ||
-            id.includes('/components/network/')
-          ) {
-            return 'config-panels'
-          }
-          // Chart libraries
-          if (id.includes('recharts') || id.includes('d3-')) {
-            return 'charts'
-          }
-          // Animation library
-          if (id.includes('node_modules/framer-motion')) {
-            return 'animations'
-          }
-        },
-      },
-    },
+    // Let Rollup split shared code with the lazy routes. Manual feature groups
+    // pulled unrelated libraries into the entry and can create cross-chunk cycles.
   },
   server: {
     host: '0.0.0.0',
