@@ -29,9 +29,12 @@ const MAX_RETRY_DELAY_MS = 30000
 const RETRY_MULTIPLIER = 2
 const MAX_RETRIES = 5
 
-// SSE exchange tokens are valid for 30 seconds, so reconnect before expiry.
-// Using 25 seconds gives a comfortable margin.
-const TOKEN_REFRESH_INTERVAL_MS = 25 * 1000
+// The SSE exchange token is single-use and only checked when the stream is
+// opened; an open stream never expires. So there is no periodic reconnect:
+// one reconnect every 25 s used to cost the API a NATS connection and seven
+// JetStream consumers per cycle for nothing (issue #18). If the stream drops,
+// the browser retries the consumed-token URL, gets 401, and handleReconnect
+// fetches a fresh token.
 
 // ─── SSE Token Exchange ─────────────────────────────────────────────────────
 
@@ -63,7 +66,6 @@ export function useEventStream(
   const eventSourceRef = useRef<EventSource | null>(null)
   const retryCountRef = useRef(0)
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const tokenRefreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const onEventRef = useRef<EventCallback>(onEvent)
   const isUnmountedRef = useRef(false)
 
@@ -81,10 +83,6 @@ export function useEventStream(
     if (reconnectTimerRef.current !== null) {
       clearTimeout(reconnectTimerRef.current)
       reconnectTimerRef.current = null
-    }
-    if (tokenRefreshTimerRef.current !== null) {
-      clearInterval(tokenRefreshTimerRef.current)
-      tokenRefreshTimerRef.current = null
     }
   }, [])
 
@@ -144,16 +142,6 @@ export function useEventStream(
       eventSourceRef.current = null
       handleReconnect()
     }
-
-    // Set up token refresh interval — SSE tokens are 30s, reconnect at 25s
-    if (tokenRefreshTimerRef.current !== null) {
-      clearInterval(tokenRefreshTimerRef.current)
-    }
-    tokenRefreshTimerRef.current = setInterval(() => {
-      if (isUnmountedRef.current) return
-      // Silently reconnect with a fresh SSE token
-      void connect()
-    }, TOKEN_REFRESH_INTERVAL_MS)
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId, cleanup])
