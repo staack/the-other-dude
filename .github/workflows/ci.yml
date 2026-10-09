@@ -107,8 +107,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure Docker Hub cache
-        run: bash scripts/ci/configure-docker-mirror.sh
+      - name: Prepare Docker images
+        run: bash scripts/ci/prepare-docker-images.sh timescale/timescaledb:latest-pg17 redis:7-alpine nats:2-alpine
 
       - name: Start test services
         run: |
@@ -174,8 +174,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure Docker Hub cache
-        run: bash scripts/ci/configure-docker-mirror.sh
+      - name: Prepare Docker images
+        run: bash scripts/ci/prepare-docker-images.sh postgres:17-alpine redis:7-alpine nats:2-alpine testcontainers/ryuk:0.13.0
 
       - uses: actions/setup-go@v5
         with:
@@ -252,8 +252,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure Docker Hub cache
-        run: bash scripts/ci/configure-docker-mirror.sh
+      - name: Prepare Docker images
+        run: bash scripts/ci/prepare-docker-images.sh golang:1.25-alpine python:3.12-slim node:20-alpine nginx:alpine alpine:3.21 golang:1.25-bookworm ubuntu:24.04
 
       # Build and scan each image SEQUENTIALLY to avoid OOM.
       # Each multi-stage build (Go, Python/pip, Node/tsc) can peak at 1-2 GB.
