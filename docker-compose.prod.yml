@@ -27,7 +27,7 @@ services:
       GUNICORN_WORKERS: "2"
       WIREGUARD_CONFIG_PATH: /data/wireguard
       WIREGUARD_GATEWAY: wireguard
-      WINBOX_WORKER_TOKEN: ${WINBOX_WORKER_TOKEN:?Set WINBOX_WORKER_TOKEN in .env}
+      WINBOX_WORKER_TOKEN: ${WINBOX_WORKER_TOKEN:?WINBOX_WORKER_TOKEN is missing; run python3 scripts/upgrade_env.py}
     cap_add:
       - NET_ADMIN
     user: root
