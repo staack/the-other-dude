@@ -27,6 +27,9 @@ const EVENT_TYPES = [
 const INITIAL_RETRY_DELAY_MS = 1000
 const MAX_RETRY_DELAY_MS = 30000
 const RETRY_MULTIPLIER = 2
+// After this many consecutive failures the UI shows "disconnected", but the
+// hook keeps trying at MAX_RETRY_DELAY_MS so an API restart or a long outage
+// still ends in a reconnect without the user pressing anything.
 const MAX_RETRIES = 5
 
 // The SSE exchange token is single-use and only checked when the stream is
@@ -146,16 +149,11 @@ export function useEventStream(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tenantId, cleanup])
 
-  // Reconnection with exponential backoff
+  // Reconnection with exponential backoff, never giving up
   const handleReconnect = useCallback(() => {
     if (isUnmountedRef.current) return
 
-    if (retryCountRef.current >= MAX_RETRIES) {
-      setConnectionState('disconnected')
-      return
-    }
-
-    setConnectionState('reconnecting')
+    setConnectionState(retryCountRef.current >= MAX_RETRIES ? 'disconnected' : 'reconnecting')
     const delay = Math.min(
       INITIAL_RETRY_DELAY_MS * Math.pow(RETRY_MULTIPLIER, retryCountRef.current),
       MAX_RETRY_DELAY_MS,
