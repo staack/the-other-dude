@@ -20,6 +20,10 @@ services:
   api:
     image: ghcr.io/staack/the-other-dude/api:${TOD_VERSION:-latest}
     container_name: tod_api
+    ulimits:
+      nofile:
+        soft: 8192
+        hard: 8192
     env_file: .env.prod
     environment:
       ENVIRONMENT: production
