@@ -33,6 +33,11 @@ _OPERATION_EVENT_SUBJECTS = ["firmware.progress.>"]
 # strong reference so the loop cannot garbage-collect them mid-close.
 _teardown_tasks: set[asyncio.Task] = set()
 
+# nats-py's close() can sit in transport.drain()/wait_closed() for the TCP
+# retransmission timeout when the broker host vanished.  After this long the
+# transport is closed by hand so the descriptor is released regardless.
+_CLOSE_TIMEOUT = 10.0
+
 
 def _map_subject_to_event_type(subject: str) -> str:
     """Map a NATS subject prefix to an SSE event type string."""
@@ -128,17 +133,15 @@ class SSEConnectionManager:
         self._tenant_id = tenant_id
         self._queue = asyncio.Queue(maxsize=256)
 
-        self._nc = await nats.connect(
-            settings.NATS_URL,
-            max_reconnect_attempts=5,
-            reconnect_time_wait=2,
-        )
+        # No auto-reconnect: the pump ends the stream the moment the broker
+        # connection is lost and the browser reconnects with fresh consumers,
+        # so a reconnecting client would only delay close().
+        self._nc = await nats.connect(settings.NATS_URL, allow_reconnect=False)
         try:
             await self._subscribe(last_event_id)
         except BaseException:
             # The socket is open; never leave it behind (issue #18).
-            self._closed = True
-            await asyncio.shield(self._start_teardown())
+            await self.disconnect()
             raise
 
         return self._queue
@@ -259,6 +262,12 @@ class SSEConnectionManager:
                         error=str(exc),
                     )
 
+        if not self._subscriptions:
+            # Nothing could ever reach the client; a 500 makes the browser
+            # retry with back-off instead of sitting on a healthy-looking
+            # stream that only carries heartbeats.
+            raise RuntimeError("no SSE subscriptions could be created")
+
         # Start background task to pull messages from subscriptions into the queue
         self._pump_task = asyncio.create_task(self._pump_messages())
 
@@ -275,7 +284,8 @@ class SSEConnectionManager:
         subscriptions without blocking.  Runs until the NATS connection is closed
         or drained.
         """
-        while self._nc and self._nc.is_connected:
+        failed = False
+        while not failed and self._nc and self._nc.is_connected:
             for sub in self._subscriptions:
                 try:
                     msg = await sub.next_msg(timeout=0.5)
@@ -288,24 +298,25 @@ class SSEConnectionManager:
                         logger.warning(
                             "sse.pump_error",
                             connection_id=self._connection_id,
-                            error=str(exc),
+                            error=str(exc) or exc.__class__.__name__,
                         )
+                    # A subscription that keeps raising would otherwise starve
+                    # the others and spin here forever; end the stream instead.
+                    failed = True
                     break
             # Brief yield to avoid tight-looping
             await asyncio.sleep(0.1)
 
-        # The broker connection is gone (reconnecting or closed) and nothing
-        # restarts the pump.  End the stream so the browser reconnects and gets
-        # fresh consumers; otherwise heartbeats would keep it looking healthy
-        # while no event ever arrives again.
+        # The broker connection is gone (or a subscription is broken) and
+        # nothing restarts the pump.  End the stream so the browser reconnects
+        # and gets fresh consumers; otherwise heartbeats would keep it looking
+        # healthy while no event ever arrives again.  put() rather than
+        # put_nowait(): a slow client's queued events are still delivered
+        # before the sentinel, and _teardown cancels this task if the
+        # consumer is already gone.
         if not self._closed and self._queue is not None:
             logger.warning("sse.broker_lost", connection_id=self._connection_id)
-            try:
-                self._queue.put_nowait(None)
-            except asyncio.QueueFull:
-                # The generator will hit the sentinel once it drains the queue.
-                self._queue._queue.clear()  # type: ignore[attr-defined]
-                self._queue.put_nowait(None)
+            await self._queue.put(None)
 
     async def _handle_message(self, msg) -> None:
         """Parse a NATS message, apply tenant filter, and enqueue as SSE event."""
@@ -394,11 +405,20 @@ class SSEConnectionManager:
 
         # close(), not drain(): drain() waits up to 30s for a client that has
         # already gone away, and close() is idempotent and cancels any pending
-        # next_msg() futures itself.  No timeout: cancelling nats-py's _close()
-        # part-way leaves the client marked CLOSED with the socket still open,
-        # and this task is already detached from the request.
+        # next_msg() futures itself.
         try:
-            await nc.close()
+            await asyncio.wait_for(nc.close(), timeout=_CLOSE_TIMEOUT)
+        except asyncio.TimeoutError:
+            # Cancelling nats-py's _close() part-way leaves the client marked
+            # CLOSED with the socket still open, so close the transport
+            # directly; the client object is discarded after this anyway.
+            logger.warning("sse.close_timeout", connection_id=self._connection_id)
+            transport = getattr(nc, "_transport", None)
+            if transport is not None:
+                try:
+                    transport.close()
+                except Exception:
+                    pass
         except Exception as exc:
             logger.warning(
                 "sse.close_failed",

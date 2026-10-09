@@ -145,8 +145,12 @@ async def event_stream(
                 except asyncio.CancelledError:
                     break
         finally:
-            await manager.disconnect()
-            logger.info("sse.stream_closed", connection_id=connection_id)
+            try:
+                await manager.disconnect()
+            finally:
+                # disconnect() may re-raise CancelledError under sse-starlette's
+                # cancelled scope; the teardown itself completes regardless.
+                logger.info("sse.stream_closed", connection_id=connection_id)
 
     # The generator's finally runs inside a cancelled scope once the client
     # disconnects; the background task runs after that scope has exited, so
