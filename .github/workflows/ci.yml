@@ -92,41 +92,6 @@ jobs:
     name: Test Backend (pytest)
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: timescale/timescaledb:latest-pg17
-        env:
-          POSTGRES_DB: tod_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      nats:
-        image: nats:2-alpine
-        ports:
-          - 4222:4222
-        options: >-
-          --health-cmd "true"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     env:
       ENVIRONMENT: dev
       DATABASE_URL: "postgresql+asyncpg://postgres:postgres@localhost:5432/tod_test"
@@ -141,6 +106,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure Docker Hub cache
+        run: bash scripts/ci/configure-docker-mirror.sh
+
+      - name: Start test services
+        run: |
+          docker run -d --name ci-postgres -p 127.0.0.1:5432:5432 \
+            -e POSTGRES_DB=tod_test -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres \
+            timescale/timescaledb:latest-pg17
+          docker run -d --name ci-redis -p 127.0.0.1:6379:6379 redis:7-alpine
+          docker run -d --name ci-nats -p 127.0.0.1:4222:4222 nats:2-alpine
+          for attempt in $(seq 1 30); do
+            if docker exec ci-postgres pg_isready -U postgres; then break; fi
+            sleep 2
+          done
+          docker exec ci-postgres pg_isready -U postgres
 
       - uses: actions/setup-python@v5
         with:
@@ -192,6 +173,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure Docker Hub cache
+        run: bash scripts/ci/configure-docker-mirror.sh
 
       - uses: actions/setup-go@v5
         with:
@@ -267,6 +251,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure Docker Hub cache
+        run: bash scripts/ci/configure-docker-mirror.sh
 
       # Build and scan each image SEQUENTIALLY to avoid OOM.
       # Each multi-stage build (Go, Python/pip, Node/tsc) can peak at 1-2 GB.
