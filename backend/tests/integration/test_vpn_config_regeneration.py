@@ -72,6 +72,12 @@ async def test_sync_rebuilds_wg0_conf_from_the_database_alone(admin_session, tmp
     uses it; a second call from another test's loop fails on engine reuse.
     """
     monkeypatch.setenv("WIREGUARD_CONFIG_PATH", str(tmp_path))
+    # Any earlier test that wrote an audit row left a pooled connection on its
+    # own (now closed) loop in the module-level engine.  Drop the pool without
+    # touching those connections so this loop gets fresh ones.
+    from app import database
+
+    await database.engine.dispose(close=False)
     live_key = await _seed_vpn(admin_session, enabled=True)
     disabled_key = await _seed_vpn(admin_session, enabled=False)
 
