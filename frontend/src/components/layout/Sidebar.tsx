@@ -1,3 +1,4 @@
+import { operationsPreviewEnabled } from '@/lib/features'
 import { useEffect, useRef } from 'react'
 import { APP_VERSION } from '@/lib/version'
 import { Link, useRouterState, useNavigate } from '@tanstack/react-router'
@@ -141,6 +142,7 @@ export function Sidebar() {
   // ─── Nav items ────────────────────────────────────────────────────────
 
   const operateItems: NavItem[] = [
+    ...(operationsPreviewEnabled ? [{ label: 'Operations', href: '/operations', icon: LayoutDashboard }] : []),
     { label: 'Overview', href: '/', icon: LayoutDashboard, exact: true },
     ...(!superAdmin && user?.tenant_id
       ? [

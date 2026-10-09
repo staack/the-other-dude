@@ -25,6 +25,7 @@ import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedOperationsRouteImport } from './routes/_authenticated/operations'
 import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated/map'
 import { Route as AuthenticatedMaintenanceRouteImport } from './routes/_authenticated/maintenance'
 import { Route as AuthenticatedFirmwareRouteImport } from './routes/_authenticated/firmware'
@@ -129,6 +130,11 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
 const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedOperationsRoute = AuthenticatedOperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMapRoute = AuthenticatedMapRouteImport.update({
@@ -294,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/firmware': typeof AuthenticatedFirmwareRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
   '/map': typeof AuthenticatedMapRoute
+  '/operations': typeof AuthenticatedOperationsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/setup': typeof AuthenticatedSetupRoute
@@ -335,6 +342,7 @@ export interface FileRoutesByTo {
   '/firmware': typeof AuthenticatedFirmwareRoute
   '/maintenance': typeof AuthenticatedMaintenanceRoute
   '/map': typeof AuthenticatedMapRoute
+  '/operations': typeof AuthenticatedOperationsRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/setup': typeof AuthenticatedSetupRoute
@@ -379,6 +387,7 @@ export interface FileRoutesById {
   '/_authenticated/firmware': typeof AuthenticatedFirmwareRoute
   '/_authenticated/maintenance': typeof AuthenticatedMaintenanceRoute
   '/_authenticated/map': typeof AuthenticatedMapRoute
+  '/_authenticated/operations': typeof AuthenticatedOperationsRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
@@ -424,6 +433,7 @@ export interface FileRouteTypes {
     | '/firmware'
     | '/maintenance'
     | '/map'
+    | '/operations'
     | '/reports'
     | '/settings'
     | '/setup'
@@ -465,6 +475,7 @@ export interface FileRouteTypes {
     | '/firmware'
     | '/maintenance'
     | '/map'
+    | '/operations'
     | '/reports'
     | '/settings'
     | '/setup'
@@ -508,6 +519,7 @@ export interface FileRouteTypes {
     | '/_authenticated/firmware'
     | '/_authenticated/maintenance'
     | '/_authenticated/map'
+    | '/_authenticated/operations'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/setup'
@@ -655,6 +667,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/operations': {
+      id: '/_authenticated/operations'
+      path: '/operations'
+      fullPath: '/operations'
+      preLoaderRoute: typeof AuthenticatedOperationsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/map': {
@@ -865,6 +884,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedFirmwareRoute: typeof AuthenticatedFirmwareRoute
   AuthenticatedMaintenanceRoute: typeof AuthenticatedMaintenanceRoute
   AuthenticatedMapRoute: typeof AuthenticatedMapRoute
+  AuthenticatedOperationsRoute: typeof AuthenticatedOperationsRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
@@ -900,6 +920,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedFirmwareRoute: AuthenticatedFirmwareRoute,
   AuthenticatedMaintenanceRoute: AuthenticatedMaintenanceRoute,
   AuthenticatedMapRoute: AuthenticatedMapRoute,
+  AuthenticatedOperationsRoute: AuthenticatedOperationsRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,

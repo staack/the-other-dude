@@ -19,7 +19,9 @@ RUN npm ci --ignore-scripts
 # Note: skip tsc type-check in Docker build (esbuild handles transpilation).
 # Run `npm run build` locally or in CI for full type-checking.
 COPY frontend/ .
-RUN npx vite build
+# Opt-in Operations preview; released images keep the current navigation by default.
+ARG VITE_OPERATIONS_PREVIEW=false
+RUN VITE_OPERATIONS_PREVIEW="${VITE_OPERATIONS_PREVIEW}" npx vite build
 
 # Stage 2: runtime — nginx serving static SPA files
 FROM nginx:alpine AS runtime
