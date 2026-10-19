@@ -369,6 +369,7 @@ async def deploy_cert(
     """
     tenant_id = await _get_tenant_id(current_user, db, tenant_id)
     cert = await _get_cert_with_tenant_check(db, cert_id, tenant_id)
+    device = await _get_device_for_tenant(db, cert.device_id, current_user)
 
     # Update status to deploying
     try:
@@ -401,6 +402,7 @@ async def deploy_cert(
         cert_pem=cert_pem,
         key_pem=key_pem,
         cert_name="portal-device-cert",
+        ssh_port=device.ssh_port or 22,
     )
 
     if result.get("success"):
@@ -528,6 +530,7 @@ async def bulk_deploy(
                 cert_pem=cert_pem,
                 key_pem=key_pem,
                 cert_name="portal-device-cert",
+                ssh_port=device.ssh_port or 22,
             )
 
             if result.get("success"):
@@ -731,6 +734,7 @@ async def rotate_cert(
         cert_pem=cert_pem,
         key_pem=key_pem,
         cert_name="portal-device-cert",
+        ssh_port=device.ssh_port or 22,
     )
 
     if result.get("success"):

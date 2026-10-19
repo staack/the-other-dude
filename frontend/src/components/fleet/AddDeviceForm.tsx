@@ -49,6 +49,8 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
     ip_address: '',
     api_port: '8728',
     api_ssl_port: '8729',
+    ssh_port: '22',
+    tls_mode: 'auto',
     username: '',
     password: '',
   })
@@ -95,6 +97,8 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
           credential_profile_id: rosProfileId,
           api_port: parseInt(form.api_port) || 8728,
           api_ssl_port: parseInt(form.api_ssl_port) || 8729,
+          ssh_port: Number(form.ssh_port),
+          tls_mode: form.tls_mode,
         })
       }
       return devicesApi.create(tenantId, {
@@ -103,6 +107,8 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
         device_type: 'routeros',
         api_port: parseInt(form.api_port) || 8728,
         api_ssl_port: parseInt(form.api_ssl_port) || 8729,
+        ssh_port: Number(form.ssh_port),
+        tls_mode: form.tls_mode,
         username: form.username,
         password: form.password,
       })
@@ -165,6 +171,8 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
       ip_address: '',
       api_port: '8728',
       api_ssl_port: '8729',
+      ssh_port: '22',
+      tls_mode: 'auto',
       username: '',
       password: '',
     })
@@ -330,6 +338,25 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
             placeholder="8729"
             type="number"
           />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="ros-ssh-port">SSH Port</Label>
+          <Input id="ros-ssh-port" value={form.ssh_port} onChange={updateRos('ssh_port')}
+            type="number" min={1} max={65535} required />
+        </div>
+        <div className="col-span-2 space-y-1.5">
+          <Label htmlFor="ros-tls-mode">API Connection</Label>
+          <select id="ros-tls-mode" value={form.tls_mode}
+            onChange={(e) => setForm((f) => ({ ...f, tls_mode: e.target.value }))}
+            className="w-full rounded-md border border-border bg-panel px-3 py-2 text-sm">
+            <option value="auto">TLS (automatic certificate verification)</option>
+            <option value="insecure">TLS (skip certificate verification)</option>
+            <option value="plain">Plain API (unencrypted)</option>
+          </select>
+          <p className="text-xs text-text-muted">
+            TLS uses the TLS API port. Plain API uses the API port and sends credentials without encryption.
+          </p>
         </div>
 
         {!useProfile && (

@@ -529,10 +529,11 @@ open http://localhost</code></pre>
           </thead>
           <tbody>
             <tr><td><code>GUNICORN_WORKERS</code></td><td><code>2</code></td><td>API worker process count</td></tr>
-            <tr><td><code>DB_POOL_SIZE</code></td><td><code>20</code></td><td>App database connection pool size</td></tr>
-            <tr><td><code>DB_MAX_OVERFLOW</code></td><td><code>40</code></td><td>Max overflow connections above pool</td></tr>
-            <tr><td><code>DB_ADMIN_POOL_SIZE</code></td><td><code>10</code></td><td>Admin database connection pool size</td></tr>
-            <tr><td><code>DB_ADMIN_MAX_OVERFLOW</code></td><td><code>20</code></td><td>Admin max overflow connections</td></tr>
+            <tr><td><code>POSTGRES_MAX_CONNECTIONS</code></td><td><code>100</code></td><td>Compose database connection limit; recreate PostgreSQL after changing it</td></tr>
+            <tr><td><code>DB_POOL_SIZE</code></td><td><code>5</code></td><td>App database connection pool size</td></tr>
+            <tr><td><code>DB_MAX_OVERFLOW</code></td><td><code>5</code></td><td>Max overflow connections above pool</td></tr>
+            <tr><td><code>DB_ADMIN_POOL_SIZE</code></td><td><code>2</code></td><td>Admin database connection pool size</td></tr>
+            <tr><td><code>DB_ADMIN_MAX_OVERFLOW</code></td><td><code>3</code></td><td>Admin max overflow connections</td></tr>
             <tr><td><code>POLL_INTERVAL_SECONDS</code></td><td><code>60</code></td><td>Device polling interval</td></tr>
             <tr><td><code>CONNECTION_TIMEOUT_SECONDS</code></td><td><code>10</code></td><td>RouterOS connection timeout</td></tr>
             <tr><td><code>COMMAND_TIMEOUT_SECONDS</code></td><td><code>30</code></td><td>RouterOS per-command timeout</td></tr>
@@ -1611,10 +1612,12 @@ open http://localhost</code></pre>
             <tr><td><code>DATABASE_URL</code></td><td><code>postgresql+asyncpg://postgres:postgres@localhost:5432/mikrotik</code></td><td>Admin (superuser) async database URL. Used for migrations and bootstrap.</td></tr>
             <tr><td><code>SYNC_DATABASE_URL</code></td><td><code>postgresql+psycopg2://postgres:postgres@localhost:5432/mikrotik</code></td><td>Synchronous URL used by Alembic migrations only.</td></tr>
             <tr><td><code>APP_USER_DATABASE_URL</code></td><td><code>postgresql+asyncpg://app_user:app_password@localhost:5432/mikrotik</code></td><td>Non-superuser async URL. Enforces PostgreSQL RLS for tenant isolation.</td></tr>
-            <tr><td><code>DB_POOL_SIZE</code></td><td><code>20</code></td><td>App user connection pool size</td></tr>
-            <tr><td><code>DB_MAX_OVERFLOW</code></td><td><code>40</code></td><td>App user pool max overflow connections</td></tr>
-            <tr><td><code>DB_ADMIN_POOL_SIZE</code></td><td><code>10</code></td><td>Admin connection pool size</td></tr>
-            <tr><td><code>DB_ADMIN_MAX_OVERFLOW</code></td><td><code>20</code></td><td>Admin pool max overflow connections</td></tr>
+            <tr><td><code>POSTGRES_MAX_CONNECTIONS</code></td><td><code>100</code></td><td>Compose database connection limit; recreate PostgreSQL after changing it</td></tr>
+            <tr><td><code>DB_POOL_SIZE</code></td><td><code>5</code></td><td>App user connection pool size</td></tr>
+            <tr><td><code>DB_MAX_OVERFLOW</code></td><td><code>5</code></td><td>App user pool max overflow connections</td></tr>
+            <tr><td><code>DB_ADMIN_POOL_SIZE</code></td><td><code>2</code></td><td>Admin connection pool size</td></tr>
+            <tr><td><code>DB_ADMIN_MAX_OVERFLOW</code></td><td><code>3</code></td><td>Admin pool max overflow connections</td></tr>
+            <tr><td>Connection budget</td><td>30 API connections</td><td>Two workers × ((5 + 5) + (2 + 3)); pool settings apply per worker. Review existing overrides and reserve capacity for the poller, TimescaleDB and administration.</td></tr>
           </tbody>
         </table>
 

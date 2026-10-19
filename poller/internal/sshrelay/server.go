@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -254,7 +256,7 @@ func (s *Server) handleSSH(w http.ResponseWriter, r *http.Request) {
 	}
 	hostKeyCB, fpCh := device.TOFUHostKeyCallback(knownFingerprint)
 
-	sshAddr := dev.IPAddress + ":22"
+	sshAddr := sshAddress(dev)
 	sshClient, err := ssh.Dial("tcp", sshAddr, &ssh.ClientConfig{
 		User:            creds.Username,
 		Auth:            authMethods,
@@ -485,4 +487,13 @@ func (s *Server) SessionList(deviceID string) []map[string]interface{} {
 		}
 	}
 	return out
+}
+
+// sshAddress honors the device override, including IPv6 hosts.
+func sshAddress(dev store.Device) string {
+	port := dev.SSHPort
+	if port == 0 {
+		port = 22
+	}
+	return net.JoinHostPort(dev.IPAddress, strconv.Itoa(port))
 }

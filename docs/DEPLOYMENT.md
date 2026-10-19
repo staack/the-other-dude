@@ -560,3 +560,15 @@ docker compose restart api
 | NATS subscriber won't start | Non-fatal -- API runs without NATS; check NATS container health |
 | Poller circuit breaker active | Device unreachable; check `CIRCUIT_BREAKER_*` env vars to tune backoff |
 | Frontend returns 502 after API restart | nginx caches upstream DNS at startup; the dynamic resolver (`resolver 127.0.0.11`) in `nginx-spa.conf` handles this automatically — if you see 502s, ensure the nginx config has not been overridden |
+
+### Database pool settings when updating
+
+The default API pool budget is 30 connections across the two production workers.
+The base Compose file explicitly sets PostgreSQL `max_connections` to 100 on
+startup, including when an existing data directory is used. Pull the updated source
+and recreate services with the updated Compose files so the PostgreSQL setting is
+applied. Existing `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `DB_ADMIN_POOL_SIZE` and
+`DB_ADMIN_MAX_OVERFLOW` environment values still override the new defaults; review
+any custom values. See [Configuration](CONFIGURATION.md#database-connection-budget).
+Do not remove or reinitialize the database volume. This change requires no new
+migration or reinstall.

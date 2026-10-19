@@ -49,6 +49,9 @@ class Device(Base):
     ip_address: Mapped[str] = mapped_column(String(45), nullable=False)  # IPv4 or IPv6
     api_port: Mapped[int] = mapped_column(Integer, default=8728, nullable=False)
     api_ssl_port: Mapped[int] = mapped_column(Integer, default=8729, nullable=False)
+    ssh_port: Mapped[int | None] = mapped_column(
+        Integer, default=22, server_default="22", nullable=True
+    )
     model: Mapped[str | None] = mapped_column(String(255), nullable=True)
     serial_number: Mapped[str | None] = mapped_column(String(255), nullable=True)
     firmware_version: Mapped[str | None] = mapped_column(String(100), nullable=True)
