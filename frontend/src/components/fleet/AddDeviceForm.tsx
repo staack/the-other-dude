@@ -511,7 +511,7 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Device</DialogTitle>
         </DialogHeader>
