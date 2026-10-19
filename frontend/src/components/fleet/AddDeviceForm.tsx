@@ -350,12 +350,13 @@ export function AddDeviceForm({ tenantId, open, onClose }: Props) {
           <select id="ros-tls-mode" value={form.tls_mode}
             onChange={(e) => setForm((f) => ({ ...f, tls_mode: e.target.value }))}
             className="w-full rounded-md border border-border bg-panel px-3 py-2 text-sm">
-            <option value="auto">TLS (automatic certificate verification)</option>
+            <option value="auto">TLS (automatic)</option>
             <option value="insecure">TLS (skip certificate verification)</option>
             <option value="plain">Plain API (unencrypted)</option>
           </select>
           <p className="text-xs text-text-muted">
-            TLS uses the TLS API port. Plain API uses the API port and sends credentials without encryption.
+            Automatic TLS allows unverified certificates. TLS uses the TLS API port.
+            Plain API uses the API port and sends credentials without encryption.
           </p>
         </div>
 
