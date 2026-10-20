@@ -9,7 +9,7 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `APP_NAME` | `TOD - The Other Dude` | Application display name |
-| `APP_VERSION` | `9.12.0` | Semantic version string (see VERSION file at project root) |
+| `APP_VERSION` | `9.12.1` | Semantic version string (see VERSION file at project root) |
 | `TOD_VERSION` | `latest` | Docker image tag for pre-built images (set by setup.py) |
 | `ENVIRONMENT` | `dev` | Runtime environment: `dev`, `staging`, or `production` |
 | `DEBUG` | `false` | Enable debug mode |
@@ -180,6 +180,8 @@ when upgrading. PostgreSQL's connection limit is applied at every container star
 including existing data directories. Recreate the database container with the updated
 Compose file; no reinstall or data-volume removal is required.
 
+### SSH authentication and ports
+
 RouterOS devices expose an SSH Port setting (1–65535; default 22) in Add Device and
 Edit Device. Certificate deployment, SSH terminal and backend config backups use
 that port. SSH operations prefer a stored device key, then a key from the attached
@@ -189,9 +191,14 @@ credentials for polling. Each username and its key/password stay together; crede
 from different accounts are never combined.
 The firmware pre-upgrade backup remains mandatory.
 
+### Quick Add connection mode
+
 The quick Add Device dialog offers TLS and explicitly selected plain API modes.
 Choosing plain API sends credentials without encryption and uses the API port;
-TLS modes use the TLS API port. Automatic mode does not silently fall back to plain.
+TLS modes use the TLS API port. Automatic TLS permits unverified certificates and
+does not silently fall back to plain.
+
+### Native WinBox launch
 
 The native WinBox tunnel attempts the registered `winbox://` handler on every
 platform. If a browser requires another click, use Open WinBox in the ready tunnel

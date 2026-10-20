@@ -23,6 +23,18 @@ Resolve scheduled RouterOS package changes before starting a TOD upgrade. Cross-
 
 MikroTik documents package installation and downgrade behavior in its [RouterOS package manual](https://help.mikrotik.com/docs/spaces/ROS/pages/40992872/Packages).
 
+## SSH authentication (9.12.1)
+
+Backups and firmware operations use the device's configured **SSH Port** (default 22). A device that disables SSH password authentication needs a stored private key with its matching public key installed on the RouterOS account.
+
+SSH key profiles are currently configured through the authenticated API:
+
+1. Create a profile with `POST /api/tenants/{tenant_id}/credential-profiles`: set `name`, `credential_type: "ssh_key"`, `username` and `private_key`. The key must be in OpenSSH format. Supply `key_passphrase` if it is encrypted. A `password` is optional and provides a fallback if the key is rejected; omit it for key-only authentication.
+2. Attach the returned profile ID using `PUT /api/tenants/{tenant_id}/devices/{device_id}` with `{"credential_profile_id": "<profile-id>"}`. The profile must belong to the same organization. Leave existing inline RouterOS API credentials in place; the binary API does not authenticate with SSH keys.
+3. Ensure that account can export configuration, create/download a binary backup, read package inventory, upload over SFTP and reboot. Then start the upgrade from Firmware.
+
+For SSH, TOD prefers an explicit device key, then the attached profile's key, then device/profile password credentials. Each username and its key/password remain together. The API host's SSH agent and default keys are not used. Keys are encrypted at rest with OpenBao Transit; an upload passphrase is used to decrypt the key and is not retained. Mandatory pre-upgrade backup failure stops the job; SSH errors identify the port/credential configuration to check.
+
 ## Production cache mount
 
 The production Compose API service mounts:
