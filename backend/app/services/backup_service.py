@@ -58,11 +58,38 @@ def _ssh_client_keys(private_key: str) -> list:
         raise ValueError("Stored SSH private key could not be loaded") from None
 
 
+async def _resolve_ssh_credentials(
+    transit, legacy, profile_transit, profile_legacy, tenant_id, *, decrypt=None
+) -> dict:
+    """Prefer an explicit device key, then a profile key, then API passwords.
+
+    Keep each credential set intact: a profile's key must never be paired with
+    a different device username or password. RouterOS API resolution is unchanged.
+    """
+    decrypt = decrypt or decrypt_credentials_hybrid
+
+    async def load(transit, legacy):
+        return json.loads(
+            await decrypt(transit, legacy, str(tenant_id), settings.get_encryption_key_bytes())
+        )
+
+    device = await load(transit, legacy) if transit or legacy else None
+    if device and device.get("private_key"):
+        return device
+    profile = (
+        await load(profile_transit, profile_legacy) if profile_transit or profile_legacy else None
+    )
+    if profile and profile.get("private_key"):
+        return profile
+    if device or profile:
+        return device or profile
+    raise ValueError("No stored SSH credentials; configure a device credential or SSH key profile")
+
+
 async def _backup_credentials(session: AsyncSession, device: Device) -> dict:
-    """Match poller precedence: device credentials, then its same-tenant profile."""
-    transit = device.encrypted_credentials_transit
-    legacy = device.encrypted_credentials
-    if not transit and not legacy and device.credential_profile_id:
+    """Resolve SSH keys independently of the device's API password."""
+    profile = None
+    if device.credential_profile_id:
         result = await session.execute(
             select(CredentialProfile).where(
                 CredentialProfile.id == device.credential_profile_id,
@@ -70,16 +97,13 @@ async def _backup_credentials(session: AsyncSession, device: Device) -> dict:
             )
         )
         profile = result.scalar_one_or_none()
-        if profile is not None:
-            transit, legacy = profile.encrypted_credentials_transit, profile.encrypted_credentials
-    if not transit and not legacy:
-        raise ValueError(
-            "No stored SSH credentials; configure a device credential or SSH key profile"
-        )
-    plaintext = await decrypt_credentials_hybrid(
-        transit, legacy, str(device.tenant_id), settings.get_encryption_key_bytes()
+    return await _resolve_ssh_credentials(
+        device.encrypted_credentials_transit,
+        device.encrypted_credentials,
+        profile.encrypted_credentials_transit if profile else None,
+        profile.encrypted_credentials if profile else None,
+        device.tenant_id,
     )
-    return json.loads(plaintext)
 
 
 async def capture_export(

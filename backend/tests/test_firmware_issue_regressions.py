@@ -215,7 +215,7 @@ async def test_connected_legacy_radio_preserves_measured_zero_ccq():
     assert values["ccq"] == 0 and values["avg_signal"] == -80
 
 
-@pytest.mark.parametrize("profile_only", [False, True])
+@pytest.mark.parametrize("profile_only", [False, True, "mixed"])
 async def test_upgrade_carries_key_and_custom_port_through_every_stage(
     monkeypatch, upgrade_mocks, profile_only
 ):
@@ -229,7 +229,13 @@ async def test_upgrade_carries_key_and_custom_port_through_every_stage(
     row = list(session.execute.return_value.fetchone.return_value)
     row[13] = 65211
     if profile_only:
-        row[10] = None
+        row[10] = b"api-ciphertext" if profile_only == "mixed" else None
+        if profile_only == "mixed":
+            decrypt.side_effect = lambda transit, legacy, *args: json.dumps(
+                {"username": "api", "password": "api-only"}
+                if legacy == b"api-ciphertext"
+                else {"username": "lab", "private_key": key}
+            )
         row[14] = b"profile-ciphertext"
     session.execute.return_value.fetchone.return_value = tuple(row)
     await upgrade.start_upgrade("job")

@@ -13,7 +13,7 @@ from app.services import backup_service as backup
 
 
 @pytest.mark.parametrize("inline", [False, True])
-async def test_backup_resolves_profile_only_as_fallback(monkeypatch, inline):
+async def test_backup_uses_profile_key_with_inline_api_password(monkeypatch, inline):
     device = SimpleNamespace(
         tenant_id=uuid.uuid4(),
         credential_profile_id=uuid.uuid4(),
@@ -25,11 +25,45 @@ async def test_backup_resolves_profile_only_as_fallback(monkeypatch, inline):
     result.scalar_one_or_none.return_value = profile
     session = AsyncMock()
     session.execute.return_value = result
-    decrypt = AsyncMock(return_value=json.dumps({"username": "test", "private_key": "stored"}))
+
+    async def decrypt(transit, *args):
+        return json.dumps(
+            {"username": "ssh-user", "private_key": "stored"}
+            if transit == "profile"
+            else {"username": "api-user", "password": "api-only"}
+        )
+
     monkeypatch.setattr(backup, "decrypt_credentials_hybrid", decrypt)
-    assert (await backup._backup_credentials(session, device))["private_key"] == "stored"
-    assert decrypt.await_args.args[0] == ("device" if inline else "profile")
-    assert session.execute.await_count == (0 if inline else 1)
+    assert await backup._backup_credentials(session, device) == {
+        "username": "ssh-user",
+        "private_key": "stored",
+    }
+
+
+@pytest.mark.parametrize(
+    "device,profile,expected",
+    [
+        (
+            {"username": "own", "private_key": "device-key"},
+            {"username": "profile", "private_key": "profile-key"},
+            "own",
+        ),
+        (
+            {"username": "own", "password": "own-pass"},
+            {"username": "profile", "password": "profile-pass"},
+            "own",
+        ),
+        (None, {"username": "profile", "password": "profile-pass"}, "profile"),
+    ],
+)
+async def test_ssh_resolution_preserves_existing_fallback(device, profile, expected):
+    decrypt = AsyncMock(
+        side_effect=lambda transit, *args: json.dumps(device if transit == "device" else profile)
+    )
+    creds = await backup._resolve_ssh_credentials(
+        "device" if device else None, None, "profile", None, "tenant", decrypt=decrypt
+    )
+    assert creds["username"] == expected
 
 
 async def test_malformed_key_error_does_not_echo_material():

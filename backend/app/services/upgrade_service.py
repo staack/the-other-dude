@@ -13,7 +13,6 @@ jobs may span multiple tenants and run in background asyncio tasks.
 """
 
 import asyncio
-import json
 import logging
 import re
 import uuid
@@ -22,10 +21,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import asyncssh
-from app.services.backup_service import _ssh_client_keys
+from app.services.backup_service import _ssh_client_keys, _resolve_ssh_credentials
 from sqlalchemy import text
 
-from app.config import settings
 from app.database import AdminAsyncSessionLocal
 from app.services.event_publisher import publish_event
 from app.services.firmware_service import normalize_routeros_version
@@ -208,13 +206,15 @@ async def _run_upgrade(job_id: str) -> None:
         )
         return
 
-    # Match the poller: device credentials take precedence over the attached profile.
-    if not encrypted_credentials_transit and not encrypted_credentials:
-        encrypted_credentials_transit = profile_credentials_transit
-        encrypted_credentials = profile_credentials
-
     # Decrypt device credentials (dual-read: Transit preferred, legacy fallback)
-    if not encrypted_credentials_transit and not encrypted_credentials:
+    if not any(
+        (
+            encrypted_credentials_transit,
+            encrypted_credentials,
+            profile_credentials_transit,
+            profile_credentials,
+        )
+    ):
         await _update_job(job_id, status="failed", error_message="Device has no stored credentials")
         await _publish_upgrade_progress(
             tenant_id,
@@ -230,14 +230,14 @@ async def _run_upgrade(job_id: str) -> None:
     try:
         from app.services.crypto import decrypt_credentials_hybrid
 
-        key = settings.get_encryption_key_bytes()
-        creds_json = await decrypt_credentials_hybrid(
+        creds = await _resolve_ssh_credentials(
             encrypted_credentials_transit,
             encrypted_credentials,
+            profile_credentials_transit,
+            profile_credentials,
             tenant_id,
-            key,
+            decrypt=decrypt_credentials_hybrid,
         )
-        creds = json.loads(creds_json)
         ssh_username = creds.get("username", "")
         ssh_password = creds.get("password", "")
         ssh_options = {"port": ssh_port, "private_key": creds.get("private_key", "")}

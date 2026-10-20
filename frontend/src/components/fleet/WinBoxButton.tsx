@@ -123,6 +123,7 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
                         Close
                     </button>
                 </div>
+                <p className="text-[10px] text-text-muted">If WinBox does not open, copy this address into the WinBox app. Browser launch requires a registered winbox:// handler.</p>
                 <p className="text-[9px] text-text-muted">Closes after 5 min idle</p>
             </div>
         )
