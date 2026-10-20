@@ -23,7 +23,7 @@ Resolve scheduled RouterOS package changes before starting a TOD upgrade. Cross-
 
 MikroTik documents package installation and downgrade behavior in its [RouterOS package manual](https://help.mikrotik.com/docs/spaces/ROS/pages/40992872/Packages).
 
-## SSH authentication (9.12.1)
+## SSH authentication (9.12.2)
 
 Backups and firmware operations use the device's configured **SSH Port** (default 22). A device that disables SSH password authentication needs a stored private key with its matching public key installed on the RouterOS account.
 

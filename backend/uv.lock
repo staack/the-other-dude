@@ -1851,7 +1851,7 @@ wheels = [
 
 [[package]]
 name = "the-other-dude-backend"
-version = "9.9.0"
+version = "9.12.2"
 source = { editable = "." }
 dependencies = [
     { name = "aiosmtplib" },

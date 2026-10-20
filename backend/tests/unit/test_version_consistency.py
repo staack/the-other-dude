@@ -1,7 +1,7 @@
 """Guard test: every hard-coded version string in the repo must agree.
 
-TOD's version lives in twelve places across ten files — `VERSION` at the
-repo root plus nine other files, each hard-coding a copy for its own
+TOD's version lives in thirteen places across eleven files — `VERSION` at the
+repo root plus ten other files, each hard-coding a copy for its own
 ecosystem (npm, npm's lockfile, hatchling, Pydantic Settings, Helm, the
 marketing site, the docs table, and the license header). There is no single
 source of truth at runtime; every prior release bumped all of them by hand,
@@ -20,6 +20,8 @@ This is pure file-reading -- no database or async required.
 """
 
 import importlib.util
+import re
+import shutil
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -39,3 +41,28 @@ def test_version_matches_everywhere():
     expected = bump_version.LOCATIONS[0].current()  # VERSION file
     problems = bump_version.check(expected)
     assert not problems, "Version drift found:\n" + "\n".join(problems)
+
+
+def test_version_guard_detects_stale_uv_project_version(tmp_path):
+    bump_version = _load_bump_version()
+    expected = bump_version.LOCATIONS[0].current()
+    # Isolate the real version-reference files; never mutate the checkout.
+    for loc in bump_version.LOCATIONS:
+        relative = loc.path.relative_to(REPO_ROOT)
+        target = tmp_path / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(loc.path, target)
+        loc.path = target
+    bump_version.REPO_ROOT = tmp_path
+    lock = tmp_path / "backend/uv.lock"
+    lock.write_text(
+        re.sub(
+            r'(name = "the-other-dude-backend"\nversion = ")[^"]+',
+            r"\g<1>0.0.0",
+            lock.read_text(),
+            count=1,
+        )
+    )
+    problems = bump_version.check(expected)
+    assert len(problems) == 1
+    assert "backend/uv.lock" in problems[0] and "0.0.0" in problems[0]
