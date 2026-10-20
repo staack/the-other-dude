@@ -88,6 +88,7 @@ function EditDeviceDialog({
     ip_address: device.ip_address,
     api_port: device.api_port,
     api_ssl_port: device.api_ssl_port,
+    ssh_port: device.ssh_port ?? 22,
     username: '',
     password: '',
     latitude: device.latitude ?? undefined,
@@ -113,6 +114,7 @@ function EditDeviceDialog({
       ip_address: form.ip_address || undefined,
       api_port: form.api_port,
       api_ssl_port: form.api_ssl_port,
+      ssh_port: form.ssh_port,
       latitude: form.latitude,
       longitude: form.longitude,
     }
@@ -127,7 +129,7 @@ function EditDeviceDialog({
     label: string,
     value: string | number | undefined,
     onChange: (v: string) => void,
-    opts?: { type?: string; placeholder?: string },
+    opts?: { type?: string; placeholder?: string; min?: number; max?: number; required?: boolean },
   ) => (
     <div className="space-y-1">
       <Label htmlFor={id} className="text-xs text-text-secondary">
@@ -139,6 +141,9 @@ function EditDeviceDialog({
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
         placeholder={opts?.placeholder}
+        min={opts?.min}
+        max={opts?.max}
+        required={opts?.required}
         className="h-8 text-sm"
       />
     </div>
@@ -156,6 +161,7 @@ function EditDeviceDialog({
             {field('ip_address', 'IP Address', form.ip_address, (v) => setForm((f) => ({ ...f, ip_address: v })))}
             {field('api_port', 'API Port', form.api_port, (v) => setForm((f) => ({ ...f, api_port: parseInt(v) || undefined })), { type: 'number' })}
             {field('api_ssl_port', 'API TLS Port', form.api_ssl_port, (v) => setForm((f) => ({ ...f, api_ssl_port: parseInt(v) || undefined })), { type: 'number' })}
+            {field('ssh_port', 'SSH Port', form.ssh_port, (v) => setForm((f) => ({ ...f, ssh_port: v === '' ? undefined : Number(v) })), { type: 'number', min: 1, max: 65535, required: true })}
           </div>
 
           <div className="border-t border-border pt-3 space-y-1">
@@ -541,6 +547,7 @@ function DeviceDetailPage() {
                 <InfoRow label="Uptime" value={formatUptime(device.uptime_seconds)} />
                 <InfoRow label="Last Seen" value={formatDateTime(device.last_seen)} />
                 <InfoRow label="Serial" value={device.serial_number || 'N/A'} />
+                <InfoRow label="SSH Port" value={String(device.ssh_port ?? 22)} />
                 <InfoRow label="API Port" value={`${device.api_port} (plain) / ${device.api_ssl_port} (TLS)`} />
                 <InfoRow
                   label="TLS Mode"

@@ -5,7 +5,7 @@ import sys
 from functools import lru_cache
 from typing import Optional
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Known insecure default values that MUST NOT be used in non-dev environments.
@@ -70,11 +70,11 @@ class Settings(BaseSettings):
     APP_USER_DATABASE_URL: str = "postgresql+asyncpg://app_user:app_password@localhost:5432/tod"
 
     # Database connection pool
-    DB_POOL_SIZE: int = 20
-    DB_MAX_OVERFLOW: int = 40
+    DB_POOL_SIZE: int = Field(default=5, ge=1)
+    DB_MAX_OVERFLOW: int = Field(default=5, ge=0)
     DB_POOL_RECYCLE: int = 1847
-    DB_ADMIN_POOL_SIZE: int = 10
-    DB_ADMIN_MAX_OVERFLOW: int = 20
+    DB_ADMIN_POOL_SIZE: int = Field(default=2, ge=1)
+    DB_ADMIN_MAX_OVERFLOW: int = Field(default=3, ge=0)
 
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
@@ -153,7 +153,7 @@ class Settings(BaseSettings):
 
     # App settings
     APP_NAME: str = "TOD - The Other Dude"
-    APP_VERSION: str = "9.12.0"
+    APP_VERSION: str = "9.12.1"
     DEBUG: bool = False
 
     @field_validator("CREDENTIAL_ENCRYPTION_KEY")

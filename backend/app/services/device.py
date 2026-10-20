@@ -424,6 +424,7 @@ def _build_device_response(device: Device) -> DeviceResponse:
         ip_address=device.ip_address,
         api_port=device.api_port,
         api_ssl_port=device.api_ssl_port,
+        ssh_port=device.ssh_port or 22,
         model=device.model,
         serial_number=device.serial_number,
         firmware_version=device.firmware_version,
@@ -543,6 +544,7 @@ async def create_device(
         device_type=data.device_type,
         api_port=data.api_port,
         api_ssl_port=data.api_ssl_port,
+        ssh_port=data.ssh_port,
         # Without this the caller's choice is discarded and every device falls
         # to the column default "auto", which never uses api_port at all.
         tls_mode=data.tls_mode or "auto",
@@ -706,6 +708,8 @@ async def update_device(
         device.latitude = data.latitude
     if data.longitude is not None:
         device.longitude = data.longitude
+    if data.ssh_port is not None:
+        device.ssh_port = data.ssh_port
     if data.tls_mode is not None:
         device.tls_mode = data.tls_mode
     # SNMP fields

@@ -146,3 +146,23 @@ func TestHardware_EnvelopeFromBackendAuthenticates(t *testing.T) {
 		host, result.Stdout, fp)
 	assert.Contains(t, result.Stdout, "name:")
 }
+
+func TestGetSSHCredentials_ProfileKeyDoesNotReplaceAPIPassword(t *testing.T) {
+	key := make([]byte, 32)
+	_, err := rand.Read(key)
+	require.NoError(t, err)
+	deviceCT := encryptLegacy(t, key, []byte(`{"type":"routeros","username":"api-user","password":"api-pass"}`))
+	profileCT := encryptLegacy(t, key, []byte(`{"type":"ssh_key","username":"ssh-user","private_key":"PROFILEKEY"}`))
+	cache := newTestCache(key)
+	ssh, err := cache.GetSSHCredentials("mixed", "tenant", nil, deviceCT, nil, profileCT)
+	require.NoError(t, err)
+	assert.Equal(t, "ssh-user", ssh.Username)
+	assert.Equal(t, "PROFILEKEY", ssh.PrivateKey)
+	assert.Empty(t, ssh.Password)
+	apiUser, apiPassword, err := cache.GetCredentials("mixed", "tenant", nil, deviceCT, nil, profileCT)
+	require.NoError(t, err)
+	assert.Equal(t, "api-user", apiUser)
+	assert.Equal(t, "api-pass", apiPassword)
+	cache.Invalidate("mixed")
+	assert.Equal(t, 0, cache.Len())
+}

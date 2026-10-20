@@ -9,7 +9,7 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `APP_NAME` | `TOD - The Other Dude` | Application display name |
-| `APP_VERSION` | `9.12.0` | Semantic version string (see VERSION file at project root) |
+| `APP_VERSION` | `9.12.1` | Semantic version string (see VERSION file at project root) |
 | `TOD_VERSION` | `latest` | Docker image tag for pre-built images (set by setup.py) |
 | `ENVIRONMENT` | `dev` | Runtime environment: `dev`, `staging`, or `production` |
 | `DEBUG` | `false` | Enable debug mode |
@@ -33,11 +33,12 @@ TOD uses Pydantic Settings for configuration. All values can be set via environm
 | `DATABASE_URL` | `postgresql+asyncpg://postgres:postgres@localhost:5432/tod` | Admin (superuser) async database URL. Used for migrations and bootstrap operations. |
 | `SYNC_DATABASE_URL` | `postgresql+psycopg2://postgres:postgres@localhost:5432/tod` | Synchronous database URL used by Alembic migrations only. |
 | `APP_USER_DATABASE_URL` | `postgresql+asyncpg://app_user:app_password@localhost:5432/tod` | Non-superuser async database URL. Enforces PostgreSQL RLS for tenant isolation. |
-| `DB_POOL_SIZE` | `20` | App user connection pool size |
-| `DB_MAX_OVERFLOW` | `40` | App user pool max overflow connections |
+| `POSTGRES_MAX_CONNECTIONS` | `100` | Compose PostgreSQL connection limit (requires container recreation) |
+| `DB_POOL_SIZE` | `5` | App user connection pool size |
+| `DB_MAX_OVERFLOW` | `5` | App user pool max overflow connections |
 | `DB_POOL_RECYCLE` | `1847` | Connection pool recycle time in seconds |
-| `DB_ADMIN_POOL_SIZE` | `10` | Admin connection pool size |
-| `DB_ADMIN_MAX_OVERFLOW` | `20` | Admin pool max overflow connections |
+| `DB_ADMIN_POOL_SIZE` | `2` | Admin connection pool size |
+| `DB_ADMIN_MAX_OVERFLOW` | `3` | Admin pool max overflow connections |
 
 ### Security
 
@@ -166,3 +167,41 @@ All containers have enforced memory limits to prevent OOM on the host:
 | Frontend | 64 MB |
 
 Build Docker images sequentially (not in parallel) to avoid OOM during builds.
+
+### Database connection budget
+
+Pool settings apply to each API worker. With the production default of two workers,
+the app and admin pools together can open at most 30 connections:
+`2 × ((5 + 5) + (2 + 3))`. The Compose database explicitly allows 100 connections,
+leaving room for the poller, TimescaleDB workers and administration. Increase the
+budget together if adding API workers, API replicas or other database clients.
+Existing environment overrides still take precedence; review old pool settings
+when upgrading. PostgreSQL's connection limit is applied at every container start,
+including existing data directories. Recreate the database container with the updated
+Compose file; no reinstall or data-volume removal is required.
+
+### SSH authentication and ports
+
+RouterOS devices expose an SSH Port setting (1–65535; default 22) in Add Device and
+Edit Device. Certificate deployment, SSH terminal and backend config backups use
+that port. SSH operations prefer a stored device key, then a key from the attached
+same-organization credential profile, then device/profile password credentials.
+An SSH key profile can be attached while retaining the device’s inline RouterOS API
+credentials for polling. Each username and its key/password stay together; credentials
+from different accounts are never combined.
+The firmware pre-upgrade backup remains mandatory.
+
+### Quick Add connection mode
+
+The quick Add Device dialog offers TLS and explicitly selected plain API modes.
+Choosing plain API sends credentials without encryption and uses the API port;
+TLS modes use the TLS API port. Automatic TLS permits unverified certificates and
+does not silently fall back to plain.
+
+### Native WinBox launch
+
+The native WinBox tunnel attempts the registered `winbox://` handler on every
+platform. If a browser requires another click, use Open WinBox in the ready tunnel
+panel. A local WinBox URI handler must be installed; installing WinBox alone may
+not register one. If the app does not open, use Copy and paste the tunnel address
+into WinBox. Remote opens WinBox in the browser without a local URI handler.

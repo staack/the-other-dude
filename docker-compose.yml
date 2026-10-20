@@ -15,6 +15,8 @@
 services:
   postgres:
     image: timescale/timescaledb:2.17.2-pg17
+    # Explicit for existing PGDATA too; do not rely on first-run auto tuning.
+    command: ["postgres", "-c", "max_connections=${POSTGRES_MAX_CONNECTIONS:-100}"]
     container_name: tod_postgres
     restart: unless-stopped
     environment:

@@ -356,3 +356,46 @@ async def test_profile_bulk_duplicate_identity_does_not_break_remaining_imports(
         .all()
     )
     assert names == ["shared-identity", "explicit-third"]
+
+
+@pytest.mark.parametrize("port", [22, 65211])
+async def test_custom_ssh_port_create_update_roundtrip(
+    client, app_user_requests, auth_headers_factory, admin_session, monkeypatch, port
+):
+    monkeypatch.setattr(
+        "app.services.device.validate_routeros_connectivity", AsyncMock(return_value=None)
+    )
+    monkeypatch.setattr(
+        "app.services.device.encrypt_credentials_transit",
+        AsyncMock(return_value="vault:v1:test-only"),
+    )
+    auth = await auth_headers_factory(admin_session, role="operator")
+    base = f"/api/tenants/{auth['tenant_id']}/devices"
+    response = await client.post(
+        base,
+        headers=auth["headers"],
+        json={
+            "ip_address": "192.0.2.1",
+            "username": "test",
+            "password": "test",
+            "ssh_port": port,
+            "tls_mode": "plain",
+        },
+    )
+    assert response.status_code == 201, response.text
+    data = response.json()
+    assert data["ssh_port"] == port
+    assert data["tls_mode"] == "plain"
+    path = base + "/" + data["id"]
+    response = await client.put(path, headers=auth["headers"], json={"ssh_port": 2222})
+    assert response.status_code == 200, response.text
+    assert response.json()["ssh_port"] == 2222
+    response = await client.get(path, headers=auth["headers"])
+    assert response.json()["ssh_port"] == 2222
+    persisted = await admin_session.scalar(
+        text("SELECT ssh_port FROM devices WHERE id=:id"), {"id": uuid.UUID(data["id"])}
+    )
+    assert persisted == 2222
+    for invalid in [0, 65536]:
+        response = await client.put(path, headers=auth["headers"], json={"ssh_port": invalid})
+        assert response.status_code == 422

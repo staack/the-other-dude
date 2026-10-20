@@ -1,7 +1,7 @@
 """Guard test: every hard-coded version string in the repo must agree.
 
-TOD's version lives in eleven places across nine files — `VERSION` at the
-repo root plus eight other files, each hard-coding a copy for its own
+TOD's version lives in twelve places across ten files — `VERSION` at the
+repo root plus nine other files, each hard-coding a copy for its own
 ecosystem (npm, npm's lockfile, hatchling, Pydantic Settings, Helm, the
 marketing site, the docs table, and the license header). There is no single
 source of truth at runtime; every prior release bumped all of them by hand,
@@ -11,7 +11,7 @@ to 9.9.0.
 
 This test reuses scripts/bump_version.py's own location list — the same
 patterns the bump script writes with — so the test and the script can never
-disagree about what "the nine locations" are. If it fails, either a file
+disagree about what "the version locations" are. If it fails, either a file
 drifted (fix it with `scripts/bump_version.py <version>`, or by hand for
 just the outlier) or the bump script's pattern for a file is stale (fix the
 pattern in scripts/bump_version.py).

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Bump TOD's version string everywhere it's written down.
 
-The version lives in eleven places across nine files: `VERSION` at the repo
-root plus eight other files that each hard-code a copy for their own
+The version lives in twelve places across ten files: `VERSION` at the repo
+root plus nine other files that each hard-code a copy for their own
 ecosystem (npm, npm's lockfile, PyPI/hatchling, Pydantic Settings, Helm, the
 marketing site, the docs table, and the license header). There has never
 been a script for this — every prior release bumped them by hand, which is
@@ -131,6 +131,15 @@ LOCATIONS.append(
         "docs/website/index.html",
         r"<tr><td>Version</td><td>(\d+\.\d+\.\d+)</td></tr>",
         "Version row in the marketing site's status table",
+    )
+)
+
+
+LOCATIONS.append(
+    Location(
+        "docs/website/docs.html",
+        r"<tr><td><code>APP_VERSION</code></td><td><code>(\d+\.\d+\.\d+)</code></td>",
+        "APP_VERSION row in the public documentation table",
     )
 )
 

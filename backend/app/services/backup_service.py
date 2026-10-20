@@ -30,7 +30,9 @@ import logging
 from datetime import datetime, timezone
 
 import asyncssh
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.credential_profile import CredentialProfile
 
 from app.config import settings
 from app.database import AdminAsyncSessionLocal, set_tenant_context
@@ -46,11 +48,70 @@ logger = logging.getLogger(__name__)
 _BACKUP_NAME = "portal-backup"
 
 
+def _ssh_client_keys(private_key: str) -> list:
+    """Use only the stored key; never inherit keys from the API host."""
+    if not private_key:
+        return []
+    try:
+        return [asyncssh.import_private_key(private_key)]
+    except Exception:
+        raise ValueError("Stored SSH private key could not be loaded") from None
+
+
+async def _resolve_ssh_credentials(
+    transit, legacy, profile_transit, profile_legacy, tenant_id, *, decrypt=None
+) -> dict:
+    """Prefer an explicit device key, then a profile key, then API passwords.
+
+    Keep each credential set intact: a profile's key must never be paired with
+    a different device username or password. RouterOS API resolution is unchanged.
+    """
+    decrypt = decrypt or decrypt_credentials_hybrid
+
+    async def load(transit, legacy):
+        return json.loads(
+            await decrypt(transit, legacy, str(tenant_id), settings.get_encryption_key_bytes())
+        )
+
+    device = await load(transit, legacy) if transit or legacy else None
+    if device and device.get("private_key"):
+        return device
+    profile = (
+        await load(profile_transit, profile_legacy) if profile_transit or profile_legacy else None
+    )
+    if profile and profile.get("private_key"):
+        return profile
+    if device or profile:
+        return device or profile
+    raise ValueError("No stored SSH credentials; configure a device credential or SSH key profile")
+
+
+async def _backup_credentials(session: AsyncSession, device: Device) -> dict:
+    """Resolve SSH keys independently of the device's API password."""
+    profile = None
+    if device.credential_profile_id:
+        result = await session.execute(
+            select(CredentialProfile).where(
+                CredentialProfile.id == device.credential_profile_id,
+                CredentialProfile.tenant_id == device.tenant_id,
+            )
+        )
+        profile = result.scalar_one_or_none()
+    return await _resolve_ssh_credentials(
+        device.encrypted_credentials_transit,
+        device.encrypted_credentials,
+        profile.encrypted_credentials_transit if profile else None,
+        profile.encrypted_credentials if profile else None,
+        device.tenant_id,
+    )
+
+
 async def capture_export(
     ip: str,
     port: int = 22,
     username: str = "",
     password: str = "",
+    private_key: str = "",
 ) -> str:
     """SSH to a RouterOS device and capture /export compact output.
 
@@ -70,7 +131,11 @@ async def capture_export(
         ip,
         port=port,
         username=username,
-        password=password,
+        password=password or None,
+        client_keys=_ssh_client_keys(private_key),
+        agent_path=None,
+        config=None,
+        preferred_auth=("publickey", "password"),
         known_hosts=None,  # RouterOS self-signed host keys — see module docstring
         connect_timeout=30,
     ) as conn:
@@ -83,6 +148,7 @@ async def capture_binary_backup(
     port: int = 22,
     username: str = "",
     password: str = "",
+    private_key: str = "",
 ) -> bytes:
     """SSH to a RouterOS device, create a binary backup, SFTP-download it, then clean up.
 
@@ -109,7 +175,11 @@ async def capture_binary_backup(
         ip,
         port=port,
         username=username,
-        password=password,
+        password=password or None,
+        client_keys=_ssh_client_keys(private_key),
+        agent_path=None,
+        config=None,
+        preferred_auth=("publickey", "password"),
         known_hosts=None,
         connect_timeout=30,
     ) as conn:
@@ -204,24 +274,12 @@ async def run_backup(
         if device is None:
             raise ValueError(f"Device {device_id!r} not found for tenant {tenant_id!r}")
 
-        if not device.encrypted_credentials_transit and not device.encrypted_credentials:
-            raise ValueError(
-                f"Device {device_id!r} has no stored credentials — cannot perform backup"
-            )
-
-        # -----------------------------------------------------------------------
-        # Step 2: Decrypt credentials (dual-read: Transit preferred, legacy fallback)
-        # -----------------------------------------------------------------------
-        key = settings.get_encryption_key_bytes()
-        creds_json = await decrypt_credentials_hybrid(
-            device.encrypted_credentials_transit,
-            device.encrypted_credentials,
-            str(device.tenant_id),
-            key,
-        )
-        creds = json.loads(creds_json)
+        # Resolve device credentials or the attached profile just as the poller does.
+        creds = await _backup_credentials(session, device)
         ssh_username = creds.get("username", "")
         ssh_password = creds.get("password", "")
+        ssh_private_key = creds.get("private_key", "")
+        ssh_port = device.ssh_port or 22
         ip = device.ip_address
 
         hostname = device.hostname or ip
@@ -238,8 +296,20 @@ async def run_backup(
         )
 
         export_text, binary_backup = await asyncio.gather(
-            capture_export(ip, username=ssh_username, password=ssh_password),
-            capture_binary_backup(ip, username=ssh_username, password=ssh_password),
+            capture_export(
+                ip,
+                port=ssh_port,
+                username=ssh_username,
+                password=ssh_password,
+                private_key=ssh_private_key,
+            ),
+            capture_binary_backup(
+                ip,
+                port=ssh_port,
+                username=ssh_username,
+                password=ssh_password,
+                private_key=ssh_private_key,
+            ),
         )
 
         # -----------------------------------------------------------------------

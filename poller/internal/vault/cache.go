@@ -225,8 +225,8 @@ func (c *CredentialCache) logKeyAccess(deviceID, tenantID, action, justification
 }
 
 // GetSSHCredentials returns decrypted SSH authentication material for a device,
-// resolving device-level credentials ahead of credential-profile credentials via
-// the same fallback chain as GetRawCredentials.
+// preferring a device key, then a profile key, then API password credentials.
+// Each set stays intact; usernames/passwords are never mixed across sources.
 //
 // Unlike GetCredentials, which returns only (username, password), this also
 // surfaces a private key when the credential envelope carries one. SSH callers
@@ -239,13 +239,36 @@ func (c *CredentialCache) GetSSHCredentials(
 	profileTransitCiphertext *string,
 	profileLegacyCiphertext []byte,
 ) (*SSHCredential, error) {
-	raw, err := c.GetRawCredentials(
-		deviceID, tenantID,
-		transitCiphertext, legacyCiphertext,
-		profileTransitCiphertext, profileLegacyCiphertext,
-	)
-	if err != nil {
-		return nil, err
+	// Read the profile separately so its key is not hidden by API credentials.
+	var own *SSHCredential
+	if (transitCiphertext != nil && *transitCiphertext != "") || len(legacyCiphertext) > 0 {
+		raw, err := c.GetRawCredentials(deviceID, tenantID, transitCiphertext, legacyCiphertext, nil, nil)
+		if err != nil {
+			return nil, err
+		}
+		own, err = ParseSSHCredentials(raw)
+		if err != nil {
+			return nil, err
+		}
+		if own.PrivateKey != "" {
+			return own, nil
+		}
 	}
-	return ParseSSHCredentials(raw)
+	if (profileTransitCiphertext != nil && *profileTransitCiphertext != "") || len(profileLegacyCiphertext) > 0 {
+		raw, err := c.GetRawCredentials(deviceID, tenantID, nil, nil, profileTransitCiphertext, profileLegacyCiphertext)
+		if err != nil {
+			return nil, err
+		}
+		profile, err := ParseSSHCredentials(raw)
+		if err != nil {
+			return nil, err
+		}
+		if profile.PrivateKey != "" || own == nil {
+			return profile, nil
+		}
+	}
+	if own != nil {
+		return own, nil
+	}
+	return nil, fmt.Errorf("no credentials available for device %s", deviceID)
 }

@@ -13,7 +13,6 @@ jobs may span multiple tenants and run in background asyncio tasks.
 """
 
 import asyncio
-import json
 import logging
 import re
 import uuid
@@ -22,9 +21,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import asyncssh
+from app.services.backup_service import _ssh_client_keys, _resolve_ssh_credentials
 from sqlalchemy import text
 
-from app.config import settings
 from app.database import AdminAsyncSessionLocal
 from app.services.event_publisher import publish_event
 from app.services.firmware_service import normalize_routeros_version
@@ -88,9 +87,13 @@ async def _run_upgrade(job_id: str) -> None:
                 SELECT j.id, j.device_id, j.tenant_id, j.target_version,
                        j.architecture, j.channel, j.status, j.confirmed_major_upgrade,
                        d.ip_address, d.hostname, d.encrypted_credentials,
-                       d.routeros_version, d.encrypted_credentials_transit
+                       d.routeros_version, d.encrypted_credentials_transit,
+                       COALESCE(d.ssh_port, 22), cp.encrypted_credentials,
+                       cp.encrypted_credentials_transit
                 FROM firmware_upgrade_jobs j
                 JOIN devices d ON d.id = j.device_id AND d.tenant_id = j.tenant_id
+                LEFT JOIN credential_profiles cp ON cp.id = d.credential_profile_id
+                    AND cp.tenant_id = d.tenant_id
                 WHERE j.id = CAST(:job_id AS uuid)
             """),
             {"job_id": job_id},
@@ -115,6 +118,9 @@ async def _run_upgrade(job_id: str) -> None:
         encrypted_credentials,
         current_version,
         encrypted_credentials_transit,
+        ssh_port,
+        profile_credentials,
+        profile_credentials_transit,
     ) = row
 
     device_id = str(device_id)
@@ -184,7 +190,10 @@ async def _run_upgrade(job_id: str) -> None:
         await _update_job(
             job_id,
             status="failed",
-            error_message=f"Pre-upgrade backup failed: {backup_err}",
+            error_message=(
+                "Pre-upgrade SSH backup failed. Check the device SSH port and credentials "
+                "or SSH key profile; allow its SSH login before retrying."
+            ),
         )
         await _publish_upgrade_progress(
             tenant_id,
@@ -193,12 +202,19 @@ async def _run_upgrade(job_id: str) -> None:
             "failed",
             target_version,
             f"Pre-upgrade backup failed for {hostname}",
-            error=str(backup_err),
+            error="Pre-upgrade SSH backup failed. Check SSH port and credentials or SSH key profile.",
         )
         return
 
     # Decrypt device credentials (dual-read: Transit preferred, legacy fallback)
-    if not encrypted_credentials_transit and not encrypted_credentials:
+    if not any(
+        (
+            encrypted_credentials_transit,
+            encrypted_credentials,
+            profile_credentials_transit,
+            profile_credentials,
+        )
+    ):
         await _update_job(job_id, status="failed", error_message="Device has no stored credentials")
         await _publish_upgrade_progress(
             tenant_id,
@@ -214,16 +230,17 @@ async def _run_upgrade(job_id: str) -> None:
     try:
         from app.services.crypto import decrypt_credentials_hybrid
 
-        key = settings.get_encryption_key_bytes()
-        creds_json = await decrypt_credentials_hybrid(
+        creds = await _resolve_ssh_credentials(
             encrypted_credentials_transit,
             encrypted_credentials,
+            profile_credentials_transit,
+            profile_credentials,
             tenant_id,
-            key,
+            decrypt=decrypt_credentials_hybrid,
         )
-        creds = json.loads(creds_json)
         ssh_username = creds.get("username", "")
         ssh_password = creds.get("password", "")
+        ssh_options = {"port": ssh_port, "private_key": creds.get("private_key", "")}
     except Exception as cred_err:
         await _update_job(
             job_id,
@@ -244,7 +261,9 @@ async def _run_upgrade(job_id: str) -> None:
     # Refuse incomplete package upgrades before downloading, uploading or rebooting.
     # RouterOS requires matching versions for every installed package, even disabled ones.
     try:
-        installed_packages = await _get_installed_packages(ip_address, ssh_username, ssh_password)
+        installed_packages = await _get_installed_packages(
+            ip_address, ssh_username, ssh_password, **ssh_options
+        )
         use_main, extra_names = _package_plan(installed_packages, architecture, target_version)
     except Exception as package_err:
         message = f"Firmware package pre-flight failed: {package_err}"
@@ -304,13 +323,13 @@ async def _run_upgrade(job_id: str) -> None:
 
     try:
         if (
-            await _get_installed_packages(ip_address, ssh_username, ssh_password)
+            await _get_installed_packages(ip_address, ssh_username, ssh_password, **ssh_options)
             != installed_packages
         ):
             raise ValueError(
                 "Installed package inventory changed during download; retry the upgrade"
             )
-        await _upload_packages(ip_address, ssh_username, ssh_password, npk_paths)
+        await _upload_packages(ip_address, ssh_username, ssh_password, npk_paths, **ssh_options)
     except Exception as upload_err:
         logger.error("NPK upload failed for %s: %s", hostname, upload_err)
         await _update_job(
@@ -342,9 +361,13 @@ async def _run_upgrade(job_id: str) -> None:
     try:
         async with asyncssh.connect(
             ip_address,
-            port=22,
+            port=ssh_port,
             username=ssh_username,
-            password=ssh_password,
+            password=ssh_password or None,
+            client_keys=_ssh_client_keys(ssh_options["private_key"]),
+            agent_path=None,
+            config=None,
+            preferred_auth=("publickey", "password"),
             known_hosts=None,
             connect_timeout=30,
         ) as conn:
@@ -364,7 +387,7 @@ async def _run_upgrade(job_id: str) -> None:
     reconnected = False
     elapsed = 0
     while elapsed < _RECONNECT_TIMEOUT:
-        if await _check_ssh_reachable(ip_address, ssh_username, ssh_password):
+        if await _check_ssh_reachable(ip_address, ssh_username, ssh_password, **ssh_options):
             reconnected = True
             break
         await asyncio.sleep(_RECONNECT_POLL_INTERVAL)
@@ -399,11 +422,15 @@ async def _run_upgrade(job_id: str) -> None:
         f"Verifying firmware version on {hostname}",
     )
     try:
-        actual_version = await _get_device_version(ip_address, ssh_username, ssh_password)
+        actual_version = await _get_device_version(
+            ip_address, ssh_username, ssh_password, **ssh_options
+        )
         if normalize_routeros_version(actual_version) == normalize_routeros_version(
             target_version
         ) and normalize_routeros_version(actual_version):
-            actual_packages = await _get_installed_packages(ip_address, ssh_username, ssh_password)
+            actual_packages = await _get_installed_packages(
+                ip_address, ssh_username, ssh_password, **ssh_options
+            )
             mismatches = [
                 name
                 for name in installed_packages
@@ -697,7 +724,7 @@ class InstalledPackage:
 
 
 async def _get_installed_packages(
-    ip: str, username: str, password: str
+    ip: str, username: str, password: str, *, port: int = 22, private_key: str = ""
 ) -> dict[str, InstalledPackage]:
     """Include disabled installed packages, exclude server-only available entries.
 
@@ -715,9 +742,13 @@ async def _get_installed_packages(
     )
     async with asyncssh.connect(
         ip,
-        port=22,
+        port=port,
         username=username,
-        password=password,
+        password=password or None,
+        client_keys=_ssh_client_keys(private_key),
+        agent_path=None,
+        config=None,
+        preferred_auth=("publickey", "password"),
         known_hosts=None,
         connect_timeout=30,
     ) as conn:
@@ -784,7 +815,15 @@ def _package_plan(
     return bool(main), extras
 
 
-async def _upload_packages(ip: str, username: str, password: str, paths: list[str]) -> None:
+async def _upload_packages(
+    ip: str,
+    username: str,
+    password: str,
+    paths: list[str],
+    *,
+    port: int = 22,
+    private_key: str = "",
+) -> None:
     """Stage a complete set under non-NPK names before making it installable.
 
     Never overwrite pre-existing NPKs. On failure remove only files created by this
@@ -794,9 +833,13 @@ async def _upload_packages(ip: str, username: str, password: str, paths: list[st
     attempt = uuid.uuid4().hex
     async with asyncssh.connect(
         ip,
-        port=22,
+        port=port,
         username=username,
-        password=password,
+        password=password or None,
+        client_keys=_ssh_client_keys(private_key),
+        agent_path=None,
+        config=None,
+        preferred_auth=("publickey", "password"),
         known_hosts=None,
         connect_timeout=30,
     ) as conn:
@@ -864,14 +907,20 @@ async def _upload_packages(ip: str, username: str, password: str, paths: list[st
                 raise
 
 
-async def _check_ssh_reachable(ip: str, username: str, password: str) -> bool:
+async def _check_ssh_reachable(
+    ip: str, username: str, password: str, *, port: int = 22, private_key: str = ""
+) -> bool:
     """Check if a device is reachable via SSH."""
     try:
         async with asyncssh.connect(
             ip,
-            port=22,
+            port=port,
             username=username,
-            password=password,
+            password=password or None,
+            client_keys=_ssh_client_keys(private_key),
+            agent_path=None,
+            config=None,
+            preferred_auth=("publickey", "password"),
             known_hosts=None,
             connect_timeout=15,
         ) as conn:
@@ -881,13 +930,19 @@ async def _check_ssh_reachable(ip: str, username: str, password: str) -> bool:
         return False
 
 
-async def _get_device_version(ip: str, username: str, password: str) -> str:
+async def _get_device_version(
+    ip: str, username: str, password: str, *, port: int = 22, private_key: str = ""
+) -> str:
     """Get the current RouterOS version from a device via SSH."""
     async with asyncssh.connect(
         ip,
-        port=22,
+        port=port,
         username=username,
-        password=password,
+        password=password or None,
+        client_keys=_ssh_client_keys(private_key),
+        agent_path=None,
+        config=None,
+        preferred_auth=("publickey", "password"),
         known_hosts=None,
         connect_timeout=30,
     ) as conn:

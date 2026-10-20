@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # How the poller is allowed to reach a RouterOS device. This is not cosmetic:
@@ -35,6 +35,7 @@ class DeviceCreate(BaseModel):
     ip_address: str
     api_port: int = 8728
     api_ssl_port: int = 8729
+    ssh_port: int = Field(default=22, ge=1, le=65535)
     # RouterOS credentials — optional for SNMP devices
     username: Optional[str] = None
     password: Optional[str] = None
@@ -89,6 +90,7 @@ class DeviceUpdate(BaseModel):
     ip_address: Optional[str] = None
     api_port: Optional[int] = None
     api_ssl_port: Optional[int] = None
+    ssh_port: Optional[int] = Field(default=None, ge=1, le=65535)
     username: Optional[str] = None
     password: Optional[str] = None
     latitude: Optional[float] = None
@@ -141,6 +143,7 @@ class DeviceResponse(BaseModel):
     ip_address: str
     api_port: int
     api_ssl_port: int
+    ssh_port: int = 22
     model: Optional[str] = None
     serial_number: Optional[str] = None
     firmware_version: Optional[str] = None

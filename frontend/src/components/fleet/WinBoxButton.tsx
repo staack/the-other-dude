@@ -27,10 +27,10 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
             setTunnelInfo(data)
             setState('ready')
 
-            // Attempt deep link on Windows only
-            if (navigator.userAgent.includes('Windows')) {
-                window.open(data.winbox_uri, '_blank')
-            }
+            // Use the current browsing context: a new window after an async
+            // request may be blocked. Keep a direct link for browsers which
+            // require another user gesture to open an external application.
+            window.open(data.winbox_uri, '_self')
         },
         onError: (err: unknown) => {
             const e = err as { response?: { data?: { detail?: string } } }
@@ -100,6 +100,10 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
                     Tunnel ready: <code className="font-mono text-[10px] text-text-secondary">{tunnelInfo.host}:{tunnelInfo.port}</code>
                 </p>
                 <div className="flex gap-1">
+                    <a href={tunnelInfo.winbox_uri}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-[var(--radius-control)] border border-border-default text-text-secondary hover:border-accent">
+                        Open WinBox
+                    </a>
                     <button
                         onClick={copyAddress}
                         className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] rounded-[var(--radius-control)] border border-border-default text-text-secondary hover:border-accent transition-[border-color] duration-[50ms]"
@@ -119,6 +123,7 @@ export function WinBoxButton({ tenantId, deviceId }: WinBoxButtonProps) {
                         Close
                     </button>
                 </div>
+                <p className="text-[10px] text-text-muted">If WinBox does not open, copy this address into the WinBox app. Browser launch requires a registered winbox:// handler.</p>
                 <p className="text-[9px] text-text-muted">Closes after 5 min idle</p>
             </div>
         )

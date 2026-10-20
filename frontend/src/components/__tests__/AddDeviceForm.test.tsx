@@ -37,3 +37,18 @@ describe('RouterOS initial display name', () => {
     }))
   })
 })
+
+describe('RouterOS transport settings', () => {
+  it.each(['auto', 'insecure', 'plain'])('submits %s mode and a custom SSH port', async (mode) => {
+    createDevice.mockReset().mockResolvedValue({ id: 'device-id', hostname: 'test' })
+    render(<AddDeviceForm tenantId="tenant-id" open onClose={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText('IP Address *'), { target: { value: '192.0.2.1' } })
+    fireEvent.change(screen.getByLabelText('Username *'), { target: { value: 'test' } })
+    fireEvent.change(screen.getByLabelText('Password *'), { target: { value: 'test' } })
+    fireEvent.change(screen.getByLabelText('SSH Port'), { target: { value: '65211' } })
+    fireEvent.change(screen.getByLabelText('API Connection'), { target: { value: mode } })
+    fireEvent.click(screen.getByRole('button', { name: /^Add Device$/ }))
+    await waitFor(() => expect(createDevice).toHaveBeenCalledOnce())
+    expect(createDevice).toHaveBeenCalledWith('tenant-id', expect.objectContaining({ ssh_port: 65211, tls_mode: mode }))
+  })
+})

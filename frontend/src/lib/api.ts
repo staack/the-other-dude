@@ -294,6 +294,7 @@ export interface DeviceResponse {
   ip_address: string
   api_port: number
   api_ssl_port: number
+  ssh_port?: number
   model: string | null
   serial_number: string | null
   firmware_version: string | null
@@ -332,12 +333,14 @@ export interface DeviceCreate {
   device_type?: 'routeros' | 'snmp'
   api_port?: number
   api_ssl_port?: number
+  ssh_port?: number
   username?: string
   password?: string
   credential_profile_id?: string
   snmp_version?: 'v2c' | 'v3'
   snmp_port?: number
   snmp_profile_id?: string
+  tls_mode?: string
 }
 
 export interface DeviceUpdate {
@@ -345,6 +348,7 @@ export interface DeviceUpdate {
   ip_address?: string
   api_port?: number
   api_ssl_port?: number
+  ssh_port?: number
   username?: string
   password?: string
   latitude?: number | null

@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+import json
 
 from app.services import firmware_service as firmware, upgrade_service as upgrade
 
@@ -74,8 +75,11 @@ def upgrade_mocks(monkeypatch, tmp_path):
         "encrypted",
         "7.16.1 (stable)",
         None,
+        22,
+        None,
+        None,
     )
-    factory, _ = session_factory([row])
+    factory, session = session_factory([row])
     monkeypatch.setattr(upgrade, "AdminAsyncSessionLocal", factory)
     monkeypatch.setattr(upgrade, "_update_job", AsyncMock())
     monkeypatch.setattr(upgrade, "_publish_upgrade_progress", AsyncMock())
@@ -118,7 +122,9 @@ def upgrade_mocks(monkeypatch, tmp_path):
     monkeypatch.setattr(upgrade.asyncio, "sleep", AsyncMock())
     monkeypatch.setattr(upgrade, "_check_ssh_reachable", AsyncMock(return_value=True))
     monkeypatch.setattr(upgrade, "_get_device_version", AsyncMock(return_value="7.24.5 (stable)"))
-    return SimpleNamespace(conn=conn, connect=connect, download=download, sftp=sftp, file=file)
+    return SimpleNamespace(
+        conn=conn, connect=connect, download=download, sftp=sftp, file=file, session=session
+    )
 
 
 @pytest.mark.parametrize(
@@ -207,3 +213,38 @@ async def test_connected_legacy_radio_preserves_measured_zero_ccq():
     )
     values = session.execute.call_args.args[1]
     assert values["ccq"] == 0 and values["avg_signal"] == -80
+
+
+@pytest.mark.parametrize("profile_only", [False, True, "mixed"])
+async def test_upgrade_carries_key_and_custom_port_through_every_stage(
+    monkeypatch, upgrade_mocks, profile_only
+):
+    import asyncssh
+    from app.services import crypto
+
+    key = asyncssh.generate_private_key("ssh-ed25519").export_private_key().decode()
+    decrypt = AsyncMock(return_value=json.dumps({"username": "lab", "private_key": key}))
+    monkeypatch.setattr(crypto, "decrypt_credentials_hybrid", decrypt)
+    session = upgrade_mocks.session
+    row = list(session.execute.return_value.fetchone.return_value)
+    row[13] = 65211
+    if profile_only:
+        row[10] = b"api-ciphertext" if profile_only == "mixed" else None
+        if profile_only == "mixed":
+            decrypt.side_effect = lambda transit, legacy, *args: json.dumps(
+                {"username": "api", "password": "api-only"}
+                if legacy == b"api-ciphertext"
+                else {"username": "lab", "private_key": key}
+            )
+        row[14] = b"profile-ciphertext"
+    session.execute.return_value.fetchone.return_value = tuple(row)
+    await upgrade.start_upgrade("job")
+    assert upgrade._update_job.call_args.kwargs["status"] == "completed"
+    for call in upgrade_mocks.connect.call_args_list:
+        assert call.kwargs["port"] == 65211
+        assert call.kwargs["client_keys"]
+        assert call.kwargs["password"] is None
+    assert upgrade._check_ssh_reachable.await_args.kwargs == {"port": 65211, "private_key": key}
+    assert upgrade._get_device_version.await_args.kwargs == {"port": 65211, "private_key": key}
+    if profile_only:
+        assert decrypt.await_args.args[1] == b"profile-ciphertext"
