@@ -182,8 +182,11 @@ Compose file; no reinstall or data-volume removal is required.
 
 RouterOS devices expose an SSH Port setting (1–65535; default 22) in Add Device and
 Edit Device. Certificate deployment, SSH terminal and backend config backups use
-that port. Backend backups resolve device credentials first, then the attached
-same-organization credential profile, and offer a stored SSH key before password.
+that port. SSH operations prefer a stored device key, then a key from the attached
+same-organization credential profile, then device/profile password credentials.
+An SSH key profile can be attached while retaining the device’s inline RouterOS API
+credentials for polling. Each username and its key/password stay together; credentials
+from different accounts are never combined.
 The firmware pre-upgrade backup remains mandatory.
 
 The quick Add Device dialog offers TLS and explicitly selected plain API modes.
@@ -192,4 +195,6 @@ TLS modes use the TLS API port. Automatic mode does not silently fall back to pl
 
 The native WinBox tunnel attempts the registered `winbox://` handler on every
 platform. If a browser requires another click, use Open WinBox in the ready tunnel
-panel. A local WinBox URI handler must be installed; Copy remains available.
+panel. A local WinBox URI handler must be installed; installing WinBox alone may
+not register one. If the app does not open, use Copy and paste the tunnel address
+into WinBox. Remote opens WinBox in the browser without a local URI handler.
