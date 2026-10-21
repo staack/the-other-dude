@@ -456,31 +456,31 @@ Neither returns a fixed value.
 
 ### Updating
 
-9.12.2 updates an existing installation without reinstalling. Keep the environment file and all `docker-data` directories. This patch adds no database migration or required environment variable.
+9.12.3 updates an existing installation without reinstalling. Keep the environment file and all `docker-data` directories. This patch adds no database migration or required environment variable.
 
-Back up first, then update the source/Compose files from the release. The updated base Compose file sets PostgreSQL `max_connections=100` when its container starts; pulling images alone does not change an existing Compose definition. Review any explicit `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `DB_ADMIN_POOL_SIZE` and `DB_ADMIN_MAX_OVERFLOW` overrides: they take precedence over the new defaults. Preserve custom deployment settings when updating Compose.
+Upgrading from 9.12.2 requires no Compose changes. Back up first, then update the source/Compose files from the release. For installations older than 9.12.2, the base Compose file sets PostgreSQL `max_connections=100` when its container starts; pulling images alone does not change an existing Compose definition. Review any explicit `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`, `DB_ADMIN_POOL_SIZE` and `DB_ADMIN_MAX_OVERFLOW` overrides: they take precedence over the new defaults. Preserve custom deployment settings when updating Compose.
 
 For prebuilt production images, use the same Compose and environment options as the installation. For the standard production layout, after updating the release files:
 
 ```bash
 ./scripts/backup.sh
 python3 scripts/upgrade_env.py
-TOD_VERSION=9.12.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod pull
-TOD_VERSION=9.12.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
+TOD_VERSION=9.12.3 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod pull
+TOD_VERSION=9.12.3 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
 
-If the environment file pins `TOD_VERSION`, update it to `9.12.2` for future commands. Recreate services with the updated Compose definition so the database limit is applied. Do not remove or reinitialize the database volume.
+If the environment file pins `TOD_VERSION`, update it to `9.12.3` for future commands. Recreate services with the updated Compose definition so the database limit is applied. Do not remove or reinitialize the database volume.
 
 For builds from source, update the release files first, then build the four application images one at a time with the source-build override:
 
 ```bash
 ./scripts/backup.sh
 python3 scripts/upgrade_env.py
-TOD_VERSION=9.12.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod build api
-TOD_VERSION=9.12.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod build poller
-TOD_VERSION=9.12.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod build frontend
-TOD_VERSION=9.12.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod build winbox-worker
-TOD_VERSION=9.12.2 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod up -d
+TOD_VERSION=9.12.3 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod build api
+TOD_VERSION=9.12.3 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod build poller
+TOD_VERSION=9.12.3 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod build frontend
+TOD_VERSION=9.12.3 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod build winbox-worker
+TOD_VERSION=9.12.3 docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.build.yml --env-file .env.prod up -d
 ```
 
 When updating from before 9.12.0, `scripts/upgrade_env.py` adds the required `WINBOX_WORKER_TOKEN` to `.env.prod` if missing, backing the file up first. Use the same value in the API and worker. Remote WinBox uses `/api/`; custom reverse proxies must forward WebSocket upgrades there and no longer need a direct `/xpra/` route.

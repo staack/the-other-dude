@@ -54,7 +54,26 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["winbox-remote"])
 
 REDIS_PREFIX = "winbox-remote:"
-RATE_PREFIX = "winbox-remote-rate:"
+# A new namespace avoids inheriting the old five-minute counters during upgrades.
+RATE_PREFIX = "winbox-remote-rate:v2:"
+SESSION_CREATE_LIMIT = 10
+SESSION_CREATE_WINDOW_SECONDS = 60
+_SESSION_RATE_SCRIPT = """
+local count = tonumber(redis.call('GET', KEYS[1]) or '0')
+local ttl = redis.call('TTL', KEYS[1])
+if count >= tonumber(ARGV[1]) then
+    if ttl < 0 then
+        redis.call('EXPIRE', KEYS[1], ARGV[2])
+        ttl = tonumber(ARGV[2])
+    end
+    return {0, ttl}
+end
+redis.call('INCR', KEYS[1])
+if ttl < 0 then
+    redis.call('EXPIRE', KEYS[1], ARGV[2])
+end
+return {1, 0}
+"""
 
 # ---------------------------------------------------------------------------
 # Lazy NATS and Redis clients (same pattern as remote_access.py)
@@ -115,16 +134,18 @@ async def _check_tenant_access(
 
 
 async def _check_rate_limit(user_id: uuid.UUID) -> None:
-    """Allow max 3 session creates per 5 minutes per user."""
+    """Allow ten create attempts per minute per user, across API workers."""
     rd = await _get_redis()
     key = f"{RATE_PREFIX}{user_id}"
-    count = await rd.incr(key)
-    if count == 1:
-        await rd.expire(key, 300)
-    if count > 3:
+    allowed, retry_after = await rd.eval(
+        _SESSION_RATE_SCRIPT, 1, key, SESSION_CREATE_LIMIT, SESSION_CREATE_WINDOW_SECONDS
+    )
+    if not allowed:
+        retry_after = max(1, int(retry_after))
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Too many session requests. Try again later.",
+            detail=f"Too many Remote WinBox session requests. Try again in {retry_after} seconds.",
+            headers={"Retry-After": str(retry_after)},
         )
 
 
@@ -228,7 +249,7 @@ async def _rollback_worker_session(session_id: str) -> None:
     summary="Create a Remote WinBox browser session",
     dependencies=[Depends(require_operator_or_above)],
 )
-@limiter.limit("10/minute")
+@limiter.limit("30/minute")
 async def create_winbox_remote_session(
     tenant_id: uuid.UUID,
     device_id: uuid.UUID,

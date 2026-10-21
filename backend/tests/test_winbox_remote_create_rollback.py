@@ -41,11 +41,8 @@ class FakeRedis:
     async def get(self, key):
         return self.data.get(key)
 
-    async def incr(self, key):
-        return 1
-
-    async def expire(self, key, ttl):
-        return True
+    async def eval(self, script, numkeys, key, limit, window):
+        return [1, 0]
 
     async def setex(self, key, ttl, value):
         self.data[key] = value
