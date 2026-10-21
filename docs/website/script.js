@@ -39,7 +39,14 @@
               /* keep active link visible in sidebar */
               var active = sidebar.querySelector('.sidebar-link--active');
               if (active) {
-                active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                // Scroll only the navigation pane; scrollIntoView can also move the article.
+                var pane = active.closest('.docs-sidebar');
+                if (pane) {
+                  var item = active.getBoundingClientRect();
+                  var frame = pane.getBoundingClientRect();
+                  if (item.top < frame.top) pane.scrollTop -= frame.top - item.top + 12;
+                  else if (item.bottom > frame.bottom) pane.scrollTop += item.bottom - frame.bottom + 12;
+                }
               }
             }
           }
