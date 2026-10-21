@@ -7,55 +7,55 @@
  * Simple mode shows 7 simplified configuration categories.
  */
 
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import type { DeviceResponse } from '@/lib/api'
 import { SimpleConfigSidebar } from './SimpleConfigSidebar'
 import { StandardConfigSidebar } from './StandardConfigSidebar'
 
 // Simple mode category panel imports
-import { InternetSetupPanel } from './categories/InternetSetupPanel'
-import { LanDhcpPanel } from './categories/LanDhcpPanel'
-import { DnsSimplePanel } from './categories/DnsSimplePanel'
-import { WifiSimplePanel } from './categories/WifiSimplePanel'
-import { PortForwardingPanel } from './categories/PortForwardingPanel'
-import { FirewallBasicsPanel } from './categories/FirewallBasicsPanel'
-import { SystemSimplePanel } from './categories/SystemSimplePanel'
+const InternetSetupPanel = lazy(() => import('./categories/InternetSetupPanel').then(m => ({ default: m.InternetSetupPanel })))
+const LanDhcpPanel = lazy(() => import('./categories/LanDhcpPanel').then(m => ({ default: m.LanDhcpPanel })))
+const DnsSimplePanel = lazy(() => import('./categories/DnsSimplePanel').then(m => ({ default: m.DnsSimplePanel })))
+const WifiSimplePanel = lazy(() => import('./categories/WifiSimplePanel').then(m => ({ default: m.WifiSimplePanel })))
+const PortForwardingPanel = lazy(() => import('./categories/PortForwardingPanel').then(m => ({ default: m.PortForwardingPanel })))
+const FirewallBasicsPanel = lazy(() => import('./categories/FirewallBasicsPanel').then(m => ({ default: m.FirewallBasicsPanel })))
+const SystemSimplePanel = lazy(() => import('./categories/SystemSimplePanel').then(m => ({ default: m.SystemSimplePanel })))
 
 // Standard config panel imports
-import { HealthTab } from '@/components/monitoring/HealthTab'
-import { WirelessTab } from '@/components/monitoring/WirelessTab'
-import { InterfacesTab } from '@/components/monitoring/InterfacesTab'
-import { ConfigTab } from '@/components/config/ConfigTab'
-import { InterfacesPanel } from '@/components/config/InterfacesPanel'
-import { SwitchPortManager } from '@/components/config/SwitchPortManager'
-import { FirewallPanel } from '@/components/config/FirewallPanel'
-import { DnsPanel } from '@/components/config/DnsPanel'
-import { DhcpPanel } from '@/components/config/DhcpPanel'
-import { DhcpClientPanel } from '@/components/config/DhcpClientPanel'
-import { WifiPanel } from '@/components/config/WifiPanel'
-import { QueuesPanel } from '@/components/config/QueuesPanel'
-import { RoutesPanel } from '@/components/config/RoutesPanel'
-import { AddressPanel } from '@/components/config/AddressPanel'
-import { ArpPanel } from '@/components/config/ArpPanel'
-import { PoolPanel } from '@/components/config/PoolPanel'
-import { SystemPanel } from '@/components/config/SystemPanel'
-import { UsersPanel } from '@/components/config/UsersPanel'
-import { ServicesPanel } from '@/components/config/ServicesPanel'
-import { ScriptsPanel } from '@/components/config/ScriptsPanel'
-import { ManglePanel } from '@/components/config/ManglePanel'
-import { AddressListPanel } from '@/components/config/AddressListPanel'
-import { ConnTrackPanel } from '@/components/config/ConnTrackPanel'
-import { PppPanel } from '@/components/config/PppPanel'
-import { IpsecPanel } from '@/components/config/IpsecPanel'
-import { NetworkToolsPanel } from '@/components/config/NetworkToolsPanel'
-import { BridgePortPanel } from '@/components/config/BridgePortPanel'
-import { BridgeVlanPanel } from '@/components/config/BridgeVlanPanel'
-import { SnmpPanel } from '@/components/config/SnmpPanel'
-import { ClientsTab } from '@/components/network/ClientsTab'
-import { VpnTab } from '@/components/network/VpnTab'
-import { LogsTab } from '@/components/network/LogsTab'
-import { WirelessStationTable } from '@/components/wireless/WirelessStationTable'
-import { RFStatsCard } from '@/components/wireless/RFStatsCard'
+const HealthTab = lazy(() => import('@/components/monitoring/HealthTab').then(m => ({ default: m.HealthTab })))
+const WirelessTab = lazy(() => import('@/components/monitoring/WirelessTab').then(m => ({ default: m.WirelessTab })))
+const InterfacesTab = lazy(() => import('@/components/monitoring/InterfacesTab').then(m => ({ default: m.InterfacesTab })))
+const ConfigTab = lazy(() => import('@/components/config/ConfigTab').then(m => ({ default: m.ConfigTab })))
+const InterfacesPanel = lazy(() => import('@/components/config/InterfacesPanel').then(m => ({ default: m.InterfacesPanel })))
+const SwitchPortManager = lazy(() => import('@/components/config/SwitchPortManager').then(m => ({ default: m.SwitchPortManager })))
+const FirewallPanel = lazy(() => import('@/components/config/FirewallPanel').then(m => ({ default: m.FirewallPanel })))
+const DnsPanel = lazy(() => import('@/components/config/DnsPanel').then(m => ({ default: m.DnsPanel })))
+const DhcpPanel = lazy(() => import('@/components/config/DhcpPanel').then(m => ({ default: m.DhcpPanel })))
+const DhcpClientPanel = lazy(() => import('@/components/config/DhcpClientPanel').then(m => ({ default: m.DhcpClientPanel })))
+const WifiPanel = lazy(() => import('@/components/config/WifiPanel').then(m => ({ default: m.WifiPanel })))
+const QueuesPanel = lazy(() => import('@/components/config/QueuesPanel').then(m => ({ default: m.QueuesPanel })))
+const RoutesPanel = lazy(() => import('@/components/config/RoutesPanel').then(m => ({ default: m.RoutesPanel })))
+const AddressPanel = lazy(() => import('@/components/config/AddressPanel').then(m => ({ default: m.AddressPanel })))
+const ArpPanel = lazy(() => import('@/components/config/ArpPanel').then(m => ({ default: m.ArpPanel })))
+const PoolPanel = lazy(() => import('@/components/config/PoolPanel').then(m => ({ default: m.PoolPanel })))
+const SystemPanel = lazy(() => import('@/components/config/SystemPanel').then(m => ({ default: m.SystemPanel })))
+const UsersPanel = lazy(() => import('@/components/config/UsersPanel').then(m => ({ default: m.UsersPanel })))
+const ServicesPanel = lazy(() => import('@/components/config/ServicesPanel').then(m => ({ default: m.ServicesPanel })))
+const ScriptsPanel = lazy(() => import('@/components/config/ScriptsPanel').then(m => ({ default: m.ScriptsPanel })))
+const ManglePanel = lazy(() => import('@/components/config/ManglePanel').then(m => ({ default: m.ManglePanel })))
+const AddressListPanel = lazy(() => import('@/components/config/AddressListPanel').then(m => ({ default: m.AddressListPanel })))
+const ConnTrackPanel = lazy(() => import('@/components/config/ConnTrackPanel').then(m => ({ default: m.ConnTrackPanel })))
+const PppPanel = lazy(() => import('@/components/config/PppPanel').then(m => ({ default: m.PppPanel })))
+const IpsecPanel = lazy(() => import('@/components/config/IpsecPanel').then(m => ({ default: m.IpsecPanel })))
+const NetworkToolsPanel = lazy(() => import('@/components/config/NetworkToolsPanel').then(m => ({ default: m.NetworkToolsPanel })))
+const BridgePortPanel = lazy(() => import('@/components/config/BridgePortPanel').then(m => ({ default: m.BridgePortPanel })))
+const BridgeVlanPanel = lazy(() => import('@/components/config/BridgeVlanPanel').then(m => ({ default: m.BridgeVlanPanel })))
+const SnmpPanel = lazy(() => import('@/components/config/SnmpPanel').then(m => ({ default: m.SnmpPanel })))
+const ClientsTab = lazy(() => import('@/components/network/ClientsTab').then(m => ({ default: m.ClientsTab })))
+const VpnTab = lazy(() => import('@/components/network/VpnTab').then(m => ({ default: m.VpnTab })))
+const LogsTab = lazy(() => import('@/components/network/LogsTab').then(m => ({ default: m.LogsTab })))
+const WirelessStationTable = lazy(() => import('@/components/wireless/WirelessStationTable').then(m => ({ default: m.WirelessStationTable })))
+const RFStatsCard = lazy(() => import('@/components/wireless/RFStatsCard').then(m => ({ default: m.RFStatsCard })))
 
 interface SimpleConfigViewProps {
   tenantId: string
@@ -89,6 +89,7 @@ export function SimpleConfigView({
   // -------------------------------------------------------------------------
   if (mode === 'standard') {
     return (
+      <Suspense fallback={<p role="status">Loading panel…</p>}>
       <div className="flex gap-6">
         <StandardConfigSidebar
           activeTab={activeTab}
@@ -210,6 +211,7 @@ export function SimpleConfigView({
           {activeTab === 'alerts' && alertsContent}
         </div>
       </div>
+      </Suspense>
     )
   }
 
@@ -217,6 +219,7 @@ export function SimpleConfigView({
   // Simple Mode — vertical sidebar + category panels
   // -------------------------------------------------------------------------
   return (
+    <Suspense fallback={<p role="status">Loading panel…</p>}>
     <div className="flex gap-6">
       <SimpleConfigSidebar
         activeCategory={activeCategory}
@@ -248,5 +251,6 @@ export function SimpleConfigView({
         )}
       </div>
     </div>
+    </Suspense>
   )
 }

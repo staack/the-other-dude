@@ -934,6 +934,7 @@ async def list_alerts(
     alert_status: Optional[str] = Query(None, alias="status"),
     severity: Optional[str] = Query(None),
     device_id: Optional[str] = Query(None),
+    alert_id: Optional[uuid.UUID] = Query(None),
     rule_id: Optional[str] = Query(None),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
@@ -947,6 +948,9 @@ async def list_alerts(
     filters = ["1=1"]
     params: dict[str, Any] = {}
 
+    if alert_id:
+        filters.append("ae.id = CAST(:alert_id AS uuid)")
+        params["alert_id"] = str(alert_id)
     if alert_status:
         filters.append("ae.status = :status")
         params["status"] = alert_status
