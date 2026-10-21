@@ -1589,7 +1589,7 @@ open http://localhost</code></pre>
           </thead>
           <tbody>
             <tr><td><code>APP_NAME</code></td><td><code>TOD - The Other Dude</code></td><td>Application display name</td></tr>
-            <tr><td><code>APP_VERSION</code></td><td><code>9.12.2</code></td><td>Semantic version string</td></tr>
+            <tr><td><code>APP_VERSION</code></td><td><code>9.12.3</code></td><td>Semantic version string</td></tr>
             <tr><td><code>ENVIRONMENT</code></td><td><code>dev</code></td><td>Runtime environment: <code>dev</code>, <code>staging</code>, or <code>production</code></td></tr>
             <tr><td><code>DEBUG</code></td><td><code>false</code></td><td>Enable debug mode</td></tr>
             <tr><td><code>CORS_ORIGINS</code></td><td><code>http://localhost:3000,...</code></td><td>Comma-separated list of allowed CORS origins</td></tr>
@@ -1700,9 +1700,9 @@ open http://localhost</code></pre>
         <h3 id="wireless-monitoring-states">Wireless monitoring states</h3>
         <p>Monitor &gt; Wireless retains radio cards and client-count charts for zero-client readings. It says &ldquo;No wireless clients connected&rdquo; only when every latest radio reading reports zero. Empty telemetry says &ldquo;No wireless monitoring data available yet&rdquo;; a failed request shows a loading error. Missing telemetry does not establish that a device has no radios or clients. If no readings arrive, check that the running poller is updated and inspect its wireless collection errors.</p>
 
-        <h3 id="updating-tod">Updating TOD (9.12.2)</h3>
-        <p>Existing installations can update without reinstalling. Keep the environment file and data directories and back up first. Update the release&rsquo;s source/Compose files, pull or rebuild all four application images, and recreate services using the same Compose and environment options. Version 9.12.2 adds no migration or required environment variable.</p>
-        <p>The updated base Compose definition sets PostgreSQL <code>max_connections=100</code> on startup. Recreate the database container with that definition; pulling application images alone does not apply it. Review existing pool overrides: defaults are app <code>5+5</code> and admin <code>2+3</code> per worker, or 30 maximum across two workers. Preserve the existing database volume. See the <a href="https://github.com/staack/the-other-dude/blob/main/docs/DEPLOYMENT.md#updating" rel="noopener">update commands</a>.</p>
+        <h3 id="updating-tod">Updating TOD (9.12.3)</h3>
+        <p>Existing installations can update without reinstalling. Keep the environment file and data directories and back up first. Update the release&rsquo;s source/Compose files, pull or rebuild all four application images, and recreate services using the same Compose and environment options. Version 9.12.3 adds no migration or required environment variable. Upgrading from 9.12.2 requires no Compose change.</p>
+        <p>For installations older than 9.12.2, the base Compose definition sets PostgreSQL <code>max_connections=100</code> on startup. Recreate the database container with that definition; pulling application images alone does not apply it. Review existing pool overrides: defaults are app <code>5+5</code> and admin <code>2+3</code> per worker, or 30 maximum across two workers. Preserve the existing database volume. See the <a href="https://github.com/staack/the-other-dude/blob/main/docs/DEPLOYMENT.md#updating" rel="noopener">update commands</a>.</p>
         <p>When updating from before 9.12.0, run <code>python3 scripts/upgrade_env.py</code> to add <code>WINBOX_WORKER_TOKEN</code> to <code>.env.prod</code> if missing. The file is backed up first; the API and worker need the same token. Custom reverse proxies must forward WebSocket upgrades on <code>/api/</code>; a direct <code>/xpra/</code> route is no longer required. Installations older than 9.11.0 also need the firmware-cache Compose mount below.</p>
 
         <h3 id="firmware-upgrades">Firmware upgrades and extra packages (9.11.0)</h3>
