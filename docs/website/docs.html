@@ -1144,6 +1144,7 @@ open http://localhost</code></pre>
         <p>A local <code>winbox://</code> URI handler must be registered on the computer running the browser; installing WinBox alone may not register one. If automatic launch is blocked, click <strong>Open WinBox</strong> in the ready panel. If it still does not open, use <strong>Copy</strong> and paste the tunnel address into the WinBox app&rsquo;s <strong>Connect to</strong> field.</p>
         <h3>Remote WinBox in the browser</h3>
         <p>Use <strong>Remote</strong> to open the server-hosted WinBox desktop inside the browser. This requires no local WinBox installation or URI handler. The API authenticates each session; the worker&rsquo;s ports remain private.</p>
+        <p>You can attempt up to 10 Remote sessions per minute per user, including failed launches. If you reach this limit, the error shows how many seconds to wait. Closing a session does not reset the limit. A separate limit allows 30 requests per minute per client IP; simultaneous sessions are also limited by worker capacity.</p>
 
         <h3>SSH Terminal</h3>
         <p>Click the <strong>SSH</strong> button to open an in-browser terminal:</p>
