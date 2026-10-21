@@ -1,9 +1,4 @@
 /* Local font loading — no third-party requests */
-@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/manrope-v20-latin-regular.woff2') format('woff2'); }
-@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/manrope-v20-latin-500.woff2') format('woff2'); }
-@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 600; font-display: swap; src: url('fonts/manrope-v20-latin-600.woff2') format('woff2'); }
-@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 700; font-display: swap; src: url('fonts/manrope-v20-latin-700.woff2') format('woff2'); }
-@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 800; font-display: swap; src: url('fonts/manrope-v20-latin-800.woff2') format('woff2'); }
 @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('fonts/ibm-plex-mono-v20-latin-regular.woff2') format('woff2'); }
 @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500; font-display: swap; src: url('fonts/ibm-plex-mono-v20-latin-500.woff2') format('woff2'); }
 
@@ -66,7 +61,7 @@ html {
 }
 
 body {
-  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.6;
   color: var(--text-primary);
@@ -97,7 +92,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   line-height: 1.2;
 }
 
@@ -181,7 +176,7 @@ ul, ol {
 }
 
 .nav-logo {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 700;
   font-size: 20px;
   display: flex;
@@ -237,7 +232,7 @@ ul, ol {
   align-items: center;
   background: var(--accent);
   color: #111113;
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
   font-size: 14px;
   padding: 8px 20px;
@@ -352,7 +347,7 @@ ul, ol {
   border: 1px solid rgba(42, 157, 143, 0.2);
   border-radius: 9999px;
   padding: 6px 16px;
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-size: 13px;
   font-weight: 500;
   letter-spacing: 0.05em;
@@ -361,7 +356,7 @@ ul, ol {
 }
 
 .hero-title {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 800;
   font-size: clamp(3rem, 6vw, 5rem);
   line-height: 1.05;
@@ -415,7 +410,7 @@ ul, ol {
   gap: 8px;
   background: var(--accent);
   color: #111113;
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
   font-size: 15px;
   padding: 14px 28px;
@@ -443,7 +438,7 @@ ul, ol {
   gap: 8px;
   background: transparent;
   color: var(--text-primary);
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
   font-size: 15px;
   padding: 14px 28px;
@@ -482,7 +477,7 @@ ul, ol {
 
 .section-label {
   color: var(--accent);
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   text-transform: uppercase;
   font-size: 13px;
   font-weight: 600;
@@ -491,7 +486,7 @@ ul, ol {
 }
 
 .section-title {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 700;
   font-size: 2.5rem;
   color: var(--text-primary);
@@ -586,7 +581,7 @@ ul, ol {
 
 .cta-closing-title {
   color: var(--text-primary);
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
   font-size: 1.3rem;
   margin-bottom: 8px;
@@ -634,7 +629,7 @@ ul, ol {
 }
 
 .feature-title {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
   font-size: 1.15rem;
   margin-bottom: 10px;
@@ -803,7 +798,7 @@ ul, ol {
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 16px;
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
@@ -1051,7 +1046,7 @@ ul, ol {
 }
 
 .cta-title {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 700;
   font-size: 2.5rem;
   color: var(--text-primary);
@@ -1188,7 +1183,7 @@ ul, ol {
 
 .sidebar-section-title {
   color: var(--docs-text);
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
   font-size: 13px;
   text-transform: uppercase;
@@ -1236,7 +1231,7 @@ ul, ol {
   border: 1px solid var(--docs-border);
   border-radius: 8px;
   padding: 8px 12px;
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-size: 14px;
   color: var(--docs-text);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -1264,7 +1259,7 @@ ul, ol {
 
 /* Content typography */
 .docs-content h1 {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 700;
   font-size: 2.25rem;
   color: var(--docs-text);
@@ -1280,7 +1275,7 @@ ul, ol {
 }
 
 .docs-content h2 {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 700;
   font-size: 2rem;
   color: var(--docs-text);
@@ -1298,7 +1293,7 @@ ul, ol {
 }
 
 .docs-content h3 {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
   font-size: 1.5rem;
   color: var(--docs-text);
@@ -1308,7 +1303,7 @@ ul, ol {
 }
 
 .docs-content h4 {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
   font-size: 1.15rem;
   color: var(--docs-text);
@@ -1393,7 +1388,7 @@ ul, ol {
   background: var(--docs-code-bg);
   text-align: left;
   padding: 12px 16px;
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
   font-size: 13px;
   border-bottom: 2px solid var(--docs-border);
@@ -2005,7 +2000,7 @@ ul, ol {
 }
 
 .stat-value {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 800;
   font-size: 2.5rem;
   color: var(--accent);
@@ -2033,7 +2028,7 @@ ul, ol {
 
 .quote-card::before {
   content: "\201C";
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-size: 4rem;
   color: var(--accent);
   opacity: 0.3;
@@ -2052,7 +2047,7 @@ ul, ol {
 }
 
 .quote-author {
-  font-family: "Manrope", sans-serif;
+  font-family: "IBM Plex Sans", sans-serif;
   font-weight: 600;
   font-size: 14px;
   color: var(--text-primary);

@@ -8,9 +8,9 @@
   <meta name="keywords" content="MikroTik, fleet management, RouterOS, MSP tools, The Other Dude, network management">
   <meta name="author" content="The Other Dude">
   <meta name="robots" content="index, follow">
-  <meta name="theme-color" content="#eae7de">
+  <meta name="theme-color" content="#edf1f4">
   <link rel="canonical" href="https://theotherdude.net/blog/what-you-can-do-today.html">
-  <link rel="icon" href="../data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%238B1A1A' stroke-width='2'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%238B1A1A'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%232A9D8F'/><circle cx='32' cy='32' r='5' fill='%238B1A1A'/><circle cx='32' cy='32' r='2.5' fill='%232A9D8F'/></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='2' y='2' width='60' height='60' rx='8' fill='none' stroke='%23326d9e' stroke-width='2'/><path d='M32 18 L46 32 L32 46 L18 32 Z' fill='%23326d9e'/><path d='M32 19 L38 32 L32 45 L26 32 Z' fill='%23627180'/><circle cx='32' cy='32' r='5' fill='%23326d9e'/><circle cx='32' cy='32' r='2.5' fill='%23627180'/></svg>">
 
   <!-- Open Graph -->
   <meta property="og:type" content="article">
@@ -43,23 +43,23 @@
 
   <!-- Fonts -->
 
-  <link rel="stylesheet" href="../style.css?v=3">
+  <link rel="stylesheet" href="../style.css?v=4">
   <style>
     /* Warm Precision overrides */
     :root {
-      --background: #eae7de;
-      --surface: #f6f4ec;
-      --elevated: #f0ede4;
-      --border: rgba(40,36,28,0.12);
-      --text-primary: #1a1810;
-      --text-secondary: #5e5a4e;
-      --text-muted: #8a8578;
-      --accent: #8a7a48;
+      --background: #edf1f4;
+      --surface: #ffffff;
+      --elevated: #f5f7f9;
+      --border: rgba(37,52,68,0.12);
+      --text-primary: #253444;
+      --text-secondary: #566574;
+      --text-muted: #627180;
+      --accent: #326d9e;
     }
-    body { background-color: #eae7de; color: #1a1810; }
-    .site-nav { background: #e0dcd2 !important; border-bottom: 1px solid rgba(40,36,28,0.12); }
-    .site-nav .nav-logo span, .site-nav .nav-link, .site-nav .nav-cta { color: #1a1810 !important; }
-    .site-nav .nav-link:hover { color: #8a7a48 !important; }
+    body { background-color: #edf1f4; color: #253444; }
+    .site-nav { background: #edf1f4 !important; border-bottom: 1px solid rgba(37,52,68,0.12); }
+    .site-nav .nav-logo span, .site-nav .nav-link, .site-nav .nav-cta { color: #253444 !important; }
+    .site-nav .nav-link:hover { color: #326d9e !important; }
     .dark { /* prevent dark mode */ }
   </style>
   <style>
@@ -74,7 +74,7 @@
       margin-bottom: 8px;
     }
     .blog-post h1 {
-      font-family: "Manrope", sans-serif;
+      font-family: "IBM Plex Sans", sans-serif;
       font-weight: 700;
       font-size: 2.5rem;
       line-height: 1.2;
@@ -82,7 +82,7 @@
       margin-bottom: 40px;
     }
     .blog-post h2 {
-      font-family: "Manrope", sans-serif;
+      font-family: "IBM Plex Sans", sans-serif;
       font-weight: 600;
       font-size: 1.4rem;
       color: var(--text-primary);
@@ -121,6 +121,7 @@
       .blog-post { padding: 60px 20px 80px; }
     }
   </style>
+  <link rel="stylesheet" href="../site-theme.css?v=1">
 </head>
 <body>
 
@@ -128,20 +129,20 @@
     <div class="nav-inner container">
       <a href="../index.html" class="nav-logo">
         <svg class="nav-logo-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-label="The Other Dude logo">
-          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
-          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
-          <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
-          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#8B1A1A" stroke-width="2"/>
-          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
-          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
-          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
-          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
-          <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
-          <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
-          <path d="M10 10 L16 10 L10 16 Z" fill="#2A9D8F" opacity="0.7"/>
-          <path d="M54 10 L54 16 L48 10 Z" fill="#2A9D8F" opacity="0.7"/>
-          <path d="M10 54 L16 54 L10 48 Z" fill="#2A9D8F" opacity="0.7"/>
-          <path d="M54 54 L48 54 L54 48 Z" fill="#2A9D8F" opacity="0.7"/>
+          <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#326d9e" stroke-width="2"/>
+          <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#edf1f4" stroke-width="1.5"/>
+          <rect x="8" y="8" width="48" height="48" rx="4" fill="#326d9e" opacity="0.15"/>
+          <path d="M32 8 L56 32 L32 56 L8 32 Z" fill="none" stroke="#326d9e" stroke-width="2"/>
+          <path d="M32 13 L51 32 L32 51 L13 32 Z" fill="none" stroke="#edf1f4" stroke-width="1.5"/>
+          <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#326d9e"/>
+          <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#627180"/>
+          <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#edf1f4"/>
+          <circle cx="32" cy="32" r="5" fill="#326d9e"/>
+          <circle cx="32" cy="32" r="2.5" fill="#627180"/>
+          <path d="M10 10 L16 10 L10 16 Z" fill="#627180" opacity="0.7"/>
+          <path d="M54 10 L54 16 L48 10 Z" fill="#627180" opacity="0.7"/>
+          <path d="M10 54 L16 54 L10 48 Z" fill="#627180" opacity="0.7"/>
+          <path d="M54 54 L48 54 L54 48 Z" fill="#627180" opacity="0.7"/>
         </svg>
         <span>The Other Dude</span>
       </a>
@@ -262,14 +263,14 @@
       <div class="footer-brand">
         <span class="footer-logo">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="24" height="24" aria-hidden="true" style="vertical-align: middle; margin-right: 8px;">
-            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#8B1A1A" stroke-width="2"/>
-            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#F5E6C8" stroke-width="1.5"/>
-            <rect x="8" y="8" width="48" height="48" rx="4" fill="#8B1A1A" opacity="0.15"/>
-            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#8B1A1A"/>
-            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#2A9D8F"/>
-            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#F5E6C8"/>
-            <circle cx="32" cy="32" r="5" fill="#8B1A1A"/>
-            <circle cx="32" cy="32" r="2.5" fill="#2A9D8F"/>
+            <rect x="2" y="2" width="60" height="60" rx="8" fill="none" stroke="#326d9e" stroke-width="2"/>
+            <rect x="6" y="6" width="52" height="52" rx="5" fill="none" stroke="#edf1f4" stroke-width="1.5"/>
+            <rect x="8" y="8" width="48" height="48" rx="4" fill="#326d9e" opacity="0.15"/>
+            <path d="M32 18 L46 32 L32 46 L18 32 Z" fill="#326d9e"/>
+            <path d="M32 19 L38 32 L32 45 L26 32 Z" fill="#627180"/>
+            <path d="M19 32 L32 26 L45 32 L32 38 Z" fill="#edf1f4"/>
+            <circle cx="32" cy="32" r="5" fill="#326d9e"/>
+            <circle cx="32" cy="32" r="2.5" fill="#627180"/>
           </svg>
           The Other Dude
         </span>
@@ -281,7 +282,7 @@
         <a href="https://github.com/staack/the-other-dude" rel="noopener">GitHub</a>
         <a href="mailto:license@theotherdude.net">Licensing</a>
       </nav>
-      <p style="margin-top:12px;font-size:0.75em;color:#8a8578;text-align:center;">This site uses self-hosted, cookie-free analytics to measure page views and engagement. No personal data is collected or shared with third parties.</p>
+      <p style="margin-top:12px;font-size:0.75em;color:#627180;text-align:center;">This site uses self-hosted, cookie-free analytics to measure page views and engagement. No personal data is collected or shared with third parties.</p>
     </div>
   </footer>
 
