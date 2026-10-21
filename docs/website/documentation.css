@@ -1,0 +1,289 @@
+/* ================================================================
+       Slate and blue — Docs page overrides
+       Light mode only. Overrides the shared base theme.
+       ================================================================ */
+
+:root {
+  --bg-deep: #edf1f4;
+  --bg-primary: #edf1f4;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f5f7f9;
+  --text-primary: #253444;
+  --text-secondary: #566574;
+  --text-muted: #627180;
+  --accent: #326d9e;
+  --accent-hover: #24547d;
+  --accent-glow: rgba(50, 109, 158, 0.10);
+  --accent-secondary: #326d9e;
+  --border: rgba(37, 52, 68, 0.12);
+  --border-accent: rgba(37, 52, 68, 0.20);
+  /* Docs-specific overrides */
+  --docs-bg: #edf1f4;
+  --docs-surface: #ffffff;
+  --docs-text: #253444;
+  --docs-text-secondary: #566574;
+  --docs-text-muted: #627180;
+  --docs-border: rgba(37, 52, 68, 0.12);
+  --docs-accent: #326d9e;
+  --docs-sidebar-bg: #f5f7f9;
+  --docs-code-bg: #ffffff;
+  --docs-code-border: rgba(37, 52, 68, 0.12);
+}
+/* Force light mode — prevent dark class from applying */
+
+.dark, [data-theme="dark"] {
+  --bg-deep: #edf1f4;
+  --bg-primary: #edf1f4;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f5f7f9;
+  --text-primary: #253444;
+  --text-secondary: #566574;
+  --text-muted: #627180;
+  --accent: #326d9e;
+  --accent-hover: #24547d;
+  --accent-glow: rgba(50, 109, 158, 0.10);
+  --accent-secondary: #326d9e;
+  --border: rgba(37, 52, 68, 0.12);
+  --border-accent: rgba(37, 52, 68, 0.20);
+  --docs-bg: #edf1f4;
+  --docs-surface: #ffffff;
+  --docs-text: #253444;
+  --docs-text-secondary: #566574;
+  --docs-text-muted: #627180;
+  --docs-border: rgba(37, 52, 68, 0.12);
+  --docs-accent: #326d9e;
+  --docs-sidebar-bg: #f5f7f9;
+  --docs-code-bg: #ffffff;
+  --docs-code-border: rgba(37, 52, 68, 0.12);
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #edf1f4;
+  color: #253444;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  color: #253444;
+}
+
+::selection {
+  background: rgba(50, 109, 158, 0.20);
+  color: #253444;
+}
+/* ---- Testing banner ---- */
+
+.testing-banner {
+  background: #f5f7f9;
+  border-bottom: 1px solid rgba(37, 52, 68, 0.12);
+  color: #566574;
+}
+
+.testing-banner strong {
+  color: #9a7a20;
+}
+/* ---- Nav overrides ---- */
+
+.site-nav,
+    .site-nav--light {
+  background: rgba(234, 231, 222, 0.92);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border-bottom: 1px solid rgba(37, 52, 68, 0.12);
+}
+
+.nav-logo {
+  color: #253444;
+}
+
+.nav-link {
+  color: #566574;
+  opacity: 1;
+}
+
+.nav-link:hover {
+  color: #253444;
+}
+
+.nav-link--active {
+  color: #326d9e;
+}
+/* ---- Sidebar overrides ---- */
+
+.sidebar-link:hover {
+  background: rgba(50, 109, 158, 0.08);
+  color: #253444;
+}
+
+.sidebar-link--active {
+  background: rgba(50, 109, 158, 0.10);
+  color: #326d9e;
+}
+
+.sidebar-link--active:hover {
+  background: rgba(50, 109, 158, 0.14);
+  color: #326d9e;
+}
+
+.docs-search input {
+  border-radius: 4px;
+}
+
+.docs-search input:focus {
+  border-color: #326d9e;
+  box-shadow: 0 0 0 3px rgba(50, 109, 158, 0.15);
+  outline: 2px solid #326d9e;
+  outline-offset: -2px;
+}
+/* ---- Content overrides ---- */
+
+.docs-content a {
+  color: #326d9e;
+  text-decoration-color: rgba(50, 109, 158, 0.3);
+}
+
+.docs-content a:hover {
+  text-decoration-color: #326d9e;
+}
+/* Code blocks — keep dark for readability */
+
+.docs-content pre {
+  background: #253444;
+  border: 1px solid rgba(37, 52, 68, 0.20);
+  border-radius: 2px;
+}
+
+.docs-content pre code {
+  color: #edf1f4;
+}
+/* Inline code */
+
+.docs-content code {
+  border-radius: 2px;
+}
+/* Tables */
+
+.docs-content th {
+  background: #f5f7f9;
+}
+/* List bullets */
+
+.docs-content ul li::before {
+  background: #326d9e;
+}
+/* Blockquote */
+
+.docs-content blockquote {
+  border-left-color: #326d9e;
+}
+/* ---- Border radius reductions ---- */
+
+.sidebar-link {
+  border-radius: 2px;
+}
+
+.docs-content table {
+  border-radius: 2px;
+}
+/* ---- Back to top button ---- */
+
+.back-to-top {
+  background: #326d9e;
+  box-shadow: 0 4px 16px rgba(50, 109, 158, 0.3);
+  border-radius: 4px;
+}
+
+.back-to-top:hover {
+  box-shadow: 0 6px 24px rgba(50, 109, 158, 0.4);
+}
+/* ---- Focus styles ---- */
+
+.docs-page :focus-visible {
+  outline-color: #326d9e;
+}
+/* ---- Code syntax highlighting — code palette ---- */
+
+.docs-content pre .token-keyword {
+  color: #c4a24a;
+}
+
+.docs-content pre .token-string {
+  color: #3a7a4a;
+}
+
+.docs-content pre .token-comment {
+  color: #627180;
+  font-style: italic;
+}
+
+.docs-content pre .token-function {
+  color: #c4a24a;
+}
+
+.docs-content pre .token-number {
+  color: #9a7a20;
+}
+
+.docs-content pre .token-operator {
+  color: #b0a890;
+}
+
+.docs-content pre .token-type {
+  color: #9a7a20;
+}
+
+.docs-content pre .token-variable {
+  color: #edf1f4;
+}
+/* ---- Footer overrides ---- */
+
+.site-footer {
+  background: #f5f7f9;
+  border-top: 1px solid rgba(37, 52, 68, 0.12);
+}
+
+.footer-brand {
+  color: #253444;
+}
+
+.footer-copy {
+  color: #627180;
+}
+
+.footer-links a {
+  color: #566574;
+}
+
+.footer-links a:hover {
+  color: #253444;
+}
+/* ---- Skip link ---- */
+
+.skip-link {
+  color: #253444;
+  background: #ffffff;
+}
+/* ---- Scrollbar ---- */
+
+.docs-page {
+  scrollbar-color: #627180 rgba(37, 52, 68, 0.12);
+}
+
+.docs-page::-webkit-scrollbar-track {
+  background: rgba(37, 52, 68, 0.06);
+}
+
+.docs-page::-webkit-scrollbar-thumb {
+  background: #627180;
+}
+
+.docs-page::-webkit-scrollbar-thumb:hover {
+  background: #566574;
+}
+/* ---- Mobile sidebar overlay ---- */
+
+.docs-sidebar-overlay {
+  background: rgba(26, 24, 16, 0.4);
+}
+
