@@ -16,8 +16,8 @@ RUN CGO_ENABLED=0 go build -o /winbox-worker ./cmd/worker/
 # Stage 2: Runtime with Xpra + WinBox
 FROM ubuntu:24.04 AS runtime
 
-ARG WINBOX_VERSION=4.3
-ARG WINBOX_SHA256=573600ac24df38a7a06ea4318b12754247eec4b54c6c90b0a57100d676787a4c
+ARG WINBOX_VERSION=4.5
+ARG WINBOX_SHA256=5192817089eb91ac5d03edc68661b2603ef81f8098627ab4fd9425b6cc7546a2
 
 # Install Xpra + X11 deps
 # Use distro xpra (works on all architectures including arm64 via emulation)
